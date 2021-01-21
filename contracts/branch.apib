@@ -1,0 +1,47 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Master Branch
+
+# Group Master Branch
+
+## List Master Branch [GET /v1/master/branches]
+
+Untuk mendapatkan daftar master branch (gerai).
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+            {
+            "status": "success",
+            "data": [
+                {
+                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "branchName": "Depok",
+                    "branchCode": "001"
+                },
+                {
+                    "id": "ff0ecebd-4556-4a02-979c-4c9d5488c2ac",
+                    "branchName": "Bogor",
+                    "branchCode": "002"
+                },
+                {
+                    "id": "ff0ecebd-4556-4a02-979c-4c9d5488c2ac",
+                    "branchName": "Medan",
+                    "branchCode": "003"
+                }
+            ]
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "message": "Internal Server Error"
+            }
