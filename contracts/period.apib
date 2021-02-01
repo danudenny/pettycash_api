@@ -1,0 +1,267 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Period
+
+# Group Period
+
+## List Period Year [GET /v1/period-years]
+
+Get list all period years.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": [
+                {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "month": 2,
+                    "year": 2020,
+                    "name": "1-2020"
+                },
+                {
+                    "id": "382a615c-7e93-4e64-8bc5-01f731d35559",
+                    "month": 2,
+                    "year": 2020,
+                    "name": "2-2020"
+                },
+                {
+                    "id": "baff824a-c193-45af-81f6-31ec77a2bcdb",
+                    "month": 3,
+                    "year": 2020,
+                    "name": "3-2020"
+                }
+            ],
+            "status": "success"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## List Period [GET /v1/periods]
+
+Get list all periods.
+
++ Parameters
+    + state (string, optional) - Status Period either `open` or `close`.
+        + Default: `open`
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": [
+                {
+                    "closeDate": "2021-01-27",
+                    "closeUserFirstName": "Adry",
+                    "closeUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                    "closeUserLastName": "Adry",
+                    "closeUserNIK": "adry",
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "month": 1,
+                    "year": 2020,
+                    "name": "1-2020"
+                },
+                {
+                    "closeDate": "2021-02-27",
+                    "closeUserFirstName": "Adry",
+                    "closeUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                    "closeUserLastName": "Adry",
+                    "closeUserNIK": "adry",
+                    "id": "382a615c-7e93-4e64-8bc5-01f731d35559",
+                    "month": 2,
+                    "year": 2020,
+                    "name": "2-2020"
+                },
+                {
+                    "closeDate": "2021-03-27",
+                    "closeUserFirstName": "Adry",
+                    "closeUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                    "closeUserLastName": "Adry",
+                    "closeUserNIK": "adry",
+                    "id": "baff824a-c193-45af-81f6-31ec77a2bcdb",
+                    "month": 3,
+                    "year": 2020,
+                    "name": "3-2020"
+                }
+            ],
+            "status": "success"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Generate Period [POST /v1/periods/generate]
+
+Generate Period
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+    
+    + Attributes (object)
+        + year: `2020` (number) - Year to be generate the periods.
+
++ Response 201 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "PERIOD_GENERATE_FAILED",
+                "message": "failed to generate period",
+                "details": [
+                    {
+                        "message": "Year is required",
+                        "field": "year"
+                    }
+                ],
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "PERIOD_ALREADY_GENERATED",
+                "message": "period year already exists",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Close Period [POST /v1/periods/close]
+
+Close Period.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+    
+    + Attributes (object)
+        + date: `2020-01-28` (string) - Closing Date in String ISO8601 DateOnly format.
+        + id: `3e7436b1-adeb-4a85-8676-2968e0cec78c` (string) - Period ID.
+
++ Response 201 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "PERIOD_CLOSE_FAILED",
+                "message": "failed to close period",
+                "details": [
+                    {
+                        "message": "Period ID is required",
+                        "field": "id"
+                    },
+                    {
+                        "message": "closeDate is required",
+                        "field": "closeDate"
+                    }
+                ],
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "PERIOD_CLOSE_FAILED_DUE_ANY_OPEN_TRANSACTION",
+                "message": "failed to close period due any open journal transaction",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Re-Open Period [POST /v1/periods/:id/open]
+
+(Re)Open Closed Period.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+    
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "message": "Period successfully opened."
+        }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "PERIOD_OPEN_FAILED",
+                "message": "failed to open period",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
