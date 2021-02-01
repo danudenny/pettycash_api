@@ -1,0 +1,62 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Employee
+
+# Group Employee
+
+## List Employee [GET /v1/employees]
+
+Untuk mendapatkan daftar employee sicepat.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "data": [
+                    {
+                        "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "nik": "3317140504900005",
+                        "name": "Denny Danuwijaya",
+                        "npwp_number": "64xxxxxx",
+                        "id_card_number": "20090134",
+                        "position_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "position_name": "Admin Branch",
+                        "branch_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "branch_name": "Kebon Jeruk"
+                    },
+                    {
+                        "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "nik": "3317140504920005",
+                        "name": "Edi Santoso",
+                        "npwp_number": "64xxxxxx",
+                        "id_card_number": "20090139",
+                        "position_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "position_name": "Staff",
+                        "branch_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "branch_name": "Kebon Jeruk"
+                    }
+                ],
+                "meta": {
+                    "page": 1,
+                    "prevPage": 1,
+                    "nextPage": null,
+                    "perPage": 10,
+                },
+                "status": "success",
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
