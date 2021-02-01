@@ -52,13 +52,15 @@ Get list all period years.
         }
 
 
-## List Period [GET /v1/periods]
+## List Period [GET /v1/periods{?state,year}]
 
 Get list all periods.
 
 + Parameters
     + state (string, optional) - Status Period either `open` or `close`.
         + Default: `open`
+    + year (string, optional) - Year of Period to filter.
+        + Example: `2021`
 
 + Request (application/json)
     + Header
