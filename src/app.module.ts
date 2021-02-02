@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from 'nestjs-pino';
 import { LoaderEnv } from './config/loader';
 import { BranchModule } from './app/modules/branch.module';
-
+import { PeriodModule } from './app/modules/period.module';
 
 @Module({
   imports: [
@@ -14,6 +14,7 @@ import { BranchModule } from './app/modules/branch.module';
     LoggerModule.forRoot(),
     // TODO: add Health checks (Terminus)
     BranchModule,
+    PeriodModule,
   ],
   controllers: [],
   providers: [],
