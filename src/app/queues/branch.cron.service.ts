@@ -35,7 +35,7 @@ export class BranchCronService {
     //   console.log(`Job with id ${job.id} has been completed`);
     // });
 
-    this.queue.on('cleaned', function(job, type) {
+    this.queue.on('cleaned', function (job, type) {
       console.log('Cleaned %s %s jobs', job.length, type);
     });
 

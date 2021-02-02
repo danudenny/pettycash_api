@@ -50,6 +50,5 @@ async function bootstrap() {
     BranchQueueService.boot();
     BranchCronService.init();
   }
-
 }
 bootstrap();

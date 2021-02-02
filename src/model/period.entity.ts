@@ -22,10 +22,10 @@ export class Period extends PtcBaseEntity {
   @Column({ type: 'smallint', name: 'year' })
   year: Number;
 
-  @Column({ type: 'date', name: 'close_date', nullable: true})
+  @Column({ type: 'date', name: 'close_date', nullable: true })
   closeDate: Date;
 
-  @Column({ type: 'uuid', name: 'close_user_id', nullable: true})
+  @Column({ type: 'uuid', name: 'close_user_id', nullable: true })
   closeUserId: string;
 
   @Column({ type: 'enum', enum: PeriodState, default: PeriodState.OPEN })

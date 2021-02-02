@@ -36,11 +36,11 @@ export class BranchQueueService {
     });
 
     // cleans all jobs that completed over 5 seconds ago.
-    this.queue.on('completed', job => {
+    this.queue.on('completed', (job) => {
       this.queue.clean(5000);
       console.log(`Job with id ${job.id} has been completed`);
     });
-    this.queue.on('cleaned', function(job, type) {
+    this.queue.on('cleaned', function (job, type) {
       console.log('Cleaned %s %s jobs', job.length, type);
     });
   }

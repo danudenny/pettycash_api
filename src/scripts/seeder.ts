@@ -22,7 +22,7 @@ async function run() {
   await connection.close();
 }
 
-(async function() {
+(async function () {
   console.log(`Running seeder...`);
   try {
     await run();

@@ -33,4 +33,3 @@ export enum AccountStatementType {
   BANK = 'bank',
   // VA = 'virtual_account',
 }
-

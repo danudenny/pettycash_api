@@ -83,7 +83,7 @@ export class LoaderEnv {
         if (!Array.isArray(dbSlaves)) {
           dbSlaves = [dbSlaves];
         }
-        slaves = dbSlaves.map(c => ({ url: c, ssl }));
+        slaves = dbSlaves.map((c) => ({ url: c, ssl }));
       }
 
       config = Object.assign(

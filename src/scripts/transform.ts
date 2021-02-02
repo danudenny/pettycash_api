@@ -17,7 +17,7 @@ project.addExistingSourceFiles('./src/**/*.{ts,tsx}');
 
 const sourceFiles = project.getSourceFiles();
 
-sourceFiles.forEach(async sourceFile => {
+sourceFiles.forEach(async (sourceFile) => {
   const importExportDeclarations = [
     ...sourceFile.getImportDeclarations(),
     ...sourceFile.getExportDeclarations(),
@@ -38,10 +38,7 @@ sourceFiles.forEach(async sourceFile => {
           sourceFileAbsolutePath,
           absolutePathToDepsModule,
         );
-        resultPath = resultPath
-          .split('/')
-          .slice(1)
-          .join('/');
+        resultPath = resultPath.split('/').slice(1).join('/');
 
         // tslint:disable-next-line: no-console
         console.log(`${sourceFileAbsolutePath}: ${value} -> ${resultPath}`);
