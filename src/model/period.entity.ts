@@ -1,5 +1,6 @@
-import { Entity, Column, Unique } from 'typeorm';
+import { Entity, Column, Unique, ManyToOne, JoinColumn } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
+import { User } from './user.entity';
 import { PeriodState } from './utils/enum';
 
 @Entity('period')
@@ -29,4 +30,8 @@ export class Period extends PtcBaseEntity {
 
   @Column({ type: 'enum', enum: PeriodState, default: PeriodState.OPEN })
   state: PeriodState;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'close_user_id', referencedColumnName: 'id' })
+  closeUser: User;
 }
