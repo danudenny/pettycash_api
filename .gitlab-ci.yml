@@ -1,0 +1,56 @@
+image: docker:19.03.12
+services:
+  - docker:19.03.12-dind
+
+stages:
+  - build
+  #- release
+  #- deploy
+variables:
+  REPOSITORY_URL: 741040551059.dkr.ecr.ap-southeast-1.amazonaws.com/sicepat-petty-cash-api
+  REGION : ap-southeast-1
+  #CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  #CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
+  #STAGING_APP_NAME: tes-yan
+before_script:
+  - apk add --update --no-cache curl py-pip
+  - pip install awscli
+  - $(aws ecr get-login --no-include-email --region "${REGION}")
+  - IMAGE_TAG="$(echo $CI_COMMIT_SHA | head -c 8)"
+  #- docker login -u hsbyp -p $CI_BUILD_TOKEN $CI_REGISTRY
+  #- 'which ssh-agent || ( apt-get install -qq openssh-client )'
+  #- eval $(ssh-agent -s)
+  #- echo "$SSH_PRIVATE_KEY" | ssh-add -
+  #- printf '%s\n' "$SSH_PRIVATE_KEY" | ssh-add -
+  #- mkdir -p ~/.ssh
+  #- '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+
+build:
+  stage: build
+  script:
+    - docker info
+    - echo "Building image..."
+    - docker build -t $REPOSITORY_URL:latest .
+    - echo "Tagging image..."
+    - docker tag $REPOSITORY_URL:latest $REPOSITORY_URL:$IMAGE_TAG
+    - echo "Pushing image..."
+    - docker push $REPOSITORY_URL:latest
+    - docker push $REPOSITORY_URL:$IMAGE_TAG  - docker build -t $CONTAINER_TEST_IMAGE .
+    - docker push $CONTAINER_TEST_IMAGE
+
+#release-image:
+#  stage: release
+# script:
+#   - docker pull $CONTAINER_TEST_IMAGE
+#   - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_RELEASE_IMAGE
+#  - docker push $CONTAINER_RELEASE_IMAGE
+# only:
+#   - tes-yang
+#deploy:
+#  stage: deploy
+#  only:
+#   - tes-yan
+# script:
+#   - apk update && apk add sshpass openssh
+#   - export IMAGE_NAME=$CONTAINER_RELEASE_IMAGE
+#   - ssh $USER_NAME@$HOST "docker pull $IMAGE_NAME && docker run  -p 80:80/tcp -d $CONTAINER_RELEASE_IMAGE"
