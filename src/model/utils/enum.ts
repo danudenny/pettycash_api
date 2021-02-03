@@ -34,6 +34,11 @@ export enum AccountStatementType {
   // VA = 'virtual_account',
 }
 
+export enum AccountStatementAmountPosition {
+  DEBIT = 'debit',
+  CREDIT = 'credit',
+}
+
 export enum PartnerState {
   DRAFT = 'draft',
   APPROVED = 'approved',
