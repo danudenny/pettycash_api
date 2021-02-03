@@ -31,14 +31,14 @@ export class Department extends BaseEntity {
   @Column({
     type: 'varchar',
     length: 25,
-    name: 'code'
+    name: 'code',
   })
   code: string;
 
   @Column({
     type: 'varchar',
     length: 255,
-    name: 'name'
+    name: 'name',
   })
   name: string;
 

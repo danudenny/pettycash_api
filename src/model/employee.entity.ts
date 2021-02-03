@@ -4,7 +4,7 @@ import { ColumnNumericTransformer } from './utils/transformer';
 // NOTE: source data separately from db master data
 @Entity('employee')
 export class Employee extends BaseEntity {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: number;
 
   @Column({
@@ -56,7 +56,8 @@ export class Employee extends BaseEntity {
     type: 'varchar',
     nullable: true,
     name: 'position_name',
-    comment: 'Legacy field master data table `employee_role.employee_role_name`',
+    comment:
+      'Legacy field master data table `employee_role.employee_role_name`',
   })
   positionName: string;
 

@@ -1,4 +1,12 @@
-import { BaseEntity, Entity, Column, JoinColumn, ManyToOne, Index, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Entity,
+  Column,
+  JoinColumn,
+  ManyToOne,
+  Index,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Branch } from './branch.entity';
 import { ColumnNumericTransformer } from './utils/transformer';
 
@@ -21,7 +29,7 @@ export class BankBranch extends BaseEntity {
     type: 'bigint',
     name: 'branch_id',
     transformer: new ColumnNumericTransformer(),
-    comment: 'Legacy field masterdata'
+    comment: 'Legacy field masterdata',
   })
   @Index()
   branchId: number;
