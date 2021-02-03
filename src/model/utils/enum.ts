@@ -33,3 +33,8 @@ export enum AccountStatementType {
   BANK = 'bank',
   // VA = 'virtual_account',
 }
+
+export enum VoucherState {
+  DRAFT = 'draft',
+  APPROVED = 'approved',
+}
