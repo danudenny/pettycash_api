@@ -33,3 +33,14 @@ export enum AccountStatementType {
   BANK = 'bank',
   // VA = 'virtual_account',
 }
+
+export enum PartnerState {
+  DRAFT = 'draft',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+}
+
+export enum PartnerType {
+  PERSONAL = 'personal',
+  COMPANY = 'company',
+}
