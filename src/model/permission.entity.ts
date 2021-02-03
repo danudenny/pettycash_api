@@ -5,13 +5,10 @@ import {
   Column,
   BaseEntity,
   PrimaryGeneratedColumn,
-  ManyToMany,
-  JoinTable,
 } from 'typeorm';
-import { Permission } from './permission.entity';
 
-@Entity('role')
-export class Role extends BaseEntity {
+@Entity('permission')
+export class Permission extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -58,18 +55,4 @@ export class Role extends BaseEntity {
     name: 'update_user_id',
   })
   updateUserId: string;
-
-  @ManyToMany(() => Permission)
-  @JoinTable({
-    name: 'role_permission',
-    joinColumn: {
-      name: 'role_id',
-      referencedColumnName: 'id',
-    },
-    inverseJoinColumn: {
-      name: 'permission_id',
-      referencedColumnName: 'id',
-    },
-  })
-  permissions: Permission[];
 }
