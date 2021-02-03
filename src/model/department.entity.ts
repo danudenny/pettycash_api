@@ -1,32 +1,49 @@
-import { Column, Entity, PrimaryGeneratedColumn, BaseEntity } from 'typeorm';
+import {
+  BaseEntity,
+  Entity,
+  Column,
+  Index,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 // NOTE: source data separately from db master data
 @Entity('department')
 export class Department extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @Column('bigint', {
-    nullable: true,
-    name: 'parent_id',
-  })
-  parentId: number;
-
-  @Column('character varying', {
+  @Column({
+    type: 'bigint',
     nullable: false,
-    length: 255,
-    name: 'code',
+    unique: true,
+    name: 'department_id',
+  })
+  @Index()
+  departmentId: number;
+
+  @Column({
+    type: 'bigint',
+    nullable: true,
+    name: 'department_parent_id',
+  })
+  departmentParentId: number;
+
+  @Column({
+    type: 'varchar',
+    length: 25,
+    name: 'code'
   })
   code: string;
 
-  @Column('character varying', {
-    nullable: false,
+  @Column({
+    type: 'varchar',
     length: 255,
-    name: 'name',
+    name: 'name'
   })
   name: string;
 
-  @Column('boolean', {
+  @Column({
+    type: 'boolean',
     nullable: false,
     default: () => 'false',
     name: 'is_deleted',

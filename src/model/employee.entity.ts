@@ -1,4 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn, BaseEntity } from 'typeorm';
+import { ColumnNumericTransformer } from './utils/transformer';
 
 // NOTE: source data separately from db master data
 @Entity('employee')
@@ -6,58 +7,72 @@ export class Employee extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('character varying', {
-    nullable: false,
-    name: 'nik'
+  @Column({
+    type: 'bigint',
+    name: 'employee_id',
+    unique: true,
+    transformer: new ColumnNumericTransformer(),
+  })
+  employeeId: number;
+
+  @Column({
+    type: 'varchar',
+    name: 'nik',
   })
   nik: string;
 
-  @Column('character varying', {
-    nullable: false,
-    name: 'name'
+  @Column({
+    type: 'varchar',
+    name: 'name',
   })
   name: string;
 
-  @Column('character varying', {
-    nullable: false,
-    name: 'npwp_number'
+  @Column({
+    type: 'varchar',
+    length: 30,
+    nullable: true,
+    name: 'npwp_number',
   })
   npwpNumber: string;
 
-  @Column('character varying', {
-    nullable: false,
-    name: 'id_card_number'
+  @Column({
+    type: 'varchar',
+    length: 25,
+    nullable: true,
+    name: 'id_card_number',
   })
   idCardNumber: string;
 
-  @Column('int', {
+  @Column({
+    type: 'int8', // Legacy using `int8`
     nullable: true,
-    name: 'id_card_number'
+    name: 'position_id',
+    transformer: new ColumnNumericTransformer(),
+    comment: 'Legacy field master data table `employee.employee_role_id`',
   })
   positionId: number;
 
-  @Column('character varying', {
+  @Column({
+    type: 'varchar',
     nullable: true,
-    name: 'position_name'
+    name: 'position_name',
+    comment: 'Legacy field master data table `employee_role.employee_role_name`',
   })
   positionName: string;
 
-  @Column('int', {
+  @Column({
+    type: 'bigint',
     nullable: true,
-    name: 'branch_id'
+    name: 'branch_id',
+    transformer: new ColumnNumericTransformer(),
   })
   branchId: number;
 
-  @Column('character varying', {
-    nullable: true,
-    name: 'branch_name'
-  })
-  branchName: string;
-
-  @Column('boolean', {
+  @Column({
+    type: 'boolean',
     nullable: false,
     default: () => 'false',
-    name: 'is_deleted'
+    name: 'is_deleted',
   })
   isDeleted: boolean;
 }

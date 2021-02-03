@@ -1,61 +1,61 @@
-import { Column, Entity, PrimaryGeneratedColumn, BaseEntity } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { PtcBaseEntity } from './base.entity';
 
-// NOTE: source data separately from db master data
 @Entity('product')
-export class Product extends BaseEntity {
+export class Product extends PtcBaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('character', {
+  @Column({
+    type: 'varchar',
+    length: 50,
     nullable: true,
     name: 'code',
-    length: 50
   })
   code: string;
 
-  @Column('character', {
+  @Column({
+    type: 'varchar',
+    length: 100,
     nullable: false,
     name: 'name',
-    length: 100
   })
   name: string;
 
-  @Column('text', {
+  @Column({
+    type: 'text',
     nullable: true,
-    name: 'description'
+    name: 'description',
   })
   description: string;
 
-  @Column( {
+  @Column({
+    type: 'boolean',
     nullable: true,
-    name: 'is_has_tax'
+    name: 'is_has_tax',
   })
   isHasTax: boolean;
 
-  @Column('decimal', {
+  @Column({
+    type: 'decimal',
     nullable: true,
     name: 'amount',
-    default: 0
+    default: 0,
   })
   amount: number;
 
-  @Column('string', {
+  @Column({
+    type: 'uuid',
     nullable: true,
-    name: 'coa_id'
+    name: 'coa_id',
   })
   coaId: string;
 
   @Column({
+    type: 'boolean',
     nullable: false,
+    default: () => 'true',
     name: 'is_active',
-    default: 1
   })
   isActive: boolean;
-
-  @Column('boolean', {
-    nullable: false,
-    default: () => 'false',
-    name: 'is_deleted'
-  })
-  isDeleted: boolean;
 }
