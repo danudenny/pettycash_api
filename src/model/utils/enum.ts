@@ -49,3 +49,8 @@ export enum PartnerType {
   PERSONAL = 'personal',
   COMPANY = 'company',
 }
+
+export enum VoucherState {
+  DRAFT = 'draft',
+  APPROVED = 'approved',
+}
