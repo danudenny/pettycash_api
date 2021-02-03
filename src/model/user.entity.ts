@@ -1,4 +1,15 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  ManyToOne,
+  ManyToMany,
+  JoinColumn,
+  JoinTable,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Branch } from './branch.entity';
+import { Role } from './role.entity';
 
 // NOTE: source data from db master data
 @Entity('users')
@@ -117,7 +128,31 @@ export class User extends BaseEntity {
   })
   otpReset: string | null;
 
+  @Column({
+    type: 'uuid',
+    nullable: true,
+    name: 'role_id',
+  })
+  roleId?: string;
+
   // relation model
+  @ManyToOne(() => Role)
+  @JoinColumn({ referencedColumnName: 'id' })
+  role: Role;
+
+  @ManyToMany(() => Branch)
+  @JoinTable({
+    name: 'user_branch',
+    joinColumn: {
+      name: 'user_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'branch_id',
+      referencedColumnName: 'id',
+    },
+  })
+  branches: Branch[];
 
   // additional method
   validatePassword(passwordToValidate: string) {

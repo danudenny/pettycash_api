@@ -3,9 +3,6 @@ import { PtcBaseEntity } from './base.entity';
 
 @Entity('product')
 export class Product extends PtcBaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
   @Column({
     type: 'varchar',
     length: 50,
