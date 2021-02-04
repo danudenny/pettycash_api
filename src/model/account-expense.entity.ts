@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { AccountDownPayment } from './account-down-payment.entity';
 import { AccountExpenseHistory } from './account-expense-history.entity';
+import { AccountExpenseItem } from './account-expense-item.entity';
 import { Attachment } from './attachment.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
@@ -78,6 +79,9 @@ export class AccountExpense extends PtcBaseEntity {
     },
   })
   attachments: Attachment[];
+
+  @OneToMany(() => AccountExpenseItem, (e) => e.accountExpense)
+  items: AccountExpenseItem[];
 
   @OneToMany(() => AccountExpenseHistory, (e) => e.accountExpense)
   histories: AccountExpenseHistory[];
