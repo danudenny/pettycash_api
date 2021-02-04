@@ -2,12 +2,14 @@ import {
   Entity,
   Column,
   JoinColumn,
+  OneToMany,
   ManyToOne,
   ManyToMany,
   JoinTable,
   Index,
 } from 'typeorm';
 import { AccountDownPayment } from './account-down-payment.entity';
+import { AccountExpenseHistory } from './account-expense-history.entity';
 import { Attachment } from './attachment.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
@@ -76,6 +78,9 @@ export class AccountExpense extends PtcBaseEntity {
     },
   })
   attachments: Attachment[];
+
+  @OneToMany(() => AccountExpenseHistory, (e) => e.accountExpense)
+  histories: AccountExpenseHistory[];
 
   @ManyToOne(() => Branch)
   @JoinColumn({ name: 'branch_id' })
