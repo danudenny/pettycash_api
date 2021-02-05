@@ -5,7 +5,7 @@ HOST: http://pettycash.api.url
 
 # Group Vouchers
 
-## List Vouchers [GET /v1/products?filter='{name}'&order='{createdAt}']
+## List Vouchers [GET /v1/voucher?filter='{number}'&order='{checkinTime}']
 
 Untuk generate voucher.
 
@@ -15,8 +15,8 @@ Untuk generate voucher.
             Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
 
 + Parameters
-    + name: `Tiket Pesawat` (string) - Filtering product by name using method `LIKE`.
-    + createdAt: `2021-02-01T13:40:10Z` (timestamp) - Sort / order product by date created.
+    + number: `VCR0001` (string) - Filtering voucher by number using method `LIKE`.
+    + checkinTime: `^checkinTime` (timestamp) - Sort / order voucher by checkin time.
 
 + Response 200 (application/json)
     + Body
@@ -25,23 +25,29 @@ Untuk generate voucher.
                 "data": [
                     {
                         "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                        "code": "PR-00001",
-                        "name": "Tiket Pesawat",
-                        "description": "Tiket pesawat untuk perjalanan",
-                        "is_has_tax": true,
-                        "amount": 700000.00,
-                        "coa_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                        "is_active": true
+                        "branch_id": "d2613fdc-8b7c-486e-90e6-aba5d4a839gd",
+                        "number": "VCR0001",
+                        "transaction_date": 2020-12-01T13:30:00Z,
+                        "employee_id": "d2613fdc-8b7c-486e-90e6-aba5d4a900ad",
+                        "employee_position": "Sigesit",
+                        "checkin_time": 2020-12-01T09:30:00Z,
+                        "checkout_time": 2020-12-01T17:30:00Z,
+                        "total_amount": 35000,00,
+                        "is_realized": true,
+                        "state": "DRAFT"
                     },
                     {
                         "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                        "code": "PR-00002",
-                        "name": "Hotel",
-                        "description": "Voucher menginap hotel",
-                        "is_has_tax": true,
-                        "amount": 350000.00,
-                        "coa_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                        "is_active": true
+                        "branch_id": "d2613fdc-8b7c-486e-90e6-aba5d4a839gd",
+                        "number": "VCR0002",
+                        "transaction_date": 2020-12-01T13:30:00Z,
+                        "employee_id": "d2613fdc-8b7c-486e-90e6-aba5d4a900ad",
+                        "employee_position": "Sigesit",
+                        "checkin_time": 2020-12-01T09:30:00Z,
+                        "checkout_time": 2020-12-01T17:30:00Z,
+                        "total_amount": 35000,00,
+                        "is_realized": true,
+                        "state": "APPROVED"
                     }
                 ],
                 "meta": {
@@ -62,139 +68,3 @@ Untuk generate voucher.
                 "message": "Internal Server Error",
                 "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
             }
-
-## Create Product [POST /v1/product]
-
-Untuk membuat product / item untuk digunakan pada uang muka, pengeluaran, dll.
-
-+ Request (application/json)
-    + Header
-
-            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
-
-    + Attributes (object)
-        + name: `Tiket Pesawat` (string) - Product name.
-        + description: `Tiket pesawat untuk perjalanan dinas` (string) - Product Description.
-        + isHasTax: true (boolean) - Describe if the product is taxable or not.
-        + amount: 750000 (string) - How much amount will be pay for product.
-        + coaId: `3e7436b1-adeb-4a85-8676-2968e0cec78c` (string).
-        + isActive: true (boolean) - Activate / Disabled the product.
-
-+ Response 200 (application/json)
-    + Body
-
-            {
-                "status": "success",
-                "message": "Product successfully created."
-            }
-
-+ Response 400 (application/json)
-    + Body
-
-            {
-                "status": "fail",
-                "code": "PRODUCT_CREATE_FAILED",
-                "message": "failed to create product",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-+ Response 500 (application/json)
-    + Body
-
-            {
-                "status": "error",
-                "code": "GENERAL_ERROR",
-                "message": "Internal Server Error",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-## Update Product [PATCH /v1/product/{id}/update]
-
-Update Product / Item.
-
-+ Request (application/json)
-    + Header
-
-            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
-    
-    + Attributes (object)
-        + name: `Tiket Pesawat` (string) - Product name.
-        + description: `Tiket pesawat untuk perjalanan dinas` (string) - Product Description.
-        + isHasTax: true (boolean) - Describe if the product is taxable or not.
-        + amount: 750000 (string) - How much amount will be pay for product.
-        + coaId: `3e7436b1-adeb-4a85-8676-2968e0cec78c` (string).
-        + isActive: true (boolean) - Activate / Disabled the product.
-
-+ Parameters
-    + id: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - UUID of ID to update single product,
-
-+ Response 200 (application/json)
-    + Body
-
-            {
-                "status": "success",
-                "message": "Product successfully updated."
-            }
-
-+ Response 400 (application/json)
-    + Body
-
-            {
-                "status": "fail",
-                "code": "PRODUCT_UPDATE_FAILED",
-                "message": "failed to update product",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-+ Response 500 (application/json)
-    + Body
-
-            {
-                "status": "error",
-                "code": "GENERAL_ERROR",
-                "message": "Internal Server Error",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-
-## Delete Product [DELETE /v1/product/{id}/delete]
-
-Delete Product / Item.
-
-+ Request (application/json)
-    + Header
-
-            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
-    
-+ Parameters
-    + id: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - UUID of ID to delete single product,
-
-+ Response 200 (application/json)
-    + Body
-
-            {
-                "status": "success",
-                "message": "Product successfully deleted."
-            }
-
-+ Response 400 (application/json)
-    + Body
-
-            {
-                "status": "fail",
-                "code": "PRODUCT_DELETED_FAILED",
-                "message": "failed to delete product",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-+ Response 500 (application/json)
-    + Body
-
-            {
-                "status": "error",
-                "code": "GENERAL_ERROR",
-                "message": "Internal Server Error",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-
