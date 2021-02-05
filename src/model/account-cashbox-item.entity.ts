@@ -29,7 +29,7 @@ export class AccountCashboxItem extends BaseEntity {
   @Column({
     type: 'decimal',
     name: 'total_amount',
-    default: 0,
+    default: () => 0,
     precision: 2
   })
   totalAmount?: number;

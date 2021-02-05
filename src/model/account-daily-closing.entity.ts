@@ -13,7 +13,6 @@ export class AccountDailyClosing extends BaseEntity {
   branchId: string;
 
   @Column({
-    type: 'uuid',
     name: 'closing_date',
     nullable: false
   })
@@ -29,7 +28,7 @@ export class AccountDailyClosing extends BaseEntity {
   @Column({
     type: 'decimal',
     name: 'opening_bank_amount',
-    default: 0,
+    default: () => 0,
     precision: 2
   })
   openingBankAmount: number;
@@ -37,7 +36,7 @@ export class AccountDailyClosing extends BaseEntity {
   @Column({
     type: 'decimal',
     name: 'closing_bank_amount',
-    default: 0,
+    default: () => 0,
     precision: 2
   })
   closingBankAmount: number;
@@ -45,7 +44,7 @@ export class AccountDailyClosing extends BaseEntity {
   @Column({
     type: 'decimal',
     name: 'opening_cash_amount',
-    default: 0,
+    default: () => 0,
     precision: 2
   })
   openingCashAmount: number;
@@ -53,7 +52,7 @@ export class AccountDailyClosing extends BaseEntity {
   @Column({
     type: 'decimal',
     name: 'closing_cash_amount',
-    default: 0,
+    default: () => 0,
     precision: 2
   })
   closingCashAmount: number;
