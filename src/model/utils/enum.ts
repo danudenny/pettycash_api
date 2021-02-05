@@ -84,3 +84,33 @@ export enum AccountExpensePaymentType {
   CASH = 'cash',
   BANK = 'bank',
 }
+
+export enum AccountPaymentType {
+  CASH = 'cash',
+  BANK = 'bank',
+}
+
+export enum AccountPaymentPayMethod {
+  PARTIALLY = 'partially',
+  FULL = 'full',
+}
+
+export enum AccountLoanType {
+  PAYABLE = 'payable',
+  RECEIVABLE = 'receivable',
+}
+
+export enum AccountLoanPaymentType {
+  CASH = 'cash',
+  BANK = 'bank',
+}
+
+export enum AccountLoanState {
+  PAID = 'paid',
+  UNPAID = 'unpaid',
+}
+
+export enum AccountTaxPartnerType {
+  PERSONAL = 'personal',
+  COMPANY = 'company',
+}
