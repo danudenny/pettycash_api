@@ -109,3 +109,8 @@ export enum AccountLoanState {
   PAID = 'paid',
   UNPAID = 'unpaid',
 }
+
+export enum AccountTaxPartnerType {
+  PERSONAL = 'personal',
+  COMPANY = 'company',
+}
