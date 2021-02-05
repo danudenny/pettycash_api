@@ -1,6 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { VoucherState } from './utils/enum';
+import { VoucherItem } from './voucher-item.entity';
 
 @Entity('voucher')
 export class Voucher extends PtcBaseEntity {
@@ -80,4 +81,7 @@ export class Voucher extends PtcBaseEntity {
     default: VoucherState.DRAFT
   })
   state: VoucherState
+
+  @OneToMany(() => VoucherItem, voucherItem => voucherItem.voucher)
+  item : VoucherItem[]
 }
