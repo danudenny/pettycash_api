@@ -1,5 +1,4 @@
 import { BaseEntity, Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
-import { JournalState } from './utils/enum';
 
 @Entity('journal_items')
 export class JournalItem extends BaseEntity {
