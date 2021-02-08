@@ -120,7 +120,22 @@ export enum JournalState {
   APPROVED_BY_SS_HO = 'approved_by_ss_ho',
   APPROVED_BY_SPV_HO = 'approved_by_spv_ho',
   APPROVED_BY_TAX = 'approved_by_tax',
-  POSTED = 'posted'
+  POSTED = 'posted',
 }
 
+export enum JournalSourceType {
+  DP = 'down_payment',
+  // Add other type
+}
 
+export enum AccountFinancialReportType {
+  SUM = 'sum',
+  COA = 'coa',
+  REPORT = 'report',
+}
+
+export enum AccountFinancialReportDisplayType {
+  NO_DETAIL = 'no_detail',
+  DETAIL_FLAT = 'detail_flat',
+  DETAIL_WITH_HIERARCHY = 'detail_with_hierarchy',
+}

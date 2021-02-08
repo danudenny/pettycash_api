@@ -1,5 +1,10 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiInternalServerErrorResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { PeriodResponse } from '../../domain/period/response.dto';
 import { PeriodService } from '../../services/v1/period.service';
 
@@ -10,7 +15,7 @@ export class PeriodController {
   constructor(private svc: PeriodService) {}
 
   @Get()
-  @ApiOperation({description: 'List all periods.'})
+  @ApiOperation({ description: 'List all periods.' })
   @ApiOkResponse({ type: PeriodResponse })
   public async list(@Query() query?: any) {
     return await this.svc.list(query);

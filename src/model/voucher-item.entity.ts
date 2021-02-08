@@ -1,37 +1,31 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, Index } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { Voucher } from './voucher.entity';
 
-@Entity('voucher-item')
+@Entity('voucher_item')
 export class VoucherItem extends PtcBaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
   @Column({
     type: 'uuid',
     name: 'voucher_id',
-    nullable: false
+    nullable: false,
   })
+  @Index()
   voucherId: string;
 
   @Column({
     type: 'uuid',
     name: 'product_id',
-    nullable: false
+    nullable: false,
   })
   productId: string;
 
   @Column({
     type: 'decimal',
-    nullable: false,
     name: 'amount',
-    precision: 2
+    nullable: false,
   })
   amount: number;
 
-  @ManyToOne(() => Voucher, voucher => voucher.item)
-  @JoinColumn({
-    name: 'voucher_id'
-  })
+  @JoinColumn({ name: 'voucher_id' })
   voucher: Voucher;
 }

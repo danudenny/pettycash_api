@@ -16,7 +16,7 @@ import { ProductModule } from './app/modules/product.module';
     // TODO: add Health checks (Terminus)
     BranchModule,
     PeriodModule,
-    ProductModule
+    ProductModule,
   ],
   controllers: [],
   providers: [],

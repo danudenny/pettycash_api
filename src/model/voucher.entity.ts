@@ -1,17 +1,16 @@
-import { Column, Entity, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany, ManyToOne } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
+import { Branch } from './branch.entity';
+import { Employee } from './employee.entity';
 import { VoucherState } from './utils/enum';
 import { VoucherItem } from './voucher-item.entity';
 
 @Entity('voucher')
 export class Voucher extends PtcBaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
   @Column({
     type: 'uuid',
     name: 'branch_id',
-    nullable: true
+    nullable: true,
   })
   branchId: string;
 
@@ -19,43 +18,45 @@ export class Voucher extends PtcBaseEntity {
     type: 'varchar',
     name: 'number',
     nullable: false,
-    length: 10,
-    unique: true
+    length: 25,
+    unique: true,
   })
   number: string;
 
   @Column({
     type: 'date',
     nullable: false,
-    name: 'transaction_date'
+    name: 'transaction_date',
+    default: () => 'CURRENT_DATE',
   })
   transactionDate: Date;
 
   @Column({
     type: 'uuid',
     name: 'employee_id',
-    nullable: false
+    nullable: false,
   })
   employeeId: string;
 
   @Column({
-    type: 'text',
+    type: 'varchar',
     name: 'employee_position',
-    nullable: false
+    length: 250,
+    nullable: true,
   })
   employeePosition?: string;
 
   @Column({
     type: 'timestamp',
     name: 'checkin_time',
-    nullable: false
+    nullable: false,
   })
   checkinTime: Date;
 
   @Column({
     type: 'timestamp',
     name: 'checkout_time',
-    nullable: false
+    nullable: false,
   })
   checkoutTime: Date;
 
@@ -64,24 +65,32 @@ export class Voucher extends PtcBaseEntity {
     name: 'total_amount',
     nullable: false,
     default: 0,
-    precision: 2
   })
   totalAmount: number;
 
   @Column({
+    type: 'boolean',
     name: 'is_realized',
     nullable: false,
     default: () => 'true',
   })
-  isRealized: boolean
+  isRealized: boolean;
 
   @Column({
     type: 'enum',
     enum: VoucherState,
-    default: VoucherState.DRAFT
+    default: VoucherState.DRAFT,
   })
-  state: VoucherState
+  state: VoucherState;
 
-  @OneToMany(() => VoucherItem, voucherItem => voucherItem.voucher)
-  item : VoucherItem[]
+  @OneToMany(() => VoucherItem, (voucherItem) => voucherItem.voucher)
+  items: VoucherItem[];
+
+  @ManyToOne(() => Branch)
+  @JoinColumn({ name: 'branch_id' })
+  branch: Branch;
+
+  @ManyToOne(() => Employee)
+  @JoinColumn({ name: 'employee_id' })
+  employee: Employee;
 }

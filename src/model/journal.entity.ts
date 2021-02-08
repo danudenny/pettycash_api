@@ -1,81 +1,91 @@
-import { BaseEntity, Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+  Index,
+} from 'typeorm';
+import { PtcBaseEntity } from './base.entity';
+import { Branch } from './branch.entity';
+import { JournalItem } from './journal-item.entity';
+import { Period } from './period.entity';
 import { JournalState } from './utils/enum';
 
-@Entity('journals')
-export class Journal extends BaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+@Entity('journal')
+export class Journal extends PtcBaseEntity {
   @Column({
     type: 'uuid',
     name: 'branch_id',
-    nullable: false
   })
+  @Index()
   branchId: string;
 
   @Column({
     type: 'varchar',
     name: 'branch_code',
     length: 25,
-    nullable: false
+    comment: 'Tracking field for sync to ERP',
   })
   branchCode: string;
 
   @Column({
-    type: 'timestamp',
+    type: 'date',
     name: 'transaction_date',
-    default: () => 'CURRENT_TIMESTAMP',
-    nullable: false
+    default: () => 'CURRENT_DATE',
   })
   transactionDate: Date;
 
   @Column({
     type: 'uuid',
     name: 'period_id',
-    nullable: false
   })
   periodId: string;
 
   @Column({
-    type: 'char',
+    type: 'varchar',
     name: 'number',
-    length: 100,
-    nullable: false
+    length: 25,
   })
   number: string;
 
   @Column({
-    type: 'char',
+    type: 'varchar',
     name: 'reference',
-    length: 100
+    length: 100,
+    nullable: true,
   })
-  reference: string;
+  reference?: string;
 
+  // FIXME: use ENUM `JournalSourceType`?
   @Column({
-    type: 'char',
+    type: 'varchar',
     name: 'source_type',
-    length: 50
+    length: 50,
+    nullable: true,
   })
-  sourceType: string;
+  sourceType?: string;
 
   @Column({
-    type: 'char',
+    type: 'varchar',
     name: 'partner_name',
-    length: 100
+    length: 250,
+    nullable: true,
   })
-  partnerName: string;
+  partnerName?: string;
 
   @Column({
-    type: 'char',
+    type: 'varchar',
     name: 'partner_code',
-    length: 100
+    length: 30,
+    nullable: true,
   })
-  partnerCode: string;
+  partnerCode?: string;
 
   @Column({
     type: 'decimal',
     name: 'total_amount',
-    precision: 2
+    default: 0,
   })
   totalAmount: number;
 
@@ -83,21 +93,31 @@ export class Journal extends BaseEntity {
     type: 'enum',
     enum: JournalState,
     default: JournalState.DRAFT,
-    nullable: false
   })
-  state: JournalState
+  state: JournalState;
 
   @Column({
+    type: 'boolean',
     name: 'is_reversed',
-    nullable: false,
-    default: false
+    default: () => 'false',
   })
   isReversed: boolean;
 
   @Column({
+    type: 'boolean',
     name: 'is_synced',
-    nullable: false,
-    default: false
+    default: false,
   })
   isSynced: boolean;
+
+  @ManyToOne(() => Branch)
+  @JoinColumn({ name: 'branch_id' })
+  branch: Branch;
+
+  @ManyToOne(() => Period)
+  @JoinColumn({ name: 'period_id' })
+  period: Period;
+
+  @OneToMany(() => JournalItem, (e) => e.journal)
+  items: JournalItem[];
 }

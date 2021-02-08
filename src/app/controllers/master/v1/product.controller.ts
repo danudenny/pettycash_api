@@ -6,8 +6,7 @@ import { ApiTags } from '@nestjs/swagger';
 @Controller('v1/products')
 @ApiTags('Products')
 export class ProductsController {
-
-  constructor (private prodService: ProductService) {}
+  constructor(private prodService: ProductService) {}
 
   @Get('')
   public async list(@Query() query: any): Promise<Product[]> {

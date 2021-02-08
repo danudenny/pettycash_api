@@ -1,30 +1,27 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 
-@Entity('voucher-sunfish')
+@Entity('voucher_sunfish')
 export class VoucherSunfish extends PtcBaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
   @Column({
     type: 'date',
     nullable: false,
-    name: 'attendance_date'
+    name: 'attendance_date',
   })
   attendanceDate: Date;
 
   @Column({
     type: 'varchar',
     name: 'nik',
+    length: 25,
     nullable: false,
-    length: 25
   })
   nik: string;
 
   @Column({
     type: 'jsonb',
     name: 'data',
-    nullable: false
+    nullable: false,
   })
   data: object;
 
@@ -33,5 +30,5 @@ export class VoucherSunfish extends PtcBaseEntity {
     nullable: false,
     default: () => 'false',
   })
-  isProcessed: boolean
+  isProcessed: boolean;
 }
