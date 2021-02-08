@@ -35,7 +35,7 @@ export class ProductDTO {
 
   @ApiProperty({
     description: 'Amount of products',
-    example: 750000.00,
+    example: 750000.0,
   })
   amount: number;
 

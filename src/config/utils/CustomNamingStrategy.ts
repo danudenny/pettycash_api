@@ -1,5 +1,6 @@
 import { DefaultNamingStrategy, NamingStrategyInterface, Table } from 'typeorm';
 import { snakeCase } from 'typeorm/util/StringUtils';
+import { RandomGenerator } from 'typeorm/util/RandomGenerator';
 
 // This helper used to trim string length
 // Because postgres e.g: Primary Key, Foreign Key only accept 63 max length
