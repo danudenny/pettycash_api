@@ -1,79 +1,94 @@
-import { BaseEntity, Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, Index, JoinColumn } from 'typeorm';
+import { PtcBaseEntity } from './base.entity';
+import { Branch } from './branch.entity';
+import { Journal } from './journal.entity';
+import { Period } from './period.entity';
 
-@Entity('journal_items')
-export class JournalItem extends BaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+@Entity('journal_item')
+export class JournalItem extends PtcBaseEntity {
   @Column({
     type: 'uuid',
     name: 'journal_id',
-    nullable: false
+    nullable: false,
   })
+  @Index()
   journalId: string;
 
   @Column({
     type: 'uuid',
     name: 'branch_id',
-    nullable: false
+    nullable: false,
   })
   branchId: string;
 
   @Column({
-    type: 'timestamp',
+    type: 'date',
     name: 'transaction_date',
-    nullable: false
+    nullable: false,
+    default: () => 'CURRENT_DATE',
   })
   transactionDate: Date;
 
   @Column({
     type: 'uuid',
     name: 'period_id',
-    nullable: false
+    nullable: false,
   })
   periodId: string;
 
   @Column({
-    type: 'char',
+    type: 'varchar',
     name: 'reference',
-    length: 100
+    length: 100,
+    nullable: true,
   })
-  reference: string;
+  reference?: string;
 
   @Column({
     type: 'uuid',
     name: 'coa_id',
-    nullable: false
+    nullable: false,
   })
   coaId: string;
 
   @Column({
-    type: 'char',
+    type: 'varchar',
     name: 'partner_name',
-    length: 100
+    length: 250,
+    nullable: true,
   })
-  partnerName: string;
+  partnerName?: string;
 
   @Column({
-    type: 'char',
+    type: 'varchar',
     name: 'partner_code',
-    length: 100
+    length: 30,
+    nullable: true,
   })
-  partnerCode: string;
+  partnerCode?: string;
 
   @Column({
     type: 'decimal',
-    name: 'total_amount',
-    precision: 2,
-    default: () => 0
+    name: 'debit',
+    default: 0,
   })
   debit: number;
 
   @Column({
     type: 'decimal',
-    name: 'total_amount',
-    precision: 2,
-    default: () => 0
+    name: 'credit',
+    default: 0,
   })
   credit: number;
+
+  @JoinColumn({ name: 'journal_id' })
+  journal: Journal;
+
+  @ManyToOne(() => Branch)
+  @JoinColumn({ name: 'branch_id' })
+  branch: Branch;
+
+  @ManyToOne(() => Period)
+  @JoinColumn({ name: 'period_id' })
+  period: Period;
 }

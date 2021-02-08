@@ -123,6 +123,11 @@ export enum JournalState {
   POSTED = 'posted',
 }
 
+export enum JournalSourceType {
+  DP = 'down_payment',
+  // Add other type
+}
+
 export enum AccountFinancialReportType {
   SUM = 'sum',
   COA = 'coa',
