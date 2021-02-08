@@ -1,4 +1,13 @@
-import { BaseEntity, Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Entity,
+  Column,
+  OneToOne,
+  JoinColumn,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { AccountCoa } from './account-coa.entity';
+import { Partner } from './partner.entity';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('global_setting')
@@ -41,4 +50,20 @@ export class GlobalSetting extends BaseEntity {
     nullable: true,
   })
   downPaymentReimbursementCoaId: string;
+
+  @OneToOne(() => Partner)
+  @JoinColumn()
+  voucherPartner: string;
+
+  @OneToOne(() => AccountCoa)
+  @JoinColumn()
+  cashTransitCoa: string;
+
+  @OneToOne(() => AccountCoa)
+  @JoinColumn()
+  downPaymentPerdinCoa: string;
+
+  @OneToOne(() => AccountCoa)
+  @JoinColumn()
+  downPaymentReimbursementCoa: string;
 }
