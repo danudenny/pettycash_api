@@ -1,28 +1,28 @@
-import { BaseEntity, Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, JoinColumn, Index } from 'typeorm';
+import { AccountDailyClosing } from './account-daily-closing.entity';
+import { PtcBaseEntity } from './base.entity';
 
 @Entity('account_cashbox_item')
-export class AccountCashboxItem extends BaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class AccountCashboxItem extends PtcBaseEntity {
   @Column({
     type: 'uuid',
     name: 'account_daily_closing_id',
-    nullable: false
+    nullable: false,
   })
+  @Index()
   accountDailyClosingId: string;
 
   @Column({
     type: 'smallint',
     name: 'pieces',
-    nullable: false
+    nullable: false,
   })
   pieces: number;
 
   @Column({
     type: 'smallint',
     name: 'total',
-    nullable: false
+    nullable: false,
   })
   total: number;
 
@@ -30,7 +30,9 @@ export class AccountCashboxItem extends BaseEntity {
     type: 'decimal',
     name: 'total_amount',
     default: () => 0,
-    precision: 2
   })
   totalAmount?: number;
+
+  @JoinColumn({ name: 'account_daily_closing_id' })
+  accountDailyClosing: AccountDailyClosing;
 }
