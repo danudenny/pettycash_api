@@ -7,6 +7,8 @@ export class PeriodResponseMapper {
     it.id = dto.id;
     it.name = dto.name;
     it.month = dto.month;
+    it.year = dto.year;
+    it.state = dto.state;
     it.closeDate = dto.closeDate;
     it.closeUserId = dto.closeUserId;
     it.closeUserFirstName = dto.closeUserFirstName;
@@ -20,6 +22,8 @@ export class PeriodResponseMapper {
       id: ety.id,
       name: ety.name,
       month: ety.month,
+      year: ety.year,
+      state: ety.state,
       closeDate: ety.closeDate,
       closeUserId: ety.closeUserId,
       closeUserFirstName: ety.closeUser && ety.closeUser.firstName,

@@ -22,6 +22,19 @@ export class PeriodDTO {
   month: Number;
 
   @ApiProperty({
+    description: 'Period Year',
+    example: 2021,
+  })
+  year: Number;
+
+  @ApiProperty({
+    description: 'Period Status',
+    example: 'open',
+    enum: ['open', 'close'],
+  })
+  state: string;
+
+  @ApiProperty({
     description: 'Closing Date in String ISO8601 DateOnly format',
     example: '2021-01-31',
   })
