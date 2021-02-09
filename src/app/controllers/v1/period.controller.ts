@@ -9,6 +9,7 @@ import { QueryPeriodYearDTO } from '../../domain/period/period-year.payload.dto'
 import { PeriodResponse } from '../../domain/period/response.dto';
 import { PeriodYearResponse } from '../../domain/period/response-year.dto';
 import { PeriodService } from '../../services/v1/period.service';
+import { QueryPeriodDTO } from '../../domain/period/period.payload.dto';
 
 @Controller('v1/periods')
 @ApiTags('Period')
@@ -19,7 +20,7 @@ export class PeriodController {
   @Get()
   @ApiOperation({ description: 'List all periods.' })
   @ApiOkResponse({ type: PeriodResponse })
-  public async list(@Query() query?: any) {
+  public async list(@Query() query: QueryPeriodDTO) {
     return await this.svc.list(query);
   }
 

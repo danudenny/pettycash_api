@@ -6,6 +6,7 @@ import { Period } from '../../../model/period.entity';
 import { QueryPeriodYearDTO } from '../../domain/period/period-year.payload.dto';
 import { PeriodResponse } from '../../domain/period/response.dto';
 import { PeriodYearResponse } from '../../domain/period/response-year.dto';
+import { QueryPeriodDTO } from '../../domain/period/period.payload.dto';
 
 @Injectable()
 export class PeriodService {
@@ -13,21 +14,9 @@ export class PeriodService {
     @InjectRepository(Period) private readonly periodRepo: Repository<Period>,
   ) {}
 
-  async list(query?: any): Promise<any> {
-    const periods = await this.periodRepo.find({
-      where: { isDeleted: false },
-      relations: ['closeUser'],
-    });
-
-    return new PeriodResponse(periods);
-  }
-
-  async listYear(query?: QueryPeriodYearDTO): Promise<PeriodYearResponse> {
-    const qb = new QueryBuilder(Period, 'p', {
-      order: '-endDate',
-      limit: 12,
-      ...query,
-    });
+  async list(query?: QueryPeriodDTO): Promise<PeriodResponse> {
+    const params = { order: '-endDate', limit: 12, ...query };
+    const qb = new QueryBuilder(Period, 'p', params);
 
     qb.fieldResolverMap['year'] = 'p.year';
     qb.fieldResolverMap['state'] = 'p.state';
@@ -39,6 +28,51 @@ export class PeriodService {
       ['p.month', 'month'],
       ['p.year', 'year'],
       ['p.state', 'state'],
+      ['p.is_deleted', 'isDeleted'],
+      ['p.close_date', 'closeDate'],
+      ['p.close_user_id', 'closeUserId'],
+      ['cu.first_name', 'closeUserFirstName'],
+      ['cu.last_name', 'closeUserLastName'],
+      ['cu.username', 'closeUserNIK'],
+    );
+    qb.leftJoin(
+      (e) => e.closeUser,
+      'cu',
+      (j) =>
+        j.andWhere(
+          (e) => e.isDeleted,
+          (v) => v.isFalse(),
+        ),
+    );
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+
+    const periods = await qb.exec();
+
+    return new PeriodResponse(periods);
+  }
+
+  async listYear(query?: QueryPeriodYearDTO): Promise<PeriodYearResponse> {
+    const params = { order: '-endDate', limit: 12, ...query };
+    const qb = new QueryBuilder(Period, 'p', params);
+
+    qb.fieldResolverMap['year'] = 'p.year';
+    qb.fieldResolverMap['state'] = 'p.state';
+
+    qb.applyFilterPagination();
+    qb.selectRaw(
+      ['p.id', 'id'],
+      ['p.name', 'name'],
+      ['p.month', 'month'],
+      ['p.year', 'year'],
+      ['p.state', 'state'],
+      ['p.is_deleted', 'isDeleted'],
+    );
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
     );
 
     const years = await qb.exec();
