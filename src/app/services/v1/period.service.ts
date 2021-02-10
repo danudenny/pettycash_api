@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Period } from '../../../model/period.entity';
 import { QueryPeriodYearDTO } from '../../domain/period/period-year.payload.dto';
@@ -15,12 +15,16 @@ import {
   QueryPeriodDTO,
 } from '../../domain/period/period.payload.dto';
 import dayjs from 'dayjs';
-import { PeriodState } from '../../../model/utils/enum';
+import { AccountExpenseState, JournalState, PeriodState } from '../../../model/utils/enum';
+import { Journal } from '../../../model/journal.entity';
+import { AccountExpense } from '../../../model/account-expense.entity';
 
 @Injectable()
 export class PeriodService {
   constructor(
     @InjectRepository(Period) private readonly periodRepo: Repository<Period>,
+    @InjectRepository(Journal) private readonly journalRepo: Repository<Journal>,
+    @InjectRepository(AccountExpense) private readonly expenseRepo: Repository<AccountExpense>,
   ) {}
 
   async getUserId() {
@@ -147,6 +151,30 @@ export class PeriodService {
 
     if (period.state == PeriodState.CLOSE) {
       throw new BadRequestException(`Period ${period.name} already closed!`);
+    }
+
+    const openJournal = await this.journalRepo.findOne({
+      where: {
+        isDeleted: false,
+        periodId: period.id,
+        state: Not(JournalState.POSTED),
+      },
+      select: ['id'],
+    });
+    if (openJournal) {
+      throw new BadRequestException(`Can't close period due any open journal transaction!`)
+    }
+
+    const openExpense = await this.expenseRepo.findOne({
+      where: {
+        isDeleted: false,
+        periodId: period.id,
+        state: AccountExpenseState.DRAFT,
+      },
+      select: ['id'],
+    });
+    if (openExpense) {
+      throw new BadRequestException(`Can't close period due any open expense transaction!`)
     }
 
     const closeDate = dayjs(payload && payload.closeDate).toDate();
