@@ -1,5 +1,8 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
@@ -9,7 +12,7 @@ import { QueryPeriodYearDTO } from '../../domain/period/period-year.payload.dto'
 import { PeriodResponse } from '../../domain/period/response.dto';
 import { PeriodYearResponse } from '../../domain/period/response-year.dto';
 import { PeriodService } from '../../services/v1/period.service';
-import { QueryPeriodDTO } from '../../domain/period/period.payload.dto';
+import { GeneratePeriodDTO, QueryPeriodDTO } from '../../domain/period/period.payload.dto';
 
 @Controller('v1/periods')
 @ApiTags('Period')
@@ -29,5 +32,14 @@ export class PeriodController {
   @ApiOkResponse({ type: PeriodYearResponse })
   public async listYear(@Query() query: QueryPeriodYearDTO) {
     return await this.svc.listYear(query);
+  }
+
+  @Post('/generate')
+  @ApiOperation({ summary: 'Generate Period for a year' })
+  @ApiCreatedResponse({ description: 'Period successfully generated' })
+  @ApiBadRequestResponse({ description: 'Failed to generated period' })
+  @ApiBody({ type: GeneratePeriodDTO })
+  public async generate(@Body() payload?: GeneratePeriodDTO) {
+    return await this.svc.generate(payload);
   }
 }

@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import dayjs from 'dayjs';
 import { BasePayload } from '../common/base-payload.dto';
 
 export class QueryPeriodDTO extends BasePayload {
@@ -14,4 +15,13 @@ export class QueryPeriodDTO extends BasePayload {
     enum: ['open', 'close'],
   })
   state: string;
+}
+
+export class GeneratePeriodDTO {
+  @ApiPropertyOptional({
+    description: 'Period Year',
+    example: 2021,
+    default: dayjs().year(),
+  })
+  year?: Number;
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -7,12 +7,19 @@ import { QueryPeriodYearDTO } from '../../domain/period/period-year.payload.dto'
 import { PeriodResponse } from '../../domain/period/response.dto';
 import { PeriodYearResponse } from '../../domain/period/response-year.dto';
 import { QueryPeriodDTO } from '../../domain/period/period.payload.dto';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class PeriodService {
   constructor(
     @InjectRepository(Period) private readonly periodRepo: Repository<Period>,
   ) {}
+
+  async getUserId() {
+    // TODO: Use From Authentication User.
+    const userId = '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
+    return userId;
+  }
 
   async list(query?: QueryPeriodDTO): Promise<PeriodResponse> {
     const params = { order: '-endDate', limit: 12, ...query };
@@ -77,5 +84,47 @@ export class PeriodService {
 
     const years = await qb.exec();
     return new PeriodYearResponse(years);
+  }
+
+  async generate(payload?: any): Promise<any> {
+    const year = Number(
+      payload && payload.year ? payload.year : dayjs().year(),
+    );
+    const MAX_YEAR = dayjs().add(1, 'year').year();
+    const CURRENT_YEAR = dayjs().year();
+
+    if (year > MAX_YEAR || year < CURRENT_YEAR) {
+      throw new BadRequestException(
+        `Generate period for year ${year} is not allowed!`,
+      );
+    }
+
+    const periodExist = await this.periodRepo.findOne({
+      where: { year, isDeleted: false },
+    });
+    if (periodExist) {
+      throw new BadRequestException(`Period for year ${year} already exists!`);
+    }
+
+    const periods: Period[] = [];
+    for (let i = 0; i <= 11; i++) {
+      const now = dayjs(`${year}`).month(i);
+      const startDate = now.date(1).toDate();
+      const endDate = now.date(now.daysInMonth()).toDate();
+      const month = now.format('MM');
+
+      const p = new Period();
+      p.name = `${month}-${year}`;
+      p.startDate = startDate;
+      p.endDate = endDate;
+      p.month = Number(month);
+      p.year = now.year();
+      p.createUserId = await this.getUserId();
+      p.updateUserId = await this.getUserId();
+      periods.push(p);
+    }
+
+    await this.periodRepo.save(periods);
+    return;
   }
 }
