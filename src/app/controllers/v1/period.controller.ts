@@ -57,4 +57,12 @@ export class PeriodController {
   ) {
     return await this.svc.close(id, payload);
   }
+
+  @Post('/:id/open')
+  @ApiOperation({ summary: 'Re-Open a closed period' })
+  @ApiCreatedResponse({ description: 'Successfully re-open period.' })
+  @ApiBadRequestResponse({ description: 'Failed to re-open period' })
+  public async open(@Param('id') id: string) {
+    return await this.svc.open(id);
+  }
 }

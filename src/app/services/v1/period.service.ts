@@ -158,4 +158,26 @@ export class PeriodService {
     });
     return;
   }
+
+  async open(id: string): Promise<any> {
+    const period = await this.periodRepo.findOne(id, {
+      where: { isDeleted: false },
+    });
+
+    if (!period) {
+      throw new NotFoundException(`Period for ${id} not found!`);
+    }
+
+    if (period.state == PeriodState.OPEN) {
+      throw new BadRequestException(`Period ${period.name} already open!`);
+    }
+
+    await this.periodRepo.save({
+      ...period,
+      state: PeriodState.OPEN,
+      closeDate: null,
+      closeUserId: null,
+    });
+    return;
+  }
 }
