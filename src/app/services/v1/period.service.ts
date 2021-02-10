@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -6,8 +10,12 @@ import { Period } from '../../../model/period.entity';
 import { QueryPeriodYearDTO } from '../../domain/period/period-year.payload.dto';
 import { PeriodResponse } from '../../domain/period/response.dto';
 import { PeriodYearResponse } from '../../domain/period/response-year.dto';
-import { QueryPeriodDTO } from '../../domain/period/period.payload.dto';
+import {
+  ClosePeriodDTO,
+  QueryPeriodDTO,
+} from '../../domain/period/period.payload.dto';
 import dayjs from 'dayjs';
+import { PeriodState } from '../../../model/utils/enum';
 
 @Injectable()
 export class PeriodService {
@@ -125,6 +133,29 @@ export class PeriodService {
     }
 
     await this.periodRepo.save(periods);
+    return;
+  }
+
+  async close(id: string, payload?: ClosePeriodDTO): Promise<any> {
+    const period = await this.periodRepo.findOne(id, {
+      where: { isDeleted: false },
+    });
+
+    if (!period) {
+      throw new NotFoundException(`Period for ${id} not found!`);
+    }
+
+    if (period.state == PeriodState.CLOSE) {
+      throw new BadRequestException(`Period ${period.name} already closed!`);
+    }
+
+    const closeDate = dayjs(payload && payload.closeDate).toDate();
+    await this.periodRepo.save({
+      ...period,
+      state: PeriodState.CLOSE,
+      closeDate,
+      closeUserId: await this.getUserId(),
+    });
     return;
   }
 }

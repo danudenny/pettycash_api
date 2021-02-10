@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsISO8601 } from 'class-validator';
 import dayjs from 'dayjs';
 import { BasePayload } from '../common/base-payload.dto';
 
@@ -24,4 +25,13 @@ export class GeneratePeriodDTO {
     default: dayjs().year(),
   })
   year?: Number;
+}
+
+export class ClosePeriodDTO {
+  @ApiPropertyOptional({
+    description: 'Close Date',
+    example: '2021-02-15',
+  })
+  @IsISO8601({ strict: false })
+  closeDate?: Date;
 }
