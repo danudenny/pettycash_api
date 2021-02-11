@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -52,7 +60,7 @@ export class PeriodController {
   @ApiCreatedResponse({ description: 'Successfully close period.' })
   @ApiBadRequestResponse({ description: 'Failed to close period' })
   public async close(
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() payload?: ClosePeriodDTO,
   ) {
     return await this.svc.close(id, payload);
@@ -62,7 +70,7 @@ export class PeriodController {
   @ApiOperation({ summary: 'Re-Open a closed period' })
   @ApiCreatedResponse({ description: 'Successfully re-open period.' })
   @ApiBadRequestResponse({ description: 'Failed to re-open period' })
-  public async open(@Param('id') id: string) {
+  public async open(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.svc.open(id);
   }
 }
