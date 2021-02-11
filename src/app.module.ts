@@ -5,6 +5,7 @@ import { LoaderEnv } from './config/loader';
 import { BranchModule } from './app/modules/branch.module';
 import { PeriodModule } from './app/modules/period.module';
 import { ProductModule } from './app/modules/product.module';
+import { GlobalSettingModule } from './app/modules/global-setting.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ProductModule } from './app/modules/product.module';
     BranchModule,
     PeriodModule,
     ProductModule,
+    GlobalSettingModule,
   ],
   controllers: [],
   providers: [],

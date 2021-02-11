@@ -7,13 +7,7 @@ import { PeriodController } from '../controllers/v1/period.controller';
 import { PeriodService } from '../services/v1/period.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      Period,
-      Journal,
-      AccountExpense,
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([Period, Journal, AccountExpense])],
   providers: [PeriodService],
   controllers: [PeriodController],
   exports: [],

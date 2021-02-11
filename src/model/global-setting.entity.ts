@@ -26,6 +26,7 @@ export class GlobalSetting extends BaseEntity {
     type: 'numeric',
     name: 'deviation_amount',
     nullable: true,
+    transformer: new ColumnNumericTransformer(),
   })
   deviationAmount: Number;
 
@@ -33,7 +34,6 @@ export class GlobalSetting extends BaseEntity {
     type: 'uuid',
     name: 'cash_transit_coa_id',
     nullable: true,
-    transformer: new ColumnNumericTransformer(),
   })
   cashTransitCoaId: string;
 
@@ -52,18 +52,18 @@ export class GlobalSetting extends BaseEntity {
   downPaymentReimbursementCoaId: string;
 
   @OneToOne(() => Partner)
-  @JoinColumn()
-  voucherPartner: string;
+  @JoinColumn({ name: 'voucher_partner_id' })
+  voucherPartner: Partner;
 
   @OneToOne(() => AccountCoa)
-  @JoinColumn()
-  cashTransitCoa: string;
+  @JoinColumn({ name: 'cash_transit_coa_id' })
+  cashTransitCoa: AccountCoa;
 
   @OneToOne(() => AccountCoa)
-  @JoinColumn()
-  downPaymentPerdinCoa: string;
+  @JoinColumn({ name: 'down_payment_perdin_coa_id' })
+  downPaymentPerdinCoa: AccountCoa;
 
   @OneToOne(() => AccountCoa)
-  @JoinColumn()
-  downPaymentReimbursementCoa: string;
+  @JoinColumn({ name: 'down_payment_reimbursement_coa_id' })
+  downPaymentReimbursementCoa: AccountCoa;
 }

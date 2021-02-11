@@ -15,7 +15,11 @@ import {
   QueryPeriodDTO,
 } from '../../domain/period/period.payload.dto';
 import dayjs from 'dayjs';
-import { AccountExpenseState, JournalState, PeriodState } from '../../../model/utils/enum';
+import {
+  AccountExpenseState,
+  JournalState,
+  PeriodState,
+} from '../../../model/utils/enum';
 import { Journal } from '../../../model/journal.entity';
 import { AccountExpense } from '../../../model/account-expense.entity';
 
@@ -23,8 +27,10 @@ import { AccountExpense } from '../../../model/account-expense.entity';
 export class PeriodService {
   constructor(
     @InjectRepository(Period) private readonly periodRepo: Repository<Period>,
-    @InjectRepository(Journal) private readonly journalRepo: Repository<Journal>,
-    @InjectRepository(AccountExpense) private readonly expenseRepo: Repository<AccountExpense>,
+    @InjectRepository(Journal)
+    private readonly journalRepo: Repository<Journal>,
+    @InjectRepository(AccountExpense)
+    private readonly expenseRepo: Repository<AccountExpense>,
   ) {}
 
   async getUserId() {
@@ -162,7 +168,9 @@ export class PeriodService {
       select: ['id'],
     });
     if (openJournal) {
-      throw new BadRequestException(`Can't close period due any open journal transaction!`)
+      throw new BadRequestException(
+        `Can't close period due any open journal transaction!`,
+      );
     }
 
     const openExpense = await this.expenseRepo.findOne({
@@ -174,7 +182,9 @@ export class PeriodService {
       select: ['id'],
     });
     if (openExpense) {
-      throw new BadRequestException(`Can't close period due any open expense transaction!`)
+      throw new BadRequestException(
+        `Can't close period due any open expense transaction!`,
+      );
     }
 
     const closeDate = dayjs(payload && payload.closeDate).toDate();
