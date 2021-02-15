@@ -2,7 +2,7 @@ import { Period } from '../../../model/period.entity';
 import { PeriodDTO } from './period.dto';
 
 export class PeriodResponseMapper {
-  public static fromDTO(dto: Partial<PeriodDTO>): PeriodDTO {
+  public static toDTO(dto: Partial<PeriodDTO>): PeriodDTO {
     const it = new PeriodDTO();
     it.id = dto.id;
     it.name = dto.name;
@@ -18,7 +18,7 @@ export class PeriodResponseMapper {
   }
 
   public static fromOneEntity(ety: Partial<Period>) {
-    return this.fromDTO({
+    return this.toDTO({
       id: ety.id,
       name: ety.name,
       month: ety.month,
@@ -34,6 +34,20 @@ export class PeriodResponseMapper {
 
   public static fromManyEntity(entities: Partial<Period[]>) {
     return entities.map((e) => PeriodResponseMapper.fromOneEntity(e));
+  }
+
+  public static toManyDTO(entities: Partial<PeriodDTO[]>) {
+    return entities.map((e) => PeriodResponseMapper.toDTO(e));
+  }
+
+  public static fromDTO(
+    data: Partial<PeriodDTO | PeriodDTO[]>,
+  ): PeriodDTO | PeriodDTO[] {
+    if (!Array.isArray(data)) {
+      return this.toDTO(data);
+    } else {
+      return this.toManyDTO(data);
+    }
   }
 
   public static fromEntity(

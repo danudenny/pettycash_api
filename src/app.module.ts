@@ -5,6 +5,8 @@ import { LoaderEnv } from './config/loader';
 import { BranchModule } from './app/modules/branch.module';
 import { PeriodModule } from './app/modules/period.module';
 import { ProductModule } from './app/modules/product.module';
+import { GlobalSettingModule } from './app/modules/global-setting.module';
+import { AccountCoaModule } from './app/modules/account-coa.module';
 
 @Module({
   imports: [
@@ -15,8 +17,10 @@ import { ProductModule } from './app/modules/product.module';
     LoggerModule.forRoot(),
     // TODO: add Health checks (Terminus)
     BranchModule,
+    AccountCoaModule,
     PeriodModule,
     ProductModule,
+    GlobalSettingModule,
   ],
   controllers: [],
   providers: [],

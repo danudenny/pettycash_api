@@ -1,5 +1,5 @@
 import * as dotEnvExtended from 'dotenv-extended';
-import * as dotEnvParseVariables from 'dotenv-parse-variables';
+import { default as dotEnvParseVariables } from 'dotenv-parse-variables';
 import * as path from 'path';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
