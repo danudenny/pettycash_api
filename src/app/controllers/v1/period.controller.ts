@@ -42,8 +42,8 @@ export class PeriodController {
   @Get('/years')
   @ApiOperation({ summary: 'List all period years.' })
   @ApiOkResponse({ type: PeriodYearResponse })
-  public async listYear(@Query() query: QueryPeriodYearDTO) {
-    return await this.svc.listYear(query);
+  public async listYear() {
+    return await this.svc.listYear();
   }
 
   @Post('/generate')
