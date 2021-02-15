@@ -7,7 +7,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Period } from '../../../model/period.entity';
-import { QueryPeriodYearDTO } from '../../domain/period/period-year.payload.dto';
 import { PeriodResponse } from '../../domain/period/response.dto';
 import { PeriodYearResponse } from '../../domain/period/response-year.dto';
 import {

@@ -16,7 +16,6 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { QueryPeriodYearDTO } from '../../domain/period/period-year.payload.dto';
 import { PeriodResponse } from '../../domain/period/response.dto';
 import { PeriodYearResponse } from '../../domain/period/response-year.dto';
 import { PeriodService } from '../../services/v1/period.service';
