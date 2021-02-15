@@ -79,26 +79,10 @@ export class PeriodService {
     return new PeriodResponse(periods);
   }
 
-  async listYear(query?: QueryPeriodYearDTO): Promise<PeriodYearResponse> {
-    const params = { order: '-endDate', limit: 12, ...query };
-    const qb = new QueryBuilder(Period, 'p', params);
-
-    qb.fieldResolverMap['year'] = 'p.year';
-    qb.fieldResolverMap['state'] = 'p.state';
-
-    qb.applyFilterPagination();
-    qb.selectRaw(
-      ['p.id', 'id'],
-      ['p.name', 'name'],
-      ['p.month', 'month'],
-      ['p.year', 'year'],
-      ['p.state', 'state'],
-      ['p.is_deleted', 'isDeleted'],
-    );
-    qb.andWhere(
-      (e) => e.isDeleted,
-      (v) => v.isFalse(),
-    );
+  async listYear(): Promise<any> {
+    const qb = new QueryBuilder(Period, 'p');
+    qb.selectRaw(['p.year', 'year']);
+    qb.groupBy((e) => e.year);
 
     const years = await qb.exec();
     return new PeriodYearResponse(years);
