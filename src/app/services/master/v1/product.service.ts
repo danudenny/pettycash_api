@@ -1,7 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from '../../../../model/product.entity';
+import { QueryBuilder } from 'typeorm-query-builder-wrapper';
+import { QueryProductDTO } from '../../../domain/product/product.payload.dto';
+import { ProductResponse } from '../../../domain/product/response.dto';
+import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
+import { CreateProductDTO } from '../../../domain/product/create-product.dto';
+import UpdateProductDTO from '../../../domain/product/update-product.dto';
 
 @Injectable()
 export class ProductService {
@@ -10,8 +16,68 @@ export class ProductService {
     private readonly productRepo: Repository<Product>,
   ) {}
 
-  public async list(query: any): Promise<any> {
-    const data = await this.productRepo.find(query);
-    return { status: 'success', data };
+  public async list(query?: QueryProductDTO): Promise<ProductResponse> {
+    const params = { order: '^code', limit: 10, ...query };
+    const qb = new QueryBuilder(Product, 'prod', params);
+
+    qb.fieldResolverMap['code__contains'] = 'prod.code';
+    qb.fieldResolverMap['name__contains'] = 'prod.name';
+
+    qb.applyFilterPagination();
+    qb.selectRaw(
+      ['prod.id', 'id'],
+      ['prod.code', 'code'],
+      ['prod.name', 'name'],
+      ['prod.description', 'description'],
+      ['prod.is_has_tax', 'isHasTax'],
+      ['prod.amount', 'amount'],
+      ['prod.coa_id', 'coaId'],
+      ['prod.is_active', 'isActive'],
+      ['prod.is_deleted', 'isDeleted']
+    );
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+
+    const products = await qb.exec();
+    return new ProductResponse(products);
+  }
+
+  public async create(data: CreateProductDTO): Promise<ProductResponse> {
+    const prodDto = await this.productRepo.create(data);
+    // const uid = uuid();
+    // prodDto.createUserId = uid;
+    // prodDto.updateUserId = uid;
+
+    const product = await this.productRepo.save(prodDto);
+    return new ProductResponse(product);
+  }
+
+  public async update(id: string, data: UpdateProductDTO): Promise<ProductResponse> {
+    const prodExist = await this.productRepo.findOne({ id, isDeleted: false });
+    if (!prodExist) {
+      throw new NotFoundException();
+    }
+    const values = await this.productRepo.create(data);
+    // values.updateUserId = uuid();
+
+    const product = await this.productRepo.update(id, values);
+    return new ProductResponse(product as any);
+  }
+
+  public async delete(id: string): Promise<any> {
+    const prodExist = await this.productRepo.findOne({ id, isDeleted: false });
+    if (!prodExist) {
+      throw new NotFoundException();
+    }
+
+    // SoftDelete
+    const product = await this.productRepo.update(id, { isDeleted: true });
+    if (!product) {
+      throw new BadRequestException();
+    }
+
+    return new ProductResponse();
   }
 }
