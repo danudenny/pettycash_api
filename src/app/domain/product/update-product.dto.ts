@@ -1,14 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { IsUUID, IsString, IsOptional } from 'class-validator';
 
-export class ProductDTO {
-  @ApiProperty({
-    description: 'Product ID',
-    example: 'b7726b7b-6882-42ea-b623-d8f8a347ba0b',
-  })
-  @IsUUID()
-  id: string;
-
+export class UpdateProductDTO {
   @ApiProperty({
     description: 'Product Code',
     example: 'PR00001',
@@ -51,3 +44,5 @@ export class ProductDTO {
   })
   isActive: boolean;
 }
+
+export default UpdateProductDTO;
