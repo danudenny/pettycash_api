@@ -7,6 +7,7 @@ import { PeriodModule } from './app/modules/period.module';
 import { ProductModule } from './app/modules/product.module';
 import { GlobalSettingModule } from './app/modules/global-setting.module';
 import { AccountCoaModule } from './app/modules/account-coa.module';
+import { PartnerModule } from './app/modules/partner.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AccountCoaModule } from './app/modules/account-coa.module';
     LoggerModule.forRoot(),
     // TODO: add Health checks (Terminus)
     BranchModule,
+    PartnerModule,
     AccountCoaModule,
     PeriodModule,
     ProductModule,
