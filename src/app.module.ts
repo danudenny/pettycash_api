@@ -10,6 +10,7 @@ import { AccountCoaModule } from './app/modules/account-coa.module';
 import { PartnerModule } from './app/modules/partner.module';
 import { TaxModule } from './app/modules/tax.module';
 import { DepartmentModule } from './app/modules/department.module';
+import { EmployeeModule } from './app/modules/employee.module';
 
 @Module({
   imports: [
@@ -26,7 +27,8 @@ import { DepartmentModule } from './app/modules/department.module';
     ProductModule,
     GlobalSettingModule,
     TaxModule,
-    DepartmentModule
+    DepartmentModule,
+    EmployeeModule
   ],
   controllers: [],
   providers: [],
