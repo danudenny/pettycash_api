@@ -28,7 +28,7 @@ export class ProductsController {
     return await this.prodService.create(payload);
   }
 
-  @Patch(':id')
+  @Patch(':id/update')
   @ApiParam({ name: 'id' })
   @ApiOperation({ summary: 'Edit Product' })
   @ApiOkResponse({ type: ProductResponse })
@@ -40,7 +40,7 @@ export class ProductsController {
     return await this.prodService.update(id, payload);
   }
 
-  @Delete(':id')
+  @Delete(':id/delete')
   @ApiParam({ name: 'id' })
   @ApiOperation({ summary: 'Delete Product' })
   @ApiOkResponse({ type: ProductResponse })
