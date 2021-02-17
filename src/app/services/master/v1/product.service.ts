@@ -26,7 +26,7 @@ export class ProductService {
 
     qb.fieldResolverMap['code__contains'] = 'prod.code';
     qb.fieldResolverMap['name__contains'] = 'prod.name';
-    qb.fieldResolverMap['isHasTax__matches'] = 'prod.isHasTax';
+    qb.fieldResolverMap['isHasTax'] = 'prod.isHasTax';
 
     qb.applyFilterPagination();
     qb.selectRaw(
