@@ -14,4 +14,10 @@ export class QueryProductDTO extends BasePayload {
   })
   name: string;
 
+  @ApiPropertyOptional({
+    description: 'Product Tax Having',
+    example: true,
+  })
+  isHasTax: boolean;
+
 }

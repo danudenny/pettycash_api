@@ -15,7 +15,9 @@ Untuk mendapatkan daftar product / item.
             Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
 
 + Parameters
+    + code: `PR001` (string) - Filtering product by code using method `LIKE`.
     + name: `Tiket Pesawat` (string) - Filtering product by name using method `LIKE`.
+    + is_has_tax: true (boolean) - Filtering product by tax having.
     + createdAt: `2021-02-01T13:40:10Z` (timestamp) - Sort / order product by date created.
 
 + Response 200 (application/json)
@@ -31,6 +33,8 @@ Untuk mendapatkan daftar product / item.
                         "is_has_tax": true,
                         "amount": 700000.00,
                         "coa_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "coaCode": "500.10.11",
+                        "coaName": "Cash Transit Coa",
                         "is_active": true
                     },
                     {
@@ -41,6 +45,8 @@ Untuk mendapatkan daftar product / item.
                         "is_has_tax": true,
                         "amount": 350000.00,
                         "coa_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "coaCode": "500.10.11",
+                        "coaName": "Cash Transit Coa",
                         "is_active": true
                     }
                 ],
