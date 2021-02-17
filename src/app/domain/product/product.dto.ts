@@ -41,9 +41,21 @@ export class ProductDTO {
 
   @ApiProperty({
     description: 'Coa of product',
-    example: 'b7726b7b-6882-42ea-b623-d8f8a347ba0b',
+    example: 'bc598bc8-aefd-44f1-92cf-2a3a0f1f2750',
   })
   coaId: string;
+
+  @ApiProperty({
+    description: 'Coa code',
+    example: '500.10.11',
+  })
+  coaCode: string;
+
+  @ApiProperty({
+    description: 'Coa Name',
+    example: 'Cash Transit Coa',
+  })
+  coaName: string;
 
   @ApiProperty({
     description: 'Describe the product if active or not',

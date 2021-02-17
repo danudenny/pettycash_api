@@ -26,6 +26,7 @@ export class ProductService {
 
     qb.fieldResolverMap['code__contains'] = 'prod.code';
     qb.fieldResolverMap['name__contains'] = 'prod.name';
+    qb.fieldResolverMap['isHasTax__matches'] = 'prod.isHasTax';
 
     qb.applyFilterPagination();
     qb.selectRaw(
@@ -36,8 +37,14 @@ export class ProductService {
       ['prod.is_has_tax', 'isHasTax'],
       ['prod.amount', 'amount'],
       ['prod.coa_id', 'coaId'],
+      ['coa.code', 'coaCode'],
+      ['coa.name', 'coaName'],
       ['prod.is_active', 'isActive'],
       ['prod.is_deleted', 'isDeleted']
+    );
+    qb.leftJoin(
+      (e) => e.coaProduct,
+      'coa'
     );
     qb.andWhere(
       (e) => e.isDeleted,

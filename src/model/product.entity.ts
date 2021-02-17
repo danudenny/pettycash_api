@@ -1,5 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
+import { User } from './user.entity';
+import { AccountCoa } from './account-coa.entity';
 
 @Entity('product')
 export class Product extends PtcBaseEntity {
@@ -55,4 +57,8 @@ export class Product extends PtcBaseEntity {
     name: 'is_active',
   })
   isActive: boolean;
+
+  @ManyToOne(() => AccountCoa)
+  @JoinColumn({ name: 'coa_id', referencedColumnName: 'id' })
+  coaProduct: AccountCoa;
 }
