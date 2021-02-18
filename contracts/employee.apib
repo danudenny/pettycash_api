@@ -5,10 +5,14 @@ HOST: http://pettycash.api.url
 
 # Group Employee
 
-## List Employee [GET /v1/employees]
+## List Employee [GET /v1/employees{?name__contains,nik__contains}]
 
 Untuk mendapatkan daftar employee sicepat.
 
++ Parameters
+    + name__contains: `Nui Employee` (string, optional) - NIK to Search (Using LIKE sql).
+    + nik__contains: `19000280` (string, optional) - NIK to Search (Using LIKE sql).
+ 
 + Request (application/json)
     + Header
 
@@ -21,25 +25,25 @@ Untuk mendapatkan daftar employee sicepat.
                 "data": [
                     {
                         "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                        "nik": "3317140504900005",
+                        "nik": "19000280",
                         "name": "Denny Danuwijaya",
-                        "npwp_number": "64xxxxxx",
-                        "id_card_number": "20090134",
-                        "position_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                        "position_name": "Admin Branch",
-                        "branch_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                        "branch_name": "Kebon Jeruk"
+                        "npwpNumber": "1232.1231.999-12.11",
+                        "idCardNumber": "20090134",
+                        "positionId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "positionName": "Admin Branch",
+                        "branchId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "branchName": "Kebon Jeruk"
                     },
                     {
                         "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                        "nik": "3317140504920005",
+                        "nik": "19000780",
                         "name": "Edi Santoso",
-                        "npwp_number": "64xxxxxx",
-                        "id_card_number": "20090139",
-                        "position_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                        "position_name": "Staff",
-                        "branch_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                        "branch_name": "Kebon Jeruk"
+                        "npwpNumber": "1232.1231.999-12.11",
+                        "idCardNumber": "20090139",
+                        "positionId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "positionName": "Staff",
+                        "branchId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "branchName": "Kebon Jeruk"
                     }
                 ],
                 "meta": {
