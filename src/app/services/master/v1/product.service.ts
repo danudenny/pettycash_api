@@ -5,7 +5,6 @@ import { Product } from '../../../../model/product.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { QueryProductDTO } from '../../../domain/product/product.payload.dto';
 import { ProductResponse } from '../../../domain/product/response.dto';
-import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { CreateProductDTO } from '../../../domain/product/create-product.dto';
 import UpdateProductDTO from '../../../domain/product/update-product.dto';
 
@@ -16,12 +15,18 @@ export class ProductService {
     private readonly productRepo: Repository<Product>,
   ) {}
 
+  async getUserId() {
+    // TODO: Use From Authentication User.
+    return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
+  }
+
   public async list(query?: QueryProductDTO): Promise<ProductResponse> {
     const params = { order: '^code', limit: 10, ...query };
     const qb = new QueryBuilder(Product, 'prod', params);
 
     qb.fieldResolverMap['code__contains'] = 'prod.code';
     qb.fieldResolverMap['name__contains'] = 'prod.name';
+    qb.fieldResolverMap['isHasTax'] = 'prod.isHasTax';
 
     qb.applyFilterPagination();
     qb.selectRaw(
@@ -32,8 +37,14 @@ export class ProductService {
       ['prod.is_has_tax', 'isHasTax'],
       ['prod.amount', 'amount'],
       ['prod.coa_id', 'coaId'],
+      ['coa.code', 'coaCode'],
+      ['coa.name', 'coaName'],
       ['prod.is_active', 'isActive'],
       ['prod.is_deleted', 'isDeleted']
+    );
+    qb.leftJoin(
+      (e) => e.coaProduct,
+      'coa'
     );
     qb.andWhere(
       (e) => e.isDeleted,
@@ -46,9 +57,8 @@ export class ProductService {
 
   public async create(data: CreateProductDTO): Promise<ProductResponse> {
     const prodDto = await this.productRepo.create(data);
-    // const uid = uuid();
-    // prodDto.createUserId = uid;
-    // prodDto.updateUserId = uid;
+    prodDto.createUserId = await this.getUserId();
+    prodDto.updateUserId = await this.getUserId();
 
     const product = await this.productRepo.save(prodDto);
     return new ProductResponse(product);
@@ -60,7 +70,7 @@ export class ProductService {
       throw new NotFoundException();
     }
     const values = await this.productRepo.create(data);
-    // values.updateUserId = uuid();
+    values.updateUserId = await this.getUserId();
 
     const product = await this.productRepo.update(id, values);
     return new ProductResponse(product as any);

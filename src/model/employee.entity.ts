@@ -5,7 +5,7 @@ import { ColumnNumericTransformer } from './utils/transformer';
 @Entity('employee')
 export class Employee extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: number;
+  id: string;
 
   @Column({
     type: 'bigint',
