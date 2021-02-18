@@ -5,20 +5,20 @@ HOST: http://pettycash.api.url
 
 # Group Products
 
-## List Products [GET /v1/products?filter='{name}'&order='{createdAt}']
+## List Products [GET /v1/products{?name__contains,hasTax,code__contains,order}]
 
 Untuk mendapatkan daftar product / item.
+
++ Parameters
+    + name__contains: `Tiket Pesawat` (string, optional) - Searching product by name using method `LIKE`.
+    + hasTax: `true` (boolean, optional) - Filtering product by has tax or not.
+    + code__contains: `PR-00001` (string, optional) - Searching product by code using method `LIKE`.
+    + order: `^code,-coaName` (string, optional) - Sort / order product by code and coaName.
 
 + Request (application/json)
     + Header
 
             Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
-
-+ Parameters
-    + code: `PR001` (string) - Filtering product by code using method `LIKE`.
-    + name: `Tiket Pesawat` (string) - Filtering product by name using method `LIKE`.
-    + is_has_tax: true (boolean) - Filtering product by tax having.
-    + createdAt: `2021-02-01T13:40:10Z` (timestamp) - Sort / order product by date created.
 
 + Response 200 (application/json)
     + Body
@@ -30,24 +30,22 @@ Untuk mendapatkan daftar product / item.
                         "code": "PR-00001",
                         "name": "Tiket Pesawat",
                         "description": "Tiket pesawat untuk perjalanan",
-                        "is_has_tax": true,
+                        "isHasTax": true,
                         "amount": 700000.00,
-                        "coa_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                        "coaCode": "500.10.11",
-                        "coaName": "Cash Transit Coa",
-                        "is_active": true
+                        "coaId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "coaCode": "500.200.221",
+                        "isActive": true
                     },
                     {
                         "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
                         "code": "PR-00002",
                         "name": "Hotel",
                         "description": "Voucher menginap hotel",
-                        "is_has_tax": true,
+                        "isHasTax": true,
                         "amount": 350000.00,
-                        "coa_id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                        "coaCode": "500.10.11",
-                        "coaName": "Cash Transit Coa",
-                        "is_active": true
+                        "coaId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "coaCode": "500.400.300",
+                        "isActive": true
                     }
                 ],
                 "meta": {
@@ -69,7 +67,7 @@ Untuk mendapatkan daftar product / item.
                 "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
             }
 
-## Create Product [POST /v1/product]
+## Create Product [POST /v1/products]
 
 Untuk membuat product / item untuk digunakan pada uang muka, pengeluaran, dll.
 
@@ -79,20 +77,16 @@ Untuk membuat product / item untuk digunakan pada uang muka, pengeluaran, dll.
             Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
 
     + Attributes (object)
+        + code: `PR0001` (string, optional) - Product code.
         + name: `Tiket Pesawat` (string) - Product name.
-        + description: `Tiket pesawat untuk perjalanan dinas` (string) - Product Description.
+        + description: `Tiket pesawat untuk perjalanan dinas` (string, optional) - Product Description.
         + isHasTax: true (boolean) - Describe if the product is taxable or not.
-        + amount: 750000 (string) - How much amount will be pay for product.
-        + coaId: `3e7436b1-adeb-4a85-8676-2968e0cec78c` (string).
+        + amount: 750000 (number, boolean) - How much amount will be pay for product.
+        + coaId: `3e7436b1-adeb-4a85-8676-2968e0cec78c` (string) - Default Chart of Account the product.
         + isActive: true (boolean) - Activate / Disabled the product.
 
-+ Response 200 (application/json)
++ Response 201 (application/json)
     + Body
-
-            {
-                "status": "success",
-                "message": "Product successfully created."
-            }
 
 + Response 400 (application/json)
     + Body
@@ -114,7 +108,7 @@ Untuk membuat product / item untuk digunakan pada uang muka, pengeluaran, dll.
                 "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
             }
 
-## Update Product [PATCH /v1/product/{id}/update]
+## Update Product [PUT /v1/products/{id}]
 
 Update Product / Item.
 
@@ -124,15 +118,16 @@ Update Product / Item.
             Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
     
     + Attributes (object)
+        + code: `PR0001` (string, optional) - Product code.
         + name: `Tiket Pesawat` (string) - Product name.
-        + description: `Tiket pesawat untuk perjalanan dinas` (string) - Product Description.
+        + description: `Tiket pesawat untuk perjalanan dinas` (string, optional) - Product Description.
         + isHasTax: true (boolean) - Describe if the product is taxable or not.
-        + amount: 750000 (string) - How much amount will be pay for product.
-        + coaId: `3e7436b1-adeb-4a85-8676-2968e0cec78c` (string).
+        + amount: 750000 (number, boolean) - How much amount will be pay for product.
+        + coaId: `3e7436b1-adeb-4a85-8676-2968e0cec78c` (string) - Default Chart of Account the product.
         + isActive: true (boolean) - Activate / Disabled the product.
 
 + Parameters
-    + id: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - UUID of ID to update single product,
+    + id: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - UUID of Product ID to update single product,
 
 + Response 200 (application/json)
     + Body
@@ -163,7 +158,7 @@ Update Product / Item.
             }
 
 
-## Delete Product [DELETE /v1/product/{id}/delete]
+## Delete Product [DELETE /v1/products/{id}]
 
 Delete Product / Item.
 
@@ -175,13 +170,8 @@ Delete Product / Item.
 + Parameters
     + id: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - UUID of ID to delete single product,
 
-+ Response 200 (application/json)
++ Response 204 (application/json)
     + Body
-
-            {
-                "status": "success",
-                "message": "Product successfully deleted."
-            }
 
 + Response 400 (application/json)
     + Body

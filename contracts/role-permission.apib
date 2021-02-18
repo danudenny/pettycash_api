@@ -1,0 +1,59 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Authorization
+
+# Group Authorization
+
+## List Role [GET /v1/authorizations{?username}]
+
+Get Authorization (role permissions) of the user.
+
++ Parameters
+    + username: `anton` (string, optional) - User ID to get.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": {
+                "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                "username": "anton",
+                "role": "accounting",
+                "permissions": [
+                    "period:read",
+                    "period:create",
+                    "period:close",
+                    "budget:read",
+                    "budget.budget:read",
+                    "budget.budget:create"
+                ]
+            },
+            "status": "success"
+        }
+
++ Response 404 (application/json)
+    + Body
+
+        {
+            "status": "fail",
+            "code": "AUTHORIZATION_USER_NOT_FOUND",
+            "message": "authorization for user {username} not found",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
