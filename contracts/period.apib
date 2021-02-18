@@ -168,7 +168,7 @@ Generate Period
             }
 
 
-## Close Period [POST /v1/periods/close]
+## Close Period [PUT /v1/periods/:id/close]
 
 Close Period.
 
@@ -178,8 +178,7 @@ Close Period.
             Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
     
     + Attributes (object)
-        + date: `2020-01-28` (string) - Closing Date in String ISO8601 DateOnly format.
-        + id: `3e7436b1-adeb-4a85-8676-2968e0cec78c` (string) - Period ID.
+        + closeDate: `2020-01-28` (string) - Closing Date in String ISO8601 DateOnly format.
 
 + Response 201 (application/json)
     + Body
@@ -225,7 +224,7 @@ Close Period.
             }
 
 
-## Re-Open Period [POST /v1/periods/:id/open]
+## Re-Open Period [PUT /v1/periods/:id/open]
 
 (Re)Open Closed Period.
 
