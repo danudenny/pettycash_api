@@ -1,0 +1,186 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Tax
+
+# Group Tax
+
+## List Tax [GET /v1/taxes{?name__contains,partnerType,hasNpwp,order}]
+
+Get list all Tax.
+
++ Parameters
+    + name__contains: `Sicepat` (string, optional) - Tax Name to Search (Using LIKE sql).
+    + partnerType: `company` (string, optional) - Partner Type `personal` `company` to filter.
+    + hasNpwp: `true` (boolean, optional) - Is Has NPWP.
+    + order: `^createdAt` (string, optional) - Sorting by field, use prefix `^` for ASC, `-` for DESC.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": [
+                {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "name": "PPN 10%",
+                    "partnerType": "personal",
+                    "isHasNpwp": false,
+                    "taxInPercent": 10,
+                    "coaId": "382a615c-7e93-4e64-8bc5-01f731d35559",
+                    "coaCode": "500.200.100"
+                },
+                {
+                    "id": "382a615c-7e93-4e64-8bc5-01f731d35559",
+                    "name": "PPH 21",
+                    "partnerType": "company",
+                    "isHasNpwp": true,
+                    "taxInPercent": 21,
+                    "coaId": "382a615c-7e93-4e64-8bc5-01f731d35559",
+                    "coaCode": "500.500.100"
+                },
+            ],
+            "meta": {
+                "page": 2,
+                "prevPage": 1,
+                "nextPage": null,
+                "perPage": 10,
+            },
+            "status": "success"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+## Create Tax [POST /v1/taxes]
+
+Create Tax
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + name: `PPN 10%` (string) - Taxe name.
+        + partnerType: `personal` (enum[string]) - Tax Partner Type.
+            + personal
+            + company
+        + isHasNpwp: `true` (boolean) - Whether the Tax has NPWP or not.
+        + coaId: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Chart of Account the Tax.
+        + taxInPercent: 10 (number) - Tax Value in Percent.
+
++ Response 201 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "TAX_CREATE_FAILED",
+                "message": "failed to create partner",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Update Tax [PUT /v1/taxes/{id}]
+
+Update Tax
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Tax ID to Update.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + name: `PPN 10%` (string) - Tax name.
+        + partnerType: `personal` (enum[string]) - Tax Partner Type.
+            + personal
+            + company
+        + isHasNpwp: `true` (boolean) - Whether the Tax has NPWP or not.
+        + coaId: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Chart of Account the Tax.
+        + taxInPercent: 10 (number) - Tax Value in Percent.
+
++ Response 200 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "TAX_UPDATE_FAILED",
+                "message": "failed to update tax",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+## Delete Tax [DELETE /v1/taxes/{id}]
+
+Update Partner
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Tax ID to Delete.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 204 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "TAX_DELETE_FAILED",
+                "message": "failed to delete tax",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
