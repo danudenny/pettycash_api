@@ -1,0 +1,270 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API User Role Mapping
+
+# Group User Role Mapping
+
+## List User Role Mapping [GET /v1/user-roles?{nik,employee_name__contains,role_id}]
+
+Get list all user role mappings.
+
++ Parameters
+    + employee_name__contains (string, optional) - Employee Name to search.
+    + role_id (string, optional) - Role ID to filter.
+        + Example: `4afc08c3-2c58-40e1-abd3-6f6b2b9e6373`
+    + nik (string, optional) - NIK to filter.
+        + Example: `19000208`
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": [
+                {
+                    "id": "be1922f6-63a4-48c5-b4a2-73c2cf7933b2",
+                    "nik": "19000208",
+                    "username": "19000208",
+                    "userId": "d1573ca9-a368-4cbd-8310-40668aac0e5a",
+                    "fullName": "FirstName + LastName",
+                    "roleId": "3373b83f-bb85-4542-9b1b-40c8edf9dc87",
+                    "roleName": "accounting"
+                }
+                {
+                    "id": "be1922f6-63a4-48c5-b4a2-73c2cf7933b2",
+                    "nik": "19000208",
+                    "username": "19000208",
+                    "userId": "d1573ca9-a368-4cbd-8310-40668aac0e5a",
+                    "fullName": "FirstName + LastName",
+                    "roleId": "3373b83f-bb85-4542-9b1b-40c8edf9dc87",
+                    "roleName": "admin_branch"
+                }
+            ],
+            "status": "success"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Get User Role Mapping details [GET /v1/user-roles/:userId]
+
+Get list user role mapping details.
+
++ Parameters
+    + userId (string, optional) - User ID to get.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": [
+                {
+                    "id": "be1922f6-63a4-48c5-b4a2-73c2cf7933b2",
+                    "nik": "19000208",
+                    "username": "19000208",
+                    "userId": "d1573ca9-a368-4cbd-8310-40668aac0e5a",
+                    "fullName": "FirstName + LastName",
+                    "roleId": "3373b83f-bb85-4542-9b1b-40c8edf9dc87",
+                    "roleName": "accounting",
+                    "branches": [
+                      {
+                        "id": "c3223daa-2953-4376-aa8e-22e690b72600",
+                        "name": "Kebon Jeruk",
+                      },
+                      {
+                        "id": "e0117cc5-0a1a-43f2-bfe9-2ad7e9d45497",
+                        "name": "Medan Timur",
+                      },
+                    ],
+                }
+                {
+                    "id": "be1922f6-63a4-48c5-b4a2-73c2cf7933b2",
+                    "nik": "19000208",
+                    "username": "19000208",
+                    "userId": "d1573ca9-a368-4cbd-8310-40668aac0e5a",
+                    "fullName": "FirstName + LastName",
+                    "roleId": "3373b83f-bb85-4542-9b1b-40c8edf9dc87",
+                    "roleName": "admin_branch",
+                    "branches": [
+                      {
+                        "id": "c3223daa-2953-4376-aa8e-22e690b72600",
+                        "name": "Kebon Jeruk",
+                      }
+                    ],
+                }
+            ],
+            "status": "success"
+        }
+
++ Response 404 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "USER_ROLE_MAPPING_NOT_FOUND",
+                "message": "user role mapping not found",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+## Create User Role Mapping [POST /v1/user-roles]
+
+Create User Role Mapping
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+    
+    + Attributes (object)
+        + userId: `bbaf7ee4-8dbb-4724-9a5f-3d279f780056` (string) - User ID to create.
+        + roleId: `a2bf5633-d968-42f1-9a6a-eb670bdd8641` (string) - Role ID to create.
+        + branches: (array[string]) - Array of Branch to assigned.
+
++ Response 201 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "USER_ROLE_CREATE_FAILED",
+                "message": "failed to create user role mapping",
+                "details": [
+                    {
+                        "message": "roleId is required",
+                        "field": "roleId"
+                    }
+                ],
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "USER_ROLE_ALREADY_EXIST",
+                "message": "user role mapping already exists",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+## Update User Role Mapping [PUT /v1/user-roles/:userId]
+
+Update User Role Mapping
+
++ Parameters
+    + userId (string, optional) - User ID to update.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+    
+    + Attributes (object)
+        + roleId: `a2bf5633-d968-42f1-9a6a-eb670bdd8641` (string) - Role ID to update.
+        + branches: (array[string]) - Array of Branch to assigned.
+
++ Response 200 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "USER_ROLE_UPDATE_FAILED",
+                "message": "failed to update user role mapping",
+                "details": [
+                    {
+                        "message": "roleId is required",
+                        "field": "roleId"
+                    }
+                ],
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+## Delete User Role Mapping [DELETE /v1/user-roles/:userId]
+
+Delete User Role Mapping
+
++ Parameters
+    + userId (string, optional) - User ID to delete.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+    
++ Response 204 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "USER_ROLE_DELETE_FAILED",
+                "message": "failed to delete user role mapping",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
