@@ -11,6 +11,7 @@ import { PartnerModule } from './app/modules/partner.module';
 import { TaxModule } from './app/modules/tax.module';
 import { DepartmentModule } from './app/modules/department.module';
 import { EmployeeModule } from './app/modules/employee.module';
+import { RoleModule } from './app/modules/role.module';
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { EmployeeModule } from './app/modules/employee.module';
     GlobalSettingModule,
     TaxModule,
     DepartmentModule,
-    EmployeeModule
+    EmployeeModule,
+    RoleModule,
   ],
   controllers: [],
   providers: [],
