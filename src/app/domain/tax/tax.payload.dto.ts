@@ -1,5 +1,6 @@
 import { BasePayload } from '../common/base-payload.dto';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AccountTaxPartnerType } from '../../../model/utils/enum';
 
 export class QueryTaxDTO extends BasePayload {
   @ApiPropertyOptional({
@@ -7,5 +8,12 @@ export class QueryTaxDTO extends BasePayload {
     example: 'PPn',
   })
   name: string;
+
+  @ApiProperty({
+    description: 'Tax Partner Type',
+    example: 'personal',
+    enum: ['company', 'personal'],
+  })
+  partnerType: AccountTaxPartnerType;
 
 }
