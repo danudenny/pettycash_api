@@ -5,11 +5,13 @@ import { AccountCoa } from '../model/account-coa.entity';
 import { Branch } from '../model/branch.entity';
 import { GlobalSetting } from '../model/global-setting.entity';
 import { Partner } from '../model/partner.entity';
+import { Role } from '../model/role.entity';
 import { User } from '../model/user.entity';
 import AccountCoaSeed from '../seeders/account-coa.seed';
 import { BranchSeed } from '../seeders/branch.seed';
 import GlobalSettingSeed from '../seeders/global-setting.seed';
 import PartnerSeed from '../seeders/partner.seed';
+import RoleSeed from '../seeders/role.seed';
 import { UserSeed } from '../seeders/user.seed';
 
 async function run() {
@@ -32,6 +34,9 @@ async function run() {
 
   // seed data global setting
   await connection.getRepository(GlobalSetting).save(GlobalSettingSeed);
+
+  // seed data roles
+  await connection.getRepository(Role).save(RoleSeed);
 
   // Close connection after running seeder.
   await connection.close();
