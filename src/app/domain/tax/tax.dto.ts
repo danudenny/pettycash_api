@@ -41,4 +41,16 @@ export class TaxDTO {
   })
   coaId?: string;
 
+  @ApiProperty({
+    description: 'Coa code',
+    example: '500.10.11',
+  })
+  coaCode: string;
+
+  @ApiProperty({
+    description: 'Coa Name',
+    example: 'Cash Transit Coa',
+  })
+  coaName: string;
+
 }

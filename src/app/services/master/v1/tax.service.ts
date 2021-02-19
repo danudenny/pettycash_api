@@ -25,6 +25,7 @@ export class TaxService {
     const qb = new QueryBuilder(AccountTax, 'tax', params);
 
     qb.fieldResolverMap['name__contains'] = 'tax.name';
+    qb.fieldResolverMap['partnerType'] = 'tax.partnerType';
 
     qb.applyFilterPagination();
     qb.selectRaw(
@@ -34,7 +35,13 @@ export class TaxService {
       ['tax.tax_in_percent', 'taxInPercent'],
       ['tax.partner_type', 'partnerType'],
       ['tax.coa_id', 'coaId'],
+      ['coa.name', 'coaName'],
+      ['coa.code', 'coaCode'],
       ['tax.is_deleted', 'isDeleted']
+    );
+    qb.leftJoin(
+      (e) => e.coa,
+      'coa'
     );
     qb.andWhere(
       (e) => e.isDeleted,
