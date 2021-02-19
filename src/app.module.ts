@@ -12,6 +12,7 @@ import { TaxModule } from './app/modules/tax.module';
 import { DepartmentModule } from './app/modules/department.module';
 import { EmployeeModule } from './app/modules/employee.module';
 import { RoleModule } from './app/modules/role.module';
+import { UserRoleModule } from './app/modules/user-role.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { RoleModule } from './app/modules/role.module';
     DepartmentModule,
     EmployeeModule,
     RoleModule,
+    UserRoleModule,
   ],
   controllers: [],
   providers: [],
