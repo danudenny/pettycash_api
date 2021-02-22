@@ -13,6 +13,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from '../../../model/role.entity';
 import { Branch } from '../../../model/branch.entity';
 import { MASTER_ROLES } from '../../../model/utils/enum';
+import { UpdateUserRoleDTO } from '../../domain/user-role/update-user-role.dto';
 
 @Injectable()
 export class UserRoleService {
@@ -61,8 +62,8 @@ export class UserRoleService {
     return new UserRoleResponse(userRoles);
   }
 
-  async create(payload: CreateUserRoleDTO): Promise<any> {
-    const { userId, roleId, branches } = payload;
+  private async updateRole(params: CreateUserRoleDTO): Promise<any> {
+    const { userId, roleId, branches } = params;
 
     const user = await this.userRepo.findOne({
       where: { id: userId, isDeleted: false },
@@ -95,8 +96,18 @@ export class UserRoleService {
 
     user.roleId = roleId;
     user.branches = assignedBranches;
-    await user.save();
 
+    return await user.save();
+  }
+
+  public async create(payload: CreateUserRoleDTO): Promise<any> {
+    await this.updateRole(payload);
+    return;
+  }
+
+  public async update(id: string, payload: UpdateUserRoleDTO): Promise<any> {
+    const params = { ...payload, userId: id };
+    await this.updateRole(params);
     return;
   }
 }
