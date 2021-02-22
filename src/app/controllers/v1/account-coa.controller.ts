@@ -7,7 +7,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { QueryAccountCoaDTO } from '../../domain/account-coa/account-coa.payload.dto';
-import { AccountCoaResponse } from '../../domain/account-coa/response.dto';
+import { AccountCoaWithPaginationResponse } from '../../domain/account-coa/response.dto';
 import { AccountCoaService } from '../../services/v1/account-coa.service';
 
 @Controller('v1/chart-of-accounts')
@@ -18,7 +18,7 @@ export class AccountCoaController {
 
   @Get()
   @ApiOperation({ summary: 'List all Chart of Accounts' })
-  @ApiOkResponse({ type: AccountCoaResponse })
+  @ApiOkResponse({ type: AccountCoaWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async list(@Query() query: QueryAccountCoaDTO) {
     return await this.svc.list(query);

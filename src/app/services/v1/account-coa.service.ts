@@ -1,7 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { AccountCoa } from '../../../model/account-coa.entity';
 import { Repository } from 'typeorm';
-import { AccountCoaResponse } from '../../domain/account-coa/response.dto';
+import { AccountCoaWithPaginationResponse } from '../../domain/account-coa/response.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { QueryAccountCoaDTO } from '../../domain/account-coa/account-coa.payload.dto';
 
@@ -11,7 +11,9 @@ export class AccountCoaService {
     private readonly coaRepo: Repository<AccountCoa>,
   ) {}
 
-  async list(query: QueryAccountCoaDTO): Promise<AccountCoaResponse> {
+  async list(
+    query: QueryAccountCoaDTO,
+  ): Promise<AccountCoaWithPaginationResponse> {
     const params = { order: '^code', limit: 25, ...query };
     const qb = new QueryBuilder(AccountCoa, 'c', params);
 
@@ -23,6 +25,6 @@ export class AccountCoaService {
     qb.selectRaw(['c.id', 'id'], ['c.code', 'code'], ['c.name', 'name']);
 
     const coa = await qb.exec();
-    return new AccountCoaResponse(coa);
+    return new AccountCoaWithPaginationResponse(coa, params);
   }
 }

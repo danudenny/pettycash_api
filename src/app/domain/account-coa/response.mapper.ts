@@ -1,4 +1,3 @@
-import { AccountCoa } from '../../../model/account-coa.entity';
 import { AccountCoaDTO } from './accounta-ca.dto';
 
 export class AccountCoaResponseMapper {
