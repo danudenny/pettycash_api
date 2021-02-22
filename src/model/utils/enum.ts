@@ -139,3 +139,14 @@ export enum AccountFinancialReportDisplayType {
   DETAIL_FLAT = 'detail_flat',
   DETAIL_WITH_HIERARCHY = 'detail_with_hierarchy',
 }
+
+export enum MASTER_ROLES {
+  SUPERUSER = 'SUPERUSER',
+  ACCOUNTING = 'ACCOUNTING',
+  PIC_HO = 'PIC HO',
+  SS_HO = 'SS HO',
+  SPV_HO = 'SPV HO',
+  ADMIN_BRANCH = 'ADMIN BRANCH',
+  OPS = 'OPS',
+  TAX = 'TAX',
+}
