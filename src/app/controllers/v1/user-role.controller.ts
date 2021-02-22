@@ -1,18 +1,24 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
   Query,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import {
   ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -55,5 +61,20 @@ export class UserRoleController {
     @Body() payload: UpdateUserRoleDTO,
   ) {
     return await this.svc.update(id, payload);
+  }
+
+  @Delete('/:id')
+  @ApiOperation({ summary: 'Delete user role mapping' })
+  @ApiNoContentResponse({
+    description: 'User role mapping successfully deleted',
+  })
+  @ApiBadRequestResponse({ description: 'Failed to delete user role' })
+  @ApiNotFoundResponse({ description: 'User role not found' })
+  public async delete(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Res() res: Response,
+  ) {
+    await this.svc.delete(id);
+    return res.status(HttpStatus.NO_CONTENT).json();
   }
 }

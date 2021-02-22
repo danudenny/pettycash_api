@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, Not, IsNull } from 'typeorm';
 import { User } from '../../../model/user.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { UserRoleResponse } from '../../domain/user-role/response.dto';
@@ -14,6 +14,7 @@ import { Role } from '../../../model/role.entity';
 import { Branch } from '../../../model/branch.entity';
 import { MASTER_ROLES } from '../../../model/utils/enum';
 import { UpdateUserRoleDTO } from '../../domain/user-role/update-user-role.dto';
+import { isNotEmpty } from 'class-validator';
 
 @Injectable()
 export class UserRoleService {
@@ -108,6 +109,21 @@ export class UserRoleService {
   public async update(id: string, payload: UpdateUserRoleDTO): Promise<any> {
     const params = { ...payload, userId: id };
     await this.updateRole(params);
+    return;
+  }
+
+  public async delete(id: string): Promise<any> {
+    const user = await this.userRepo.findOne({
+      where: { id, roleId: Not(IsNull()), isDeleted: false },
+    });
+    if (!user) {
+      throw new NotFoundException(`User ID ${id} not found!`);
+    }
+
+    user.roleId = null;
+    user.branches = null;
+
+    await user.save();
     return;
   }
 }
