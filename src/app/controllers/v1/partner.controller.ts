@@ -1,22 +1,28 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
   Query,
+  Res,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { Response } from 'express';
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
 import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
 import { PartnerWithPaginationResponse } from '../../domain/partner/response.dto';
@@ -56,5 +62,18 @@ export class PartnerController {
     @Body() payload: UpdatePartnerDTO,
   ) {
     return await this.svc.update(id, payload);
+  }
+
+  @Delete('/:id')
+  @ApiOperation({ summary: 'Delete Partner' })
+  @ApiNoContentResponse({ description: 'Partner successfully deleted' })
+  @ApiBadRequestResponse({ description: 'Failed to delete partner' })
+  @ApiNotFoundResponse({ description: 'Partner not found' })
+  public async delete(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Res() res: Response,
+  ) {
+    await this.svc.delete(id);
+    return res.status(HttpStatus.NO_CONTENT).json();
   }
 }

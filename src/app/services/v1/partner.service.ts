@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -78,6 +78,22 @@ export class PartnerService {
     updatedPartner.updateUserId = await this.getUserId();
 
     await this.partnerRepo.update(id, updatedPartner);
+    return;
+  }
+
+  public async delete(id: string): Promise<any> {
+    const partnerExist = await this.partnerRepo.findOne({
+      where: { id, isDeleted: false },
+    });
+    if (!partnerExist) {
+      throw new NotFoundException(`Partner ID ${id} not found!`);
+    }
+
+    const partner = await this.partnerRepo.update(id, { isDeleted: true });
+    if (!partner) {
+      throw new BadRequestException();
+    }
+
     return;
   }
 }
