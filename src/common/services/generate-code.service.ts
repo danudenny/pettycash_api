@@ -15,6 +15,13 @@ export class GenerateCode {
     return pre + randomCode;
   }
 
+  public static partner(dateTime: Date = new Date(), digit: number = 6) {
+    // Format Code: PRTN202102ABC123
+    const prefix = `PRTN${dayjs(dateTime).format('YYYYMM')}`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
+
   public static journal(dateTime: Date, digit: number = 8) {
     // Format Code: JRNL/2020/12/XYZA1234
     const prefix = `JRNL/${dayjs(dateTime).format('YYYY/MM')}/`;
