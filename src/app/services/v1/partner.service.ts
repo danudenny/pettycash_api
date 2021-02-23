@@ -54,6 +54,17 @@ export class PartnerService {
     return new PartnerWithPaginationResponse(partners, params);
   }
 
+  public async get(id: string): Promise<PartnerResponse> {
+    const partner = await this.partnerRepo.findOne({
+      where: { id, isDeleted: false },
+    });
+    if (!partner) {
+      throw new NotFoundException(`Partner ID ${id} not found!`);
+    }
+
+    return new PartnerResponse(partner as any);
+  }
+
   public async create(payload: CreatePartnerDTO) {
     if (payload && !payload.code) {
       payload.code = 'RANDOM_CODE'; // FIXME: Use Random Generator

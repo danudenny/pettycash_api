@@ -55,6 +55,18 @@ export class PartnerController {
     return await this.svc.create(payload);
   }
 
+  @Get('/:id')
+  @ApiOperation({ summary: 'Get partner detail' })
+  @ApiOkResponse({
+    description: 'Get partner',
+    type: PartnerResponse,
+  })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiNotFoundResponse({ description: 'Partner not found' })
+  public async get(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.svc.get(id);
+  }
+
   @Put('/:id')
   @ApiOperation({ summary: 'Update Partner' })
   @ApiOkResponse({ description: 'Partner successfully updated' })

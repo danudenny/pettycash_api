@@ -13,7 +13,7 @@ export class PartnerResponse extends BaseResponse {
     }
   }
 
-  @ApiPropertyOptional({ type: () => [PartnerDTO] })
+  @ApiPropertyOptional({ type: () => PartnerDTO })
   data?: PartnerDTO | PartnerDTO[] = null;
 }
 
