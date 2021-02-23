@@ -28,6 +28,7 @@ import { UserRoleResponse } from '../../domain/user-role/response.dto';
 import { UpdateUserRoleDTO } from '../../domain/user-role/update-user-role.dto';
 import { QueryUserRoleDTO } from '../../domain/user-role/user-role.payload.dto';
 import { UserRoleService } from '../../services/v1/user-role.service';
+import { UserRoleDetailResponse } from '../../domain/user-role/response-detail.dto';
 
 @Controller('v1/user-roles')
 @ApiTags('User Role Mapping')
@@ -49,6 +50,18 @@ export class UserRoleController {
   @ApiBody({ type: CreateUserRoleDTO })
   public async create(@Body() payload: CreateUserRoleDTO) {
     return await this.svc.create(payload);
+  }
+
+  @Get('/:id')
+  @ApiOperation({ summary: 'Get user role mapping' })
+  @ApiOkResponse({
+    description: 'Get user role mapping',
+    type: UserRoleDetailResponse,
+  })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiNotFoundResponse({ description: 'User role mapping not found' })
+  public async get(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.svc.get(id);
   }
 
   @Put('/:id')
