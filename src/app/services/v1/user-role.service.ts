@@ -14,7 +14,7 @@ import { Role } from '../../../model/role.entity';
 import { Branch } from '../../../model/branch.entity';
 import { MASTER_ROLES } from '../../../model/utils/enum';
 import { UpdateUserRoleDTO } from '../../domain/user-role/update-user-role.dto';
-import { isNotEmpty } from 'class-validator';
+import { UserRoleDetailResponse } from '../../domain/user-role/response-detail.dto';
 
 @Injectable()
 export class UserRoleService {
@@ -61,6 +61,32 @@ export class UserRoleService {
 
     const userRoles = await qb.exec();
     return new UserRoleResponse(userRoles);
+  }
+
+  public async get(id: string): Promise<any> {
+    const userRole = await this.userRepo.findOne({
+      where: {
+        id,
+        roleId: Not(IsNull()),
+        isDeleted: false,
+      },
+      relations: ['role', 'branches'],
+      select: [
+        'id',
+        'username',
+        'firstName',
+        'lastName',
+        'roleId',
+        'role',
+        'branches',
+      ],
+    });
+
+    if (!userRole) {
+      throw new NotFoundException(`User ID ${id} not found!`);
+    }
+
+    return new UserRoleDetailResponse(userRole);
   }
 
   private async updateRole(params: CreateUserRoleDTO): Promise<any> {

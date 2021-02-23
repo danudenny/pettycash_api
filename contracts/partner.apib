@@ -81,6 +81,7 @@ Create Partner
     + Attributes (object)
         + code: `QT3001` (string, optional) - Partner code.
         + name: `Sicepat.com` (string) - Partner name.
+        + type: `company` (string) - Partner Type `personal` or `company`.
         + npwpNumber: `1232.1231.999-12.11` (string, optional) - Partner NPWP.
         + idCardNumber: `332211440920001` (string, optional) - Partner ID Card Number (KTP).
         + address: `Jl. dipatiukur no.8, bandung, jawa barat, indonesia` (string) - Partner Address.
@@ -123,6 +124,7 @@ Update Partner
 
     + Attributes (object)
         + name: `Sicepat.com` (string) - Partner name.
+        + type: `company` (string) - Partner Type `personal` or `company`.
         + npwpNumber: `1232.1231.999-12.11` (string, optional) - Partner NPWP.
         + idCardNumber: `332211440920001` (string, optional) - Partner ID Card Number (KTP).
         + address: `Jl. dipatiukur no.8, bandung, jawa barat, indonesia` (string) - Partner Address.
@@ -185,7 +187,7 @@ Update Partner
                 "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
             }
 
-## Approve Partner [POST /v1/partners/{id}/approve]
+## Approve Partner [PUT /v1/partners/{id}/approve]
 
 Untuk Approve Partner yang dibuat.
 
