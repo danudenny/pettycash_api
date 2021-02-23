@@ -1,7 +1,10 @@
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Partner } from '../../../model/partner.entity';
 import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
-import { PartnerResponse } from '../../domain/partner/response.dto';
+import {
+  PartnerResponse,
+  PartnerWithPaginationResponse,
+} from '../../domain/partner/response.dto';
 
 export class PartnerService {
   constructor() {}
@@ -34,6 +37,6 @@ export class PartnerService {
     );
 
     const partners = await qb.exec();
-    return new PartnerResponse(partners);
+    return new PartnerWithPaginationResponse(partners, params);
   }
 }
