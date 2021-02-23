@@ -17,26 +17,32 @@ Untuk mendapatkan daftar master branch (gerai).
 + Response 200 (application/json)
     + Body
 
-            {
+        {
             "status": "success",
             "data": [
                 {
                     "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                    "branchName": "Depok",
-                    "branchCode": "001"
+                    "name": "Depok",
+                    "code": "001"
                 },
                 {
                     "id": "ff0ecebd-4556-4a02-979c-4c9d5488c2ac",
-                    "branchName": "Bogor",
-                    "branchCode": "002"
+                    "name": "Bogor",
+                    "code": "002"
                 },
                 {
                     "id": "ff0ecebd-4556-4a02-979c-4c9d5488c2ac",
-                    "branchName": "Medan",
-                    "branchCode": "003"
+                    "name": "Medan",
+                    "code": "003"
                 }
-            ]
+            ],
+            "meta": {
+                "page": 2,
+                "prevPage": 1,
+                "nextPage": null,
+                "perPage": 10,
             }
+        }
 
 + Response 500 (application/json)
     + Body

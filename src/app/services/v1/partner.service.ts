@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
+import { GenerateCode } from '../../../common/services/generate-code.service';
 import { Partner } from '../../../model/partner.entity';
 import { PartnerState } from '../../../model/utils/enum';
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
@@ -67,7 +68,7 @@ export class PartnerService {
 
   public async create(payload: CreatePartnerDTO) {
     if (payload && !payload.code) {
-      payload.code = 'RANDOM_CODE'; // FIXME: Use Random Generator
+      payload.code = GenerateCode.partner();
     }
 
     const partner = this.partnerRepo.create(payload as Partner);
