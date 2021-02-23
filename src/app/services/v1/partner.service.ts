@@ -1,5 +1,8 @@
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Partner } from '../../../model/partner.entity';
+import { CreatePartnerDTO } from '../../domain/partner/create.dto';
 import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
 import {
   PartnerResponse,
@@ -7,7 +10,15 @@ import {
 } from '../../domain/partner/response.dto';
 
 export class PartnerService {
-  constructor() {}
+  constructor(
+    @InjectRepository(Partner)
+    private readonly partnerRepo: Repository<Partner>,
+  ) {}
+
+  private async getUserId() {
+    // TODO: Use From Authentication User.
+    return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
+  }
 
   async list(query: QueryPartnerDTO): Promise<PartnerResponse> {
     const params = { order: '-createdAt', limit: 25, ...query };
@@ -38,5 +49,18 @@ export class PartnerService {
 
     const partners = await qb.exec();
     return new PartnerWithPaginationResponse(partners, params);
+  }
+
+  public async create(payload: CreatePartnerDTO) {
+    if (payload && !payload.code) {
+      payload.code = 'RANDOM_CODE'; // FIXME: Use Random Generator
+    }
+
+    const partner = this.partnerRepo.create(payload as Partner);
+    partner.createUserId = await this.getUserId();
+    partner.updateUserId = await this.getUserId();
+
+    await this.partnerRepo.save(partner);
+    return;
   }
 }
