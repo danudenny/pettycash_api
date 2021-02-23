@@ -25,7 +25,10 @@ import {
 import { Response } from 'express';
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
 import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
-import { PartnerWithPaginationResponse } from '../../domain/partner/response.dto';
+import {
+  PartnerResponse,
+  PartnerWithPaginationResponse,
+} from '../../domain/partner/response.dto';
 import { UpdatePartnerDTO } from '../../domain/partner/update.dto';
 import { PartnerService } from '../../services/v1/partner.service';
 
@@ -75,5 +78,16 @@ export class PartnerController {
   ) {
     await this.svc.delete(id);
     return res.status(HttpStatus.NO_CONTENT).json();
+  }
+
+  @Put('/:id/approve')
+  @ApiOperation({ summary: 'Approve Partner' })
+  @ApiOkResponse({
+    description: 'Partner successfully approved',
+    type: PartnerResponse,
+  })
+  @ApiBadRequestResponse({ description: 'Failed to approve partner' })
+  public async approve(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.svc.approve(id);
   }
 }

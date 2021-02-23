@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Partner } from '../../../model/partner.entity';
+import { PartnerState } from '../../../model/utils/enum';
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
 import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
 import {
@@ -95,5 +96,31 @@ export class PartnerService {
     }
 
     return;
+  }
+
+  public async approve(id: string): Promise<any> {
+    const partnerExist = await this.partnerRepo.findOne({
+      where: { id, isDeleted: false },
+    });
+    if (!partnerExist) {
+      throw new NotFoundException(`Partner ID ${id} not found!`);
+    }
+
+    if (partnerExist.state === PartnerState.APPROVED) {
+      throw new BadRequestException(
+        `Partner ${partnerExist.name} already approved!`,
+      );
+    }
+
+    const partner = this.partnerRepo.create(partnerExist);
+    partner.state = PartnerState.APPROVED;
+    partner.updateUserId = await this.getUserId();
+
+    const updatePartner = await this.partnerRepo.save(partner);
+    if (!updatePartner) {
+      throw new BadRequestException();
+    }
+
+    return new PartnerResponse(updatePartner as any);
   }
 }
