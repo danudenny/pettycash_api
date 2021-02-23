@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -11,6 +20,7 @@ import {
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
 import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
 import { PartnerWithPaginationResponse } from '../../domain/partner/response.dto';
+import { UpdatePartnerDTO } from '../../domain/partner/update.dto';
 import { PartnerService } from '../../services/v1/partner.service';
 
 @Controller('v1/partners')
@@ -34,5 +44,17 @@ export class PartnerController {
   @ApiBody({ type: CreatePartnerDTO })
   public async create(@Body() payload: CreatePartnerDTO) {
     return await this.svc.create(payload);
+  }
+
+  @Put('/:id')
+  @ApiOperation({ summary: 'Update Partner' })
+  @ApiOkResponse({ description: 'Partner successfully updated' })
+  @ApiBadRequestResponse({ description: 'Failed to update partner' })
+  @ApiBody({ type: UpdatePartnerDTO })
+  public async update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() payload: UpdatePartnerDTO,
+  ) {
+    return await this.svc.update(id, payload);
   }
 }

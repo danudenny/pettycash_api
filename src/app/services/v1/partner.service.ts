@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -8,6 +9,7 @@ import {
   PartnerResponse,
   PartnerWithPaginationResponse,
 } from '../../domain/partner/response.dto';
+import { UpdatePartnerDTO } from '../../domain/partner/update.dto';
 
 export class PartnerService {
   constructor(
@@ -61,6 +63,21 @@ export class PartnerService {
     partner.updateUserId = await this.getUserId();
 
     await this.partnerRepo.save(partner);
+    return;
+  }
+
+  public async update(id: string, payload: UpdatePartnerDTO) {
+    const partner = await this.partnerRepo.findOne({
+      where: { id, isDeleted: false },
+    });
+    if (!partner) {
+      throw new NotFoundException(`Partner ID ${id} not found!`);
+    }
+
+    const updatedPartner = this.partnerRepo.create(payload as Partner);
+    updatedPartner.updateUserId = await this.getUserId();
+
+    await this.partnerRepo.update(id, updatedPartner);
     return;
   }
 }
