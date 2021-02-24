@@ -10,6 +10,8 @@ import RoleSPVHO from './role-permission/role-spv-ho';
 import RoleAdminBranch from './role-permission/role-admin-branch';
 import RoleOPS from './role-permission/role-ops';
 import RoleTax from './role-permission/role-tax';
+import { User } from '../model/user.entity';
+import { Branch } from '../model/branch.entity';
 
 const getRole = async (name: string, conn: Connection): Promise<Role> => {
   const search = await conn.getRepository(Role).findOne({
@@ -46,6 +48,19 @@ const assignRolePermission = async (
   return await conn.getRepository(Role).save(cRole);
 };
 
+const asssignUserToRole = async (role: string, conn: Connection) => {
+  const userRepo = conn.getRepository(User);
+  const branchRepo = conn.getRepository(Branch);
+  const cUser: User = await userRepo.findOne();
+  cUser.role = await getRole(role, conn);
+  cUser.branches = await branchRepo.find({ take: 2 });
+  return await userRepo.save(cUser);
+};
+
+const AssignRandomUserToRole = async (conn: Connection) => {
+  return await asssignUserToRole(MASTER_ROLES.SUPERUSER, conn);
+};
+
 const ResetRolePermission = async (conn: Connection) => {
   const q = `DELETE FROM "role_permission"`;
   return await conn.query(q);
@@ -63,4 +78,4 @@ const SeedRolePermission = async (conn: Connection) => {
   await assignRolePermission(MASTER_ROLES.TAX, RoleTax, conn);
 };
 
-export { ResetRolePermission, SeedRolePermission };
+export { ResetRolePermission, SeedRolePermission, AssignRandomUserToRole };
