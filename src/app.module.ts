@@ -14,6 +14,7 @@ import { EmployeeModule } from './app/modules/employee.module';
 import { RoleModule } from './app/modules/role.module';
 import { UserRoleModule } from './app/modules/user-role.module';
 import { UserModule } from './app/modules/user.module';
+import { AuthModule } from './app/modules/auth.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { UserModule } from './app/modules/user.module';
     DepartmentModule,
     EmployeeModule,
     UserModule,
+    AuthModule,
     RoleModule,
     UserRoleModule,
   ],
