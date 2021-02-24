@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccountTax } from '../../../../model/account-tax.entity';
-import { TaxResponse } from '../../../domain/tax/tax-response.dto';
+import { TaxResponse, TaxWithPaginationResponse } from '../../../domain/tax/tax-response.dto';
 import { QueryTaxDTO } from '../../../domain/tax/tax.payload.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { CreateTaxDTO } from '../../../domain/tax/create-tax.dto';
@@ -20,7 +20,7 @@ export class TaxService {
     return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
   }
 
-  public async list(query?: QueryTaxDTO): Promise<TaxResponse> {
+  public async list(query?: QueryTaxDTO): Promise<TaxWithPaginationResponse> {
     const params = { order: '^created_at', limit: 10, ...query };
     const qb = new QueryBuilder(AccountTax, 'tax', params);
 
@@ -49,7 +49,7 @@ export class TaxService {
     );
 
     const taxes = await qb.exec();
-    return new TaxResponse(taxes);
+    return new TaxWithPaginationResponse(taxes, params);
   }
 
   public async create(data: CreateTaxDTO): Promise<TaxResponse> {

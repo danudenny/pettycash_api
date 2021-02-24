@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ProductService } from '../../../services/master/v1/product.service';
 import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { ProductResponse } from '../../../domain/product/response.dto';
+import { ProductResponse, ProductWithPaginationResponse } from '../../../domain/product/response.dto';
 import { QueryProductDTO } from '../../../domain/product/product.payload.dto';
 import { CreateProductDTO } from '../../../domain/product/create-product.dto';
 import UpdateProductDTO from '../../../domain/product/update-product.dto';
@@ -14,7 +14,7 @@ export class ProductsController {
 
   @Get('')
   @ApiOperation({ summary: 'List all Products' })
-  @ApiOkResponse({ type: ProductResponse })
+  @ApiOkResponse({ type: ProductWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async list(@Query() query: QueryProductDTO){
     return await this.prodService.list(query);

@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Product } from '../../../../model/product.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { QueryProductDTO } from '../../../domain/product/product.payload.dto';
-import { ProductResponse } from '../../../domain/product/response.dto';
+import { ProductResponse, ProductWithPaginationResponse } from '../../../domain/product/response.dto';
 import { CreateProductDTO } from '../../../domain/product/create-product.dto';
 import UpdateProductDTO from '../../../domain/product/update-product.dto';
 
@@ -20,7 +20,7 @@ export class ProductService {
     return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
   }
 
-  public async list(query?: QueryProductDTO): Promise<ProductResponse> {
+  public async list(query?: QueryProductDTO): Promise<ProductWithPaginationResponse> {
     const params = { order: '^code', limit: 10, ...query };
     const qb = new QueryBuilder(Product, 'prod', params);
 
@@ -52,7 +52,7 @@ export class ProductService {
     );
 
     const products = await qb.exec();
-    return new ProductResponse(products);
+    return new ProductWithPaginationResponse(products, params);
   }
 
   public async create(data: CreateProductDTO): Promise<ProductResponse> {

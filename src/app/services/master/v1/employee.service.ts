@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Employee } from '../../../../model/employee.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { QueryEmployeeDTO } from '../../../domain/employee/employee.payload.dto';
-import { EmployeeResponse } from '../../../domain/employee/employee-response.dto';
+import { EmployeeResponse, EmployeeWithPaginationResponse } from '../../../domain/employee/employee-response.dto';
 
 @Injectable()
 export class EmployeeService {
@@ -19,7 +19,7 @@ export class EmployeeService {
     return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
   }
 
-  public async list(query?: QueryEmployeeDTO): Promise<EmployeeResponse> {
+  public async list(query?: QueryEmployeeDTO): Promise<EmployeeWithPaginationResponse> {
     const params = { order: '^id', limit: 10, ...query };
     const qb = new QueryBuilder(Employee, 'emp', params);
 
@@ -47,6 +47,6 @@ export class EmployeeService {
     );
 
     const emp = await qb.exec();
-    return new EmployeeResponse(emp);
+    return new EmployeeWithPaginationResponse(emp, params);
   }
 }
