@@ -16,7 +16,7 @@ import PermissionSeed from '../seeders/permission.seed';
 import RoleSeed from '../seeders/role.seed';
 import { UserSeed } from '../seeders/user.seed';
 
-import { ResetRolePermission, SeedRolePermission } from '../seeders/role-permission.seed';
+import { AssignRandomUserToRole, ResetRolePermission, SeedRolePermission } from '../seeders/role-permission.seed';
 
 async function run() {
   // init connection
@@ -56,6 +56,9 @@ async function run() {
 
   // seed data mapping role and permission
   await SeedRolePermission(connection);
+
+  // assign random user to role
+  await AssignRandomUserToRole(connection);
   // --- End Role and Permissions --- //
 
   // Close connection after running seeder.
