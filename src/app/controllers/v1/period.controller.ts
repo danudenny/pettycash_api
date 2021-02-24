@@ -2,13 +2,11 @@ import {
   Body,
   Controller,
   Get,
-  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
   Query,
-  Res,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -19,8 +17,10 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Response } from 'express';
-import { PeriodResponse } from '../../domain/period/response.dto';
+import {
+  PeriodActionResponse,
+  PeriodResponse,
+} from '../../domain/period/response.dto';
 import { PeriodYearResponse } from '../../domain/period/response-year.dto';
 import { PeriodService } from '../../services/v1/period.service';
 import {
@@ -60,26 +60,26 @@ export class PeriodController {
 
   @Put('/:id/close')
   @ApiOperation({ summary: 'Close a period' })
-  @ApiCreatedResponse({ description: 'Successfully close period.' })
+  @ApiOkResponse({
+    description: 'Successfully close period.',
+    type: PeriodActionResponse,
+  })
   @ApiBadRequestResponse({ description: 'Failed to close period' })
   public async close(
-    @Res() res: Response,
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() payload?: ClosePeriodDTO,
   ) {
-    await this.svc.close(id, payload);
-    return res.status(HttpStatus.CREATED).json();
+    return await this.svc.close(id, payload);
   }
 
   @Put('/:id/open')
   @ApiOperation({ summary: 'Re-Open a closed period' })
-  @ApiCreatedResponse({ description: 'Successfully re-open period.' })
+  @ApiOkResponse({
+    description: 'Successfully re-open period.',
+    type: PeriodActionResponse,
+  })
   @ApiBadRequestResponse({ description: 'Failed to re-open period' })
-  public async open(
-    @Res() res: Response,
-    @Param('id', new ParseUUIDPipe()) id: string
-  ) {
-    await this.svc.open(id);
-    return res.status(HttpStatus.CREATED).json();
+  public async open(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.svc.open(id);
   }
 }

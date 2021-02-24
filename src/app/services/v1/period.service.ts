@@ -7,7 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Period } from '../../../model/period.entity';
-import { PeriodResponse } from '../../domain/period/response.dto';
+import {
+  PeriodActionResponse,
+  PeriodResponse,
+} from '../../domain/period/response.dto';
 import { PeriodYearResponse } from '../../domain/period/response-year.dto';
 import {
   ClosePeriodDTO,
@@ -129,7 +132,10 @@ export class PeriodService {
     return;
   }
 
-  async close(id: string, payload?: ClosePeriodDTO): Promise<any> {
+  async close(
+    id: string,
+    payload?: ClosePeriodDTO,
+  ): Promise<PeriodActionResponse> {
     const period = await this.periodRepo.findOne(id, {
       where: { isDeleted: false },
     });
@@ -170,17 +176,21 @@ export class PeriodService {
       );
     }
 
-    const closeDate = dayjs(payload && payload.closeDate).toDate();
-    await this.periodRepo.save({
-      ...period,
-      state: PeriodState.CLOSE,
-      closeDate,
-      closeUserId: await this.getUserId(),
+    period.state = PeriodState.CLOSE;
+    period.closeDate = dayjs(payload && payload.closeDate).toDate();
+    period.closeUserId = await this.getUserId();
+    await this.periodRepo.save(period);
+
+    // Refetch period with closeUser info for FE need! \(o_o)/
+    const updatedPeriod = await this.periodRepo.findOne(id, {
+      where: { isDeleted: false },
+      relations: ['closeUser'],
     });
-    return;
+
+    return new PeriodActionResponse(updatedPeriod);
   }
 
-  async open(id: string): Promise<any> {
+  async open(id: string): Promise<PeriodActionResponse> {
     const period = await this.periodRepo.findOne(id, {
       where: { isDeleted: false },
     });
@@ -193,12 +203,11 @@ export class PeriodService {
       throw new BadRequestException(`Period ${period.name} already open!`);
     }
 
-    await this.periodRepo.save({
-      ...period,
-      state: PeriodState.OPEN,
-      closeDate: null,
-      closeUserId: null,
-    });
-    return;
+    period.state = PeriodState.OPEN;
+    period.closeDate = null;
+    period.closeUser = null;
+    await this.periodRepo.save(period);
+
+    return new PeriodActionResponse(period);
   }
 }

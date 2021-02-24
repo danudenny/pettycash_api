@@ -14,3 +14,18 @@ export class PeriodResponse extends BaseResponse {
   @ApiPropertyOptional({ type: () => [PeriodDTO] })
   data?: PeriodDTO | PeriodDTO[] = null;
 }
+
+/**
+ * Period Action (open, close) Response
+ */
+export class PeriodActionResponse extends BaseResponse {
+  constructor(data?: any) {
+    super();
+    if (data) {
+      this.data = PeriodResponseMapper.fromEntity(data);
+    }
+  }
+
+  @ApiPropertyOptional({ type: () => PeriodDTO })
+  data?: PeriodDTO | PeriodDTO[] = null;
+}
