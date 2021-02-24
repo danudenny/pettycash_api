@@ -2,7 +2,7 @@ import { EmployeeDTO } from './employee.dto';
 import { Employee } from '../../../model/employee.entity';
 
 export class EmployeeResponseMapper {
-  public static fromDTO(dto: Partial<EmployeeDTO>): EmployeeDTO {
+  public static toDTO(dto: Partial<EmployeeDTO>): EmployeeDTO {
     const it = new EmployeeDTO();
     it.id = dto.id;
     it.employeeId = dto.employeeId;
@@ -17,7 +17,7 @@ export class EmployeeResponseMapper {
   }
 
   public static fromOneEntity(ety: Partial<Employee>) {
-    return this.fromDTO({
+    return this.toDTO({
       id: ety.id,
       employeeId: ety.employeeId,
       nik: ety.nik,
@@ -32,6 +32,20 @@ export class EmployeeResponseMapper {
 
   public static fromManyEntity(entities: Partial<Employee[]>) {
     return entities.map((e) => EmployeeResponseMapper.fromOneEntity(e));
+  }
+
+  public static toManyDTO(entities: Partial<EmployeeDTO[]>) {
+    return entities.map((e) => EmployeeResponseMapper.toDTO(e));
+  }
+
+  public static fromDTO(
+    data: Partial<EmployeeDTO | EmployeeDTO[]>,
+  ): EmployeeDTO | EmployeeDTO[] {
+    if (!Array.isArray(data)) {
+      return this.toDTO(data);
+    } else {
+      return this.toManyDTO(data);
+    }
   }
 
   public static fromEntity(

@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Department } from '../../../../model/department.entity';
 import { QueryDepartmentDTO } from '../../../domain/department/department.payload.dto';
-import { DepartmentResponse } from '../../../domain/department/department-response.dto';
+import { DepartmentResponse, DepartmentWithPaginationResponse } from '../../../domain/department/department-response.dto';
 
 @Injectable()
 export class DepartmentService {
@@ -14,7 +14,7 @@ export class DepartmentService {
   ) {
   }
 
-  public async list(query?: QueryDepartmentDTO): Promise<DepartmentResponse> {
+  public async list(query?: QueryDepartmentDTO): Promise<DepartmentWithPaginationResponse> {
     const params = { order: '^code', limit: 10, ...query };
     const qb = new QueryBuilder(Department, 'dept', params);
 
@@ -35,6 +35,6 @@ export class DepartmentService {
     );
 
     const dept = await qb.exec();
-    return new DepartmentResponse(dept);
+    return new DepartmentWithPaginationResponse(dept, params);
   }
 }
