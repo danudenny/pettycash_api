@@ -7,6 +7,9 @@ import { ValidationPipe } from './common/pipes/validation.pipe';
 import { Logger, PinoLogger } from 'nestjs-pino';
 import { BranchQueueService } from './app/queues/branch.queue.service';
 import { BranchCronService } from './app/queues/branch.cron.service';
+import { ContextService } from './common/services/context.service';
+import { Request, Response, NextFunction } from 'express';
+import { contextMiddleware } from './common/middleware/context.middleware';
 
 const logger = new PinoLogger({});
 
@@ -21,6 +24,14 @@ async function bootstrap() {
   // app.use(urlencoded({ extended: true, limit: '10mb' }));
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe());
+
+  // RequestContext
+  app.use(contextMiddleware);
+  // FIXME: refactor this!
+  app.use(function (req: Request, res: Response, next: NextFunction) {
+    ContextService.set('headers', req.headers);
+    next();
+  });
 
   // Only create bull-board if background job activated.
   if (LoaderEnv.envs.APP_USE_BACKGROUND_JOB) {
