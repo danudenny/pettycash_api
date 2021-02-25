@@ -5,6 +5,7 @@ import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { Partner } from '../../../model/partner.entity';
 import { PartnerState } from '../../../model/utils/enum';
+import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../shared/errors';
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
 import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
 import {
@@ -75,7 +76,14 @@ export class PartnerService {
     partner.createUserId = await this.getUserId();
     partner.updateUserId = await this.getUserId();
 
-    await this.partnerRepo.save(partner);
+    try {
+      await this.partnerRepo.save(partner);
+    } catch (err) {
+      if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
+        throw new BadRequestException(`name and address should be unique!`);
+      }
+      throw err;
+    }
     return;
   }
 
