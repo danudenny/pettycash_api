@@ -1,0 +1,94 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Budget
+
+# Group Budget
+
+## List Budget [GET /v1/budgets]
+
+Untuk mendapatkan daftar budget.
+
++ Parameters
+    + startDate__gte: `2021-02-09T17:00:00.000Z` (date, optional) - Searching budget with date range from date start.
+    + endDate__gte: `2021-02-15T17:00:00.000Z` (date, optional) - Searching budget with date range from end date.
+    + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string, optional) - Searching budget by branch id.
+    + minAmount__gte: `1000000` (number, optional) - Searching range total amount - min.
+    + maxAmount__gte: `8000000` (number, optional) - Searching range total amount - max.
+    + state: `draft` (enum, optional) - Searching budget status `draft, approve_by_ho, approve_by_ss, rejected`
+    + order: `-minimumAmount` (string, optional) - Sort / order bucget by minimumAmount ascending.
+
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+      "status": "success",
+      "data": [
+          {
+              "id": "d4923882-f5a0-4517-9229-a0d9908a1eb6",
+              "branchId": "eaaf465b-65bc-4784-909e-8d0180c6eb4c",
+              "branchName": "Tangerang Pinang",
+              "number": "BGT00001",
+              "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+              "responsibleUserFirstName": "Adry",
+              "responsibleUserLastName": "Adry",
+              "responsibleUserUsername": "adry",
+              "startDate": "2021-02-09T17:00:00.000Z",
+              "endDate": "2021-02-15T17:00:00.000Z",
+              "minimumAmount": "2000000",
+              "totalAmount": "7000000",
+              "state": "draft",
+              "rejectedNote": null
+          },
+          {
+              "id": "9177edfe-1846-4f6a-8e3d-11feabb9867d",
+              "branchId": "28786cd1-bb9e-4926-a332-3a2e1c302e68",
+              "branchName": "Medan",
+              "number": "BGT00002",
+              "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+              "responsibleUserFirstName": "Adry",
+              "responsibleUserLastName": "Adry",
+              "responsibleUserUsername": "adry",
+              "startDate": "2021-02-16T17:00:00.000Z",
+              "endDate": "2021-02-22T17:00:00.000Z",
+              "minimumAmount": "2285714",
+              "totalAmount": "8000000",
+              "state": "draft",
+              "rejectedNote": null
+          },
+          {
+              "id": "46dc5599-43f0-4569-b5f0-33e25f4cd29c",
+              "branchId": "eaaf465b-65bc-4784-909e-8d0180c6eb4c",
+              "branchName": "Tangerang Pinang",
+              "number": "BGT/2021/02/QHRT0857",
+              "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+              "responsibleUserFirstName": "Adry",
+              "responsibleUserLastName": "Adry",
+              "responsibleUserUsername": "adry",
+              "startDate": "2021-02-16T17:00:00.000Z",
+              "endDate": "2021-02-22T17:00:00.000Z",
+              "minimumAmount": "2000000",
+              "totalAmount": "7000000",
+              "state": "draft",
+              "rejectedNote": null
+          }
+      ],
+      "meta": {
+          "page": 1,
+          "prevPage": null,
+          "nextPage": null,
+          "perPage": 10
+      }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "message": "Internal Server Error"
+            }
