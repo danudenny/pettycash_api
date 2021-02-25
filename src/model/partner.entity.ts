@@ -1,8 +1,9 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Unique, Column } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { PartnerState, PartnerType } from './utils/enum';
 
 @Entity('partner')
+@Unique('unique_partner__name_address', ['name', 'address'])
 export class Partner extends PtcBaseEntity {
   @Column({
     type: 'varchar',

@@ -59,7 +59,7 @@ export class Role extends BaseEntity {
   })
   updateUserId: string;
 
-  @ManyToMany(() => Permission)
+  @ManyToMany(() => Permission, { nullable: false, onDelete: 'RESTRICT' })
   @JoinTable({
     name: 'role_permission',
     joinColumn: {
