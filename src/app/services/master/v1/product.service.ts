@@ -62,7 +62,8 @@ export class ProductService {
     prodDto.updateUserId = await this.getUserId();
 
     try {
-      await this.productRepo.save(prodDto);
+      const product = await this.productRepo.save(prodDto);
+      return new ProductResponse(product);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
         throw new BadRequestException(`name and code should be unique!`);
@@ -70,8 +71,6 @@ export class ProductService {
       throw err;
     }
 
-    const product = await this.productRepo.save(prodDto);
-    return new ProductResponse(product);
   }
 
   public async update(id: string, data: UpdateProductDTO): Promise<ProductResponse> {
@@ -83,7 +82,8 @@ export class ProductService {
     values.updateUserId = await this.getUserId();
 
     try {
-      await this.productRepo.save(values);
+      const product = await this.productRepo.update(id, values);
+      return new ProductResponse(product as any);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
         throw new BadRequestException(`name and code should be unique!`);
@@ -91,8 +91,6 @@ export class ProductService {
       throw err;
     }
 
-    const product = await this.productRepo.update(id, values);
-    return new ProductResponse(product as any);
   }
 
   public async delete(id: string): Promise<any> {
