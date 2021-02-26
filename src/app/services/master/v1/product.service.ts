@@ -7,6 +7,7 @@ import { QueryProductDTO } from '../../../domain/product/product.payload.dto';
 import { ProductResponse, ProductWithPaginationResponse } from '../../../domain/product/response.dto';
 import { CreateProductDTO } from '../../../domain/product/create-product.dto';
 import UpdateProductDTO from '../../../domain/product/update-product.dto';
+import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../../shared/errors';
 
 @Injectable()
 export class ProductService {
@@ -60,6 +61,15 @@ export class ProductService {
     prodDto.createUserId = await this.getUserId();
     prodDto.updateUserId = await this.getUserId();
 
+    try {
+      await this.productRepo.save(prodDto);
+    } catch (err) {
+      if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
+        throw new BadRequestException(`name and code should be unique!`);
+      }
+      throw err;
+    }
+
     const product = await this.productRepo.save(prodDto);
     return new ProductResponse(product);
   }
@@ -71,6 +81,15 @@ export class ProductService {
     }
     const values = await this.productRepo.create(data);
     values.updateUserId = await this.getUserId();
+
+    try {
+      await this.productRepo.save(values);
+    } catch (err) {
+      if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
+        throw new BadRequestException(`name and code should be unique!`);
+      }
+      throw err;
+    }
 
     const product = await this.productRepo.update(id, values);
     return new ProductResponse(product as any);
