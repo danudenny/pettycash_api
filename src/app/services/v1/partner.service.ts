@@ -80,7 +80,7 @@ export class PartnerService {
       await this.partnerRepo.save(partner);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`name and address should be unique!`);
+        throw new BadRequestException(`Nama partner dengan alamat yang sama sudah pernah dibuat`);
       }
       throw err;
     }
@@ -102,7 +102,7 @@ export class PartnerService {
       await this.partnerRepo.update(id, updatedPartner);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`name and address should be unique!`);
+        throw new BadRequestException(`Nama partner dengan alamat yang sama sudah pernah dibuat`);
       }
       throw err;
     }
