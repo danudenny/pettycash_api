@@ -98,7 +98,14 @@ export class PartnerService {
     const updatedPartner = this.partnerRepo.create(payload as Partner);
     updatedPartner.updateUserId = await this.getUserId();
 
-    await this.partnerRepo.update(id, updatedPartner);
+    try {
+      await this.partnerRepo.update(id, updatedPartner);
+    } catch (err) {
+      if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
+        throw new BadRequestException(`name and address should be unique!`);
+      }
+      throw err;
+    }
     return;
   }
 
