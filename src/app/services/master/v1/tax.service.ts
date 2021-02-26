@@ -59,7 +59,8 @@ export class TaxService {
     taxDto.updateUserId = await this.getUserId();
 
     try {
-      await this.taxRepo.save(taxDto);
+      const tax = await this.taxRepo.save(taxDto);
+      return new TaxResponse(tax);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
         throw new BadRequestException(`Name should be unique!`);
@@ -67,8 +68,6 @@ export class TaxService {
       throw err;
     }
 
-    const tax = await this.taxRepo.save(taxDto);
-    return new TaxResponse(tax);
   }
 
   public async update(id: string, data: UpdateTaxDTO): Promise<TaxResponse> {
@@ -80,7 +79,8 @@ export class TaxService {
     values.updateUserId = await this.getUserId();
 
     try {
-      await this.taxRepo.save(values);
+      const tax = await this.taxRepo.update(id, values);
+      return new TaxResponse(tax as any);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
         throw new BadRequestException(`Name should be unique!`);
@@ -88,8 +88,6 @@ export class TaxService {
       throw err;
     }
 
-    const tax = await this.taxRepo.update(id, values);
-    return new TaxResponse(tax as any);
   }
 
   public async delete(id: string): Promise<any> {
