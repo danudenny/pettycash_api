@@ -1,10 +1,23 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Patch, Post, Query, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpException,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiBadRequestResponse, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { BudgetService } from '../../services/v1/budget.service';
 import { BudgetResponse, BudgetWithPaginationResponse } from '../../domain/budget/budget-response.dto';
 import { QueryBugdetDTO } from '../../domain/budget/budget.payload.dto';
 import FindIdParams from '../../domain/common/findId-param.dto';
-import { CreateBudgetDTO, UpdateBudgetDTO } from '../../domain/budget/budget-createUpdate.dto';
+import { CreateBudgetDTO, RejectBudgetDTO, UpdateBudgetDTO } from '../../domain/budget/budget-createUpdate.dto';
 import { FindBudgetIdParams } from '../../domain/budget/budget.dto';
 
 @Controller('v1/budgets')
@@ -60,7 +73,7 @@ export class BudgetController {
     @Param() { id }: FindIdParams,
   ) {
     const budgetDuplicate = await this.budgetService.duplicate(id);
-    console.log(budgetDuplicate);
+
     if(budgetDuplicate) {
       return budgetDuplicate;
     } else {
@@ -78,6 +91,42 @@ export class BudgetController {
     @Body() payload: UpdateBudgetDTO,
   ) {
     return await this.budgetService.update(id, payload);
+  }
+
+  @Put('/:id/approve_by_ss')
+  @ApiOperation({ summary: 'Approve Budget By Senior Supervisor' })
+  @ApiOkResponse({
+    description: 'Budget successfully approved by SS',
+    type: BudgetResponse,
+  })
+  @ApiBadRequestResponse({ description: 'Failed to approve Budget' })
+  public async approve_by_ss(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.budgetService.approve_by_ss(id);
+  }
+
+  @Put('/:id/approve_by_spv')
+  @ApiOperation({ summary: 'Approve Budget By Supervisor' })
+  @ApiOkResponse({
+    description: 'Budget successfully approved by SPV',
+    type: BudgetResponse,
+  })
+  @ApiBadRequestResponse({ description: 'Failed to approve Budget' })
+  public async approve_by_spv(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.budgetService.approve_by_spv(id);
+  }
+
+  @Put('/:id/reject')
+  @ApiOperation({ summary: 'Reject Budget' })
+  @ApiOkResponse({
+    description: 'Budget successfully rejected',
+    type: BudgetResponse,
+  })
+  @ApiBadRequestResponse({ description: 'Failed to reject Budget' })
+  public async reject(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() data: RejectBudgetDTO
+  ) {
+    return await this.budgetService.reject(id, data);
   }
 
   @Delete(':id/delete')

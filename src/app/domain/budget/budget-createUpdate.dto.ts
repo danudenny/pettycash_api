@@ -131,3 +131,12 @@ export class UpdateBudgetDTO {
   @IsOptional()
   rejectedNote: string
 }
+
+export class RejectBudgetDTO {
+  @ApiProperty({
+    description: 'Budget Rejection Note',
+    example: 'Budget melebihi batas minimum'
+  })
+  @IsOptional()
+  rejectedNote: string
+}

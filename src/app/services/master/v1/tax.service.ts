@@ -7,6 +7,7 @@ import { QueryTaxDTO } from '../../../domain/tax/tax.payload.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { CreateTaxDTO } from '../../../domain/tax/create-tax.dto';
 import { UpdateTaxDTO } from '../../../domain/tax/update-tax.dto';
+import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../../shared/errors';
 
 @Injectable()
 export class TaxService {
@@ -57,6 +58,15 @@ export class TaxService {
     taxDto.createUserId = await this.getUserId();
     taxDto.updateUserId = await this.getUserId();
 
+    try {
+      await this.taxRepo.save(taxDto);
+    } catch (err) {
+      if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
+        throw new BadRequestException(`Name should be unique!`);
+      }
+      throw err;
+    }
+
     const tax = await this.taxRepo.save(taxDto);
     return new TaxResponse(tax);
   }
@@ -68,6 +78,15 @@ export class TaxService {
     }
     const values = await this.taxRepo.create(data);
     values.updateUserId = await this.getUserId();
+
+    try {
+      await this.taxRepo.save(values);
+    } catch (err) {
+      if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
+        throw new BadRequestException(`Name should be unique!`);
+      }
+      throw err;
+    }
 
     const tax = await this.taxRepo.update(id, values);
     return new TaxResponse(tax as any);
