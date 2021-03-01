@@ -9,10 +9,6 @@ import * as moment from 'moment-timezone';
   imports: [TypeOrmModule.forFeature([Budget])],
   providers: [
     BudgetService,
-    {
-      provide: 'MomentWrapper',
-      useValue: moment
-    },
   ],
   controllers: [BudgetController],
   exports: [],
