@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID, IsString, IsOptional } from 'class-validator';
 
 export class UpdateProductDTO {
-  @ApiProperty({
-    description: 'Product Code',
-    example: 'PR00001',
-  })
-  code: string;
+  // @ApiProperty({
+  //   description: 'Product Code',
+  //   example: 'PR00001',
+  // })
+  // code: string;
 
   @ApiProperty({
     description: 'Product Name',

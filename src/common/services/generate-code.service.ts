@@ -30,8 +30,15 @@ export class GenerateCode {
   }
 
   public static budget(dateTime: Date = new Date(), digit: number = 8) {
-    // Format Code: JRNL/2020/12/XYZA1234
+    // Format Code: BGT/2020/12/XYZA1234
     const prefix = `BGT/${dayjs(dateTime).format('YYYY/MM')}/`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
+
+  public static product(dateTime: Date = new Date(), digit: number = 8) {
+    // Format Code: PRD/2020/12/XYZA1234
+    const prefix = `PRD/${dayjs(dateTime).format('YYYY/MM')}/`;
     const randomCode = this.randomCode(digit);
     return prefix + randomCode.toString();
   }

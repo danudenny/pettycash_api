@@ -10,6 +10,7 @@ export class Product extends PtcBaseEntity {
     length: 50,
     nullable: true,
     name: 'code',
+    unique: true
   })
   code: string;
 
@@ -18,6 +19,7 @@ export class Product extends PtcBaseEntity {
     length: 100,
     nullable: false,
     name: 'name',
+    unique: true,
   })
   name: string;
 

@@ -17,7 +17,7 @@ export class ProductDTO {
 
   @ApiProperty({
     description: 'Product Name',
-    example: 'Tiket Pesawat',
+    example: 'Tiket Pesawat'
   })
   name: string;
 

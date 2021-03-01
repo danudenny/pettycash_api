@@ -5,7 +5,12 @@ import { AccountTaxPartnerType } from './utils/enum';
 
 @Entity('account_tax')
 export class AccountTax extends PtcBaseEntity {
-  @Column({ type: 'varchar', name: 'name' })
+  @Column({
+    type: 'varchar',
+    name: 'name',
+    unique: true,
+    nullable: false,
+  })
   name: string;
 
   @Column({
