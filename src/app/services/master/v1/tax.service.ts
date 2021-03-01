@@ -8,6 +8,7 @@ import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { CreateTaxDTO } from '../../../domain/tax/create-tax.dto';
 import { UpdateTaxDTO } from '../../../domain/tax/update-tax.dto';
 import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../../shared/errors';
+import { GenerateCode } from '../../../../common/services/generate-code.service';
 
 @Injectable()
 export class TaxService {

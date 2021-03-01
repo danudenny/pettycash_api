@@ -8,6 +8,7 @@ import { ProductResponse, ProductWithPaginationResponse } from '../../../domain/
 import { CreateProductDTO } from '../../../domain/product/create-product.dto';
 import UpdateProductDTO from '../../../domain/product/update-product.dto';
 import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../../shared/errors';
+import { GenerateCode } from '../../../../common/services/generate-code.service';
 
 @Injectable()
 export class ProductService {
@@ -58,15 +59,23 @@ export class ProductService {
 
   public async create(data: CreateProductDTO): Promise<ProductResponse> {
     const prodDto = await this.productRepo.create(data);
+    const prodExist = await this.productRepo.findOne({name: prodDto.name, isDeleted: false})
     prodDto.createUserId = await this.getUserId();
     prodDto.updateUserId = await this.getUserId();
+    prodDto.code = GenerateCode.product();
+
+    if(!prodDto.name) {
+      throw new BadRequestException(
+        `Product Name cannot be empty!`,
+      );
+    }
 
     try {
       const product = await this.productRepo.save(prodDto);
       return new ProductResponse(product);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`name and code should be unique!`);
+        throw new BadRequestException(`Name already exists!`);
       }
       throw err;
     }
@@ -76,7 +85,7 @@ export class ProductService {
   public async update(id: string, data: UpdateProductDTO): Promise<ProductResponse> {
     const prodExist = await this.productRepo.findOne({ id, isDeleted: false });
     if (!prodExist) {
-      throw new NotFoundException();
+      throw new NotFoundException('Product ID Not Found');
     }
     const values = await this.productRepo.create(data);
     values.updateUserId = await this.getUserId();
@@ -86,7 +95,7 @@ export class ProductService {
       return new ProductResponse(product as any);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`name and code should be unique!`);
+        throw new BadRequestException(`Name already exists!`);
       }
       throw err;
     }

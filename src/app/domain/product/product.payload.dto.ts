@@ -6,13 +6,13 @@ export class QueryProductDTO extends BasePayload {
     description: 'Product Code',
     example: 'PR00001',
   })
-  code: string;
+  code__contains: string;
 
   @ApiPropertyOptional({
     description: 'Product Name',
     example: 'Tiket Pesawat',
   })
-  name: string;
+  name__contains: string;
 
   @ApiPropertyOptional({
     description: 'Product Tax Having',
