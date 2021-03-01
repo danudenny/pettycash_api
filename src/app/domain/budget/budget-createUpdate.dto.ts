@@ -1,8 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsDateString, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
 import { BudgetState } from '../../../model/utils/enum';
-import { Type } from 'class-transformer';
-import { AfterInsert } from 'typeorm';
 
 export class CreateBudgetDTO {
   @ApiProperty({
@@ -37,11 +35,6 @@ export class CreateBudgetDTO {
   })
   @IsOptional()
   endDate: Date;
-
-  @AfterInsert()
-  async addDays(): Promise<void> {
-    this.endDate = await new Date(this.startDate.getDate() + 7);
-  }
 
   @ApiProperty({
     description: 'Budget Minimum Amount',

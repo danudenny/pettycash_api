@@ -16,6 +16,7 @@ import { UserRoleModule } from './app/modules/user-role.module';
 import { UserModule } from './app/modules/user.module';
 import { BudgetModule } from './app/modules/budget.module';
 import { AuthModule } from './app/modules/auth.module';
+import { BudgetItemModule } from './app/modules/budget-item.module';
 
 @Module({
   imports: [
@@ -38,7 +39,8 @@ import { AuthModule } from './app/modules/auth.module';
     AuthModule,
     RoleModule,
     UserRoleModule,
-    BudgetModule
+    BudgetModule,
+    BudgetItemModule
   ],
   controllers: [],
   providers: [],
