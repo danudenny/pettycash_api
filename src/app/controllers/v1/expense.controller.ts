@@ -10,12 +10,15 @@ import {
   Query,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
-  ApiNoContentResponse,
+  ApiNoContentResponse, ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
 import { ExpenseService } from '../../services/v1/expense.service';
+import { QueryExpenseDTO } from '../../domain/expense/expense.payload.dto';
+import { ExpenseWithPaginationResponse } from '../../domain/expense/response.dto';
 
 @Controller('v1/expenses')
 @ApiTags('Expense')
@@ -25,7 +28,9 @@ export class ExpenseController {
 
   @Get()
   @ApiOperation({ summary: 'List all Expense' })
-  public async list(@Query() query: any) {
+  @ApiOkResponse({ type: ExpenseWithPaginationResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async list(@Query() query: QueryExpenseDTO): Promise<ExpenseWithPaginationResponse> {
     return await this.svc.list(query);
   }
 

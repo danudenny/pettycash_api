@@ -5,23 +5,23 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { CustomNamingStrategy } from './utils/CustomNamingStrategy';
 
-// Load `.env.defaults` then `.env` file.
+// Load `.env.dev.defaults` then `.env.dev` file.
 // `load()` only returning from these files!
 const fileEnvs = dotEnvExtended.load({
   errorOnMissing: true, // ensure to validate the schema throw error if not valid.
 });
 
-// Load `.env.defaults` then `.env` file and include OS Env.
+// Load `.env.dev.defaults` then `.env.dev` file and include OS Env.
 const osEnvs = dotEnvParseVariables(
   dotEnvExtended.load({
     includeProcessEnv: true, // used when you want include OS to the object.
-    overrideProcessEnv: false, // if true will override OS Env with .env file.
+    overrideProcessEnv: false, // if true will override OS Env with .env.dev file.
   }),
 );
 
 // The purpose of this thing is
 // We want to get value from OS Env
-// But only the key from declared .env file.
+// But only the key from declared .env.dev file.
 const envs: any = {};
 for (const key of Object.keys(fileEnvs)) {
   envs[key] = osEnvs[key];
