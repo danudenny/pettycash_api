@@ -27,7 +27,7 @@ export class ProductService {
     const qb = new QueryBuilder(Product, 'prod', params);
 
     qb.fieldResolverMap['code__contains'] = 'prod.code';
-    qb.fieldResolverMap['name__contains'] = 'prod.name';
+    qb.fieldResolverMap['name__icontains'] = 'prod.name';
     qb.fieldResolverMap['isHasTax'] = 'prod.isHasTax';
 
     qb.applyFilterPagination();

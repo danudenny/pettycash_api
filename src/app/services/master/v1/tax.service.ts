@@ -26,7 +26,7 @@ export class TaxService {
     const params = { order: '^created_at', limit: 10, ...query };
     const qb = new QueryBuilder(AccountTax, 'tax', params);
 
-    qb.fieldResolverMap['name__contains'] = 'tax.name';
+    qb.fieldResolverMap['name__icontains'] = 'tax.name';
     qb.fieldResolverMap['partnerType'] = 'tax.partnerType';
 
     qb.applyFilterPagination();

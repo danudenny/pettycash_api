@@ -7,7 +7,7 @@ export class QueryTaxDTO extends BasePayload {
     description: 'Tax Name',
     example: 'PPn',
   })
-  name__contains: string;
+  name__icontains: string;
 
   @ApiProperty({
     description: 'Tax Partner Type',
