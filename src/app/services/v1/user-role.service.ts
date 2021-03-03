@@ -6,7 +6,10 @@ import {
 import { Repository, Not, IsNull } from 'typeorm';
 import { User } from '../../../model/user.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
-import { UserRoleResponse } from '../../domain/user-role/response.dto';
+import {
+  UserRoleResponse,
+  UserRoleWithPaginationResponse,
+} from '../../domain/user-role/response.dto';
 import { QueryUserRoleDTO } from '../../domain/user-role/user-role.payload.dto';
 import { CreateUserRoleDTO } from '../../domain/user-role/create-user-role.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -25,8 +28,8 @@ export class UserRoleService {
     private readonly roleRepo: Repository<Role>,
   ) {}
 
-  async list(query: QueryUserRoleDTO): Promise<UserRoleResponse> {
-    const params = { ...query };
+  async list(query: QueryUserRoleDTO): Promise<UserRoleWithPaginationResponse> {
+    const params = { page: 1, ...query };
     const qb = new QueryBuilder(User, 'u', params);
 
     qb.fieldResolverMap['employee_name__contains'] = 'u.first_name';
@@ -60,7 +63,7 @@ export class UserRoleService {
     );
 
     const userRoles = await qb.exec();
-    return new UserRoleResponse(userRoles);
+    return new UserRoleWithPaginationResponse(userRoles);
   }
 
   public async get(id: string): Promise<any> {
