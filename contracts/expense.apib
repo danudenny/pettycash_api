@@ -1,0 +1,476 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Expense
+
+# Group Expense
+
+## List Expense [GET /v1/expenses{?start_date__gte,end_date__lte,branchId,type,amount__gte,amount__lte,state,down_payment_number__contains,number__contains}]
+
+Get list all expense.
+
++ Parameters
+    + start_date__gte: `2021-01-01` (date, optional) - Start Date to filter.
+    + end_date__lte: `2021-12-31` (date, optional) - End Date to filter.
+    + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string, optional) - Branch to filter.
+    + type: `expense` (enum[string], optional) - Expense Type.
+        + down_payment
+        + expense
+    + amount__gte: `100000` (number, optional) - Amount Min to filter.
+    + amount__lte: `900000` (number, optional) - Amount Max to filter.
+    + state: `draft` (enum[string], optional) - Expense Status.
+        + draft
+        + approved_by_pic_ho
+        + approved_by_ss_spv_ho
+        + reversed
+        + rejected
+    + down_payment_number__contains: `UM0002` (string, optional) - Nomor Uang Muka to search.
+    + number__contains: `REL-2020/01/AAB112` (string, optional) - Nomor Expense to search.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": [
+                {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "transactionDate": "2021-01-27",
+                    "periodMonth": 1,
+                    "periodYear": 2021,
+                    "branchName": "Kebon Jeruk",
+                    "type": "expense",
+                    "downPaymentId": null,
+                    "downPaymentNumber": null,
+                    "number": "REL-2020/01/AAB112",
+                    "amount": 900000,
+                    "state": "draft"
+                },
+                {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "transactionDate": "2021-01-26",
+                    "periodMonth": 1,
+                    "periodYear": 2021,
+                    "branchName": "Bandung",
+                    "type": "down_payment",
+                    "downPaymentId": "382a615c-7e93-4e64-8bc5-01f731d35559",
+                    "downPaymentNumber": "UM0002",
+                    "number": "REL-2020/01/AAB119",
+                    "amount": 400000,
+                    "state": "approved_by_pic_ho"
+                }
+            ],
+            "meta": {
+                "page": 2,
+                "prevPage": 1,
+                "nextPage": null,
+                "perPage": 10,
+            },
+            "status": "success"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Get Expense [GET /v1/expenses/{id}]
+
+Get Expense detail.
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Expense ID to Retrieve.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": {
+                "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                "transactionDate": "2021-01-27",
+                "periodId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                "periodMonth": 1,
+                "periodYear": 2021,
+                "number": "REL-2020/01/AAB112",
+                "partnerId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                "partnerName": "HR Sicepat",
+                "sourceDocument": "BENSIN-0001",
+                "items": [
+                  {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "productId": "5eab29b9-d6e0-4f34-bcac-185e4381d7e0",
+                    "productName": "Hotel",
+                    "productCode": "Hotel",
+                    "description": "Menginap 1 malam",
+                    "attributes": null,
+                    "amount": 250000,
+                    "picHoAmount": 250000,
+                    "ssHoAmount": null,
+                    "checkedNote": "OK"
+                  },
+                  {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "productId": "5eab29b9-d6e0-4f34-bcac-185e4381d7e0",
+                    "productName": "Bensin",
+                    "productCode": "BENSIN",
+                    "description": "Bensin PP",
+                    "attributes": [
+                      {
+                        "key": "vehicleNumber",
+                        "value": "B-1234-VKG"
+                      },
+                      {
+                        "key": "departure",
+                        "value": "Jakarta"
+                      },
+                      {
+                        "key": "destination",
+                        "value": "Bandung"
+                      },
+                      {
+                        "key": "kilometerStart",
+                        "value": 2500
+                      },
+                      {
+                        "key": "kilometerEnd",
+                        "value": 4000
+                      }
+                    ],
+                    "amount": 250000,
+                    "picHoAmount": 250000,
+                    "ssHoAmount": null,
+                    "checkedNote": "OK"
+                  }
+                ],
+                "totalAmount": 900000,
+                "downPaymentAmount": 0,
+                "differenceAmount": 0,
+                "paymentType": "bank",
+                "histories": [
+                  {
+                    "id": "2a683159-6a53-4a24-833b-3e0375ff68ed",
+                    "userId": "6e381b42-23c9-4388-ba0a-bb0272d33099",
+                    "userName": "Jenny",
+                    "userRole": "admin",
+                    "branchName": "Kebon Jeruk",
+                    "state": "draft",
+                    "rejectedNote": null,
+                    "createdAt": "2021-03-02T04:48:56.736Z"
+                  }
+                ]
+            },
+            "status": "success"
+        }
+
++ Response 404 (application/json)
+    + Body
+
+          {
+              "status": "fail",
+              "code": "EXPENSE_NOT_FOUND",
+              "message": "expense {id} not found",
+              "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+          }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Create Expense [POST /v1/expenses]
+
+Create Expense
+
++ Request (multipart/form-date)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + number:           `REL-2020/01/AAB112` (string) - Expense Number.
+        + transactionDate:  `2021-01-27` (string) - Transaction Date.
+        + periodId:         `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - Period ID.
+        + partnerId:        `d659d65c-fcf3-45c8-956e-5baf9dee2522` (string) - Partner ID.
+        + sourceDocument:   `Bensin001` (string) - Partner name.
+        + paymentType:      `cash` (string) - Expense Payment Type.
+        + attachments:      (array) - Attachments.
+        + items: (array)
+            + item:
+                + productId: `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - Product ID.
+                + description: `Description here` (string) - Description
+                + amount: 250000 (number) - Item Amount
+                + attributes: (array)
+                    + item:
+                        + key: `vehicleNumber` (string) - Attribute Key
+                        + value: `B-1234-VKG` (string) - Attribute Value
+
+
++ Response 201 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "EXPENSE_CREATE_FAILED",
+                "message": "failed to create expense",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Approve Expense [PATCH /v1/expenses/{id}/approve]
+
+Approve Expense
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Expense ID.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + items: (array)
+            + item:
+                + id: `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - Item ID.
+                + picHoAmount: (number) - Amount checked by PIC HO.
+                + ssHoAmount: (number) - Amount checked by SS/SPV HO.
+                + checkedNote: (string) - Checked Note.
+
++ Response 200 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "EXPENSE_APPROVE_FAILED",
+                "message": "failed to approve expense",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Reject Expense [PATCH /v1/expenses/{id}/reject]
+
+Reject Expense
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Expense ID.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + rejectedNote: `Salah nominal` (string, required) - Rejected Note.
+
++ Response 200 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "EXPENSE_REJECT_FAILED",
+                "message": "failed to reject expense",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## List Attachments [GET /v1/expenses/{id}/attachments]
+
+Get Expense Attachments.
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Expense ID to Retrieve.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+          "data": [
+            {
+              "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+              "name": "imagename.jpg",
+              "fileName": "imagename.jpg",
+              "fileMime": "image/jpeg",
+              "url": "https://sicepatresi.s3.amazonaws.com/0009775/000977539725.jpg"
+            },
+            {
+              "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+              "name": "imagename2.png",
+              "fileName": "imagename2.png",
+              "fileMime": "image/png",
+              "url": "https://sicepatresi.s3.amazonaws.com/0009775/000977539725.png"
+            }
+          ],
+          "status": "success"
+        }
+
++ Response 404 (application/json)
+    + Body
+
+          {
+              "status": "fail",
+              "code": "EXPENSE_NOT_FOUND",
+              "message": "expense {id} not found",
+              "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+          }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Create Attachment [POST /v1/expenses/{id}/attachments]
+
+Create Attachment
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Expense ID.
+
++ Request (multipart/form-data)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + file: (string) - File to upload (file data).
+
++ Response 201 (application/json)
+    + Body
+        {
+          "data": {
+            "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+            "name": "imagename.jpg",
+            "fileName": "imagename.jpg",
+            "fileMime": "image/jpeg",
+            "url": "https://sicepatresi.s3.amazonaws.com/0009775/000977539725.jpg"
+          },
+          "status": "success"
+        }
+        
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "EXPENSE_ATTACHMENT_CREATE_FAILED",
+                "message": "failed to create expense attachment",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Delete Attachment [DELETE /v1/expenses/{id}/attachments/{attachmentId}]
+
+Delete Attachment by ID
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Expense ID.
+    + attachmentId: `d97a5ba7-60c0-4326-85fe-76452e3b416c` (string) - Attachment ID to Delete.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 204 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "EXPENSE_ATTACHMENT_DELETE_FAILED",
+                "message": "failed to delete expense attachment",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
