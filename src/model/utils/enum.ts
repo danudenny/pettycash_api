@@ -72,7 +72,7 @@ export enum AccountDownPaymentState {
   REJECTED = 'rejected',
 }
 
-export enum AccountExpenseState {
+export enum ExpenseState {
   DRAFT = 'draft',
   APPROVED_BY_SS_SPV = 'approved_by_ss_spv_ho',
   APPROVED_BY_PIC = 'approved_by_pic_ho',
@@ -80,9 +80,14 @@ export enum AccountExpenseState {
   REJECTED = 'rejected',
 }
 
-export enum AccountExpensePaymentType {
+export enum ExpensePaymentType {
   CASH = 'cash',
   BANK = 'bank',
+}
+
+export enum ExpenseType {
+  DOWN_PAYMENT = 'down_payment',
+  EXPENSE = 'expense'
 }
 
 export enum AccountPaymentType {

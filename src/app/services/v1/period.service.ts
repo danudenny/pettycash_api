@@ -18,12 +18,12 @@ import {
 } from '../../domain/period/period.payload.dto';
 import dayjs from 'dayjs';
 import {
-  AccountExpenseState,
+  ExpenseState,
   JournalState,
   PeriodState,
 } from '../../../model/utils/enum';
 import { Journal } from '../../../model/journal.entity';
-import { AccountExpense } from '../../../model/account-expense.entity';
+import { Expense } from '../../../model/expense.entity';
 
 @Injectable()
 export class PeriodService {
@@ -31,8 +31,8 @@ export class PeriodService {
     @InjectRepository(Period) private readonly periodRepo: Repository<Period>,
     @InjectRepository(Journal)
     private readonly journalRepo: Repository<Journal>,
-    @InjectRepository(AccountExpense)
-    private readonly expenseRepo: Repository<AccountExpense>,
+    @InjectRepository(Expense)
+    private readonly expenseRepo: Repository<Expense>,
   ) {}
 
   async getUserId() {
@@ -166,7 +166,7 @@ export class PeriodService {
       where: {
         isDeleted: false,
         periodId: period.id,
-        state: AccountExpenseState.DRAFT,
+        state: ExpenseState.DRAFT,
       },
       select: ['id'],
     });
