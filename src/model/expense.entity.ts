@@ -27,7 +27,12 @@ export class Expense extends PtcBaseEntity {
   @Column({ type: 'varchar', length: 25, name: 'number' })
   number: string;
 
-  @Column({ type: 'varchar', length: 100, name: 'source_document', nullable: true})
+  @Column({
+    type: 'varchar',
+    length: 100,
+    name: 'source_document',
+    nullable: true,
+  })
   sourceDocument?: string;
 
   @Column({ type: 'date', name: 'transaction_date' })
@@ -36,7 +41,7 @@ export class Expense extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'period_id' })
   periodId: string;
 
-  @Column({ type: 'uuid', name: 'down_payment_id', nullable: true})
+  @Column({ type: 'uuid', name: 'down_payment_id', nullable: true })
   downPaymentId?: string;
 
   @Column({ type: 'uuid', name: 'partner_id' })
