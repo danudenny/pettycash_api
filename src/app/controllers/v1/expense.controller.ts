@@ -8,13 +8,17 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiConsumes,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiNoContentResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -26,6 +30,9 @@ import {
   ExpenseResponse,
   ExpenseWithPaginationResponse,
 } from '../../domain/expense/response.dto';
+import { ExpenseAttachmentResponse } from '../../domain/expense/response-attachment.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { CreateExpenseAttachmentDTO } from '../../domain/expense/create-attachment.dto';
 
 @Controller('v1/expenses')
 @ApiTags('Expense')
@@ -81,17 +88,24 @@ export class ExpenseController {
 
   @Get('/:id/attachments')
   @ApiOperation({ summary: 'List Expense Attachment' })
+  @ApiOkResponse({ type: ExpenseAttachmentResponse })
+  @ApiNotFoundResponse({ description: 'Attachments not found.' })
   public async listAttachment(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.svc.listAttachment(id);
   }
 
   @Post('/:id/attachments')
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create Expense Attachment' })
+  @UseInterceptors(FilesInterceptor('attachements'))
+  @ApiCreatedResponse({ type: ExpenseAttachmentResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiBody({ type: CreateExpenseAttachmentDTO })
   public async createAttachment(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() payload: string,
+    @UploadedFiles() attachements: any,
   ) {
-    return await this.svc.createAttachment(id, payload);
+    return await this.svc.createAttachment(id, attachements);
   }
 
   @Delete('/:id/attachments/:attachmentId')

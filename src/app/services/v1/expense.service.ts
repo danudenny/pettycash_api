@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, getManager } from 'typeorm';
+import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { ExpenseItemAttribute } from '../../../model/expense-item-attribute.entity';
 import { ExpenseItem } from '../../../model/expense-item.entity';
@@ -18,6 +19,10 @@ import { NotFoundException } from '@nestjs/common';
 import { AccountTax } from '../../../model/account-tax.entity';
 import { Partner } from '../../../model/partner.entity';
 import { Product } from '../../../model/product.entity';
+import { Attachment } from '../../../model/attachment.entity';
+import { ExpenseAttachmentResponse } from '../../domain/expense/response-attachment.dto';
+import { AttachmentService } from '../../../common/services/attachment.service';
+import { ExpenseAttachmentDTO } from '../../domain/expense/expense-attachment.dto';
 
 @Injectable()
 export class ExpenseService {
@@ -30,6 +35,8 @@ export class ExpenseService {
     private readonly partnerRepo: Repository<Partner>,
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
+    @InjectRepository(Attachment)
+    private readonly attachmentRepo: Repository<Attachment>,
   ) {}
 
   private async getUser(includeBranch: boolean = false) {
@@ -195,12 +202,107 @@ export class ExpenseService {
     // TODO: Implement API Reject Expense
   }
 
-  public async listAttachment(query?: any) {
-    // TODO: Implement API List Expense Attachments
+  /**
+   * List all Attachments of Expense
+   *
+   * @param {string} expenseId ID of Expense
+   * @return {*}  {Promise<ExpenseAttachmentResponse>}
+   * @memberof ExpenseService
+   */
+  public async listAttachment(
+    expenseId: string,
+  ): Promise<ExpenseAttachmentResponse> {
+    const params = { expenseId };
+    const qb = new QueryBuilder(Expense, 'exp', params);
+
+    qb.fieldResolverMap['exp.id'] = 'expenseId';
+    qb.selectRaw(
+      ['exp.id', 'expenseId'],
+      ['att.id', 'id'],
+      ['att."name"', 'name'],
+      ['att.filename', 'fileName'],
+      ['att.file_mime', 'fileMime'],
+      ['att.url', 'url'],
+    );
+    qb.innerJoin(
+      (e) => e.attachments,
+      'att',
+      (j) =>
+        j.andWhere(
+          (e) => e.isDeleted,
+          (v) => v.isFalse(),
+        ),
+    );
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+
+    const attachments = await qb.exec();
+    if (!attachments) {
+      throw new NotFoundException(`Attachments not found!`);
+    }
+
+    return new ExpenseAttachmentResponse(attachments);
   }
 
-  public async createAttachment(expenseId: string, payload?: any) {
-    // TODO: Implement API Create Expense Attachments
+  /**
+   * Upload Attachment to S3 and attach to Expense
+   *
+   * @param {string} expenseId
+   * @param {*} [files]
+   * @return {*}  {Promise<ExpenseAttachmentResponse>}
+   * @memberof ExpenseService
+   */
+  public async createAttachment(
+    expenseId: string,
+    files?: any,
+  ): Promise<ExpenseAttachmentResponse> {
+    try {
+      const createAttachment = await getManager().transaction(
+        async (manager) => {
+          const expense = await manager.findOne(Expense, {
+            where: { id: expenseId, isDeleted: false },
+            relations: ['attachments'],
+          });
+          if (!expense) {
+            throw new NotFoundException(
+              `Expense with ID ${expenseId} not found!`,
+            );
+          }
+
+          // Upload file attachments
+          let newAttachments: Attachment[];
+          if (files && files.length) {
+            const expensePath = `expense/${expenseId}`;
+            const attachments = await AttachmentService.uploadFiles(
+              files,
+              (file) => {
+                const rid = uuid().split('-')[0];
+                const pathId = `${expensePath}_${rid}_${file.originalname}`;
+                return pathId;
+              },
+              manager,
+            );
+            newAttachments = attachments;
+          }
+
+          const existingAttachments = expense.attachments;
+
+          expense.attachments = [].concat(existingAttachments, newAttachments);
+          expense.updateUser = await this.getUser();
+
+          await manager.save(expense);
+          return newAttachments;
+        },
+      );
+
+      return new ExpenseAttachmentResponse(
+        createAttachment as ExpenseAttachmentDTO[],
+      );
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   public async deleteAttachment(expenseId: string, attachmentId: string) {
