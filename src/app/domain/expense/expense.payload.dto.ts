@@ -24,7 +24,7 @@ export class QueryExpenseDTO extends BasePayload {
   @ApiPropertyOptional({
     description: 'Expense Type',
     example: 'expense',
-    enum: ExpenseType
+    enum: ExpenseType,
   })
   type: ExpenseType;
 
@@ -43,7 +43,7 @@ export class QueryExpenseDTO extends BasePayload {
   @ApiPropertyOptional({
     description: 'Expense State',
     example: 'draft',
-    enum: ExpenseState
+    enum: ExpenseState,
   })
   state: ExpenseState;
 

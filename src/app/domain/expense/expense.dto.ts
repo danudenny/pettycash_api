@@ -30,14 +30,14 @@ export class ExpenseDTO {
 
   @ApiProperty({
     description: 'Branch Name',
-    example: "Kebon Jeruk",
+    example: 'Kebon Jeruk',
   })
   branchName: string;
 
   @ApiProperty({
     description: 'Expense Type',
-    example: "expense",
-    enum: ExpenseType
+    example: 'expense',
+    enum: ExpenseType,
   })
   type: ExpenseType;
 
@@ -55,7 +55,7 @@ export class ExpenseDTO {
 
   @ApiProperty({
     description: 'Expense Number',
-    example: "REL-2020/01/AAB112",
+    example: 'REL-2020/01/AAB112',
   })
   number: string;
 
@@ -67,9 +67,8 @@ export class ExpenseDTO {
 
   @ApiProperty({
     description: 'Expense State',
-    example: "draft",
-    enum: ExpenseState
+    example: 'draft',
+    enum: ExpenseState,
   })
   state: ExpenseState;
-
 }

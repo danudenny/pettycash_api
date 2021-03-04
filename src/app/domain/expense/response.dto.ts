@@ -13,7 +13,7 @@ export class ExpenseResponse extends BaseResponse {
     }
   }
 
-  @ApiPropertyOptional({ type: () => [ExpenseDTO] })
+  @ApiPropertyOptional({ type: () => ExpenseDTO })
   data?: ExpenseDTO | ExpenseDTO[] = null;
 }
 
