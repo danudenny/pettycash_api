@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOneOptions } from 'typeorm';
 import { ContextService } from '../../../common/services/context.service';
 import { LoaderEnv } from '../../../config/loader';
 import { User } from '../../../model/user.entity';
@@ -24,21 +24,23 @@ export class AuthService {
     return username;
   }
 
-  public static async getUser(): Promise<User> {
+  public static async getUser(options?: FindOneOptions<User>): Promise<User> {
     let username = await AuthService.getUsernameFromHeader();
     // TODO: Remove this mock after integrating with API Gateway Service
     if (!username) {
       username = 'adry';
     }
-    // Find User
-    const user = await User.findOneOrFail(
-      {
-        username,
-        isDeleted: false,
-      },
-      { cache: LoaderEnv.envs.AUTH_CACHE_DURATION_IN_MINUTES * 60000 },
-    );
-    return user;
+    try {
+      // Find User
+      const user = await User.findOne({
+        ...options,
+        where: { username, isDeleted: false },
+        cache: LoaderEnv.envs.AUTH_CACHE_DURATION_IN_MINUTES * 60000,
+      });
+      return user;
+    } catch (error) {
+      throw error;
+    }
   }
 
   public async get(query?: any): Promise<AuthorizationResponse> {

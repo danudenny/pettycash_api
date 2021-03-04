@@ -11,14 +11,21 @@ import {
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBody,
+  ApiCreatedResponse,
   ApiInternalServerErrorResponse,
-  ApiNoContentResponse, ApiOkResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { CreateExpenseDTO } from '../../domain/expense/create.dto';
 import { ExpenseService } from '../../services/v1/expense.service';
 import { QueryExpenseDTO } from '../../domain/expense/expense.payload.dto';
-import { ExpenseWithPaginationResponse } from '../../domain/expense/response.dto';
+import {
+  ExpenseResponse,
+  ExpenseWithPaginationResponse,
+} from '../../domain/expense/response.dto';
 
 @Controller('v1/expenses')
 @ApiTags('Expense')
@@ -30,7 +37,9 @@ export class ExpenseController {
   @ApiOperation({ summary: 'List all Expense' })
   @ApiOkResponse({ type: ExpenseWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async list(@Query() query: QueryExpenseDTO): Promise<ExpenseWithPaginationResponse> {
+  public async list(
+    @Query() query: QueryExpenseDTO,
+  ): Promise<ExpenseWithPaginationResponse> {
     return await this.svc.list(query);
   }
 
@@ -42,7 +51,13 @@ export class ExpenseController {
 
   @Post()
   @ApiOperation({ summary: 'Create Expense' })
-  public async create(@Body() payload: any) {
+  @ApiCreatedResponse({
+    type: ExpenseResponse,
+    description: 'Expense Successfully Created',
+  })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiBody({ type: CreateExpenseDTO })
+  public async create(@Body() payload: CreateExpenseDTO) {
     return await this.svc.create(payload);
   }
 
