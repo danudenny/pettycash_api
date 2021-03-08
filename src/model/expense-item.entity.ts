@@ -57,9 +57,13 @@ export class ExpenseItem extends PtcBaseEntity {
   })
   isValid: boolean;
 
-  @OneToMany(() => ExpenseItemAttribute, (e) => e.expenseItem)
+  @OneToMany(
+    () => ExpenseItemAttribute,
+    (e) => e.expenseItem,
+    {eager: true})
   attributes: ExpenseItemAttribute[];
 
+  @ManyToOne(() => Expense, (e) => e.items)
   @JoinColumn({ name: 'expense_id' })
   expense: Expense;
 

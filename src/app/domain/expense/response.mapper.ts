@@ -1,4 +1,4 @@
-import { ExpenseDTO } from './expense.dto';
+import { ExpenseDTO, ExpenseRelationDTO } from './expense.dto';
 import { Expense } from '../../../model/expense.entity';
 
 export class ExpenseResponseMapper {
@@ -59,6 +59,37 @@ export class ExpenseResponseMapper {
       return this.fromOneEntity(entities);
     } else {
       return this.fromManyEntity(entities);
+    }
+  }
+
+  public static toManyRelationDTO(entities: Partial<ExpenseRelationDTO[]>) {
+    return entities.map((e) => ExpenseResponseMapper.toRelationalDTO(e));
+  }
+
+  public static toRelationalDTO(dto: Partial<ExpenseRelationDTO>) {
+    const it = new ExpenseRelationDTO();
+    it.id = dto.id;
+    it.transactionDate = dto.transactionDate;
+    it.periodMonth = dto.periodMonth;
+    it.periodYear = dto.periodYear;
+    it.branchName = dto.branchName;
+    it.type = dto.type;
+    it.downPaymentId = dto.downPaymentId;
+    it.downPaymentNumber = dto.downPaymentNumber;
+    it.number = dto.number;
+    it.totalAmount = dto.totalAmount;
+    it.state = dto.state;
+    it.items = dto.items;
+    return it;
+  }
+
+  public static fromRelationalDTO(
+    data: Partial<ExpenseRelationDTO | ExpenseRelationDTO[]>,
+  ): ExpenseRelationDTO | ExpenseRelationDTO[] {
+    if (!Array.isArray(data)) {
+      return this.toRelationalDTO(data);
+    } else {
+      return this.toManyRelationDTO(data);
     }
   }
 }

@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseResponse } from '../common/base-response.dto';
 import { PaginationBuilder } from '../common/pagination-builder';
 import { BasePaginationResponse } from '../common/base-pagination-response.dto';
-import { ExpenseDTO } from './expense.dto';
+import { ExpenseDTO, ExpenseRelationDTO } from './expense.dto';
 import { ExpenseResponseMapper } from './response.mapper';
 
 export class ExpenseResponse extends BaseResponse {
@@ -15,6 +15,18 @@ export class ExpenseResponse extends BaseResponse {
 
   @ApiPropertyOptional({ type: () => ExpenseDTO })
   data?: ExpenseDTO | ExpenseDTO[] = null;
+}
+
+export class ExpenseRelationResponse extends BaseResponse {
+  constructor(data?: Partial<ExpenseRelationDTO | ExpenseRelationDTO[]>) {
+    super();
+    if (data) {
+      this.data = ExpenseResponseMapper.fromRelationalDTO(data);
+    }
+  }
+
+  @ApiPropertyOptional({ type: () => [ExpenseRelationDTO] })
+  data?: ExpenseRelationDTO | ExpenseRelationDTO[] = null;
 }
 
 export class ExpenseWithPaginationResponse extends BaseResponse {

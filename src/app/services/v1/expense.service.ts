@@ -10,6 +10,7 @@ import { ExpenseState, ExpenseType } from '../../../model/utils/enum';
 import { CreateExpenseDTO } from '../../domain/expense/create.dto';
 import { AuthService } from './auth.service';
 import {
+  ExpenseRelationResponse,
   ExpenseResponse,
   ExpenseWithPaginationResponse,
 } from '../../domain/expense/response.dto';
@@ -122,15 +123,16 @@ export class ExpenseService {
     return new ExpenseWithPaginationResponse(expense, params);
   }
 
-  public async getById(id?: string): Promise<ExpenseResponse> {
+  public async getById(id?: string): Promise<ExpenseRelationResponse> {
     // TODO: Implement API Get Expense Detail
-    const expense = await this.expenseRepo.findOne({
+    const expense = await this.expenseRepo.find({
       where: { id, isDeleted: false },
+      relations: ['items']
     });
     if (!expense) {
       throw new NotFoundException(`Expense ID ${id} not found!`);
     }
-    return new ExpenseResponse(expense as any);
+    return new ExpenseRelationResponse(expense as any);
   }
 
   /**
