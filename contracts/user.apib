@@ -5,13 +5,14 @@ HOST: http://pettycash.api.url
 
 # Group User
 
-## List User [GET /v1/users{?name__contains,nik__contains}]
+## List User [GET /v1/users{?name__contains,nik__contains,isHasRole}]
 
 Untuk mendapatkan daftar user sicepat.
 
 + Parameters
     + name__contains: `Nui Employee` (string, optional) - Name to Search (Using LIKE sql).
     + nik__contains: `19000280` (string, optional) - NIK to Search (Using LIKE sql).
+    + isHasRole: true (boolean, optional) - Filter User by Role.
  
 + Request (application/json)
     + Header
