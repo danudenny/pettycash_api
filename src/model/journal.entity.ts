@@ -118,6 +118,6 @@ export class Journal extends PtcBaseEntity {
   @JoinColumn({ name: 'period_id' })
   period: Period;
 
-  @OneToMany(() => JournalItem, (e) => e.journal)
+  @OneToMany(() => JournalItem, (e) => e.journal, { cascade: true })
   items: JournalItem[];
 }

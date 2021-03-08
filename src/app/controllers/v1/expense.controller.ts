@@ -33,6 +33,7 @@ import {
 import { ExpenseAttachmentResponse } from '../../domain/expense/response-attachment.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { CreateExpenseAttachmentDTO } from '../../domain/expense/create-attachment.dto';
+import { ApproveExpenseDTO } from '../../domain/expense/approve.dto';
 
 @Controller('v1/expenses')
 @ApiTags('Expense')
@@ -70,9 +71,10 @@ export class ExpenseController {
 
   @Patch('/:id/approve')
   @ApiOperation({ summary: 'Approve Expense' })
+  @ApiBody({ type: ApproveExpenseDTO })
   public async approve(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() payload: string,
+    @Body() payload?: ApproveExpenseDTO,
   ) {
     return await this.svc.approve(id, payload);
   }

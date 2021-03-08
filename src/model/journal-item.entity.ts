@@ -81,6 +81,7 @@ export class JournalItem extends PtcBaseEntity {
   })
   credit: number;
 
+  @ManyToOne(() => Journal, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'journal_id' })
   journal: Journal;
 
