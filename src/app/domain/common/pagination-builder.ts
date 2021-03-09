@@ -9,8 +9,8 @@ export class PaginationBuilder {
   public static build(data, params?) {
     let prevPage = null;
     let nextPage = null;
-    const page = params.page ? Number(params.page) : 1;
-    const limit = params.limit ? Number(params.limit) : null;
+    const page = params && params.page ? Number(params.page) : 1;
+    const limit = params && params.limit ? Number(params.limit) : null;
 
     if (page && page > 1) {
       prevPage = page - 1;

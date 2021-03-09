@@ -6,16 +6,16 @@ import {
   ManyToOne,
   Index,
 } from 'typeorm';
-import { AccountExpenseItemAttribute } from './account-expense-item-attribute.entity';
-import { AccountExpense } from './account-expense.entity';
+import { ExpenseItemAttribute } from './expense-item-attribute.entity';
+import { Expense } from './expense.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Product } from './product.entity';
 
-@Entity('account_expense_item')
-export class AccountExpenseItem extends PtcBaseEntity {
-  @Column({ type: 'uuid', name: 'account_expense_id' })
+@Entity('expense_item')
+export class ExpenseItem extends PtcBaseEntity {
+  @Column({ type: 'uuid', name: 'expense_id' })
   @Index()
-  accountExpenseId: string;
+  expenseId: string;
 
   @Column({ type: 'uuid', name: 'product_id' })
   productId: string;
@@ -57,11 +57,15 @@ export class AccountExpenseItem extends PtcBaseEntity {
   })
   isValid: boolean;
 
-  @OneToMany(() => AccountExpenseItemAttribute, (e) => e.accountExpenseItem)
-  attributes: AccountExpenseItemAttribute[];
+  @OneToMany(
+    () => ExpenseItemAttribute,
+    (e) => e.expenseItem,
+    {eager: true})
+  attributes: ExpenseItemAttribute[];
 
-  @JoinColumn({ name: 'account_expense_id' })
-  accountExpense: AccountExpense;
+  @ManyToOne(() => Expense, (e) => e.items)
+  @JoinColumn({ name: 'expense_id' })
+  expense: Expense;
 
   @ManyToOne(() => Product)
   @JoinColumn({ name: 'product_id' })

@@ -9,17 +9,17 @@ import {
   Index,
 } from 'typeorm';
 import { AccountDownPayment } from './account-down-payment.entity';
-import { AccountExpenseHistory } from './account-expense-history.entity';
-import { AccountExpenseItem } from './account-expense-item.entity';
+import { ExpenseHistory } from './expense-history.entity';
+import { ExpenseItem } from './expense-item.entity';
 import { Attachment } from './attachment.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Partner } from './partner.entity';
 import { Period } from './period.entity';
-import { AccountExpensePaymentType, AccountExpenseState } from './utils/enum';
+import { ExpensePaymentType, ExpenseState, ExpenseType } from './utils/enum';
 
-@Entity('account_expense')
-export class AccountExpense extends PtcBaseEntity {
+@Entity('expense')
+export class Expense extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'branch_id' })
   @Index()
   branchId: string;
@@ -27,8 +27,13 @@ export class AccountExpense extends PtcBaseEntity {
   @Column({ type: 'varchar', length: 25, name: 'number' })
   number: string;
 
-  @Column({ type: 'varchar', length: 100, name: 'source_document' })
-  sourceDocument: string;
+  @Column({
+    type: 'varchar',
+    length: 100,
+    name: 'source_document',
+    nullable: true,
+  })
+  sourceDocument?: string;
 
   @Column({ type: 'date', name: 'transaction_date' })
   transactionDate: Date;
@@ -36,18 +41,26 @@ export class AccountExpense extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'period_id' })
   periodId: string;
 
-  @Column({ type: 'uuid', name: 'down_payment_id' })
-  downPaymentId: string;
+  @Column({ type: 'uuid', name: 'down_payment_id', nullable: true })
+  downPaymentId?: string;
 
   @Column({ type: 'uuid', name: 'partner_id' })
   partnerId: string;
 
   @Column({
     type: 'enum',
-    enum: AccountExpensePaymentType,
+    enum: ExpenseType,
+    name: 'type',
+    default: ExpenseType.EXPENSE,
+  })
+  type: ExpenseType;
+
+  @Column({
+    type: 'enum',
+    enum: ExpensePaymentType,
     name: 'payment_type',
   })
-  paymentType: AccountExpensePaymentType;
+  paymentType: ExpensePaymentType;
 
   // Sum of Items
   @Column({ type: 'numeric', name: 'total_amount', default: 0 })
@@ -61,16 +74,16 @@ export class AccountExpense extends PtcBaseEntity {
 
   @Column({
     type: 'enum',
-    enum: AccountExpenseState,
-    default: AccountExpenseState.DRAFT,
+    enum: ExpenseState,
+    default: ExpenseState.DRAFT,
   })
-  state: AccountExpenseState;
+  state: ExpenseState;
 
   @ManyToMany(() => Attachment)
   @JoinTable({
-    name: 'account_expense_attachment',
+    name: 'expense_attachment',
     joinColumn: {
-      name: 'account_expense_id',
+      name: 'expense_id',
       referencedColumnName: 'id',
     },
     inverseJoinColumn: {
@@ -80,11 +93,13 @@ export class AccountExpense extends PtcBaseEntity {
   })
   attachments: Attachment[];
 
-  @OneToMany(() => AccountExpenseItem, (e) => e.accountExpense)
-  items: AccountExpenseItem[];
+  @OneToMany(
+    () => ExpenseItem,
+    (e) => e.expense)
+  items: ExpenseItem[];
 
-  @OneToMany(() => AccountExpenseHistory, (e) => e.accountExpense)
-  histories: AccountExpenseHistory[];
+  @OneToMany(() => ExpenseHistory, (e) => e.expense)
+  histories: ExpenseHistory[];
 
   @ManyToOne(() => Branch)
   @JoinColumn({ name: 'branch_id' })
