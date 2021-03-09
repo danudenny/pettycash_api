@@ -687,12 +687,13 @@ export class ExpenseService {
   ): Promise<JournalItem[]> {
     const items: JournalItem[] = [];
     const taxedItems = data?.items.filter((v) => v.tax);
+    const cashCoaId = data.branch && data.branch.cashCoaId;
     let taxedAmount: number;
 
     const i = new JournalItem();
     i.createUser = user;
     i.updateUser = user;
-    i.coaId = data.branch && data.branch.cashCoaId;
+    i.coaId = cashCoaId;
     i.branchId = data.branchId;
     i.transactionDate = data.transactionDate;
     i.periodId = data.periodId;
@@ -738,30 +739,18 @@ export class ExpenseService {
         .filter((v) => v)
         .reduce((a, b) => a + b, 0);
     }
-    items.push(i);
 
     // Add JournalItem for Tax
     if (taxedItems.length > 0) {
       // FIXME: Build JournalItem for each tax?
       const taxedItem = taxedItems[0];
-      let taxValue = taxedItem.tax;
-      taxValue = this.calculateTax(taxedAmount, taxValue);
+      const taxValue = this.calculateTax(taxedAmount, taxedItem.tax);
       if (taxValue && taxValue > 0) {
-        const tax = await this.getTax(data.partnerId, taxedItem.productId);
-        const jTax = new JournalItem();
-        jTax.createUser = user;
-        jTax.updateUser = user;
-        jTax.coaId = tax && tax.coaId;
-        jTax.branchId = data.branchId;
-        jTax.transactionDate = data.transactionDate;
-        jTax.periodId = data.periodId;
-        jTax.reference = data.number;
-        jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-        jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-        jTax.credit = roundToTwo(taxValue);
-        items.push(jTax);
+        i.credit = i.credit + roundToTwo(taxValue);
       }
     }
+
+    items.push(i);
     return items;
   }
 
@@ -818,12 +807,13 @@ export class ExpenseService {
 
     // Add JournalItem for Tax
     if (taxes.length) {
-      // FIXME: Get CoA from configuration.
-      const coa = await AccountCoaService.findCoaByCode('900.001.000');
+      const taxedItems = data?.items.filter((v) => v.tax);
+      const taxedItem = taxedItems[0];
+      const tax = await this.getTax(data.partnerId, taxedItem.productId);
       const jTax = new JournalItem();
       jTax.createUser = user;
       jTax.updateUser = user;
-      jTax.coa = coa;
+      jTax.coaId = tax && tax.coaId;
       jTax.branchId = data.branchId;
       jTax.transactionDate = data.transactionDate;
       jTax.periodId = data.periodId;
