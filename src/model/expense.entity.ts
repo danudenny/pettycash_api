@@ -93,7 +93,9 @@ export class Expense extends PtcBaseEntity {
   })
   attachments: Attachment[];
 
-  @OneToMany(() => ExpenseItem, (e) => e.expense)
+  @OneToMany(
+    () => ExpenseItem,
+    (e) => e.expense)
   items: ExpenseItem[];
 
   @OneToMany(() => ExpenseHistory, (e) => e.expense)

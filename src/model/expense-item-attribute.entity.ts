@@ -1,4 +1,4 @@
-import { Entity, Column, JoinColumn, Index } from 'typeorm';
+import { Entity, Column, JoinColumn, Index, ManyToOne } from 'typeorm';
 import { ExpenseItem } from './expense-item.entity';
 import { PtcBaseEntity } from './base.entity';
 
@@ -14,6 +14,7 @@ export class ExpenseItemAttribute extends PtcBaseEntity {
   @Column({ type: 'varchar', name: 'value' })
   value: string;
 
+  @ManyToOne(() => ExpenseItem, (e) => e.attributes)
   @JoinColumn({ name: 'expense_item_id' })
   expenseItem: ExpenseItem;
 }
