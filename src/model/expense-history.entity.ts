@@ -1,4 +1,4 @@
-import { Entity, Column, JoinColumn, Index } from 'typeorm';
+import { Entity, Column, JoinColumn, Index, ManyToOne } from 'typeorm';
 import { Expense } from './expense.entity';
 import { PtcBaseEntity } from './base.entity';
 import { ExpenseState } from './utils/enum';
@@ -19,6 +19,7 @@ export class ExpenseHistory extends PtcBaseEntity {
   @Column({ type: 'text', name: 'rejected_note', nullable: true })
   rejectedNote?: string;
 
+  @ManyToOne(() => Expense, (e) => e.histories)
   @JoinColumn({ name: 'expense_id' })
   expense: Expense;
 }

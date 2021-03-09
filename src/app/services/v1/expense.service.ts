@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getManager } from 'typeorm';
+import { Repository, getManager, getConnection } from 'typeorm';
 import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { ExpenseItemAttribute } from '../../../model/expense-item-attribute.entity';
@@ -37,7 +37,7 @@ export class ExpenseService {
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
     @InjectRepository(Attachment)
-    private readonly attachmentRepo: Repository<Attachment>,
+    private readonly attachmentRepo: Repository<Attachment>
   ) {}
 
   private async getUser(includeBranch: boolean = false) {
@@ -86,8 +86,8 @@ export class ExpenseService {
     const params = { order: '^created_at', limit: 10, ...query };
     const qb = new QueryBuilder(Expense, 'exp', params);
 
-    qb.fieldResolverMap['startDate__gte'] = 'exp.startDate';
-    qb.fieldResolverMap['endDate__gte'] = 'exp.endDate';
+    qb.fieldResolverMap['startDate__gte'] = 'exp.transactionDate';
+    qb.fieldResolverMap['endDate__lte'] = 'exp.transactionDate';
     qb.fieldResolverMap['branchId'] = 'exp.branchId';
     qb.fieldResolverMap['type'] = 'exp.type';
     qb.fieldResolverMap['totalAmount_gte'] = 'exp.totalAmount';
@@ -123,16 +123,60 @@ export class ExpenseService {
     return new ExpenseWithPaginationResponse(expense, params);
   }
 
-  public async getById(id?: string): Promise<ExpenseRelationResponse> {
-    // TODO: Implement API Get Expense Detail
-    const expense = await this.expenseRepo.find({
-      where: { id, isDeleted: false },
-      relations: ['items']
-    });
-    if (!expense) {
-      throw new NotFoundException(`Expense ID ${id} not found!`);
-    }
-    return new ExpenseRelationResponse(expense as any);
+  public async getById(id?: string): Promise<any> {
+    const expense = await getConnection()
+      .createQueryBuilder()
+      .select([
+        "expense.id",
+        "expense.transactionDate",
+        "expense.number",
+        "expense.sourceDocument",
+        "expense.totalAmount",
+        "expense.differenceAmount",
+        "expense.paymentType",
+        "items.id",
+        "items.productId",
+        "items.products.name",
+        "product.code",
+        "attributes.key",
+        "attributes.value",
+        "items.description",
+        "items.amount",
+        "items.picHoAmount",
+        "items.ssHoAmount",
+        "items.checkedNote",
+        "period.id",
+        "period.month",
+        "period.year",
+        "partner.id",
+        "partner.name",
+        "histories.id",
+        "histories.state",
+        "histories.rejectedNote",
+        "histories.createdAt",
+        ]
+      )
+      .from(Expense, "expense")
+      .leftJoin("expense.items", "items")
+      .leftJoin('expense.period', 'period')
+      .leftJoin('items.product', 'product')
+      .leftJoin('items.attributes', 'attributes')
+      .leftJoin('expense.partner', 'partner')
+      .leftJoin('expense.histories', 'histories')
+      .where("expense.id = :id", { id })
+      .andWhere("expense.isDeleted = false")
+      .getMany();
+    return expense
+    // const expense = await this.expenseRepo.findOne({
+    //   where: { id, isDeleted: false },
+    //   relations: [
+    //     'items'
+    //   ],
+    // });
+    // if (!expense) {
+    //   throw new NotFoundException(`Expense ID ${id} not found!`);
+    // }
+    // return new ExpenseRelationResponse(expense);
   }
 
   /**

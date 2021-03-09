@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { ExpenseState, ExpenseType } from '../../../model/utils/enum';
 import { ExpenseItem } from '../../../model/expense-item.entity';
+import { Product } from '../../../model/product.entity';
 
 export class ExpenseDTO {
   @ApiProperty({
@@ -99,12 +100,12 @@ export class ExpenseRelationDTO {
     example: 2021,
   })
   periodYear: Number;
-
-  @ApiProperty({
-    description: 'Branch Name',
-    example: 'Kebon Jeruk',
-  })
-  branchName: string;
+  //
+  // @ApiProperty({
+  //   description: 'Branch Name',
+  //   example: 'Kebon Jeruk',
+  // })
+  // branchName: string;
 
   @ApiProperty({
     description: 'Expense Type',
@@ -113,17 +114,17 @@ export class ExpenseRelationDTO {
   })
   type: ExpenseType;
 
-  @ApiProperty({
-    description: 'Expense Down Payment ID',
-    example: null,
-  })
-  downPaymentId: string;
+  // @ApiProperty({
+  //   description: 'Expense Down Payment ID',
+  //   example: null,
+  // })
+  // downPaymentId: string;
 
-  @ApiProperty({
-    description: 'Expense Down Payment Number',
-    example: null,
-  })
-  downPaymentNumber: string;
+  // @ApiProperty({
+  //   description: 'Expense Down Payment Number',
+  //   example: null,
+  // })
+  // downPaymentNumber: string;
 
   @ApiProperty({
     description: 'Expense Number',
@@ -144,9 +145,8 @@ export class ExpenseRelationDTO {
   })
   state: ExpenseState;
 
-  @ApiProperty({
-    description: 'Relational Item',
-    example: ExpenseItem,
-  })
+  @ApiProperty()
   items: ExpenseItem[];
 }
+
+
