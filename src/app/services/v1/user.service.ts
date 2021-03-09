@@ -5,6 +5,7 @@ import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryUserDTO } from '../../domain/user/user.payload.dto';
 import { UserWithPaginationResponse } from '../../domain/user/response.dto';
+import { parseBool } from '../../../shared/utils';
 
 @Injectable()
 export class UserService {
@@ -31,6 +32,21 @@ export class UserService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+
+    if (params.isHasRole) {
+      const isHasRole = parseBool(params.isHasRole);
+      if (isHasRole) {
+        qb.andWhere(
+          (e) => e.roleId,
+          (v) => v.isNotNull(),
+        );
+      } else {
+        qb.andWhere(
+          (e) => e.roleId,
+          (v) => v.isNull(),
+        );
+      }
+    }
 
     const users = await qb.exec();
     return new UserWithPaginationResponse(users, params);
