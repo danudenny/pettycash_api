@@ -34,6 +34,7 @@ import { ExpenseAttachmentResponse } from '../../domain/expense/response-attachm
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { CreateExpenseAttachmentDTO } from '../../domain/expense/create-attachment.dto';
 import { ApproveExpenseDTO } from '../../domain/expense/approve.dto';
+import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 
 @Controller('v1/expenses')
 @ApiTags('Expense')
@@ -81,9 +82,10 @@ export class ExpenseController {
 
   @Patch('/:id/reject')
   @ApiOperation({ summary: 'Reject Expense' })
+  @ApiBody({ type: RejectExpenseDTO })
   public async reject(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() payload: string,
+    @Body() payload: RejectExpenseDTO,
   ) {
     return await this.svc.reject(id, payload);
   }

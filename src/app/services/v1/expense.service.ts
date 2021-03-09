@@ -17,6 +17,7 @@ import {
   JournalState,
   MASTER_ROLES,
   PartnerState,
+  PeriodState,
 } from '../../../model/utils/enum';
 import { CreateExpenseDTO } from '../../domain/expense/create.dto';
 import { AuthService } from './auth.service';
@@ -45,6 +46,8 @@ import { User } from '../../../model/user.entity';
 import { getPercentage, roundToTwo } from '../../../shared/utils';
 import { AccountCoa } from '../../../model/account-coa.entity';
 import { AccountCoaService } from './account-coa.service';
+import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
+import { Period } from '../../../model/period.entity';
 
 @Injectable()
 export class ExpenseService {
@@ -262,7 +265,7 @@ export class ExpenseService {
           // Create Journal for PIC HO
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
-          await manager.save(journal);
+          await this.createJournal(manager, journal);
         } else if (
           userRole === MASTER_ROLES.SS_HO ||
           userRole === MASTER_ROLES.SPV_HO
@@ -279,7 +282,7 @@ export class ExpenseService {
           // (Re)Create Journal for SS/SPV HO
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
-          await manager.save(journal);
+          await this.createJournal(manager, journal);
         }
 
         if (!state) {
@@ -290,6 +293,7 @@ export class ExpenseService {
 
         expense.state = state;
         expense.histories = await this.buildHistory(expense, { state });
+        expense.updateUser = user;
         return await manager.save(expense);
       });
 
@@ -299,8 +303,72 @@ export class ExpenseService {
     }
   }
 
-  public async reject(expenseId: string, payload?: any) {
-    // TODO: Implement API Reject Expense
+  /**
+   * Reject an Expense
+   *
+   * @param {string} expenseId
+   * @param {RejectExpenseDTO} [payload]
+   * @return {*}
+   * @memberof ExpenseService
+   */
+  public async reject(
+    expenseId: string,
+    payload?: RejectExpenseDTO,
+  ): Promise<Expense> {
+    try {
+      const rejectExpense = await getManager().transaction(async (manager) => {
+        const expense = await manager.findOne(Expense, {
+          where: { id: expenseId, isDeleted: false },
+          relations: ['histories'],
+        });
+        if (!expense) {
+          throw new NotFoundException(`Expense ID ${expenseId} not found!`);
+        }
+
+        if (expense.state === ExpenseState.REJECTED) {
+          throw new UnprocessableEntityException(`Expense already rejected!`);
+        }
+
+        const user = await AuthService.getUser({ relations: ['role'] });
+        const userRole = user?.role?.name as MASTER_ROLES;
+
+        if (!userRole) {
+          throw new BadRequestException(
+            `Failed to approve expense due unknown user role!`,
+          );
+        }
+
+        if (
+          ![
+            MASTER_ROLES.PIC_HO,
+            MASTER_ROLES.SS_HO,
+            MASTER_ROLES.SPV_HO,
+            MASTER_ROLES.SUPERUSER,
+          ].includes(userRole)
+        ) {
+          throw new BadRequestException(
+            `Only PIC/SS/SPV HO can reject expense!`,
+          );
+        }
+
+        // Remove journal if state in draft, otherwise throw error
+        await this.removeJournal(manager, expense);
+
+        const { rejectedNote } = payload;
+        const state = ExpenseState.REJECTED;
+
+        expense.state = state;
+        expense.histories = await this.buildHistory(expense, {
+          state,
+          rejectedNote,
+        });
+        expense.updateUser = user;
+        return await manager.save(expense);
+      });
+      return rejectExpense;
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**
@@ -454,6 +522,34 @@ export class ExpenseService {
     const val1 = amount / (1 - getPercentage(taxValue));
     const val2 = val1 * getPercentage(taxValue);
     return val2;
+  }
+
+  /**
+   * Internal Helper for create journal
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Journal} journal
+   * @return {*}  {Promise<Journal>}
+   * @memberof ExpenseService
+   */
+  private async createJournal(
+    manager: EntityManager,
+    journal: Journal,
+  ): Promise<Journal> {
+    const journalRepo = manager.getRepository<Journal>(Journal);
+    const periodRepo = manager.getRepository<Period>(Period);
+    const period = await periodRepo.findOne({
+      where: { id: journal.periodId, isDeleted: false },
+    });
+
+    if (!period || (period && period.state === PeriodState.CLOSE)) {
+      throw new BadRequestException(
+        `Failed create journal due period already closed!`,
+      );
+    }
+
+    return await journalRepo.save(journal);
   }
 
   /**
