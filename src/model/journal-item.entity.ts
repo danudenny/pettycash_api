@@ -1,4 +1,5 @@
 import { Entity, Column, ManyToOne, Index, JoinColumn } from 'typeorm';
+import { AccountCoa } from './account-coa.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Journal } from './journal.entity';
@@ -92,4 +93,8 @@ export class JournalItem extends PtcBaseEntity {
   @ManyToOne(() => Period)
   @JoinColumn({ name: 'period_id' })
   period: Period;
+
+  @ManyToOne(() => AccountCoa)
+  @JoinColumn({ name: 'coa_id' })
+  coa: AccountCoa;
 }

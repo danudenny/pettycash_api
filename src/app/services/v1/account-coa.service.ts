@@ -1,6 +1,6 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { AccountCoa } from '../../../model/account-coa.entity';
-import { Repository } from 'typeorm';
+import { Repository, getManager, Raw } from 'typeorm';
 import { AccountCoaWithPaginationResponse } from '../../domain/account-coa/response.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { QueryAccountCoaDTO } from '../../domain/account-coa/account-coa.payload.dto';
@@ -26,5 +26,15 @@ export class AccountCoaService {
 
     const coa = await qb.exec();
     return new AccountCoaWithPaginationResponse(coa, params);
+  }
+
+  public static async findCoaByCode(code: string): Promise<AccountCoa> {
+    const coaRepo = getManager().getRepository(AccountCoa);
+    const coa = await coaRepo.findOne({
+      where: {
+        code: Raw((alias) => `${alias} ILIKE '%${code}%'`),
+      },
+    });
+    return coa;
   }
 }

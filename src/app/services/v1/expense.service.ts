@@ -42,6 +42,9 @@ import { ExpenseHistory } from '../../../model/expense-history.entity';
 import { Journal } from '../../../model/journal.entity';
 import { JournalItem } from '../../../model/journal-item.entity';
 import { User } from '../../../model/user.entity';
+import { getPercentage, roundToTwo } from '../../../shared/utils';
+import { AccountCoa } from '../../../model/account-coa.entity';
+import { AccountCoaService } from './account-coa.service';
 
 @Injectable()
 export class ExpenseService {
@@ -169,7 +172,9 @@ export class ExpenseService {
     expense.sourceDocument = payload.sourceDocument;
     expense.transactionDate = payload.transactionDate;
     expense.periodId = payload.periodId;
-    expense.downPaymentId = null; // TODO: Add when work in DownPayment feature
+    // TODO: Add when work in DownPayment feature
+    // expense.downPaymentId = null;
+    expense.downPaymentAmount = 0;
     expense.partnerId = payload.partnerId;
     expense.type = ExpenseType.EXPENSE; // TODO: Add condition when work in DownPayment feature.
     expense.paymentType = payload.paymentType;
@@ -405,12 +410,12 @@ export class ExpenseService {
     // TODO: Implement API Delete Expense Attachments
   }
 
-  private async getTaxValue(
+  private async getTax(
     partnerId: string,
     productId: string,
-  ): Promise<number> {
+  ): Promise<AccountTax> {
     // FIXME: Refactor to use single query if posible.
-    let taxValue = null;
+    let tax: AccountTax;
 
     const product = await this.productRepo.findOne(
       { id: productId },
@@ -423,17 +428,32 @@ export class ExpenseService {
     const hasNpwp = partner && partner.npwpNumber ? true : false;
 
     if (product && product.isHasTax) {
-      const tax = await this.taxRepo.findOne({
+      tax = await this.taxRepo.findOne({
         where: {
           partnerType: partner.type,
           isHasNpwp: hasNpwp,
         },
-        select: ['id', 'taxInPercent'],
+        select: ['id', 'taxInPercent', 'coaId'],
       });
-      taxValue = tax && tax.taxInPercent;
     }
 
+    return tax;
+  }
+
+  private async getTaxValue(
+    partnerId: string,
+    productId: string,
+  ): Promise<number> {
+    const tax = await this.getTax(partnerId, productId);
+
+    const taxValue = tax && tax.taxInPercent;
     return taxValue;
+  }
+
+  private calculateTax(amount: number, taxValue: number) {
+    const val1 = amount / (1 - getPercentage(taxValue));
+    const val2 = val1 * getPercentage(taxValue);
+    return val2;
   }
 
   /**
@@ -503,28 +523,10 @@ export class ExpenseService {
     j.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
     j.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
     j.items = await this.buildJournalItem(data, userRole);
-
-    // Get totalAmount based on userRole
-    if (userRole === MASTER_ROLES.PIC_HO) {
-      j.totalAmount = data?.items
-        .map((m) => Number(m.picHoAmount))
-        .filter((i) => i)
-        .reduce((a, b) => a + b, 0);
-    } else if (
-      userRole === MASTER_ROLES.SS_HO ||
-      userRole === MASTER_ROLES.SPV_HO
-    ) {
-      j.totalAmount = data?.items
-        .map((m) => Number(m.ssHoAmount))
-        .filter((i) => i)
-        .reduce((a, b) => a + b, 0);
-    }
-
-    // If no totalAmount, use totalAmount from Admin Branch
-    if (!j.totalAmount) {
-      j.totalAmount = data?.totalAmount;
-    }
-
+    j.totalAmount = j.items
+      .map((m) => Number(m.debit))
+      .filter((i) => i)
+      .reduce((a, b) => a + b, 0);
     return j;
   }
 
@@ -555,6 +557,18 @@ export class ExpenseService {
     const user = await this.getUser();
     const debit = await this.buildJournalItemDebit(data, user, userRole);
     const credit = await this.buildJournalItemCredit(data, user, userRole);
+    const amountDebit = debit
+      .map((m) => Number(m.debit))
+      .filter((i) => i)
+      .reduce((a, b) => a + b, 0);
+    const amountCredit = credit
+      .map((m) => Number(m.credit))
+      .filter((i) => i)
+      .reduce((a, b) => a + b, 0);
+
+    if (amountDebit !== amountCredit) {
+      throw new Error(`Amount debit and credit should equal!`);
+    }
 
     const items = [...new Set([...debit, ...credit])];
     return items;
@@ -576,6 +590,8 @@ export class ExpenseService {
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
     const items: JournalItem[] = [];
+    const taxedItems = data?.items.filter((v) => v.tax);
+    let taxedAmount: number;
 
     const i = new JournalItem();
     i.createUser = user;
@@ -594,11 +610,21 @@ export class ExpenseService {
         .map((m) => Number(m.picHoAmount))
         .filter((v) => v)
         .reduce((a, b) => a + b, 0);
+
+      taxedAmount = taxedItems
+        .map((m) => Number(m.picHoAmount))
+        .filter((v) => v)
+        .reduce((a, b) => a + b, 0);
     } else if (
       userRole === MASTER_ROLES.SS_HO ||
       userRole === MASTER_ROLES.SPV_HO
     ) {
       i.credit = data?.items
+        .map((m) => Number(m.ssHoAmount))
+        .filter((v) => v)
+        .reduce((a, b) => a + b, 0);
+
+      taxedAmount = taxedItems
         .map((m) => Number(m.ssHoAmount))
         .filter((v) => v)
         .reduce((a, b) => a + b, 0);
@@ -610,11 +636,36 @@ export class ExpenseService {
         .map((m) => Number(m.amount))
         .filter((v) => v)
         .reduce((a, b) => a + b, 0);
+
+      taxedAmount = taxedItems
+        .map((m) => Number(m.amount))
+        .filter((v) => v)
+        .reduce((a, b) => a + b, 0);
     }
     items.push(i);
 
-    // TODO: Add JournalItem for Tax
-
+    // Add JournalItem for Tax
+    if (taxedItems.length > 0) {
+      // FIXME: Build JournalItem for each tax?
+      const taxedItem = taxedItems[0];
+      let taxValue = taxedItem.tax;
+      taxValue = this.calculateTax(taxedAmount, taxValue);
+      if (taxValue && taxValue > 0) {
+        const tax = await this.getTax(data.partnerId, taxedItem.productId);
+        const jTax = new JournalItem();
+        jTax.createUser = user;
+        jTax.updateUser = user;
+        jTax.coaId = tax && tax.coaId;
+        jTax.branchId = data.branchId;
+        jTax.transactionDate = data.transactionDate;
+        jTax.periodId = data.periodId;
+        jTax.reference = data.number;
+        jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+        jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+        jTax.credit = roundToTwo(taxValue);
+        items.push(jTax);
+      }
+    }
     return items;
   }
 
@@ -634,6 +685,7 @@ export class ExpenseService {
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
     const items: JournalItem[] = [];
+    const taxes: number[] = [];
     for (const v of data?.items) {
       const i = new JournalItem();
       i.createUser = user;
@@ -661,10 +713,30 @@ export class ExpenseService {
         i.debit = v.amount;
       }
 
+      if (v.tax) {
+        taxes.push(this.calculateTax(i.debit, v.tax));
+      }
+
       items.push(i);
     }
 
-    // TODO: Add JournalItem for Tax
+    // Add JournalItem for Tax
+    if (taxes.length) {
+      // FIXME: Get CoA from configuration.
+      const coa = await AccountCoaService.findCoaByCode('900.001.000');
+      const jTax = new JournalItem();
+      jTax.createUser = user;
+      jTax.updateUser = user;
+      jTax.coa = coa;
+      jTax.branchId = data.branchId;
+      jTax.transactionDate = data.transactionDate;
+      jTax.periodId = data.periodId;
+      jTax.reference = data.number;
+      jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+      jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+      jTax.debit = roundToTwo(taxes.reduce((a, b) => a + b, 0));
+      items.push(jTax);
+    }
 
     return items;
   }
