@@ -22,7 +22,7 @@ export class GenerateCode {
     return prefix + randomCode.toString();
   }
 
-  public static journal(dateTime: Date, digit: number = 8) {
+  public static journal(dateTime: Date = new Date(), digit: number = 8) {
     // Format Code: JRNL/2020/12/XYZA1234
     const prefix = `JRNL/${dayjs(dateTime).format('YYYY/MM')}/`;
     const randomCode = this.randomCode(digit);

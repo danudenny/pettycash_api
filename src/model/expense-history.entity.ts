@@ -19,7 +19,7 @@ export class ExpenseHistory extends PtcBaseEntity {
   @Column({ type: 'text', name: 'rejected_note', nullable: true })
   rejectedNote?: string;
 
-  @ManyToOne(() => Expense, (e) => e.histories)
+  @ManyToOne(() => Expense, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'expense_id' })
   expense: Expense;
 }

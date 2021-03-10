@@ -17,6 +17,7 @@ import { Branch } from './branch.entity';
 import { Partner } from './partner.entity';
 import { Period } from './period.entity';
 import { ExpensePaymentType, ExpenseState, ExpenseType } from './utils/enum';
+import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('expense')
 export class Expense extends PtcBaseEntity {
@@ -63,14 +64,29 @@ export class Expense extends PtcBaseEntity {
   paymentType: ExpensePaymentType;
 
   // Sum of Items
-  @Column({ type: 'numeric', name: 'total_amount', default: 0 })
-  totalAmount: Number;
+  @Column({
+    type: 'numeric',
+    name: 'total_amount',
+    default: 0,
+    transformer: new ColumnNumericTransformer(),
+  })
+  totalAmount: number;
 
-  @Column({ type: 'numeric', name: 'down_payment_amount', default: 0 })
-  downPaymentAmount: Number;
+  @Column({
+    type: 'numeric',
+    name: 'down_payment_amount',
+    default: 0,
+    transformer: new ColumnNumericTransformer(),
+  })
+  downPaymentAmount: number;
 
-  @Column({ type: 'numeric', name: 'difference_amount', default: 0 })
-  differenceAmount: Number;
+  @Column({
+    type: 'numeric',
+    name: 'difference_amount',
+    default: 0,
+    transformer: new ColumnNumericTransformer(),
+  })
+  differenceAmount: number;
 
   @Column({
     type: 'enum',
@@ -93,12 +109,10 @@ export class Expense extends PtcBaseEntity {
   })
   attachments: Attachment[];
 
-  @OneToMany(
-    () => ExpenseItem,
-    (e) => e.expense)
+  @OneToMany(() => ExpenseItem, (e) => e.expense, { cascade: true })
   items: ExpenseItem[];
 
-  @OneToMany(() => ExpenseHistory, (e) => e.expense)
+  @OneToMany(() => ExpenseHistory, (e) => e.expense, { cascade: true })
   histories: ExpenseHistory[];
 
   @ManyToOne(() => Branch)
@@ -116,4 +130,12 @@ export class Expense extends PtcBaseEntity {
   @ManyToOne(() => Partner)
   @JoinColumn({ name: 'partner_id' })
   partner: Partner;
+
+  // Use Relations to Journals?
+  // @Column({ type: 'uuid', name: 'journal_id', nullable: true })
+  // journalId?: string;
+
+  // @ManyToOne(() => Journal, { onDelete: 'SET NULL' })
+  // @JoinColumn({ name: 'journal_id' })
+  // journal: Journal;
 }

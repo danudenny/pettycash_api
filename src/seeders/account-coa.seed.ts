@@ -1,4 +1,10 @@
+import { Connection } from 'typeorm';
 import { AccountCoa } from '../model/account-coa.entity';
+import { Branch } from '../model/branch.entity';
+
+const COA_ID_KAS_KANTOR_PUSAT = '36d2b72d-b1bb-4eed-8763-cd3378143353';
+const COA_ID_KAS_MEDAN = '10520f57-45a1-4480-8ac5-662a8f468b7a';
+const COA_ID_TAX2PERSEN = '01e5c4a4-e681-4608-b58b-a54a513f6a6b';
 
 const getAccounts = () => {
   const coas: AccountCoa[] = [];
@@ -39,9 +45,37 @@ const getAccounts = () => {
   coa5.name = 'Down Payment Reimbursement Coa Pengganti';
   coas.push(coa5);
 
+  const coaCashKantorPusat = new AccountCoa();
+  coaCashKantorPusat.id = COA_ID_KAS_KANTOR_PUSAT;
+  coaCashKantorPusat.code = '111.001.0010';
+  coaCashKantorPusat.name = 'Kas Kantor Pusat';
+  coas.push(coaCashKantorPusat);
+
+  const coaCashMedan = new AccountCoa();
+  coaCashMedan.id = COA_ID_KAS_MEDAN;
+  coaCashMedan.code = '111.001.3890';
+  coaCashMedan.name = 'Kas Medan';
+  coas.push(coaCashMedan);
+
+  const coaTax2Persen = new AccountCoa();
+  coaTax2Persen.id = COA_ID_TAX2PERSEN;
+  coaTax2Persen.code = '200.004.0010';
+  coaTax2Persen.name = 'Tax 2%';
+  coas.push(coaTax2Persen);
+
   return coas;
 };
 
 const AccountCoaSeed = getAccounts();
 
-export default AccountCoaSeed;
+const AssignCoaToBranch = async (conn: Connection) => {
+  const branchRepo = conn.getRepository(Branch);
+  await branchRepo.update('142648ab-9624-4a7a-a4b4-2f1c51e648d7', {
+    cashCoaId: COA_ID_KAS_KANTOR_PUSAT,
+  });
+  await branchRepo.update('28786cd1-bb9e-4926-a332-3a2e1c302e68', {
+    cashCoaId: COA_ID_KAS_MEDAN,
+  });
+};
+
+export { AssignCoaToBranch, AccountCoaSeed, COA_ID_TAX2PERSEN };

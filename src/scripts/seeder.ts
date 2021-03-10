@@ -8,7 +8,7 @@ import { Partner } from '../model/partner.entity';
 import { Permission } from '../model/permission.entity';
 import { Role } from '../model/role.entity';
 import { User } from '../model/user.entity';
-import AccountCoaSeed from '../seeders/account-coa.seed';
+import { AccountCoaSeed, AssignCoaToBranch } from '../seeders/account-coa.seed';
 import { BranchSeed } from '../seeders/branch.seed';
 import GlobalSettingSeed from '../seeders/global-setting.seed';
 import PartnerSeed from '../seeders/partner.seed';
@@ -17,6 +17,8 @@ import RoleSeed from '../seeders/role.seed';
 import { UserSeed } from '../seeders/user.seed';
 
 import { AssignRandomUserToRole, ResetRolePermission, SeedRolePermission } from '../seeders/role-permission.seed';
+import { AccountTax } from '../model/account-tax.entity';
+import { AccountTaxSeed } from '../seeders/tax.seed';
 
 async function run() {
   // init connection
@@ -35,6 +37,11 @@ async function run() {
 
   // seed data account coa
   await connection.getRepository(AccountCoa).save(AccountCoaSeed);
+
+  await AssignCoaToBranch(connection);
+
+  // seed data account tax
+  await connection.getRepository(AccountTax).save(AccountTaxSeed);
 
   // seed data global setting
   await connection.getRepository(GlobalSetting).save(GlobalSettingSeed);
