@@ -90,10 +90,9 @@ export class ExpenseRelationDTO {
   transactionDate: Date;
 
   @ApiProperty({
-    description: 'Expense Period Month',
-    example: 1,
+    description: 'Expense Period Id',
   })
-  periodMonth: Number;
+  periodId: string;
 
   @ApiProperty({
     description: 'Expense Period Year',
