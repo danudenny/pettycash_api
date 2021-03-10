@@ -4,7 +4,7 @@ import { PaginationBuilder } from '../common/pagination-builder';
 import { BasePaginationResponse } from '../common/base-pagination-response.dto';
 import { ExpenseDTO, ExpenseRelationDTO } from './expense.dto';
 import { ExpenseResponseMapper } from './response.mapper';
-import { ExpenseRelationalResponseMapper } from './response-expenseItem.dto';
+import { ExpenseRelationalResponseMapper } from './response-expense-item.dto';
 
 export class ExpenseResponse extends BaseResponse {
   constructor(data?: Partial<ExpenseDTO | ExpenseDTO[]>) {

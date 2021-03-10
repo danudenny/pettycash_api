@@ -48,17 +48,32 @@ const assignRolePermission = async (
   return await conn.getRepository(Role).save(cRole);
 };
 
-const asssignUserToRole = async (role: string, conn: Connection) => {
+const asssignUserToRole = async (
+  username: string,
+  role: string,
+  conn: Connection,
+) => {
   const userRepo = conn.getRepository(User);
   const branchRepo = conn.getRepository(Branch);
-  const cUser: User = await userRepo.findOne();
+  const cUser: User = await userRepo.findOne({ where: { username } });
+  if (!cUser) return;
   cUser.role = await getRole(role, conn);
-  cUser.branches = await branchRepo.find({ take: 2 });
+  const take = username !== 'admin' ? 2 : 1;
+  cUser.branches = await branchRepo.find({ take, order: { branchId: 'ASC' } });
   return await userRepo.save(cUser);
 };
 
 const AssignRandomUserToRole = async (conn: Connection) => {
-  return await asssignUserToRole(MASTER_ROLES.SUPERUSER, conn);
+  await asssignUserToRole('adry', MASTER_ROLES.SUPERUSER, conn);
+  await asssignUserToRole('superuser', MASTER_ROLES.SUPERUSER, conn);
+  await asssignUserToRole('accounting', MASTER_ROLES.ACCOUNTING, conn);
+  await asssignUserToRole('tax', MASTER_ROLES.TAX, conn);
+  await asssignUserToRole('pic_ho', MASTER_ROLES.PIC_HO, conn);
+  await asssignUserToRole('ss_ho', MASTER_ROLES.SS_HO, conn);
+  await asssignUserToRole('spv_ho', MASTER_ROLES.SPV_HO, conn);
+  await asssignUserToRole('admin', MASTER_ROLES.ADMIN_BRANCH, conn);
+  await asssignUserToRole('ops', MASTER_ROLES.OPS, conn);
+  return;
 };
 
 const ResetRolePermission = async (conn: Connection) => {

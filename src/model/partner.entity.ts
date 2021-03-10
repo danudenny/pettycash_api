@@ -3,7 +3,7 @@ import { PtcBaseEntity } from './base.entity';
 import { PartnerState, PartnerType } from './utils/enum';
 
 @Entity('partner')
-@Unique('unique_partner__name_address', ['name', 'address'])
+@Unique('unique_partner__name_address_is_deleted', ['name', 'address', 'isDeleted'])
 export class Partner extends PtcBaseEntity {
   @Column({
     type: 'varchar',

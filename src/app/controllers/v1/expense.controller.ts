@@ -20,7 +20,7 @@ import {
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
-  ApiOperation,
+  ApiOperation, ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateExpenseDTO } from '../../domain/expense/create.dto';
@@ -33,6 +33,9 @@ import {
 import { ExpenseAttachmentResponse } from '../../domain/expense/response-attachment.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { CreateExpenseAttachmentDTO } from '../../domain/expense/create-attachment.dto';
+import { ApproveExpenseDTO } from '../../domain/expense/approve.dto';
+import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
+import FindIdParams, { FindAttachmentIdParams, FindExpenseIdParams } from '../../domain/common/findId-param.dto';
 
 @Controller('v1/expenses')
 @ApiTags('Expense')
@@ -70,18 +73,20 @@ export class ExpenseController {
 
   @Patch('/:id/approve')
   @ApiOperation({ summary: 'Approve Expense' })
+  @ApiBody({ type: ApproveExpenseDTO })
   public async approve(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() payload: string,
+    @Body() payload?: ApproveExpenseDTO,
   ) {
     return await this.svc.approve(id, payload);
   }
 
   @Patch('/:id/reject')
   @ApiOperation({ summary: 'Reject Expense' })
+  @ApiBody({ type: RejectExpenseDTO })
   public async reject(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() payload: string,
+    @Body() payload: RejectExpenseDTO,
   ) {
     return await this.svc.reject(id, payload);
   }
@@ -97,24 +102,26 @@ export class ExpenseController {
   @Post('/:id/attachments')
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create Expense Attachment' })
-  @UseInterceptors(FilesInterceptor('attachements'))
+  @UseInterceptors(FilesInterceptor('attachments'))
   @ApiCreatedResponse({ type: ExpenseAttachmentResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   @ApiBody({ type: CreateExpenseAttachmentDTO })
   public async createAttachment(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @UploadedFiles() attachements: any,
+    @UploadedFiles() attachments: any,
   ) {
-    return await this.svc.createAttachment(id, attachements);
+    return await this.svc.createAttachment(id, attachments);
   }
 
-  @Delete('/:id/attachments/:attachmentId')
+  @Delete('/:expenseId/attachments/:attachmentId')
+  @ApiParam({ name: 'attachmentId' })
+  @ApiParam({ name: 'expenseId' })
   @ApiOperation({ summary: 'Delete Expense Attachment' })
   @ApiNoContentResponse({ description: 'Successfully delete attachment' })
   public async deleteAttachment(
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Param('attachmentId', new ParseUUIDPipe()) attachmentId: string,
+    @Param() { expenseId }: FindExpenseIdParams,
+    @Param() { attachmentId }: FindAttachmentIdParams,
   ) {
-    return await this.svc.deleteAttachment(id, attachmentId);
+    return await this.svc.deleteAttachment(expenseId, attachmentId);
   }
 }

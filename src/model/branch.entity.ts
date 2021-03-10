@@ -47,6 +47,13 @@ export class Branch extends BaseEntity {
   })
   phone1: string | null;
 
+  @Column({
+    type: 'uuid',
+    name: 'cash_coa_id',
+    nullable: true,
+  })
+  cashCoaId?: string;
+
   @Column('boolean', {
     name: 'is_active',
     nullable: false,

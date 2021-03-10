@@ -8,7 +8,7 @@ export class AccountCoa extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   code: string;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 250 })
   name: string;
 
   @Column({ type: 'varchar', nullable: true })
