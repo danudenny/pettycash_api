@@ -101,15 +101,15 @@ export class ExpenseController {
   @Post('/:id/attachments')
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create Expense Attachment' })
-  @UseInterceptors(FilesInterceptor('attachements'))
+  @UseInterceptors(FilesInterceptor('attachments'))
   @ApiCreatedResponse({ type: ExpenseAttachmentResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   @ApiBody({ type: CreateExpenseAttachmentDTO })
   public async createAttachment(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @UploadedFiles() attachements: any,
+    @UploadedFiles() attachments: any,
   ) {
-    return await this.svc.createAttachment(id, attachements);
+    return await this.svc.createAttachment(id, attachments);
   }
 
   @Delete('/:id/attachments/:attachmentId')

@@ -13,5 +13,5 @@ export class CreateExpenseAttachmentDTO {
       },
     },
   })
-  attachements: any[];
+  attachments: any[];
 }
