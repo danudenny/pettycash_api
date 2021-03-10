@@ -1,4 +1,4 @@
-import { ExpenseDTO } from './expense.dto';
+import { ExpenseDTO, ExpenseRelationDTO } from './expense.dto';
 import { Expense } from '../../../model/expense.entity';
 
 export class ExpenseResponseMapper {

@@ -42,7 +42,7 @@ import { ExpenseModule } from './app/modules/expense.module';
     UserRoleModule,
     BudgetModule,
     BudgetItemModule,
-    ExpenseModule,
+    ExpenseModule
   ],
   controllers: [],
   providers: [],
