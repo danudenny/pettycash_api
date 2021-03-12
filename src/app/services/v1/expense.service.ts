@@ -917,6 +917,9 @@ export class ExpenseService {
         item.ssHoAmount = v.ssHoAmount;
       }
 
+      // Mark item is valid
+      item.isValid = true;
+
       await expenseItemRepo.update(v.id, item);
     }
   }
