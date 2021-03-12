@@ -35,6 +35,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { CreateExpenseAttachmentDTO } from '../../domain/expense/create-attachment.dto';
 import { ApproveExpenseDTO } from '../../domain/expense/approve.dto';
 import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
+import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
 import FindIdParams, { FindAttachmentIdParams, FindExpenseIdParams } from '../../domain/common/findId-param.dto';
 
 @Controller('v1/expenses')
@@ -55,6 +56,8 @@ export class ExpenseController {
 
   @Get('/:id')
   @ApiOperation({ summary: 'Get Expense' })
+  @ApiOkResponse({ type: ExpenseDetailResponse })
+  @ApiNotFoundResponse({ description: 'Expense not found' })
   public async get(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.svc.getById(id);
   }

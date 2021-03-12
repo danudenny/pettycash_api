@@ -1,20 +1,6 @@
-import { Binary } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsISO8601, IsOptional, IsUUID } from 'class-validator';
-
-export class ExpenseItemAttributeDTO {
-  @ApiProperty({
-    description: 'Key',
-    example: 'vehicleNumber',
-  })
-  key: string;
-
-  @ApiProperty({
-    description: 'Value',
-    example: 'B-1234-VKG',
-  })
-  value: string;
-}
+import { IsArray, IsOptional, IsUUID } from 'class-validator';
+import { ExpenseItemAttributeDTO } from './expense-item-attribute.dto';
 
 export class CreateExpenseItemDTO {
   @ApiProperty({

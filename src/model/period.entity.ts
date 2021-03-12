@@ -17,10 +17,10 @@ export class Period extends PtcBaseEntity {
 
   // This is period "number".
   @Column({ type: 'smallint', name: 'month' })
-  month: Number;
+  month: number;
 
   @Column({ type: 'smallint', name: 'year' })
-  year: Number;
+  year: number;
 
   @Column({ type: 'date', name: 'close_date', nullable: true })
   closeDate: Date;

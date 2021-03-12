@@ -49,6 +49,7 @@ import { AccountCoa } from '../../../model/account-coa.entity';
 import { AccountCoaService } from './account-coa.service';
 import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 import { Period } from '../../../model/period.entity';
+import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
 
 @Injectable()
 export class ExpenseService {
@@ -117,60 +118,24 @@ export class ExpenseService {
     return new ExpenseWithPaginationResponse(expense, params);
   }
 
-  public async getById(id?: string): Promise<any> {
-    const expense = await getConnection()
-      .createQueryBuilder()
-      .select([
-        "expense.id",
-        "expense.transactionDate",
-        "expense.number",
-        "expense.sourceDocument",
-        "expense.totalAmount",
-        "expense.differenceAmount",
-        "expense.paymentType",
-        "items.id",
-        "items.productId",
-        "items.products.name",
-        "product.code",
-        "attributes.key",
-        "attributes.value",
-        "items.description",
-        "items.amount",
-        "items.picHoAmount",
-        "items.ssHoAmount",
-        "items.checkedNote",
-        "period.id",
-        "period.month",
-        "period.year",
-        "partner.id",
-        "partner.name",
-        "histories.id",
-        "histories.state",
-        "histories.rejectedNote",
-        "histories.createdAt",
-        ]
-      )
-      .from(Expense, "expense")
-      .leftJoin("expense.items", "items")
-      .leftJoin('expense.period', 'period')
-      .leftJoin('items.product', 'product')
-      .leftJoin('items.attributes', 'attributes')
-      .leftJoin('expense.partner', 'partner')
-      .leftJoin('expense.histories', 'histories')
-      .where("expense.id = :id", { id })
-      .andWhere("expense.isDeleted = false")
-      .getMany();
-    return expense
-    // const expense = await this.expenseRepo.findOne({
-    //   where: { id, isDeleted: false },
-    //   relations: [
-    //     'items'
-    //   ],
-    // });
-    // if (!expense) {
-    //   throw new NotFoundException(`Expense ID ${id} not found!`);
-    // }
-    // return new ExpenseRelationResponse(expense);
+  public async getById(id: string): Promise<ExpenseDetailResponse> {
+    const expense = await this.expenseRepo.findOne({
+      where: { id, isDeleted: false },
+      relations: [
+        'period',
+        'branch',
+        'partner',
+        'items',
+        'items.product',
+        'items.attributes',
+        'histories',
+        'histories.createUser',
+      ],
+    });
+    if (!expense) {
+      throw new NotFoundException(`Expense ID ${id} not found!`);
+    }
+    return new ExpenseDetailResponse(expense);
   }
 
   /**
