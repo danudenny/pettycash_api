@@ -38,6 +38,7 @@ export class ExpenseDetailResponseMapper {
       item.picHoAmount = v.picHoAmount;
       item.ssHoAmount = v.ssHoAmount;
       item.checkedNote = v.checkedNote;
+      item.isValid = v.isValid;
       item.atrributes = this.toExpenseItemAttributeDTO(v.attributes);
       return item;
     });

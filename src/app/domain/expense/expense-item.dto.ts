@@ -61,6 +61,13 @@ export class ExpenseItemDTO {
   checkedNote: string;
 
   @ApiProperty({
+    description:
+      'Marker for this item is valid (already checked by PIC/SS/SPV) or not',
+    example: true,
+  })
+  isValid: boolean;
+
+  @ApiProperty({
     description: 'Item Attributes',
     type: [ExpenseItemAttributeDTO],
   })
