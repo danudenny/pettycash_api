@@ -32,9 +32,9 @@ export class UserRoleService {
     const params = { page: 1, ...query };
     const qb = new QueryBuilder(User, 'u', params);
 
-    qb.fieldResolverMap['employee_name__contains'] = 'u.first_name';
+    qb.fieldResolverMap['employee_name__icontains'] = 'u.first_name';
     qb.fieldResolverMap['role_id'] = 'u.role_id';
-    qb.fieldResolverMap['nik'] = 'u.username';
+    qb.fieldResolverMap['nik__icontains'] = 'u.username';
 
     qb.applyFilterPagination();
     qb.selectRaw(

@@ -5,15 +5,15 @@ HOST: http://pettycash.api.url
 
 # Group User Role Mapping
 
-## List User Role Mapping [GET /v1/user-roles?{nik,employee_name__contains,role_id}]
+## List User Role Mapping [GET /v1/user-roles?{nik__icontains,employee_name__icontains,role_id}]
 
 Get list all user role mappings.
 
 + Parameters
-    + employee_name__contains (string, optional) - Employee Name to search.
+    + employee_name__icontains (string, optional) - Employee Name to search.
     + role_id (string, optional) - Role ID to filter.
         + Example: `4afc08c3-2c58-40e1-abd3-6f6b2b9e6373`
-    + nik (string, optional) - NIK to filter.
+    + nik__icontains (string, optional) - NIK to search.
         + Example: `19000208`
 
 + Request (application/json)

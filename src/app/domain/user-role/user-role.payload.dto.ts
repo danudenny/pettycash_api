@@ -8,7 +8,7 @@ export class QueryUserRoleDTO extends BasePayload {
     example: 'Adry',
   })
   @IsOptional()
-  employee_name__contains: string;
+  employee_name__icontains: string;
 
   @ApiPropertyOptional({
     description: 'Period ID',
@@ -22,7 +22,6 @@ export class QueryUserRoleDTO extends BasePayload {
     description: 'Employee NIK',
     example: '190000280',
   })
-  @IsUUID()
   @IsOptional()
-  nik: string;
+  nik__icontains: string;
 }
