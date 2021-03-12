@@ -20,7 +20,7 @@ import {
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
-  ApiOperation,
+  ApiOperation, ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateExpenseDTO } from '../../domain/expense/create.dto';
@@ -36,6 +36,7 @@ import { CreateExpenseAttachmentDTO } from '../../domain/expense/create-attachme
 import { ApproveExpenseDTO } from '../../domain/expense/approve.dto';
 import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
+import FindIdParams, { FindAttachmentIdParams, FindExpenseIdParams } from '../../domain/common/findId-param.dto';
 
 @Controller('v1/expenses')
 @ApiTags('Expense')
@@ -115,13 +116,15 @@ export class ExpenseController {
     return await this.svc.createAttachment(id, attachments);
   }
 
-  @Delete('/:id/attachments/:attachmentId')
+  @Delete('/:expenseId/attachments/:attachmentId')
+  @ApiParam({ name: 'attachmentId' })
+  @ApiParam({ name: 'expenseId' })
   @ApiOperation({ summary: 'Delete Expense Attachment' })
   @ApiNoContentResponse({ description: 'Successfully delete attachment' })
   public async deleteAttachment(
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Param('attachmentId', new ParseUUIDPipe()) attachmentId: string,
+    @Param() { expenseId }: FindExpenseIdParams,
+    @Param() { attachmentId }: FindAttachmentIdParams,
   ) {
-    return await this.svc.deleteAttachment(id, attachmentId);
+    return await this.svc.deleteAttachment(expenseId, attachmentId);
   }
 }

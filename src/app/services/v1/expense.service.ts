@@ -4,7 +4,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getManager, EntityManager, getConnection } from 'typeorm';
+import { Repository, getManager, EntityManager, getConnection, createQueryBuilder } from 'typeorm';
 import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { ExpenseItemAttribute } from '../../../model/expense-item-attribute.entity';
@@ -485,8 +485,26 @@ export class ExpenseService {
     }
   }
 
-  public async deleteAttachment(expenseId: string, attachmentId: string) {
+  public async deleteAttachment(expenseId: string, attachmentId: string): Promise<ExpenseResponse> {
     // TODO: Implement API Delete Expense Attachments
+    const attExist = await createQueryBuilder("attachment", "att")
+      .leftJoin("expense_attachment", "eat", "att.id = eat.attachment_id")
+      .where("eat.expense_id = :expenseId", { expenseId: expenseId })
+      .andWhere("eat.attachment_id = :attachmentId", { attachmentId: attachmentId })
+      .andWhere("att.isDeleted = false")
+      .getOne();
+
+    if (!attExist) {
+      throw new NotFoundException("Tidak ditemukan attachment!");
+
+    }
+    // SoftDelete
+    const deleteAttachment = await this.attachmentRepo.update(attachmentId, { isDeleted: true });
+    if (!deleteAttachment) {
+      throw new BadRequestException('Gagal menghapus attachment!');
+
+    }
+    return new ExpenseResponse(attExist)
   }
 
   private async getTax(

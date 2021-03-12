@@ -6,12 +6,8 @@ export class ExpenseRelationalResponseMapper {
     const it = new ExpenseRelationDTO();
     it.id = dto.id;
     it.transactionDate = dto.transactionDate;
-    it.periodMonth = dto.periodMonth;
-    it.periodYear = dto.periodYear;
-    // it.branchName = dto.branchName;
+    it.periodId = dto.periodId;
     it.type = dto.type;
-    // it.downPaymentId = dto.downPaymentId;
-    // it.downPaymentNumber = dto.downPaymentNumber;
     it.number = dto.number;
     it.totalAmount = dto.totalAmount;
     it.state = dto.state;
@@ -23,16 +19,11 @@ export class ExpenseRelationalResponseMapper {
     return this.toRelationalDTO({
       id: ety.id,
       transactionDate: ety.transactionDate,
-      periodMonth: ety.period && ety.period.month,
-      periodYear: ety.period && ety.period.year,
-      // branchName: ety.branch && ety.branch.branchName,
+      periodId: ety.periodId,
       type: ety.type,
-      // downPaymentId: ety.downPaymentId,
-      // downPaymentNumber: ety.accountDownPayment && ety.accountDownPayment.number,
       number: ety.number,
       totalAmount: ety.totalAmount,
       state: ety.state,
-      items: ety.items,
     });
   }
 
