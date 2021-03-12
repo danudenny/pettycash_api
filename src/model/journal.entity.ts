@@ -99,11 +99,11 @@ export class Journal extends PtcBaseEntity {
   state: JournalState;
 
   @Column({
-    type: 'boolean',
-    name: 'is_reversed',
-    default: () => 'false',
+    type: 'uuid',
+    name: 'reverse_journal_id',
+    nullable: true,
   })
-  isReversed: boolean;
+  reverseJournalId: string;
 
   @Column({
     type: 'boolean',
@@ -111,6 +111,10 @@ export class Journal extends PtcBaseEntity {
     default: false,
   })
   isSynced: boolean;
+
+  @ManyToOne(() => Journal)
+  @JoinColumn({ name: 'reverse_journal_id' })
+  reverseJournal: Journal;
 
   @ManyToOne(() => Branch)
   @JoinColumn({ name: 'branch_id' })
