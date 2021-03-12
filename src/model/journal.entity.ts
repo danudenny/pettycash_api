@@ -11,6 +11,7 @@ import { Branch } from './branch.entity';
 import { JournalItem } from './journal-item.entity';
 import { Period } from './period.entity';
 import { JournalState } from './utils/enum';
+import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('journal')
 export class Journal extends PtcBaseEntity {
@@ -86,6 +87,7 @@ export class Journal extends PtcBaseEntity {
     type: 'decimal',
     name: 'total_amount',
     default: 0,
+    transformer: new ColumnNumericTransformer(),
   })
   totalAmount: number;
 
