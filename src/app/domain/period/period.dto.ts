@@ -19,13 +19,13 @@ export class PeriodDTO {
     description: 'Period Month',
     example: 1,
   })
-  month: Number;
+  month: number;
 
   @ApiProperty({
     description: 'Period Year',
     example: 2021,
   })
-  year: Number;
+  year: number;
 
   @ApiProperty({
     description: 'Period Status',
