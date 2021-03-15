@@ -100,17 +100,17 @@ export enum AccountPaymentPayMethod {
   FULL = 'full',
 }
 
-export enum AccountLoanType {
+export enum LoanType {
   PAYABLE = 'payable',
   RECEIVABLE = 'receivable',
 }
 
-export enum AccountLoanPaymentType {
+export enum LoanPaymentType {
   CASH = 'cash',
   BANK = 'bank',
 }
 
-export enum AccountLoanState {
+export enum LoanState {
   PAID = 'paid',
   UNPAID = 'unpaid',
 }
