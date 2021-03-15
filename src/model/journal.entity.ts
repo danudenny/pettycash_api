@@ -112,7 +112,7 @@ export class Journal extends PtcBaseEntity {
   })
   isSynced: boolean;
 
-  @ManyToOne(() => Journal)
+  @ManyToOne(() => Journal, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'reverse_journal_id' })
   reverseJournal: Journal;
 

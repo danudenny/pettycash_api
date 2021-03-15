@@ -17,6 +17,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
+import { ReverseJournalDTO } from '../../domain/journal/reverse.dto';
 import { JournalService } from '../../services/v1/journal.service';
 
 @Controller('v1/journals')
@@ -53,11 +54,12 @@ export class JournalController {
 
   @Patch('/:id/reverse')
   @ApiOperation({ summary: 'Reverse Journal' })
+  @ApiOkResponse({ description: 'Successfully reversing journal' })
   @ApiNotFoundResponse({ description: 'Journal not found' })
-  @ApiBody({})
+  @ApiBody({ type: ReverseJournalDTO })
   public async reverse(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() payload: any,
+    @Body() payload: ReverseJournalDTO,
   ) {
     return await this.svc.reverse(id, payload);
   }
