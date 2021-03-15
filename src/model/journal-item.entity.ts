@@ -4,6 +4,7 @@ import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Journal } from './journal.entity';
 import { Period } from './period.entity';
+import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('journal_item')
 export class JournalItem extends PtcBaseEntity {
@@ -72,6 +73,7 @@ export class JournalItem extends PtcBaseEntity {
     type: 'decimal',
     name: 'debit',
     default: 0,
+    transformer: new ColumnNumericTransformer(),
   })
   debit: number;
 
@@ -79,6 +81,7 @@ export class JournalItem extends PtcBaseEntity {
     type: 'decimal',
     name: 'credit',
     default: 0,
+    transformer: new ColumnNumericTransformer(),
   })
   credit: number;
 

@@ -25,7 +25,7 @@ export class Expense extends PtcBaseEntity {
   @Index()
   branchId: string;
 
-  @Column({ type: 'varchar', length: 25, name: 'number' })
+  @Column({ type: 'varchar', length: 25, name: 'number', unique: true })
   number: string;
 
   @Column({

@@ -11,6 +11,7 @@ import { Branch } from './branch.entity';
 import { JournalItem } from './journal-item.entity';
 import { Period } from './period.entity';
 import { JournalState } from './utils/enum';
+import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('journal')
 export class Journal extends PtcBaseEntity {
@@ -86,6 +87,7 @@ export class Journal extends PtcBaseEntity {
     type: 'decimal',
     name: 'total_amount',
     default: 0,
+    transformer: new ColumnNumericTransformer(),
   })
   totalAmount: number;
 
@@ -97,11 +99,11 @@ export class Journal extends PtcBaseEntity {
   state: JournalState;
 
   @Column({
-    type: 'boolean',
-    name: 'is_reversed',
-    default: () => 'false',
+    type: 'uuid',
+    name: 'reverse_journal_id',
+    nullable: true,
   })
-  isReversed: boolean;
+  reverseJournalId: string;
 
   @Column({
     type: 'boolean',
@@ -109,6 +111,10 @@ export class Journal extends PtcBaseEntity {
     default: false,
   })
   isSynced: boolean;
+
+  @ManyToOne(() => Journal, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'reverse_journal_id' })
+  reverseJournal: Journal;
 
   @ManyToOne(() => Branch)
   @JoinColumn({ name: 'branch_id' })
