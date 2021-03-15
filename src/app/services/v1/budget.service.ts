@@ -8,6 +8,8 @@ import { BudgetResponse, BudgetWithPaginationResponse } from '../../domain/budge
 import { CreateBudgetDTO, UpdateBudgetDTO, RejectBudgetDTO } from '../../domain/budget/budget-createUpdate.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { BudgetState } from '../../../model/utils/enum';
+import { BudgetItem } from '../../../model/budget-item.entity';
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class BudgetService {
@@ -20,6 +22,14 @@ export class BudgetService {
   async getUserId() {
     // TODO: Use From Authentication User.
     return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
+  }
+
+  private async getUser(includeBranch: boolean = false) {
+    if (includeBranch) {
+      return await AuthService.getUser({ relations: ['branches'] });
+    } else {
+      return await AuthService.getUser();
+    }
   }
 
   public async list(query?: QueryBugdetDTO): Promise<BudgetWithPaginationResponse> {
@@ -119,7 +129,7 @@ export class BudgetService {
     return start;
   }
 
-  public async create(data: CreateBudgetDTO): Promise<BudgetResponse> {
+  public async createOld(data: CreateBudgetDTO): Promise<BudgetResponse> {
     try {
       const budgetDTO = await this.budgetRepo.create(data);
 
@@ -138,7 +148,43 @@ export class BudgetService {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
 
+  public async create(data: CreateBudgetDTO): Promise<BudgetResponse> {
+    if (data && !data.number) {
+      data.number = GenerateCode.budget();
+    }
+
+    const user = await this.getUser(true);
+    const branchId = user && user.branches && user.branches[0].id;
+
+    // Build BudgetItem
+    const items: BudgetItem[] = [];
+    for (const v of data.items) {
+      const item = new BudgetItem();
+      item.productId = v.productId;
+      item.description = v.description;
+      item.amount = v.amount;
+      items.push(item);
+    }
+
+    // Build Budget
+    const budget = new Budget();
+    budget.branchId = branchId;
+    budget.number = data.number;
+    budget.responsibleUserId = data.responsibleUserId;
+    budget.startDate = data.startDate;
+    budget.endDate = data.endDate;
+    budget.totalAmount = data.totalAmount;
+    budget.minimumAmount = data.minimumAmount;
+    budget.rejectedNote = '';
+    budget.state = BudgetState.DRAFT;
+    budget.items = items;
+    budget.createUser = user;
+    budget.updateUser = user;
+
+    const result = await this.budgetRepo.save(budget);
+    return new BudgetResponse(result);
   }
 
   public async duplicate(id: string): Promise<BudgetResponse> {

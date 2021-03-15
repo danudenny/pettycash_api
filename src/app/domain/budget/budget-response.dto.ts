@@ -13,7 +13,7 @@ export class BudgetResponse extends BaseResponse {
     }
   }
 
-  @ApiPropertyOptional({ type: () => [BudgetDTO] })
+  @ApiPropertyOptional({ type: () => BudgetDTO })
   data?: BudgetDTO | BudgetDTO[] = null;
 }
 

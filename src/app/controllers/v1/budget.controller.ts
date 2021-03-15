@@ -12,7 +12,7 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { BudgetService } from '../../services/v1/budget.service';
 import { BudgetResponse, BudgetWithPaginationResponse } from '../../domain/budget/budget-response.dto';
 import { QueryBugdetDTO } from '../../domain/budget/budget.payload.dto';
@@ -58,8 +58,12 @@ export class BudgetController {
 
   @Post('')
   @ApiOperation({ summary: 'Create Budget' })
-  @ApiOkResponse({ type: BudgetResponse })
+  @ApiCreatedResponse({
+    type: BudgetResponse,
+    description: 'Budget Successfully Created',
+  })
   @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiBody({ type: CreateBudgetDTO })
   public async create(@Body() payload: CreateBudgetDTO) {
     return await this.budgetService.create(payload);
   }
