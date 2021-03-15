@@ -1,0 +1,344 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Journal
+
+# Group Journal 
+
+## List Journal [GET /v1/journals{?start_date__gte,end_date__lte,state,partner__icontains,number__icontains,reference__icontains,order}]
+
+Get list all Journal.
+
++ Parameters
+    + start_date__gte: `2021-01-01` (date, optional) - Start Date to filter.
+    + end_date__lte: `2021-12-31` (date, optional) - End Date to filter.
+    + state: `draft` (enum[string], optional) - Journal Status.
+        + draft
+        + approved_by_ss_ho
+        + approved_by_spv_ho
+        + approved_by_tax
+        + posted 
+    + partner__icontains: `HR Sicepat` (string, optional) - Partner Name to Search.
+    + number__icontains: `JRNL20200201AAA123` (string, optional) - Journal Number to Search.
+    + reference__icontains: `Sicepat` (string, optional) - Journal Reference to Search.
+    + order: `^createdAt` (string, optional) - Sorting by field, use prefix `^` for ASC, `-` for DESC.
+        + Default: `-createdAt`
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+        {
+          "data": [
+            {
+              "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+              "transactionDate": "2021-01-27",
+              "periodMonth": 1,
+              "periodYear": 2021,
+              "number": "JRNL20200201AAA123",
+              "reference": "REF DOC 001",
+              "partnerName": "PT. ABC DEF",
+              "partnerCode": "PRTN001",
+              "totalAmount": 900000,
+              "state": "draft",
+              "items": [
+                {
+                  "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                  "transactionDate": "2021-01-27",
+                  "periodMonth": 1,
+                  "periodYear": 2021,
+                  "number": "JRNL20200201AAA123",
+                  "reference": "REF DOC 001",
+                  "partnerName": "PT. ABC DEF",
+                  "partnerCode": "PRTN001",
+                  "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                  "coaCode": "500.001.009",
+                  "coaName": "Piutang Karyawan",
+                  "debit": 900000,
+                  "credit": 0
+                },
+                {
+                  "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                  "transactionDate": "2021-01-27",
+                  "periodMonth": 1,
+                  "periodYear": 2021,
+                  "number": "JRNL20200201AAA123",
+                  "reference": "REF DOC 001",
+                  "partnerName": "PT. ABC DEF",
+                  "partnerCode": "PRTN001",
+                  "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                  "coaCode": "200.001.009",
+                  "coaName": "Kas Cabang Jeruk",
+                  "debit": 0,
+                  "credit": 900000
+                }
+              ]
+            },
+            {
+              "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+              "transactionDate": "2021-01-27",
+              "periodMonth": 1,
+              "periodYear": 2021,
+              "number": "JRNL20200201AAA123",
+              "reference": "REF DOC 002",
+              "partnerName": "PT. HIJ DEF",
+              "partnerCode": "PRTN001",
+              "totalAmount": 700000,
+              "state": "posted",
+              "items": [
+                {
+                  "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                  "transactionDate": "2021-01-27",
+                  "periodMonth": 1,
+                  "periodYear": 2021,
+                  "number": "JRNL20200201AAA123",
+                  "reference": "REF DOC 001",
+                  "partnerName": "PT. HIJ DEF",
+                  "partnerCode": "PRTN001",
+                  "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                  "coaCode": "500.001.009",
+                  "coaName": "Piutang Karyawan",
+                  "debit": 700000,
+                  "credit": 0
+                },
+                {
+                  "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                  "transactionDate": "2021-01-27",
+                  "periodMonth": 1,
+                  "periodYear": 2021,
+                  "number": "JRNL20200201AAA123",
+                  "reference": "REF DOC 001",
+                  "partnerName": "PT. HIJ DEF",
+                  "partnerCode": "PRTN001",
+                  "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                  "coaCode": "200.001.009",
+                  "coaName": "Kas Cabang Jeruk",
+                  "debit": 0,
+                  "credit": 700000
+                }
+              ]
+            }
+          ],
+          "meta": {
+            "page": 2,
+            "prevPage": 1,
+            "nextPage": null,
+            "perPage": 10
+          },
+          "status": "success"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Approve Journal [PATCH /v1/journals/{id}/approve]
+
+Approve Journal
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Journal ID.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "JOURNAL_APPROVE_FAILED",
+                "message": "failed to approve journal",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 404 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "JOURNAL_NOT_FOUND",
+                "message": "journal not found",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+## Batch Approve Journal [PUT /v1/journals/batch-approve]
+
+Approve Journal in Batch
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + datas: (array)
+            + item:
+                + id: `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string, required) - Journal ID to approve
+
++ Response 200 (application/json)
+    + Body
+
+        {
+          "status": "success",
+          "data": {
+            "success": [
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              },
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              }
+            ],
+            "failed": [
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              },
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              },
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              }
+            ]
+          }
+        }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "JOURNAL_BATCH_APPROVE_FAILED",
+                "message": "failed to batch approve journal",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+## Post Journal [PATCH /v1/journals/{id}/post]
+
+Post Journal
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Journal ID.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "JOURNAL_POST_FAILED",
+                "message": "failed to approve journal",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 404 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "JOURNAL_NOT_FOUND",
+                "message": "journal not found",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+## Reverse Journal [PATCH /v1/journals/{id}/reverse]
+
+Reverse Journal
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Journal ID.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + reverseDate: `2020-03-15` (string) - (optional) Reverse Date.
+
++ Response 200 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "JOURNAL_REVERSE_FAILED",
+                "message": "failed to approve journal",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 404 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "JOURNAL_NOT_FOUND",
+                "message": "journal not found",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
