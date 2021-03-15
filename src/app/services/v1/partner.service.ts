@@ -67,7 +67,7 @@ export class PartnerService {
     return new PartnerResponse(partner as any);
   }
 
-  public async create(payload: CreatePartnerDTO) {
+  public async create(payload: CreatePartnerDTO): Promise<PartnerResponse> {
     if (payload && !payload.code) {
       payload.code = GenerateCode.partner();
     }
@@ -77,14 +77,14 @@ export class PartnerService {
     partner.updateUserId = await this.getUserId();
 
     try {
-      await this.partnerRepo.save(partner);
+      const newPartner = await this.partnerRepo.save(partner);
+      return new PartnerResponse(newPartner);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
         throw new BadRequestException(`Nama partner dengan alamat yang sama sudah pernah dibuat`);
       }
       throw err;
     }
-    return;
   }
 
   public async update(id: string, payload: UpdatePartnerDTO) {

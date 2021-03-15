@@ -48,7 +48,10 @@ export class PartnerController {
 
   @Post()
   @ApiOperation({ summary: 'Create Partner' })
-  @ApiCreatedResponse({ description: 'Partner successfully created' })
+  @ApiCreatedResponse({
+    description: 'Partner successfully created',
+    type: PartnerResponse,
+  })
   @ApiBadRequestResponse({ description: 'Failed to create partner' })
   @ApiBody({ type: CreatePartnerDTO })
   public async create(@Body() payload: CreatePartnerDTO) {
