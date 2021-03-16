@@ -16,6 +16,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { QueryLoanDTO } from '../../domain/loan/loan.query.dto';
 import { LoanDetailResponse } from '../../domain/loan/response-detail.dto';
 import { LoanWithPaginationResponse } from '../../domain/loan/response.dto';
 import { LoanService } from '../../services/v1/loan.service';
@@ -30,7 +31,9 @@ export class LoanController {
   @ApiOperation({ summary: 'List all loan' })
   @ApiOkResponse({ type: LoanWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async list(@Query() query: any): Promise<any> {
+  public async list(
+    @Query() query: QueryLoanDTO,
+  ): Promise<LoanWithPaginationResponse> {
     return await this.svc.list(query);
   }
 

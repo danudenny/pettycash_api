@@ -6,7 +6,7 @@ import { LoanDTO } from './loan.dto';
 import { LoanResponseMapper } from './response.mapper';
 
 export class LoanWithPaginationResponse extends BaseResponse {
-  constructor(data?: Partial<LoanDTO | LoanDTO[]>, params?: any) {
+  constructor(data?: LoanDTO | LoanDTO[], params?: any) {
     super();
     if (data) {
       this.data = LoanResponseMapper.fromDTO(data);

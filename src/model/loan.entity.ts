@@ -14,6 +14,7 @@ import { Branch } from './branch.entity';
 import { Employee } from './employee.entity';
 import { Period } from './period.entity';
 import { LoanPaymentType, LoanState, LoanType } from './utils/enum';
+import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('loan')
 export class Loan extends PtcBaseEntity {
@@ -41,13 +42,30 @@ export class Loan extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'employee_id' })
   employeeId: string;
 
-  @Column({ type: 'numeric', name: 'amount', default: 0 })
+  @Column({
+    type: 'numeric',
+    name: 'amount',
+    default: 0,
+    transformer: new ColumnNumericTransformer(),
+  })
   amount: number;
 
-  @Column({ type: 'numeric', name: 'residual_amount', default: 0 })
+  @Column({
+    type: 'numeric',
+    name: 'residual_amount',
+    default: 0,
+
+    transformer: new ColumnNumericTransformer(),
+  })
   residualAmount: number;
 
-  @Column({ type: 'numeric', name: 'paid_amount', default: 0 })
+  @Column({
+    type: 'numeric',
+    name: 'paid_amount',
+    default: 0,
+
+    transformer: new ColumnNumericTransformer(),
+  })
   paidAmount: number;
 
   @Column({
