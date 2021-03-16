@@ -22,7 +22,7 @@ export class GenerateCode {
     return prefix + randomCode.toString();
   }
 
-  public static journal(dateTime: Date, digit: number = 8) {
+  public static journal(dateTime: Date = new Date(), digit: number = 8) {
     // Format Code: JRNL/2020/12/XYZA1234
     const prefix = `JRNL/${dayjs(dateTime).format('YYYY/MM')}/`;
     const randomCode = this.randomCode(digit);
@@ -39,6 +39,13 @@ export class GenerateCode {
   public static product(dateTime: Date = new Date(), digit: number = 8) {
     // Format Code: PRD/2020/12/XYZA1234
     const prefix = `PRD/${dayjs(dateTime).format('YYYY/MM')}/`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
+
+  public static expense(dateTime: Date = new Date(), digit: number = 6) {
+    // Format Code: REL202102ABC123
+    const prefix = `REL${dayjs(dateTime).format('YYYYMM')}`;
     const randomCode = this.randomCode(digit);
     return prefix + randomCode.toString();
   }

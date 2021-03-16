@@ -13,9 +13,9 @@ services:
     ports:
       - 3010:3010
     command: yarn start:dev
-    # Comment this line for easy changing ENV from .env file
+    # Comment this line for easy changing ENV from .env.dev file
     # env_file:
-      # - .env
+      # - .env.dev
     networks:
       - sicepatnet
     depends_on:

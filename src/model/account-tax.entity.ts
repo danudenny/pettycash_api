@@ -22,7 +22,7 @@ export class AccountTax extends PtcBaseEntity {
   isHasNpwp: boolean;
 
   @Column({ type: 'decimal', name: 'tax_in_percent', default: 0 })
-  taxInPercent: Number;
+  taxInPercent: number;
 
   @Column({ type: 'enum', enum: AccountTaxPartnerType, name: 'partner_type' })
   partnerType: AccountTaxPartnerType;

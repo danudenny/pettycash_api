@@ -10,6 +10,7 @@ import { ExpenseItemAttribute } from './expense-item-attribute.entity';
 import { Expense } from './expense.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Product } from './product.entity';
+import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('expense_item')
 export class ExpenseItem extends PtcBaseEntity {
@@ -23,27 +24,39 @@ export class ExpenseItem extends PtcBaseEntity {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ type: 'decimal', name: 'amount', default: 0 })
-  amount: Number;
+  @Column({
+    type: 'decimal',
+    name: 'amount',
+    default: 0,
+    transformer: new ColumnNumericTransformer(),
+  })
+  amount: number;
 
   @Column({
     type: 'decimal',
     name: 'pic_ho_amount',
     default: 0,
     comment: 'Checked Amount by PIC HO',
+    transformer: new ColumnNumericTransformer(),
   })
-  picHoAmount: Number;
+  picHoAmount: number;
 
   @Column({
     type: 'decimal',
     name: 'ss_ho_amount',
     default: 0,
     comment: 'Checked Amount by SS/SPV HO',
+    transformer: new ColumnNumericTransformer(),
   })
-  ssHoAmount: Number;
+  ssHoAmount: number;
 
-  @Column({ type: 'smallint', name: 'tax', nullable: true })
-  tax?: Number;
+  @Column({
+    type: 'smallint',
+    name: 'tax',
+    nullable: true,
+    transformer: new ColumnNumericTransformer(),
+  })
+  tax?: number;
 
   @Column({ type: 'text', name: 'checked_note', nullable: true })
   checkedNote?: string;
@@ -57,9 +70,13 @@ export class ExpenseItem extends PtcBaseEntity {
   })
   isValid: boolean;
 
-  @OneToMany(() => ExpenseItemAttribute, (e) => e.expenseItem)
+  @OneToMany(
+    () => ExpenseItemAttribute,
+    (e) => e.expenseItem,
+    {eager: true})
   attributes: ExpenseItemAttribute[];
 
+  @ManyToOne(() => Expense, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'expense_id' })
   expense: Expense;
 

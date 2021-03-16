@@ -130,6 +130,7 @@ export enum JournalState {
 
 export enum JournalSourceType {
   DP = 'down_payment',
+  EXPENSE = 'expense',
   // Add other type
 }
 
