@@ -8,7 +8,7 @@ import {
   JoinTable,
   Index,
 } from 'typeorm';
-import { AccountDownPayment } from './account-down-payment.entity';
+import { DownPayment } from './down-payment.entity';
 import { ExpenseHistory } from './expense-history.entity';
 import { ExpenseItem } from './expense-item.entity';
 import { Attachment } from './attachment.entity';
@@ -123,9 +123,9 @@ export class Expense extends PtcBaseEntity {
   @JoinColumn({ name: 'period_id' })
   period: Period;
 
-  @ManyToOne(() => AccountDownPayment)
+  @ManyToOne(() => DownPayment)
   @JoinColumn({ name: 'down_payment_id' })
-  accountDownPayment: AccountDownPayment;
+  downPayment: DownPayment;
 
   @ManyToOne(() => Partner)
   @JoinColumn({ name: 'partner_id' })

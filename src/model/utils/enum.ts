@@ -55,17 +55,17 @@ export enum VoucherState {
   APPROVED = 'approved',
 }
 
-export enum AccountDownPaymentType {
+export enum DownPaymentType {
   PERDIN = 'perdin',
   REIMBURSEMENT = 'reimbursement',
 }
 
-export enum AccountDownPaymentPayType {
+export enum DownPaymentPayType {
   CASH = 'cash',
   BANK = 'bank',
 }
 
-export enum AccountDownPaymentState {
+export enum DownPaymentState {
   DRAFT = 'draft',
   APPROVED_BY_SS = 'approved_by_ss',
   APPROVED_BY_SPV = 'approved_by_spv',

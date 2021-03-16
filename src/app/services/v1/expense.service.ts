@@ -108,7 +108,7 @@ export class ExpenseService {
     );
     qb.leftJoin((e) => e.branch, 'brc');
     qb.leftJoin((e) => e.period, 'per');
-    qb.leftJoin((e) => e.accountDownPayment, 'adp');
+    qb.leftJoin((e) => e.downPayment, 'adp');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),

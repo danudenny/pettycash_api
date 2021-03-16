@@ -2,43 +2,43 @@ import { Entity, Column, JoinColumn, ManyToOne, Index } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Department } from './department.entity';
-import { User } from './user.entity';
+import { Employee } from './employee.entity';
 import {
-  AccountDownPaymentPayType,
-  AccountDownPaymentState,
-  AccountDownPaymentType,
+  DownPaymentPayType,
+  DownPaymentState,
+  DownPaymentType,
 } from './utils/enum';
 
-@Entity('account_down_payment')
-export class AccountDownPayment extends PtcBaseEntity {
+@Entity('down_payment')
+export class DownPayment extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'branch_id' })
   @Index()
   branchId: string;
 
-  @Column({ type: 'varchar', length: 25, name: 'number' })
+  @Column({ type: 'varchar', length: 25, name: 'number', unique: true })
   number: string;
 
   @Column({ type: 'date', name: 'transaction_date' })
   transactionDate: Date;
 
-  @Column({ type: 'enum', enum: AccountDownPaymentType, name: 'type' })
-  type: AccountDownPaymentType;
+  @Column({ type: 'enum', enum: DownPaymentType, name: 'type' })
+  type: DownPaymentType;
 
   @Column({ type: 'uuid', name: 'department_id' })
   departmentId: string;
 
-  @Column({ type: 'uuid', name: 'responsible_user_id' })
-  responsibleUserId: string;
+  @Column({ type: 'uuid', name: 'employee_id' })
+  employeeId: string;
 
   @Column({ type: 'decimal', name: 'amount', default: 0 })
-  amount: Number;
+  amount: number;
 
   @Column({
     type: 'enum',
-    enum: AccountDownPaymentPayType,
+    enum: DownPaymentPayType,
     name: 'payment_type',
   })
-  paymentType: AccountDownPaymentPayType;
+  paymentType: DownPaymentPayType;
 
   @Column({ type: 'text', name: 'description', nullable: true })
   description?: string;
@@ -48,8 +48,8 @@ export class AccountDownPayment extends PtcBaseEntity {
 
   @Column({
     type: 'enum',
-    enum: AccountDownPaymentState,
-    default: AccountDownPaymentState.DRAFT,
+    enum: DownPaymentState,
+    default: DownPaymentState.DRAFT,
   })
   state: string;
 
@@ -69,7 +69,7 @@ export class AccountDownPayment extends PtcBaseEntity {
   @JoinColumn({ name: 'department_id', referencedColumnName: 'id' })
   department: Department;
 
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'responsible_user_id', referencedColumnName: 'id' })
-  responsibleUser: User;
+  @ManyToOne(() => Employee)
+  @JoinColumn({ name: 'employee_id', referencedColumnName: 'id' })
+  employee: Employee;
 }
