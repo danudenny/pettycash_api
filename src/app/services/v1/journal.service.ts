@@ -22,6 +22,7 @@ import { JournalItem } from '../../../model/journal-item.entity';
 import { Period } from '../../../model/period.entity';
 import { User } from '../../../model/user.entity';
 import { ReverseJournalDTO } from '../../domain/journal/reverse.dto';
+import { BatchApproveJournalDTO } from '../../domain/journal/approve.dto';
 
 @Injectable()
 export class JournalService {
@@ -41,6 +42,11 @@ export class JournalService {
 
   public async approve(id: string): Promise<any> {
     // TODO: Implement API approve journal
+  }
+
+  public async batchApprove(payload: BatchApproveJournalDTO): Promise<any> {
+    // TODO: Implement API approve journal
+    return payload;
   }
 
   public async post(id: string): Promise<any> {

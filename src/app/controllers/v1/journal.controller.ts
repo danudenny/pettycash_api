@@ -5,6 +5,7 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
+  Put,
   Query,
 } from '@nestjs/common';
 import {
@@ -16,6 +17,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { BatchApproveJournalDTO } from '../../domain/journal/approve.dto';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
 import { ReverseJournalDTO } from '../../domain/journal/reverse.dto';
 import { JournalService } from '../../services/v1/journal.service';
@@ -42,6 +44,15 @@ export class JournalController {
   @ApiBody({})
   public async approve(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.svc.approve(id);
+  }
+
+  @Put('/batch-approve')
+  @ApiOperation({ summary: 'Batch Approve Journal' })
+  @ApiOkResponse({ description: 'Successfully approve journal' })
+  @ApiBadRequestResponse({ description: 'Failed to batch approve journal' })
+  @ApiBody({ type: BatchApproveJournalDTO })
+  public async batchApprove(@Body() data: BatchApproveJournalDTO) {
+    return await this.svc.batchApprove(data);
   }
 
   @Patch('/:id/post')

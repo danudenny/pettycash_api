@@ -66,8 +66,12 @@ export class ProductService {
 
     if(!prodDto.name) {
       throw new BadRequestException(
-        `Product Name cannot be empty!`,
+        `Nama produk tidak boleh kosong!`,
       );
+    }
+
+    if(prodExist) {
+      throw new BadRequestException(`Nama produk sudah terdaftar!`);
     }
 
     try {
@@ -75,7 +79,7 @@ export class ProductService {
       return new ProductResponse(product);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`Name already exists!`);
+        throw new BadRequestException(`Nama produk sudah terdaftar!`);
       }
       throw err;
     }
@@ -83,19 +87,24 @@ export class ProductService {
   }
 
   public async update(id: string, data: UpdateProductDTO): Promise<ProductResponse> {
-    const prodExist = await this.productRepo.findOne({ id, isDeleted: false });
-    if (!prodExist) {
-      throw new NotFoundException('Product ID Not Found');
-    }
     const values = await this.productRepo.create(data);
+    const prodExist = await this.productRepo.findOne({ id,isDeleted: false });
+    const prodNameExist = await this.productRepo.findOne({ name: values.name,isDeleted: false });
+    if (!prodExist) {
+      throw new NotFoundException('Product ID Tidak Ditemukan');
+    }
     values.updateUserId = await this.getUserId();
+
+    if(prodNameExist) {
+      throw new BadRequestException(`Nama produk sudah terdaftar!`);
+    }
 
     try {
       const product = await this.productRepo.update(id, values);
       return new ProductResponse(product as any);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`Name already exists!`);
+        throw new BadRequestException(`Nama produk sudah terdaftar!`);
       }
       throw err;
     }

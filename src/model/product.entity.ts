@@ -19,7 +19,6 @@ export class Product extends PtcBaseEntity {
     length: 100,
     nullable: false,
     name: 'name',
-    unique: true,
   })
   name: string;
 
