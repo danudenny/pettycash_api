@@ -70,6 +70,10 @@ export class ProductService {
       );
     }
 
+    if(prodExist) {
+      throw new BadRequestException(`Nama produk sudah terdaftar!`);
+    }
+
     try {
       const product = await this.productRepo.save(prodDto);
       return new ProductResponse(product);
@@ -83,12 +87,17 @@ export class ProductService {
   }
 
   public async update(id: string, data: UpdateProductDTO): Promise<ProductResponse> {
-    const prodExist = await this.productRepo.findOne({ id, isDeleted: false });
+    const values = await this.productRepo.create(data);
+    const prodExist = await this.productRepo.findOne({ id,isDeleted: false });
+    const prodNameExist = await this.productRepo.findOne({ name: values.name,isDeleted: false });
     if (!prodExist) {
       throw new NotFoundException('Product ID Tidak Ditemukan');
     }
-    const values = await this.productRepo.create(data);
     values.updateUserId = await this.getUserId();
+
+    if(prodNameExist) {
+      throw new BadRequestException(`Nama produk sudah terdaftar!`);
+    }
 
     try {
       const product = await this.productRepo.update(id, values);
