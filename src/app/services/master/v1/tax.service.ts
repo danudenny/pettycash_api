@@ -64,7 +64,7 @@ export class TaxService {
       return new TaxResponse(tax);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`Name should be unique!`);
+        throw new BadRequestException(`Nama pajak sudah terdaftar!`);
       }
       throw err;
     }
@@ -84,7 +84,7 @@ export class TaxService {
       return new TaxResponse(tax as any);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`Name should be unique!`);
+        throw new BadRequestException(`Nama pajak sudah terdaftar!`);
       }
       throw err;
     }
