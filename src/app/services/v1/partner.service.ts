@@ -13,6 +13,7 @@ import {
   PartnerWithPaginationResponse,
 } from '../../domain/partner/response.dto';
 import { UpdatePartnerDTO } from '../../domain/partner/update.dto';
+import { AuthService } from './auth.service';
 
 export class PartnerService {
   constructor(
@@ -21,8 +22,8 @@ export class PartnerService {
   ) {}
 
   private async getUserId() {
-    // TODO: Use From Authentication User.
-    return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
+    const user = await AuthService.getUser();
+    return user.id;
   }
 
   async list(query: QueryPartnerDTO): Promise<PartnerResponse> {
@@ -72,19 +73,27 @@ export class PartnerService {
       payload.code = GenerateCode.partner();
     }
 
+    const existingPartner = await this.partnerRepo.find({
+      select: ['id'],
+      where: {
+        name: payload.name,
+        address: payload.address,
+        isDeleted: false,
+      },
+    });
+
+    if (!!existingPartner.length) {
+      throw new BadRequestException(
+        `Nama partner dengan alamat yang sama sudah pernah dibuat`,
+      );
+    }
+
     const partner = this.partnerRepo.create(payload as Partner);
     partner.createUserId = await this.getUserId();
     partner.updateUserId = await this.getUserId();
 
-    try {
-      const newPartner = await this.partnerRepo.save(partner);
-      return new PartnerResponse(newPartner);
-    } catch (err) {
-      if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`Nama partner dengan alamat yang sama sudah pernah dibuat`);
-      }
-      throw err;
-    }
+    const newPartner = await this.partnerRepo.save(partner);
+    return new PartnerResponse(newPartner);
   }
 
   public async update(id: string, payload: UpdatePartnerDTO) {
@@ -102,7 +111,9 @@ export class PartnerService {
       await this.partnerRepo.update(id, updatedPartner);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`Nama partner dengan alamat yang sama sudah pernah dibuat`);
+        throw new BadRequestException(
+          `Nama partner dengan alamat yang sama sudah pernah dibuat`,
+        );
       }
       throw err;
     }
