@@ -84,8 +84,7 @@ export class ExpenseDetailResponseMapper {
       downPaymentAmount: ety.downPaymentAmount,
       differenceAmount: ety.differenceAmount,
       downPaymentId: ety.downPaymentId,
-      downPaymentNumber:
-        ety.accountDownPayment && ety.accountDownPayment.number,
+      downPaymentNumber: ety?.downPayment?.number,
       type: ety.type,
       paymentType: ety.paymentType,
       state: ety.state,
