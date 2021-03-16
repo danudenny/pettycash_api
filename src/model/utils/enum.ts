@@ -87,7 +87,7 @@ export enum ExpensePaymentType {
 
 export enum ExpenseType {
   DOWN_PAYMENT = 'down_payment',
-  EXPENSE = 'expense'
+  EXPENSE = 'expense',
 }
 
 export enum AccountPaymentType {
@@ -103,11 +103,6 @@ export enum AccountPaymentPayMethod {
 export enum LoanType {
   PAYABLE = 'payable',
   RECEIVABLE = 'receivable',
-}
-
-export enum LoanPaymentType {
-  CASH = 'cash',
-  BANK = 'bank',
 }
 
 export enum LoanState {

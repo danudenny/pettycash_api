@@ -13,7 +13,7 @@ import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Employee } from './employee.entity';
 import { Period } from './period.entity';
-import { LoanPaymentType, LoanState, LoanType } from './utils/enum';
+import { LoanState, LoanType } from './utils/enum';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('loan')
@@ -74,13 +74,6 @@ export class Loan extends PtcBaseEntity {
     name: 'type',
   })
   type: LoanType;
-
-  @Column({
-    type: 'enum',
-    enum: LoanPaymentType,
-    name: 'payment_type',
-  })
-  paymentType: LoanPaymentType;
 
   @Column({
     type: 'enum',
