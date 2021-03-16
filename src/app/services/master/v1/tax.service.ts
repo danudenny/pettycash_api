@@ -56,8 +56,20 @@ export class TaxService {
 
   public async create(data: CreateTaxDTO): Promise<TaxResponse> {
     const taxDto = await this.taxRepo.create(data);
+    const taxExist = await this.taxRepo.findOne({name: taxDto.name, isDeleted: false})
     taxDto.createUserId = await this.getUserId();
     taxDto.updateUserId = await this.getUserId();
+
+    if(!taxDto.name) {
+      throw new BadRequestException(
+        `Nama pajak tidak boleh kosong!`,
+      );
+    }
+
+    if(taxExist) {
+      throw new BadRequestException(`Nama pajak sudah terdaftar!`);
+    }
+
 
     try {
       const tax = await this.taxRepo.save(taxDto);
@@ -72,12 +84,24 @@ export class TaxService {
   }
 
   public async update(id: string, data: UpdateTaxDTO): Promise<TaxResponse> {
+    const values = await this.taxRepo.create(data);
     const taxExist = await this.taxRepo.findOne({ id, isDeleted: false });
+    const taxNameExist = await this.taxRepo.findOne({name: values.name, isDeleted: false})
+    values.updateUserId = await this.getUserId();
+
     if (!taxExist) {
       throw new NotFoundException();
     }
-    const values = await this.taxRepo.create(data);
-    values.updateUserId = await this.getUserId();
+
+    if(!values.name) {
+      throw new BadRequestException(
+        `Nama pajak tidak boleh kosong!`,
+      );
+    }
+
+    if(taxExist) {
+      throw new BadRequestException(`Nama pajak sudah terdaftar!`);
+    }
 
     try {
       const tax = await this.taxRepo.update(id, values);
