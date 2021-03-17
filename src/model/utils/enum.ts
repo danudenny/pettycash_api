@@ -90,12 +90,12 @@ export enum ExpenseType {
   EXPENSE = 'expense',
 }
 
-export enum AccountPaymentType {
+export enum AccountPaymentPayMethod {
   CASH = 'cash',
   BANK = 'bank',
 }
 
-export enum AccountPaymentPayMethod {
+export enum AccountPaymentType {
   PARTIALLY = 'partially',
   FULL = 'full',
 }

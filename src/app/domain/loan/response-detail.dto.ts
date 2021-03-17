@@ -1,16 +1,17 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Loan } from '../../../model/loan.entity';
 import { BaseResponse } from '../common/base-response.dto';
-import { LoanDTO } from './loan.dto';
+import { LoanDetailDTO } from './loan-detail.dto';
 import { LoanDetailResponseMapper } from './response-detail.mapper';
 
 export class LoanDetailResponse extends BaseResponse {
-  constructor(data?: LoanDTO, params?: any) {
+  constructor(data?: Loan) {
     super();
     if (data) {
-      this.data = LoanDetailResponseMapper.fromDTO(data);
+      this.data = LoanDetailResponseMapper.fromEntity(data);
     }
   }
 
-  @ApiPropertyOptional({ type: () => LoanDTO })
-  data?: LoanDTO = null;
+  @ApiPropertyOptional({ type: () => LoanDetailDTO })
+  data?: LoanDetailDTO = null;
 }

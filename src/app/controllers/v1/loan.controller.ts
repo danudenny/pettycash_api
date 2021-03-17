@@ -43,7 +43,7 @@ export class LoanController {
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async getById(
     @Param('id', new ParseUUIDPipe()) id: string,
-  ): Promise<any> {
+  ): Promise<LoanDetailResponse> {
     return await this.svc.getById(id);
   }
 

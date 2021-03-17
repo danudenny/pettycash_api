@@ -13,13 +13,13 @@ export class AccountPayment extends PtcBaseEntity {
   transactionDate: Date;
 
   @Column({ type: 'decimal', name: 'amount', default: 0 })
-  amount: Number;
+  amount: number;
 
   @Column({
     type: 'enum',
     enum: AccountPaymentType,
     name: 'type',
-    comment: 'Payment Type either cash or bank',
+    comment: 'Payment Type either partially or full',
   })
   type: AccountPaymentType;
 
@@ -27,7 +27,7 @@ export class AccountPayment extends PtcBaseEntity {
     type: 'enum',
     enum: AccountPaymentPayMethod,
     name: 'payment_method',
-    comment: 'Payment Method either partially or full',
+    comment: 'Payment Method either cash or bank',
   })
   paymentMethod: AccountPaymentPayMethod;
 
