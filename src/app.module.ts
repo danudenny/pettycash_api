@@ -19,6 +19,7 @@ import { AuthModule } from './app/modules/auth.module';
 import { BudgetItemModule } from './app/modules/budget-item.module';
 import { ExpenseModule } from './app/modules/expense.module';
 import { JournalModule } from './app/modules/journal.module';
+import { LoanModule } from './app/modules/loan.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { JournalModule } from './app/modules/journal.module';
     BudgetItemModule,
     ExpenseModule,
     JournalModule,
+    LoanModule,
   ],
   controllers: [],
   providers: [],
