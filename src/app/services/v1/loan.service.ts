@@ -43,6 +43,7 @@ export class LoanService {
       ['l.number', 'number'],
       ['l.transaction_date', 'transactionDate'],
       ['l.type', 'type'],
+      ['l.state', 'state'],
       ['l.amount', 'amount'],
       ['l.residual_amount', 'residualAmount'],
       ['l.paid_amount', 'paidAmount'],

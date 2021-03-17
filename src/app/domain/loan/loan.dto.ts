@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-import { LoanType } from '../../../model/utils/enum';
+import { LoanState, LoanType } from '../../../model/utils/enum';
 
 export class LoanDTO {
   @ApiProperty({
@@ -41,6 +41,12 @@ export class LoanDTO {
   branchCode: string;
 
   @ApiProperty({
+    description: 'Loan Number',
+    example: 'LOAN202003111AAA',
+  })
+  number: string;
+
+  @ApiProperty({
     description: 'Source Document',
     example: '1008991',
   })
@@ -64,6 +70,13 @@ export class LoanDTO {
     enum: LoanType,
   })
   type: LoanType;
+
+  @ApiProperty({
+    description: 'Loan State',
+    example: LoanState.PAID,
+    enum: LoanState,
+  })
+  state: LoanState;
 
   @ApiProperty({
     description: 'Loan Amount',
