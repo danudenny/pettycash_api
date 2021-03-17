@@ -2,6 +2,7 @@ import { Entity, Column, JoinColumn, ManyToOne, Index } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { AccountPaymentPayMethod, AccountPaymentType } from './utils/enum';
+import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('account_payment')
 export class AccountPayment extends PtcBaseEntity {
@@ -12,7 +13,12 @@ export class AccountPayment extends PtcBaseEntity {
   @Column({ type: 'date', name: 'transaction_date' })
   transactionDate: Date;
 
-  @Column({ type: 'decimal', name: 'amount', default: 0 })
+  @Column({
+    type: 'decimal',
+    name: 'amount',
+    default: 0,
+    transformer: new ColumnNumericTransformer(),
+  })
   amount: number;
 
   @Column({

@@ -12,6 +12,7 @@ export class LoanDetailResponseMapper {
     dto.sourceDocument = ety.sourceDocument;
     dto.amount = ety.amount;
     dto.residualAmount = ety.residualAmount;
+    dto.state = ety.state;
     dto.payments = this.toPaymentDTO(ety.payments);
     return dto;
   }

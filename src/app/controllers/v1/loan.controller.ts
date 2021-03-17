@@ -16,6 +16,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { CreatePaymentLoanDTO } from '../../domain/loan/create-payment.dto';
 import { QueryLoanDTO } from '../../domain/loan/loan.query.dto';
 import { LoanDetailResponse } from '../../domain/loan/response-detail.dto';
 import { LoanWithPaginationResponse } from '../../domain/loan/response.dto';
@@ -47,13 +48,14 @@ export class LoanController {
     return await this.svc.getById(id);
   }
 
-  @Post('/:id/pay')
-  @ApiOperation({ summary: 'Pay a Loan' })
+  @Post('/:id/payments')
+  @ApiOperation({ summary: 'Create/Add Payments to Loan' })
   @ApiNotFoundResponse({ description: 'Loan not found' })
-  @ApiBody({})
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiBody({ type: CreatePaymentLoanDTO })
   public async pay(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() payload: any,
+    @Body() payload: CreatePaymentLoanDTO,
   ) {
     return await this.svc.pay(id, payload);
   }

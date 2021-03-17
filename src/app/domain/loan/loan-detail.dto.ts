@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
+import { LoanState } from '../../../model/utils/enum';
 import { LoanPaymentDTO } from './loan-payment.dto';
 
 export class LoanDetailDTO {
@@ -39,6 +40,13 @@ export class LoanDetailDTO {
     example: 40000,
   })
   residualAmount: number;
+
+  @ApiProperty({
+    description: 'Loan State',
+    example: LoanState.PAID,
+    enum: LoanState,
+  })
+  state: LoanState;
 
   @ApiProperty({
     description: 'Payments',
