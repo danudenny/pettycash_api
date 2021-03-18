@@ -1,6 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsOptional } from 'class-validator';
 import { BasePayload } from '../common/base-payload.dto';
 
 export class QueryUserDTO extends BasePayload {
@@ -9,14 +8,14 @@ export class QueryUserDTO extends BasePayload {
     example: 'Adry',
   })
   @IsOptional()
-  name__contains: string;
+  name__icontains: string;
 
   @ApiPropertyOptional({
     description: 'User NIK or Username',
     example: '19000280',
   })
   @IsOptional()
-  nik__contains: string;
+  nik__icontains: string;
 
   @ApiPropertyOptional({
     description: 'Filter user by has role or not',

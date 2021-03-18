@@ -6,13 +6,13 @@ export class QueryPartnerDTO extends BasePayload {
     description: 'Search by Partner Name (using LIKE sql)',
     example: 'PT. Indocahya',
   })
-  name__contains: string;
+  name__icontains: string;
 
   @ApiPropertyOptional({
     description: 'Search by Partner Code (using LIKE sql)',
     example: 'HR_SICEPAT',
   })
-  code__contains: string;
+  code__icontains: string;
 
   @ApiPropertyOptional({
     description: 'Partner Status',

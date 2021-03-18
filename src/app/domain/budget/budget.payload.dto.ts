@@ -23,27 +23,26 @@ export class QueryBugdetDTO extends BasePayload {
 
   @ApiPropertyOptional({
     description: 'Minimum Range Total Amount',
-    example: 1000000.0
+    example: 1000000.0,
   })
   minAmount: number;
 
   @ApiPropertyOptional({
     description: 'Maximum Range Total Amount',
-    example: 5000000.0
+    example: 5000000.0,
   })
   maxAmount: number;
 
   @ApiPropertyOptional({
     description: 'Budget State',
     example: BudgetState.DRAFT,
-    enum: BudgetState
+    enum: BudgetState,
   })
   state: BudgetState;
 
   @ApiPropertyOptional({
     description: 'Budget Number',
-    example: 'BG001'
+    example: 'BG001',
   })
-  number: string;
-
+  number__icontains: string;
 }

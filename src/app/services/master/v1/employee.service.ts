@@ -23,10 +23,10 @@ export class EmployeeService {
     const params = { order: '^id', limit: 10, ...query };
     const qb = new QueryBuilder(Employee, 'emp', params);
 
-    qb.fieldResolverMap['nik__contains'] = 'emp.nik';
-    qb.fieldResolverMap['name__contains'] = 'emp.name';
-    qb.fieldResolverMap['idCardNumber__contains'] = 'emp.idCardNumber';
-    qb.fieldResolverMap['branchId__contains'] = 'emp.branchId';
+    qb.fieldResolverMap['nik__icontains'] = 'emp.nik';
+    qb.fieldResolverMap['name__icontains'] = 'emp.name';
+    qb.fieldResolverMap['idCardNumber__icontains'] = 'emp.idCardNumber';
+    qb.fieldResolverMap['branchId'] = 'emp.branchId';
 
     qb.applyFilterPagination();
     qb.selectRaw(

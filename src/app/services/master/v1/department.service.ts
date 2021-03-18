@@ -18,8 +18,8 @@ export class DepartmentService {
     const params = { order: '^code', limit: 10, ...query };
     const qb = new QueryBuilder(Department, 'dept', params);
 
-    qb.fieldResolverMap['code__contains'] = 'dept.code';
-    qb.fieldResolverMap['name__contains'] = 'dept.name';
+    qb.fieldResolverMap['code__icontains'] = 'dept.code';
+    qb.fieldResolverMap['name__icontains'] = 'dept.name';
 
     qb.applyFilterPagination();
     qb.selectRaw(

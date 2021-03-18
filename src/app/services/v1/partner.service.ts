@@ -31,8 +31,8 @@ export class PartnerService {
     const qb = new QueryBuilder(Partner, 'p', params);
 
     qb.fieldResolverMap['id'] = 'p.id';
-    qb.fieldResolverMap['name__contains'] = 'p.name';
-    qb.fieldResolverMap['code__contains'] = 'p.code';
+    qb.fieldResolverMap['name__icontains'] = 'p.name';
+    qb.fieldResolverMap['code__icontains'] = 'p.code';
     qb.fieldResolverMap['state'] = 'p.state';
     qb.fieldResolverMap['type'] = 'p."type"';
 

@@ -17,8 +17,8 @@ export class BranchService {
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(Branch, 'b', params);
 
-    qb.fieldResolverMap['name__contains'] = 'b.branch_name';
-    qb.fieldResolverMap['code__contains'] = 'b.branch_code';
+    qb.fieldResolverMap['name__icontains'] = 'b.branch_name';
+    qb.fieldResolverMap['code__icontains'] = 'b.branch_code';
 
     qb.applyFilterPagination();
     qb.selectRaw(
