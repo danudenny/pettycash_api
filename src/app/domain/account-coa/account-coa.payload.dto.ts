@@ -15,11 +15,11 @@ export class QueryAccountCoaDTO extends BasePayload {
     description: 'Search by CoA Code (using LIKE sql)',
     example: '500',
   })
-  code__contains: string;
+  code__icontains: string;
 
   @ApiPropertyOptional({
     description: 'Search by CoA Name (using LIKE sql)',
     example: 'Uang',
   })
-  name__contains: string;
+  name__icontains: string;
 }

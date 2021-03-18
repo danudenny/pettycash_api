@@ -51,11 +51,11 @@ export class QueryExpenseDTO extends BasePayload {
     description: 'Down Payment Number',
     example: 'UM0002',
   })
-  downPaymentNumber__contains: string;
+  downPaymentNumber__icontains: string;
 
   @ApiPropertyOptional({
     description: 'Expense Number',
     example: 'REL-2020/01/AAB112',
   })
-  number__contains: string;
+  number__icontains: string;
 }

@@ -6,7 +6,7 @@ export class QueryProductDTO extends BasePayload {
     description: 'Product Code',
     example: 'PR00001',
   })
-  code__contains: string;
+  code__icontains: string;
 
   @ApiPropertyOptional({
     description: 'Product Name',
@@ -19,5 +19,4 @@ export class QueryProductDTO extends BasePayload {
     example: true,
   })
   isHasTax: boolean;
-
 }

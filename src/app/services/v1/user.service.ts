@@ -18,8 +18,8 @@ export class UserService {
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(User, 'u', params);
 
-    qb.fieldResolverMap['name__contains'] = 'u.first_name';
-    qb.fieldResolverMap['nik__contains'] = 'u.username';
+    qb.fieldResolverMap['name__icontains'] = 'u.first_name';
+    qb.fieldResolverMap['nik__icontains'] = 'u.username';
 
     qb.applyFilterPagination();
     qb.selectRaw(
