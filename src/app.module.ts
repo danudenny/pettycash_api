@@ -20,6 +20,7 @@ import { BudgetItemModule } from './app/modules/budget-item.module';
 import { ExpenseModule } from './app/modules/expense.module';
 import { JournalModule } from './app/modules/journal.module';
 import { LoanModule } from './app/modules/loan.module';
+import { BalanceModule } from './app/modules/balance.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { LoanModule } from './app/modules/loan.module';
     ExpenseModule,
     JournalModule,
     LoanModule,
+    BalanceModule,
   ],
   controllers: [],
   providers: [],
