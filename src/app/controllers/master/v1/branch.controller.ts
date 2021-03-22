@@ -1,6 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiHeader,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -18,6 +19,11 @@ export class BranchController {
   @ApiOperation({ summary: 'List all Branch' })
   @ApiOkResponse({ type: BranchWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiHeader({
+    name: 'x-username',
+    description: 'User Request',
+    required: false,
+  })
   public async list(@Query() query: QueryBranchDTO) {
     return await this.svc.list(query);
   }
