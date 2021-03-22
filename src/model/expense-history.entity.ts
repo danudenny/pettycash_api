@@ -12,7 +12,7 @@ export class ExpenseHistory extends PtcBaseEntity {
   @Column({
     type: 'enum',
     enum: ExpenseState,
-    default: ExpenseState.DRAFT,
+    default: ExpenseState.UNAPROVED,
   })
   state: ExpenseState;
 
