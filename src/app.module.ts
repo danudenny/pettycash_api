@@ -19,6 +19,8 @@ import { AuthModule } from './app/modules/auth.module';
 import { BudgetItemModule } from './app/modules/budget-item.module';
 import { ExpenseModule } from './app/modules/expense.module';
 import { JournalModule } from './app/modules/journal.module';
+import { LoanModule } from './app/modules/loan.module';
+import { BalanceModule } from './app/modules/balance.module';
 
 @Module({
   imports: [
@@ -45,6 +47,8 @@ import { JournalModule } from './app/modules/journal.module';
     BudgetItemModule,
     ExpenseModule,
     JournalModule,
+    LoanModule,
+    BalanceModule,
   ],
   controllers: [],
   providers: [],

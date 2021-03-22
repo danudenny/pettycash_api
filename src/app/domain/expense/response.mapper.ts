@@ -27,7 +27,7 @@ export class ExpenseResponseMapper {
       branchName: ety.branch && ety.branch.branchName,
       type: ety.type,
       downPaymentId: ety.downPaymentId,
-      downPaymentNumber: ety.accountDownPayment && ety.accountDownPayment.number,
+      downPaymentNumber: ety?.downPayment?.number,
       number: ety.number,
       totalAmount: ety.totalAmount,
       state: ety.state,

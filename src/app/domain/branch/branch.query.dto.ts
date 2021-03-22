@@ -6,11 +6,11 @@ export class QueryBranchDTO extends BasePayload {
     description: 'Search by Branch Name (using LIKE sql)',
     example: 'Medan',
   })
-  name__contains: string;
+  name__icontains: string;
 
   @ApiPropertyOptional({
     description: 'Search by Branch Code (using LIKE sql)',
     example: '0201001',
   })
-  code__contains: string;
+  code__icontains: string;
 }

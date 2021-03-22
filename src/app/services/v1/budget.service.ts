@@ -65,7 +65,7 @@ export class BudgetService {
     qb.fieldResolverMap['minAmount__gte'] = 'bgt.totalAmount';
     qb.fieldResolverMap['maxAmount__lte'] = 'bgt.totalAmount';
     qb.fieldResolverMap['state'] = 'bgt.state';
-    qb.fieldResolverMap['number__contains'] = 'bgt.number';
+    qb.fieldResolverMap['number__icontains'] = 'bgt.number';
 
     qb.applyFilterPagination();
     qb.selectRaw(
@@ -163,9 +163,9 @@ export class BudgetService {
 
   public async getBranch(branchId?: string): Promise<any> {
     const getEndDate = await this.budgetRepo.findOne(
-      { branchId: branchId, isDeleted: false },
-      { order: { endDate: "DESC" }});
-    let start = new Date(getEndDate['endDate']);
+      { branchId, isDeleted: false },
+      { order: { endDate: 'DESC' }});
+    const start = new Date(getEndDate['endDate']);
     start.setDate(start.getDate() + 1);
     return start;
   }
@@ -244,7 +244,7 @@ export class BudgetService {
 
   public async duplicate(id: string): Promise<BudgetResponse> {
 
-    const qb = new QueryBuilder(Budget, 'bgt', { order: { endDate: "DESC" }, limit: 1});
+    const qb = new QueryBuilder(Budget, 'bgt', { order: { endDate: 'DESC' }, limit: 1});
 
     qb.selectRaw(
       ['bgt.branch_id', 'branchId'],

@@ -18,8 +18,8 @@ export class AccountCoaService {
     const qb = new QueryBuilder(AccountCoa, 'c', params);
 
     qb.fieldResolverMap['id'] = 'c.id';
-    qb.fieldResolverMap['code__contains'] = 'c.code';
-    qb.fieldResolverMap['name__contains'] = 'c.name';
+    qb.fieldResolverMap['code__icontains'] = 'c.code';
+    qb.fieldResolverMap['name__icontains'] = 'c.name';
 
     qb.applyFilterPagination();
     qb.selectRaw(['c.id', 'id'], ['c.code', 'code'], ['c.name', 'name']);

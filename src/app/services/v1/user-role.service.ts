@@ -6,10 +6,7 @@ import {
 import { Repository, Not, IsNull } from 'typeorm';
 import { User } from '../../../model/user.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
-import {
-  UserRoleResponse,
-  UserRoleWithPaginationResponse,
-} from '../../domain/user-role/response.dto';
+import { UserRoleWithPaginationResponse } from '../../domain/user-role/response.dto';
 import { QueryUserRoleDTO } from '../../domain/user-role/user-role.payload.dto';
 import { CreateUserRoleDTO } from '../../domain/user-role/create-user-role.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -32,7 +29,7 @@ export class UserRoleService {
     const params = { page: 1, ...query };
     const qb = new QueryBuilder(User, 'u', params);
 
-    qb.fieldResolverMap['employee_name__icontains'] = 'u.first_name';
+    // qb.fieldResolverMap['employee_name__icontains'] = 'u.first_name';
     qb.fieldResolverMap['role_id'] = 'u.role_id';
     qb.fieldResolverMap['nik__icontains'] = 'u.username';
 
@@ -61,6 +58,20 @@ export class UserRoleService {
       (e) => e.roleId,
       (v) => v.isNotNull(),
     );
+    // Custom Search in multiple column
+    if (params.employee_name__icontains) {
+      qb.andWhereIsolated((q) =>
+        q
+          .andWhere(
+            (e) => e.firstName,
+            (v) => v.contains(params.employee_name__icontains, true),
+          )
+          .orWhere(
+            (e) => e.lastName,
+            (v) => v.contains(params.employee_name__icontains, true),
+          ),
+      );
+    }
 
     const userRoles = await qb.exec();
     return new UserRoleWithPaginationResponse(userRoles);

@@ -1,0 +1,132 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Cash Balance Allocation
+
+# Group Cash Balance Allocation
+
+## List Cash Balance Allocation [GET /v1/balance_allocations]
+
+Untuk mendapatkan daftar Cash Balance Allocation.
+
++ Parameters
+    + createDate: `2021-03-03` (string, optional) - Searching alokasi saldo kas by date.
+    + branchId: `142648ab-9624-4a7a-a4b4-2f1c51e648d7` (string, optional) - Filtering alokasi saldo kas by branchID.
+    + number: `ASK/2021/03/11/QWER123` (string, optional) - Filtering nomor referensi alokasi saldo kas.
+    + state (enum[string], optional) - Cash Balance Allocation status.
+        + Draft
+        + Approve By SS HO
+        + Approve By SPV HO
+        + Rejected
+        + Received
+        + Transferred
+        + Expired
+    + order: `^number,` (string, optional) - Sort / order alokasi saldo kas by reference number.
+
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": [
+                {
+                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "branchId": "142648ab-9624-4a7a-a4b4-2f1c51e648d7",
+                    "branchName": "Kantor Pusat",
+                    "number": "ASK/2021/03/21/QWER123",
+                    "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
+                    "picName": "Admin Branch"
+                    "status": "Draft, 
+                    "receivedDate": "2021-03-22", 
+                    "receivedUserId": null,
+                    "receivedUserName": null
+                },
+                {
+                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "branchId": "142648ab-9624-4a7a-a4b4-2f1c51e648d7",
+                    "branchName": "Kantor Pusat",
+                    "number": "ASK/2021/03/21/QWER123",
+                    "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
+                    "picName": "Admin Branch"
+                    "status": "Approved By SS HO, 
+                    "receivedDate": "2021-03-22", 
+                    "receivedUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
+                    "receivedUserName": "Admin Branch"
+                },
+                {
+                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "branchId": "142648ab-9624-4a7a-a4b4-2f1c51e648d7",
+                    "branchName": "Kantor Pusat",
+                    "number": "ASK/2021/03/21/QWER123",
+                    "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
+                    "picName": "Admin Branch"
+                    "status": "Received, 
+                    "receivedDate": "2021-03-22", 
+                    "receivedUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
+                    "receivedUserName": "Admin Branch"
+                }
+            ],
+            "meta": {
+                "page": 1,
+                "prevPage": null,
+                "nextPage": null,
+                "perPage": 10,
+            }
+        }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "message": "Internal Server Error"
+            }
+
+
+## Get Cash Balance Allocation by ID [GET /v1/balance_allocations/{id}]
+
+Untuk mendapatkan Cash Balance Allocation by ID.
+
++ Parameters
+    + id: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string).
+
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": [
+                {
+                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "branchId": "142648ab-9624-4a7a-a4b4-2f1c51e648d7",
+                    "branchName": "Kantor Pusat",
+                    "number": "ASK/2021/03/21/QWER123",
+                    "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
+                    "picName": "Admin Branch"
+                    "status": "Received, 
+                    "receivedDate": "2021-03-22", 
+                    "receivedUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
+                    "receivedUserName": "Admin Branch"
+                },
+            ]
+        }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "message": "Internal Server Error"
+            }

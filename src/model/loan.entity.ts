@@ -13,19 +13,16 @@ import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Employee } from './employee.entity';
 import { Period } from './period.entity';
-import {
-  AccountLoanPaymentType,
-  AccountLoanState,
-  AccountLoanType,
-} from './utils/enum';
+import { LoanState, LoanType } from './utils/enum';
+import { ColumnNumericTransformer } from './utils/transformer';
 
-@Entity('account_loan')
-export class AccountLoan extends PtcBaseEntity {
+@Entity('loan')
+export class Loan extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'branch_id' })
   @Index()
   branchId: string;
 
-  @Column({ type: 'varchar', length: 25, name: 'number' })
+  @Column({ type: 'varchar', length: 25, name: 'number', unique: true })
   number: string;
 
   @Column({
@@ -45,41 +42,51 @@ export class AccountLoan extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'employee_id' })
   employeeId: string;
 
-  @Column({ type: 'numeric', name: 'amount', default: 0 })
-  amount: Number;
+  @Column({
+    type: 'numeric',
+    name: 'amount',
+    default: 0,
+    transformer: new ColumnNumericTransformer(),
+  })
+  amount: number;
 
-  @Column({ type: 'numeric', name: 'residual_amount', default: 0 })
-  residualAmount: Number;
+  @Column({
+    type: 'numeric',
+    name: 'residual_amount',
+    default: 0,
 
-  @Column({ type: 'numeric', name: 'paid_amount', default: 0 })
-  paidAmount: Number;
+    transformer: new ColumnNumericTransformer(),
+  })
+  residualAmount: number;
+
+  @Column({
+    type: 'numeric',
+    name: 'paid_amount',
+    default: 0,
+
+    transformer: new ColumnNumericTransformer(),
+  })
+  paidAmount: number;
 
   @Column({
     type: 'enum',
-    enum: AccountLoanType,
+    enum: LoanType,
     name: 'type',
   })
-  type: AccountLoanType;
+  type: LoanType;
 
   @Column({
     type: 'enum',
-    enum: AccountLoanPaymentType,
-    name: 'payment_type',
+    enum: LoanState,
+    default: LoanState.UNPAID,
   })
-  paymentType: AccountLoanPaymentType;
-
-  @Column({
-    type: 'enum',
-    enum: AccountLoanState,
-    default: AccountLoanState.UNPAID,
-  })
-  state: AccountLoanState;
+  state: LoanState;
 
   @ManyToMany(() => Attachment)
   @JoinTable({
-    name: 'account_loan_attachment',
+    name: 'loan_attachment',
     joinColumn: {
-      name: 'account_loan_id',
+      name: 'loan_id',
       referencedColumnName: 'id',
     },
     inverseJoinColumn: {
@@ -91,9 +98,9 @@ export class AccountLoan extends PtcBaseEntity {
 
   @ManyToMany(() => AccountPayment)
   @JoinTable({
-    name: 'account_loan_payment',
+    name: 'loan_payment',
     joinColumn: {
-      name: 'account_loan_id',
+      name: 'loan_id',
       referencedColumnName: 'id',
     },
     inverseJoinColumn: {

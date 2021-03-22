@@ -4,7 +4,12 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getManager, EntityManager, getConnection, createQueryBuilder } from 'typeorm';
+import {
+  Repository,
+  getManager,
+  EntityManager,
+  createQueryBuilder,
+} from 'typeorm';
 import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { ExpenseItemAttribute } from '../../../model/expense-item-attribute.entity';
@@ -22,7 +27,6 @@ import {
 import { CreateExpenseDTO } from '../../domain/expense/create.dto';
 import { AuthService } from './auth.service';
 import {
-  ExpenseRelationResponse,
   ExpenseResponse,
   ExpenseWithPaginationResponse,
 } from '../../domain/expense/response.dto';
@@ -45,8 +49,6 @@ import { Journal } from '../../../model/journal.entity';
 import { JournalItem } from '../../../model/journal-item.entity';
 import { User } from '../../../model/user.entity';
 import { getPercentage, roundToTwo } from '../../../shared/utils';
-import { AccountCoa } from '../../../model/account-coa.entity';
-import { AccountCoaService } from './account-coa.service';
 import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 import { Period } from '../../../model/period.entity';
 import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
@@ -88,9 +90,9 @@ export class ExpenseService {
     qb.fieldResolverMap['totalAmount_gte'] = 'exp.totalAmount';
     qb.fieldResolverMap['totalAmount_lte'] = 'exp.totalAmount';
     qb.fieldResolverMap['state'] = 'exp.state';
-    qb.fieldResolverMap['downPaymentNumber__contains'] =
+    qb.fieldResolverMap['downPaymentNumber__icontains'] =
       'exp.downPaymentNumber';
-    qb.fieldResolverMap['number__contains'] = 'exp.number';
+    qb.fieldResolverMap['number__icontains'] = 'exp.number';
 
     qb.applyFilterPagination();
     qb.selectRaw(
@@ -108,7 +110,7 @@ export class ExpenseService {
     );
     qb.leftJoin((e) => e.branch, 'brc');
     qb.leftJoin((e) => e.period, 'per');
-    qb.leftJoin((e) => e.accountDownPayment, 'adp');
+    qb.leftJoin((e) => e.downPayment, 'adp');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
@@ -485,26 +487,29 @@ export class ExpenseService {
     }
   }
 
-  public async deleteAttachment(expenseId: string, attachmentId: string): Promise<ExpenseResponse> {
+  public async deleteAttachment(
+    expenseId: string,
+    attachmentId: string,
+  ): Promise<ExpenseResponse> {
     // TODO: Implement API Delete Expense Attachments
-    const attExist = await createQueryBuilder("attachment", "att")
-      .leftJoin("expense_attachment", "eat", "att.id = eat.attachment_id")
-      .where("eat.expense_id = :expenseId", { expenseId: expenseId })
-      .andWhere("eat.attachment_id = :attachmentId", { attachmentId: attachmentId })
-      .andWhere("att.isDeleted = false")
+    const attExist = await createQueryBuilder('attachment', 'att')
+      .leftJoin('expense_attachment', 'eat', 'att.id = eat.attachment_id')
+      .where('eat.expense_id = :expenseId', { expenseId })
+      .andWhere('eat.attachment_id = :attachmentId', { attachmentId })
+      .andWhere('att.isDeleted = false')
       .getOne();
 
     if (!attExist) {
-      throw new NotFoundException("Tidak ditemukan attachment!");
-
+      throw new NotFoundException('Tidak ditemukan attachment!');
     }
     // SoftDelete
-    const deleteAttachment = await this.attachmentRepo.update(attachmentId, { isDeleted: true });
+    const deleteAttachment = await this.attachmentRepo.update(attachmentId, {
+      isDeleted: true,
+    });
     if (!deleteAttachment) {
       throw new BadRequestException('Gagal menghapus attachment!');
-
     }
-    return new ExpenseResponse(attExist)
+    return new ExpenseResponse(attExist);
   }
 
   private async getTax(

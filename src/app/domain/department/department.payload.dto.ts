@@ -6,12 +6,11 @@ export class QueryDepartmentDTO extends BasePayload {
     description: 'Department Code',
     example: 'DP001',
   })
-  code: string;
+  code__icontains: string;
 
   @ApiPropertyOptional({
     description: 'Department Name',
     example: 'Accounting',
   })
-  name: string;
-
+  name__icontains: string;
 }
