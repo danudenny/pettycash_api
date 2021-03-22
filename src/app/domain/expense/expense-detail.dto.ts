@@ -110,7 +110,7 @@ export class ExpenseDetailDTO {
 
   @ApiProperty({
     description: 'Expense State',
-    example: ExpenseState.UNAPROVED,
+    example: ExpenseState.DRAFT,
     enum: ExpenseState,
   })
   state: ExpenseState;

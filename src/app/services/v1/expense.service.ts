@@ -194,7 +194,7 @@ export class ExpenseService {
     expense.partnerId = payload.partnerId;
     expense.type = ExpenseType.EXPENSE; // TODO: Add condition when work in DownPayment feature.
     expense.paymentType = payload.paymentType;
-    expense.state = ExpenseState.UNAPROVED;
+    expense.state = ExpenseState.DRAFT;
     expense.items = items;
     expense.totalAmount =
       items &&
@@ -203,7 +203,7 @@ export class ExpenseService {
         .filter((i) => i)
         .reduce((a, b) => a + b, 0);
     expense.histories = await this.buildHistory(expense, {
-      state: ExpenseState.UNAPROVED,
+      state: ExpenseState.DRAFT,
     });
     expense.createUser = user;
     expense.updateUser = user;
@@ -265,15 +265,15 @@ export class ExpenseService {
         if (userRole === MASTER_ROLES.PIC_HO) {
           // Approving with same state is not allowed
           if (
-            currentState === ExpenseState.APPROVED_BY_PIC_HO ||
-            currentState === ExpenseState.APPROVED_BY_SS_HO
+            currentState === ExpenseState.APPROVED_BY_PIC ||
+            currentState === ExpenseState.APPROVED_BY_SS_SPV
           ) {
             throw new BadRequestException(
               `Can't approve expense with current state ${currentState}`,
             );
           }
 
-          state = ExpenseState.APPROVED_BY_PIC_HO;
+          state = ExpenseState.APPROVED_BY_PIC;
 
           // Create Journal for PIC HO
           await this.removeJournal(manager, expense);
@@ -284,13 +284,13 @@ export class ExpenseService {
           userRole === MASTER_ROLES.SPV_HO
         ) {
           // Approving with same state is not allowed
-          if (currentState === ExpenseState.APPROVED_BY_SS_HO) {
+          if (currentState === ExpenseState.APPROVED_BY_SS_SPV) {
             throw new BadRequestException(
               `Can't approve expense with current state ${currentState}`,
             );
           }
 
-          state = ExpenseState.APPROVED_BY_SS_HO;
+          state = ExpenseState.APPROVED_BY_SS_SPV;
 
           // (Re)Create Journal for SS/SPV HO
           await this.removeJournal(manager, expense);
