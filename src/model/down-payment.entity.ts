@@ -9,7 +9,7 @@ import {
   DownPaymentType,
 } from './utils/enum';
 
-@Entity('down_payment')
+@Entity('account_down_payment')
 export class DownPayment extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'branch_id' })
   @Index()

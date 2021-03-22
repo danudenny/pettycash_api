@@ -32,13 +32,13 @@ export class QueryExpenseDTO extends BasePayload {
     description: 'Expense Amount Min',
     example: 100000,
   })
-  totalAmount_gte: number;
+  totalAmount__gte: number;
 
   @ApiPropertyOptional({
     description: 'Expense Amount Max',
     example: 900000,
   })
-  totalAmount_lte: string;
+  totalAmount__lte: string;
 
   @ApiPropertyOptional({
     description: 'Expense State',

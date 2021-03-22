@@ -87,8 +87,8 @@ export class ExpenseService {
     qb.fieldResolverMap['endDate__lte'] = 'exp.transactionDate';
     qb.fieldResolverMap['branchId'] = 'exp.branchId';
     qb.fieldResolverMap['type'] = 'exp.type';
-    qb.fieldResolverMap['totalAmount_gte'] = 'exp.totalAmount';
-    qb.fieldResolverMap['totalAmount_lte'] = 'exp.totalAmount';
+    qb.fieldResolverMap['totalAmount__gte'] = 'exp.totalAmount';
+    qb.fieldResolverMap['totalAmount__lte'] = 'exp.totalAmount';
     qb.fieldResolverMap['state'] = 'exp.state';
     qb.fieldResolverMap['downPaymentNumber__icontains'] =
       'exp.downPaymentNumber';
