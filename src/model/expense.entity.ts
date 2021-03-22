@@ -91,7 +91,7 @@ export class Expense extends PtcBaseEntity {
   @Column({
     type: 'enum',
     enum: ExpenseState,
-    default: ExpenseState.UNAPROVED,
+    default: ExpenseState.DRAFT,
   })
   state: ExpenseState;
 

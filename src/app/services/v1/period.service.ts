@@ -166,7 +166,7 @@ export class PeriodService {
       where: {
         isDeleted: false,
         periodId: period.id,
-        state: ExpenseState.UNAPROVED,
+        state: ExpenseState.DRAFT,
       },
       select: ['id'],
     });
