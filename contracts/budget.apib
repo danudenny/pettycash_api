@@ -92,3 +92,122 @@ Untuk mendapatkan daftar budget.
                 "status": "error",
                 "message": "Internal Server Error"
             }
+
+
+## Get Budget by ID [GET /v1/budgets/{id}]
+
+Get Budget detail.
+
++ Parameters
+    + id: `46dc5599-43f0-4569-b5f0-33e25f4cd29c` (string) - Budget ID to Retrieve.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": {
+                "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                "transactionDate": "2021-01-27",
+                "periodId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                "periodMonth": 1,
+                "periodYear": 2021,
+                "number": "REL-2020/01/AAB112",
+                "partnerId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                "partnerName": "HR Sicepat",
+                "sourceDocument": "BENSIN-0001",
+                "totalAmount": 900000,
+                "downPaymentAmount": 0,
+                "differenceAmount": 0,
+                "type": "expense",
+                "paymentType": "bank",
+                "state": "draft",
+                "downPaymentId": '5eab29b9-d6e0-4f34-bcac-185e4381d7e0',
+                "items": [
+                  {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "productId": "5eab29b9-d6e0-4f34-bcac-185e4381d7e0",
+                    "productName": "Hotel",
+                    "productCode": "Hotel",
+                    "description": "Menginap 1 malam",
+                    "attributes": null,
+                    "amount": 250000,
+                    "picHoAmount": 250000,
+                    "ssHoAmount": null,
+                    "checkedNote": "OK",
+                    "isValid": true
+                  },
+                  {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "productId": "5eab29b9-d6e0-4f34-bcac-185e4381d7e0",
+                    "productName": "Bensin",
+                    "productCode": "BENSIN",
+                    "description": "Bensin PP",
+                    "attributes": [
+                      {
+                        "key": "vehicleNumber",
+                        "value": "B-1234-VKG"
+                      },
+                      {
+                        "key": "departure",
+                        "value": "Jakarta"
+                      },
+                      {
+                        "key": "destination",
+                        "value": "Bandung"
+                      },
+                      {
+                        "key": "kilometerStart",
+                        "value": 2500
+                      },
+                      {
+                        "key": "kilometerEnd",
+                        "value": 4000
+                      }
+                    ],
+                    "amount": 250000,
+                    "picHoAmount": 250000,
+                    "ssHoAmount": null,
+                    "checkedNote": "OK",
+                    "isValid": true
+                  }
+                ],
+                "histories": [
+                  {
+                    "id": "2a683159-6a53-4a24-833b-3e0375ff68ed",
+                    "userId": "6e381b42-23c9-4388-ba0a-bb0272d33099",
+                    "userFullName": "Jenny Safitri",
+                    "userRole": "admin",
+                    "branchName": "Kebon Jeruk",
+                    "state": "draft",
+                    "rejectedNote": null,
+                    "createdAt": "2021-03-02T04:48:56.736Z"
+                  }
+                ]
+            },
+            "status": "success"
+        }
+
++ Response 404 (application/json)
+    + Body
+
+          {
+              "status": "fail",
+              "code": "EXPENSE_NOT_FOUND",
+              "message": "expense {id} not found",
+              "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+          }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }

@@ -10,6 +10,8 @@ import { GenerateCode } from '../../../common/services/generate-code.service';
 import { BudgetState } from '../../../model/utils/enum';
 import { BudgetItem } from '../../../model/budget-item.entity';
 import { AuthService } from './auth.service';
+import { BudgetHistory } from '../../../model/budget-history.entity';
+import { BudgetDetailResponse } from '../../domain/budget/budget-detail-response.dto';
 
 @Injectable()
 export class BudgetService {
@@ -30,6 +32,27 @@ export class BudgetService {
     } else {
       return await AuthService.getUser();
     }
+  }
+
+  private async buildHistory(
+    budget: Budget,
+    data?: {
+      state: BudgetState;
+      rejectedNote?: string;
+      endDate?: Date;
+    },
+  ): Promise<BudgetHistory[]> {
+    const newHistory = new BudgetHistory();
+    newHistory.state = data.state;
+    newHistory.rejectedNote = data.rejectedNote;
+    newHistory.endDate = data.endDate;
+    newHistory.createUser = await this.getUser();
+    newHistory.updateUser = await this.getUser();
+
+    const history = [].concat(budget.histories, [
+      newHistory,
+    ]) as BudgetHistory[];
+    return history.filter((v) => v);
   }
 
   public async list(query?: QueryBugdetDTO): Promise<BudgetWithPaginationResponse> {
@@ -76,6 +99,24 @@ export class BudgetService {
 
     const budgets = await qb.exec();
     return new BudgetWithPaginationResponse(budgets, params);
+  }
+
+  public async getById(id: string): Promise<BudgetDetailResponse> {
+    const budget = await this.budgetRepo.findOne({
+      where: { id, isDeleted: false },
+      relations: [
+        'branch',
+        'users',
+        'items',
+        'items.product',
+        'histories',
+        'histories.createUser',
+      ],
+    });
+    if (!budget) {
+      throw new NotFoundException(`Budget ID ${id} not found!`);
+    }
+    return new BudgetDetailResponse(budget);
   }
 
   public async show(id?: string): Promise<BudgetResponse> {
@@ -155,16 +196,24 @@ export class BudgetService {
       data.number = GenerateCode.budget();
     }
 
+    console.log(data);
+
     const user = await this.getUser(true);
     const branchId = user && user.branches && user.branches[0].id;
+    console.log(user);
+    console.log(branchId);
 
     // Build BudgetItem
     const items: BudgetItem[] = [];
+    let totalAmountItem = 0;
     for (const v of data.items) {
       const item = new BudgetItem();
       item.productId = v.productId;
       item.description = v.description;
       item.amount = v.amount;
+      item.createUser = user;
+      item.updateUser = user;
+      totalAmountItem = totalAmountItem + v.amount;
       items.push(item);
     }
 
@@ -175,13 +224,19 @@ export class BudgetService {
     budget.responsibleUserId = data.responsibleUserId;
     budget.startDate = data.startDate;
     budget.endDate = data.endDate;
-    budget.totalAmount = data.totalAmount;
+    budget.totalAmount = totalAmountItem;
     budget.minimumAmount = data.minimumAmount;
-    budget.rejectedNote = '';
+    budget.rejectedNote = null;
     budget.state = BudgetState.DRAFT;
+    budget.histories = await this.buildHistory(budget, {
+      state: BudgetState.DRAFT,
+      endDate: data.endDate,
+    });
     budget.items = items;
     budget.createUser = user;
     budget.updateUser = user;
+
+    console.log(budget);
 
     const result = await this.budgetRepo.save(budget);
     return new BudgetResponse(result);
