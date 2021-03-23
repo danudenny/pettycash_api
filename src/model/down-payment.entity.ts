@@ -1,19 +1,20 @@
-import { Entity, Column, JoinColumn, ManyToOne, Index } from 'typeorm';
-import { PtcBaseEntity } from './base.entity';
+import { Entity, Column, JoinColumn, ManyToOne, OneToMany, Index } from 'typeorm';
+import { DownPaymentPayType, DownPaymentState, DownPaymentType,} from './utils/enum';
 import { Branch } from './branch.entity';
-import { Department } from './department.entity';
 import { Employee } from './employee.entity';
-import {
-  DownPaymentPayType,
-  DownPaymentState,
-  DownPaymentType,
-} from './utils/enum';
+import { PtcBaseEntity } from './base.entity';
+import { Department } from './department.entity';
+import { DownPaymentHistory } from './down-payment-history.entity';
 
 @Entity('down_payment')
 export class DownPayment extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'branch_id' })
   @Index()
   branchId: string;
+  
+  @Column({ type: 'uuid', name: 'period_id' })
+  @Index()
+  periodId: string;
 
   @Column({ type: 'varchar', length: 25, name: 'number', unique: true })
   number: string;
@@ -33,11 +34,7 @@ export class DownPayment extends PtcBaseEntity {
   @Column({ type: 'decimal', name: 'amount', default: 0 })
   amount: number;
 
-  @Column({
-    type: 'enum',
-    enum: DownPaymentPayType,
-    name: 'payment_type',
-  })
+  @Column({ type: 'enum', enum: DownPaymentPayType, name: 'payment_type',})
   paymentType: DownPaymentPayType;
 
   @Column({ type: 'text', name: 'description', nullable: true })
@@ -46,19 +43,10 @@ export class DownPayment extends PtcBaseEntity {
   @Column({ type: 'text', name: 'destination_place', nullable: true })
   destinationPlace?: string;
 
-  @Column({
-    type: 'enum',
-    enum: DownPaymentState,
-    default: DownPaymentState.DRAFT,
-  })
-  state: string;
+  @Column({ type: 'enum', enum: DownPaymentState, default: DownPaymentState.DRAFT,})
+  state: DownPaymentState;
 
-  @Column({
-    type: 'boolean',
-    nullable: false,
-    default: () => 'false',
-    name: 'is_realized',
-  })
+  @Column({ type: 'boolean', nullable: false, default: () => 'false', name: 'is_realized',})
   isRealized?: boolean;
 
   @ManyToOne(() => Branch)
@@ -72,4 +60,10 @@ export class DownPayment extends PtcBaseEntity {
   @ManyToOne(() => Employee)
   @JoinColumn({ name: 'employee_id', referencedColumnName: 'id' })
   employee: Employee;
+
+  @OneToMany(() => DownPaymentHistory, (e) => e.downPayment, { cascade: true })
+  histories: DownPaymentHistory[];
+
 }
+
+ 

@@ -1,3 +1,4 @@
+import { DownPaymentModule } from './app/modules/down-payment.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from 'nestjs-pino';
@@ -57,8 +58,9 @@ import { AccountStatementModule } from './app/modules/account-statement.module';
     BalanceModule,
     AllocationBalanceModule,
     AccountStatementModule,
+    DownPaymentModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }
