@@ -4,7 +4,7 @@ export class BalanceResponseMapper {
   public static toDTO(data: any): BalanceDTO {
     const it = new BalanceDTO();
     it.branchId = data.branch_id;
-    it.branchName = data.branch_id;
+    it.branchName = data.branch_name;
     it.currentAmount = +data.current_balance;
     it.minimumAmount = +data.minimum_amount;
     it.budgetAmount = +data.budget_amount;
