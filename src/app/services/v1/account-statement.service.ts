@@ -1,13 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import {
   AccountStatementAmountPosition,
   AccountStatementType,
 } from '../../../model/utils/enum';
+import { QueryAccountStatementDTO } from '../../domain/account-statement/account-statement.payload.dto';
 import { CreateAccountStatementDTO } from '../../domain/account-statement/create.dto';
+import { AccountStatementWithPaginationResponse } from '../../domain/account-statement/response.dto';
 import { AuthService } from './auth.service';
 
 @Injectable()
@@ -60,5 +63,48 @@ export class AccountStatementService {
 
     await this.repo.save([statementDebit, statementCredit]);
     return;
+  }
+
+  public async list(query?: QueryAccountStatementDTO): Promise<AccountStatementWithPaginationResponse> {
+    const params = { order: '-transactionDate', ...query };
+    const qb = new QueryBuilder(AccountStatement, 'stmt', params);
+    const user = await AuthService.getUser({ relations: ['branches'] });
+    const userBranches = user?.branches?.map((v) => v.id);
+
+    qb.fieldResolverMap['startDate__gte'] = 'transactionDate';
+    qb.fieldResolverMap['endDate__gte'] = 'transactionDate';
+    qb.fieldResolverMap['branchId'] = 'branchId';
+    qb.fieldResolverMap['type'] = 'type';
+
+    qb.applyFilterPagination();
+    qb.selectRaw(
+      ['stmt.id', 'id'],
+      ['stmt.transaction_date', 'transactionDate'],
+      ['stmt."type"', 'type'],
+      ['stmt.reference', 'reference'],
+      ['stmt.amount', 'amount'],
+      ['stmt.amount_position', 'amountPosition'],
+      ['brnc.id', 'branchId'],
+      ['brnc.branch_name', 'branchName'],
+      ['brnc.branch_code', 'branchCode'],
+      ['user.username', 'userNik'],
+      ['user.first_name', 'userFirstName'],
+      ['user.last_name', 'userLastName'],
+    );
+    qb.leftJoin((e) => e.branch, 'brnc');
+    qb.leftJoin((e) => e.updateUser, 'user');
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+    if (userBranches?.length) {
+      qb.andWhere(
+        (e) => e.branchId,
+        (v) => v.in(userBranches),
+      );
+    }
+
+    const statements = await qb.exec();
+    return new AccountStatementWithPaginationResponse(statements, params);
   }
 }

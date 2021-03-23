@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiHeader,
@@ -7,7 +7,9 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { QueryAccountStatementDTO } from '../../domain/account-statement/account-statement.payload.dto';
 import { CreateAccountStatementDTO } from '../../domain/account-statement/create.dto';
+import { AccountStatementWithPaginationResponse } from '../../domain/account-statement/response.dto';
 import { AccountStatementService } from '../../services/v1/account-statement.service';
 
 @Controller('v1/account-statements')
@@ -24,5 +26,15 @@ export class AccountStatementController {
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async create(@Body() payload: CreateAccountStatementDTO) {
     return await this.svc.create(payload);
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'List all Historical Account Statement (Riwayat Saldo)',
+  })
+  @ApiOkResponse({ type: AccountStatementWithPaginationResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async list(@Query() query: QueryAccountStatementDTO) {
+    return await this.svc.list(query);
   }
 }
