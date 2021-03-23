@@ -22,6 +22,7 @@ import { JournalModule } from './app/modules/journal.module';
 import { LoanModule } from './app/modules/loan.module';
 import { BalanceModule } from './app/modules/balance.module';
 import { AllocationBalanceModule } from './app/modules/allocation-balance.module';
+import { AccountStatementModule } from './app/modules/account-statement.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { AllocationBalanceModule } from './app/modules/allocation-balance.module
     LoanModule,
     BalanceModule,
     AllocationBalanceModule,
+    AccountStatementModule,
   ],
   controllers: [],
   providers: [],

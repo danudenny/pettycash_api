@@ -1,0 +1,45 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Account Statement
+
+# Group Mutasi Saldo
+
+## Create Account Statement [POST /v1/account-statements]
+
+Create Account Statement (Mutasi Saldo) 
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + transactionDate:  `2021-01-27` (string) - Transaction Date.
+        + type: `cash` (enum[string], optional) - Transaction Type.
+            + cash
+            + bank
+        + amount: `100000` (number, optional) - Amount.
+
++ Response 201 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "ACCOUNT_STATEMENT_CREATE_FAILED",
+                "message": "failed to create account statement",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }

@@ -49,4 +49,11 @@ export class GenerateCode {
     const randomCode = this.randomCode(digit);
     return prefix + randomCode.toString();
   }
+
+  public static accountStatement(dateTime: Date = new Date(), digit: number = 6) {
+    // Format Code: MUT202102ABC123
+    const prefix = `MUT${dayjs(dateTime).format('YYYYMM')}`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
 }
