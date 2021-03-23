@@ -43,3 +43,78 @@ Create Account Statement (Mutasi Saldo)
                 "message": "Internal Server Error",
                 "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
             }
+
+
+# Group Riwayat Saldo
+
+## List Account Statement [GET /v1/account-statements{?startDate__gte,endDate__lte,branchId,type}]
+
+List all historical Account Statement (Riwayat Saldo Kas)
+
++ Parameters
+    + startDate__gte: `2021-01-01` (date, optional) - Start Date to filter.
+    + endDate__lte: `2021-12-31` (date, optional) - End Date to filter.
+    + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string, optional) - Branch to filter.
+    + type: `bank` (enum[string], optional) - Transaction Type.
+        + bank
+        + cash
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+            x-username: username
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": [
+                {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "transactionDate": "2021-01-27",
+                    "branchCode": "1890009",
+                    "branchName": "Kebon Jeruk",
+                    "type": "bank",
+                    "reference": "Transaksi VC001",
+                    "updateUserNik": "19000280",
+                    "updateUserFirstName": "Denny",
+                    "updateUserLastName": "Danuwijaya",
+                    "amount": 900000,
+                    "amountPosition": "debit"
+                },
+                {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "transactionDate": "2021-03-27",
+                    "branchCode": "1890004",
+                    "branchName": "Medan",
+                    "type": "cash",
+                    "reference": "MUT202008000AAA",
+                    "updateUserNik": "19000980",
+                    "updateUserFirstName": "Arianti",
+                    "updateUserLastName": "Silvia",
+                    "amount": 500000,
+                    "amountPosition": "credit"
+                }
+            ],
+            "meta": {
+                "page": 2,
+                "prevPage": 1,
+                "nextPage": null,
+                "perPage": 10,
+            },
+            "status": "success"
+        }
+
++ Response 400 (application/json)
+    + Body
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
