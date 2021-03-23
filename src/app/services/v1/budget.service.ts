@@ -7,17 +7,20 @@ import { QueryBugdetDTO } from '../../domain/budget/budget.payload.dto';
 import { BudgetResponse, BudgetWithPaginationResponse } from '../../domain/budget/budget-response.dto';
 import { CreateBudgetDTO, UpdateBudgetDTO, RejectBudgetDTO } from '../../domain/budget/budget-createUpdate.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
-import { BudgetState } from '../../../model/utils/enum';
+import { BudgetState, MASTER_ROLES } from '../../../model/utils/enum';
 import { BudgetItem } from '../../../model/budget-item.entity';
 import { AuthService } from './auth.service';
 import { BudgetHistory } from '../../../model/budget-history.entity';
 import { BudgetDetailResponse } from '../../domain/budget/budget-detail-response.dto';
+import { truncate } from 'lodash';
 
 @Injectable()
 export class BudgetService {
   constructor(
     @InjectRepository(Budget)
     private readonly budgetRepo: Repository<Budget>,
+    @InjectRepository(BudgetItem)
+    private readonly budgetItemRepo: Repository<BudgetItem>,
   ) {
   }
 
@@ -113,6 +116,7 @@ export class BudgetService {
         'histories.createUser',
       ],
     });
+    console.log(budget);
     if (!budget) {
       throw new NotFoundException(`Budget ID ${id} not found!`);
     }
@@ -196,12 +200,8 @@ export class BudgetService {
       data.number = GenerateCode.budget();
     }
 
-    console.log(data);
-
     const user = await this.getUser(true);
     const branchId = user && user.branches && user.branches[0].id;
-    console.log(user);
-    console.log(branchId);
 
     // Build BudgetItem
     const items: BudgetItem[] = [];
@@ -240,6 +240,58 @@ export class BudgetService {
 
     const result = await this.budgetRepo.save(budget);
     return new BudgetResponse(result);
+  }
+
+  public async createDuplicate(data: CreateBudgetDTO): Promise<BudgetResponse> {
+    if (data && !data.number) {
+      data.number = GenerateCode.budget();
+    }
+
+    const user = await this.getUser(true);
+    const branchId = user && user.branches && user.branches[0].id;
+
+    const endDateData = await this.getBranch(branchId);
+    const checkDate = new Date(data.startDate);
+
+    if (checkDate >= endDateData) {
+      // Build BudgetItem
+      const items: BudgetItem[] = [];
+      let totalAmountItem = 0;
+      for (const v of data.items) {
+        const item = new BudgetItem();
+        item.productId = v.productId;
+        item.description = v.description;
+        item.amount = v.amount;
+        item.createUser = user;
+        item.updateUser = user;
+        totalAmountItem = totalAmountItem + v.amount;
+        items.push(item);
+      }
+
+      // Build Budget
+      const budget = new Budget();
+      budget.branchId = branchId;
+      budget.number = data.number;
+      budget.responsibleUserId = data.responsibleUserId;
+      budget.startDate = data.startDate;
+      budget.endDate = data.endDate;
+      budget.totalAmount = totalAmountItem;
+      budget.minimumAmount = data.minimumAmount;
+      budget.rejectedNote = null;
+      budget.state = BudgetState.DRAFT;
+      budget.histories = await this.buildHistory(budget, {
+        state: BudgetState.DRAFT,
+        endDate: data.endDate,
+      });
+      budget.items = items;
+      budget.createUser = user;
+      budget.updateUser = user;
+
+      const result = await this.budgetRepo.save(budget);
+      return new BudgetResponse(result);
+    } else {
+      throw new HttpException('Cannot Duplicate, Range Date is not Available!', HttpStatus.BAD_REQUEST);
+    }
   }
 
   public async duplicate(id: string): Promise<BudgetResponse> {
@@ -296,12 +348,52 @@ export class BudgetService {
     const budgetExist = await this.budgetRepo.findOne({ id, isDeleted: false });
     if (!budgetExist) {
       throw new NotFoundException();
-    }
-    const values = await this.budgetRepo.create(data);
-    values.updateUserId = await this.getUserId();
+    } else {
+      const user = await this.getUser(true);
+      const branchId = user && user.branches && user.branches[0].id;
 
-    const budget = await this.budgetRepo.update(id, values);
-    return new BudgetResponse(budget as any);
+      const endDateData = await this.getBranch(branchId);
+      const checkDate = new Date(data.startDate);
+
+      if (checkDate >= endDateData) {
+        // Build BudgetItem
+        const items: BudgetItem[] = [];
+        let totalAmountItem = 0;
+        for (const v of data.items) {
+          const item = new BudgetItem();
+          item.productId = v.productId;
+          item.description = v.description;
+          item.amount = v.amount;
+          item.createUser = user;
+          item.updateUser = user;
+          totalAmountItem = totalAmountItem + v.amount;
+          items.push(item);
+        }
+
+        // Build Budget
+        const budget = new Budget();
+        budget.branchId = branchId;
+        budget.number = data.number;
+        budget.responsibleUserId = data.responsibleUserId;
+        budget.startDate = data.startDate;
+        budget.endDate = data.endDate;
+        budget.totalAmount = totalAmountItem;
+        budget.minimumAmount = data.minimumAmount;
+        budget.rejectedNote = null;
+        budget.state = BudgetState.DRAFT;
+        budget.histories = await this.buildHistory(budget, {
+          state: BudgetState.DRAFT,
+          endDate: data.endDate,
+        });
+        budget.items = items;
+        budget.updateUser = user;
+
+        const result = await this.budgetRepo.update(id, budget);
+        return new BudgetResponse(result as any);
+      } else {
+        throw new HttpException('Cannot Edit, Range Date is not Available!', HttpStatus.BAD_REQUEST);
+      }
+    } 
   }
 
   public async delete(id: string): Promise<any> {
@@ -313,6 +405,10 @@ export class BudgetService {
     // SoftDelete
     const budget = await this.budgetRepo.update(id, { isDeleted: true });
     if (!budget) {
+      throw new BadRequestException();
+    }
+    const budgetItem = await this.budgetItemRepo.update(id, { isDeleted: true });
+    if (!budgetItem) {
       throw new BadRequestException();
     }
 
@@ -375,6 +471,60 @@ export class BudgetService {
     }
 
     return new BudgetResponse(updateBudget as any);
+  }
+
+  public async approve(id: string): Promise<any> {
+    const budgetExists = await this.budgetRepo.findOne({
+      where: { id, isDeleted: false },
+    });
+    if (!budgetExists) {
+      throw new NotFoundException(`Budget ID ${id} not found!`);
+    }
+
+    const user = await this.getUser(true);
+    const userRole = user?.role?.name;
+
+    if (userRole === MASTER_ROLES.SPV_HO) {
+      if (budgetExists.state === BudgetState.APPROVED_BY_SPV || budgetExists.state === BudgetState.APPROVED_BY_SS) {
+        throw new BadRequestException(
+          `Budget ${budgetExists.number} already approved!`,
+        );
+      }
+  
+      const budget = this.budgetRepo.create(budgetExists);
+      budget.state = BudgetState.APPROVED_BY_SPV;
+      budget.updateUserId = await this.getUserId();
+  
+      const updateBudget = await this.budgetRepo.save(budget);
+      if (!updateBudget) {
+        throw new BadRequestException();
+      }
+  
+      return new BudgetResponse(updateBudget as any);
+    } else if (userRole === MASTER_ROLES.SS_HO) {
+      if (budgetExists.state === BudgetState.APPROVED_BY_SS) {
+        throw new BadRequestException(
+          `Budget ${budgetExists.number} already approved!`,
+        );
+      }
+  
+      if (budgetExists.state === BudgetState.DRAFT) {
+        throw new BadRequestException(
+          `Budget ${budgetExists.number} need approve by SPV first!`,
+        );
+      }
+  
+      const budget = this.budgetRepo.create(budgetExists);
+      budget.state = BudgetState.APPROVED_BY_SS;
+      budget.updateUserId = await this.getUserId();
+  
+      const updateBudget = await this.budgetRepo.save(budget);
+      if (!updateBudget) {
+        throw new BadRequestException();
+      }
+  
+      return new BudgetResponse(updateBudget as any);
+    }
   }
 
   public async reject(id: string, data: RejectBudgetDTO): Promise<BudgetResponse> {

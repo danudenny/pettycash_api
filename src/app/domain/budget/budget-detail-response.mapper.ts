@@ -16,6 +16,9 @@ export class BudgetDetailResponseMapper {
     const items = datas.map((v) => {
       const item = new BudgetItemDTO();
       item.id = v.id;
+      item.productId = v.productId;
+      item.productName = v.product && v.product.name;
+      item.productCode = v.product && v.product.code;
       item.description = v.description;
       item.amount = v.amount;
       return item;

@@ -37,7 +37,6 @@ export class AuthService {
         where: { username, isDeleted: false },
         cache: LoaderEnv.envs.AUTH_CACHE_DURATION_IN_MINUTES * 60000,
       });
-      console.log(user);
       return user;
     } catch (error) {
       throw error;

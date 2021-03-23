@@ -19,6 +19,7 @@ import { QueryBugdetDTO } from '../../domain/budget/budget.payload.dto';
 import FindIdParams from '../../domain/common/findId-param.dto';
 import { CreateBudgetDTO, RejectBudgetDTO, UpdateBudgetDTO } from '../../domain/budget/budget-createUpdate.dto';
 import { FindBudgetIdParams } from '../../domain/budget/budget.dto';
+import { BudgetDetailResponse } from '../../domain/budget/budget-detail-response.dto';
 
 @Controller('v1/budgets')
 @ApiTags('Budget')
@@ -48,12 +49,12 @@ export class BudgetController {
   @Get('/:id')
   @ApiParam({ name: 'id' })
   @ApiOperation({ summary: 'Get Budget with ID' })
-  @ApiOkResponse({ type: BudgetResponse })
+  @ApiOkResponse({ type: BudgetDetailResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async show(
     @Param() { id }: FindIdParams,
   ) {
-    return await this.budgetService.show(id);
+    return await this.budgetService.getById(id);
   }
 
   @Post('')
@@ -68,22 +69,45 @@ export class BudgetController {
     return await this.budgetService.create(payload);
   }
 
-  @Post(':id/duplicate')
+  @Get('/:id/duplicate')
   @ApiParam({ name: 'id' })
-  @ApiOperation({ summary: 'Duplicate Existing Budget' })
-  @ApiOkResponse({ type: BudgetResponse })
+  @ApiOperation({ summary: 'Get Budget with ID For Duplicate' })
+  @ApiOkResponse({ type: BudgetDetailResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async duplicate(
+  public async showDataDuplicate(
     @Param() { id }: FindIdParams,
   ) {
-    const budgetDuplicate = await this.budgetService.duplicate(id);
-
-    if(budgetDuplicate) {
-      return budgetDuplicate;
-    } else {
-      throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
-    }
+    return await this.budgetService.getById(id);
   }
+
+  @Post('duplicate')
+  @ApiOperation({ summary: 'Duplicate Existing Budget' })
+  @ApiCreatedResponse({
+    type: BudgetResponse,
+    description: 'Budget Successfully Created',
+  })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiBody({ type: CreateBudgetDTO })
+  public async duplicate(@Body() payload: CreateBudgetDTO) {
+    return await this.budgetService.createDuplicate(payload);
+  }
+
+  // @Post(':id/duplicate')
+  // @ApiParam({ name: 'id' })
+  // @ApiOperation({ summary: 'Duplicate Existing Budget' })
+  // @ApiOkResponse({ type: BudgetResponse })
+  // @ApiBadRequestResponse({ description: 'Bad Request' })
+  // public async duplicate(
+  //   @Param() { id }: FindIdParams,
+  // ) {
+  //   const budgetDuplicate = await this.budgetService.duplicate(id);
+
+  //   if(budgetDuplicate) {
+  //     return budgetDuplicate;
+  //   } else {
+  //     throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
+  //   }
+  // }
 
   @Patch(':id/update')
   @ApiParam({ name: 'id' })
@@ -117,6 +141,17 @@ export class BudgetController {
   @ApiBadRequestResponse({ description: 'Failed to approve Budget' })
   public async approve_by_spv(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.budgetService.approve_by_spv(id);
+  }
+
+  @Put('/:id/approve')
+  @ApiOperation({ summary: 'Approve Budget' })
+  @ApiOkResponse({
+    description: 'Budget successfully approved',
+    type: BudgetResponse,
+  })
+  @ApiBadRequestResponse({ description: 'Failed to approve Budget' })
+  public async approve(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.budgetService.approve(id);
   }
 
   @Put('/:id/reject')
