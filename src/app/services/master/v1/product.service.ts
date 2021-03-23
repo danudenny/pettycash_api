@@ -87,27 +87,27 @@ export class ProductService {
   }
 
   public async update(id: string, data: UpdateProductDTO): Promise<ProductResponse> {
-    const values = await this.productRepo.create(data);
-    const prodExist = await this.productRepo.findOne({ id,isDeleted: false });
-    const prodNameExist = await this.productRepo.findOne({ name: values.name,isDeleted: false });
-    if (!prodExist) {
-      throw new NotFoundException('Product ID Tidak Ditemukan');
+    const product = await this.productRepo.findOne({
+      where: { id, isDeleted: false },
+    });
+    if (!product) {
+      throw new NotFoundException(`Produk ID ${id} not found!`);
     }
-    values.updateUserId = await this.getUserId();
 
-    if(prodNameExist) {
-      throw new BadRequestException(`Nama produk sudah terdaftar!`);
-    }
+    const updatedProduct = this.productRepo.create(data as Product);
+    updatedProduct.updateUserId = await this.getUserId();
 
     try {
-      const product = await this.productRepo.update(id, values);
-      return new ProductResponse(product as any);
+      await this.productRepo.update(id, updatedProduct);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`Nama produk sudah terdaftar!`);
+        throw new BadRequestException(
+          `Nama product sudah pernah dibuat`,
+        );
       }
       throw err;
     }
+    return new ProductResponse;
 
   }
 
