@@ -84,31 +84,24 @@ export class TaxService {
   }
 
   public async update(id: string, data: UpdateTaxDTO): Promise<TaxResponse> {
-    const values = await this.taxRepo.create(data);
-    const taxExist = await this.taxRepo.findOne({ id, isDeleted: false });
-    const taxNameExist = await this.taxRepo.findOne({name: values.name, isDeleted: false})
-    values.updateUserId = await this.getUserId();
-
-    if (!taxExist) {
-      throw new NotFoundException();
+    const tax = await this.taxRepo.findOne({
+      where: { id, isDeleted: false },
+    });
+    if (!tax) {
+      throw new NotFoundException(`Tax ID ${id} tidak ditemukan!`);
     }
 
-    if(!values.name) {
-      throw new BadRequestException(
-        `Nama pajak tidak boleh kosong!`,
-      );
-    }
-
-    if(taxExist) {
-      throw new BadRequestException(`Nama pajak sudah terdaftar!`);
-    }
+    const updatedTax = this.taxRepo.create(data as AccountTax);
+    updatedTax.updateUserId = await this.getUserId();
 
     try {
-      const tax = await this.taxRepo.update(id, values);
-      return new TaxResponse(tax as any);
+      const taxSave = this.taxRepo.update(id, updatedTax);
+      return new TaxResponse(taxSave as any);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`Nama pajak sudah terdaftar!`);
+        throw new BadRequestException(
+          `Nama pajak sudah pernah dibuat`,
+        );
       }
       throw err;
     }
