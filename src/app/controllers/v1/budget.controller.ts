@@ -35,16 +35,16 @@ export class BudgetController {
     return await this.budgetService.list(query);
   }
 
-  @Get('/branch/:branchId')
-  @ApiParam({ name: 'branchId' })
-  @ApiOperation({ summary: 'Get Budget with Branch ID' })
-  @ApiOkResponse({ type: BudgetResponse })
-  @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async getBranch(
-    @Param() { branchId }: FindBudgetIdParams,
-  ) {
-    return await this.budgetService.getBranch(branchId);
-  }
+  // @Get('/branch/:branchId')
+  // @ApiParam({ name: 'branchId' })
+  // @ApiOperation({ summary: 'Get Budget with Branch ID' })
+  // @ApiOkResponse({ type: BudgetResponse })
+  // @ApiBadRequestResponse({ description: 'Bad Request' })
+  // public async getBranch(
+  //   @Param() { branchId }: FindBudgetIdParams,
+  // ) {
+  //   return await this.budgetService.getBranch(branchId);
+  // }
 
   @Get('/:id')
   @ApiParam({ name: 'id' })
@@ -92,55 +92,14 @@ export class BudgetController {
     return await this.budgetService.createDuplicate(payload);
   }
 
-  // @Post(':id/duplicate')
-  // @ApiParam({ name: 'id' })
-  // @ApiOperation({ summary: 'Duplicate Existing Budget' })
-  // @ApiOkResponse({ type: BudgetResponse })
-  // @ApiBadRequestResponse({ description: 'Bad Request' })
-  // public async duplicate(
-  //   @Param() { id }: FindIdParams,
-  // ) {
-  //   const budgetDuplicate = await this.budgetService.duplicate(id);
-
-  //   if(budgetDuplicate) {
-  //     return budgetDuplicate;
-  //   } else {
-  //     throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
-  //   }
-  // }
-
   @Patch(':id/update')
   @ApiParam({ name: 'id' })
   @ApiOperation({ summary: 'Edit Budget' })
-  @ApiOkResponse({ type: BudgetResponse })
-  @ApiBadRequestResponse({ description: 'Bad Request' })
   public async update(
-    @Param() { id }: FindIdParams,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() payload: UpdateBudgetDTO,
   ) {
     return await this.budgetService.update(id, payload);
-  }
-
-  @Put('/:id/approve_by_ss')
-  @ApiOperation({ summary: 'Approve Budget By Senior Supervisor' })
-  @ApiOkResponse({
-    description: 'Budget successfully approved by SS',
-    type: BudgetResponse,
-  })
-  @ApiBadRequestResponse({ description: 'Failed to approve Budget' })
-  public async approve_by_ss(@Param('id', new ParseUUIDPipe()) id: string) {
-    return await this.budgetService.approve_by_ss(id);
-  }
-
-  @Put('/:id/approve_by_spv')
-  @ApiOperation({ summary: 'Approve Budget By Supervisor' })
-  @ApiOkResponse({
-    description: 'Budget successfully approved by SPV',
-    type: BudgetResponse,
-  })
-  @ApiBadRequestResponse({ description: 'Failed to approve Budget' })
-  public async approve_by_spv(@Param('id', new ParseUUIDPipe()) id: string) {
-    return await this.budgetService.approve_by_spv(id);
   }
 
   @Put('/:id/approve')

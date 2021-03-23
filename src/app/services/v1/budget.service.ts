@@ -116,7 +116,7 @@ export class BudgetService {
         'histories.createUser',
       ],
     });
-    console.log(budget);
+
     if (!budget) {
       throw new NotFoundException(`Budget ID ${id} not found!`);
     }
@@ -236,8 +236,6 @@ export class BudgetService {
     budget.createUser = user;
     budget.updateUser = user;
 
-    console.log(budget);
-
     const result = await this.budgetRepo.save(budget);
     return new BudgetResponse(result);
   }
@@ -346,6 +344,7 @@ export class BudgetService {
 
   public async update(id: string, data: UpdateBudgetDTO): Promise<BudgetResponse> {
     const budgetExist = await this.budgetRepo.findOne({ id, isDeleted: false });
+    console.log(budgetExist);
     if (!budgetExist) {
       throw new NotFoundException();
     } else {
@@ -364,7 +363,7 @@ export class BudgetService {
           item.productId = v.productId;
           item.description = v.description;
           item.amount = v.amount;
-          item.createUser = user;
+          item.createUser = budgetExist.createUser;
           item.updateUser = user;
           totalAmountItem = totalAmountItem + v.amount;
           items.push(item);
@@ -386,6 +385,7 @@ export class BudgetService {
           endDate: data.endDate,
         });
         budget.items = items;
+        budget.createUser = budgetExist.createUser;
         budget.updateUser = user;
 
         const result = await this.budgetRepo.update(id, budget);
@@ -407,7 +407,7 @@ export class BudgetService {
     if (!budget) {
       throw new BadRequestException();
     }
-    const budgetItem = await this.budgetItemRepo.update(id, { isDeleted: true });
+    const budgetItem = await this.budgetItemRepo.update({budgetId: id}, { isDeleted: true });
     if (!budgetItem) {
       throw new BadRequestException();
     }
@@ -415,63 +415,63 @@ export class BudgetService {
     return new BudgetResponse();
   }
 
-  public async approve_by_ss(id: string): Promise<any> {
-    const budgetExists = await this.budgetRepo.findOne({
-      where: { id, isDeleted: false },
-    });
-    if (!budgetExists) {
-      throw new NotFoundException(`Budget ID ${id} not found!`);
-    }
+  // public async approve_by_ss(id: string): Promise<any> {
+  //   const budgetExists = await this.budgetRepo.findOne({
+  //     where: { id, isDeleted: false },
+  //   });
+  //   if (!budgetExists) {
+  //     throw new NotFoundException(`Budget ID ${id} not found!`);
+  //   }
 
-    if (budgetExists.state === BudgetState.APPROVED_BY_SS) {
-      throw new BadRequestException(
-        `Budget ${budgetExists.number} already approved!`,
-      );
-    }
+  //   if (budgetExists.state === BudgetState.APPROVED_BY_SS) {
+  //     throw new BadRequestException(
+  //       `Budget ${budgetExists.number} already approved!`,
+  //     );
+  //   }
 
-    if (budgetExists.state === BudgetState.DRAFT) {
-      throw new BadRequestException(
-        `Budget ${budgetExists.number} need approve by SPV first!`,
-      );
-    }
+  //   if (budgetExists.state === BudgetState.DRAFT) {
+  //     throw new BadRequestException(
+  //       `Budget ${budgetExists.number} need approve by SPV first!`,
+  //     );
+  //   }
 
-    const budget = this.budgetRepo.create(budgetExists);
-    budget.state = BudgetState.APPROVED_BY_SS;
-    budget.updateUserId = await this.getUserId();
+  //   const budget = this.budgetRepo.create(budgetExists);
+  //   budget.state = BudgetState.APPROVED_BY_SS;
+  //   budget.updateUserId = await this.getUserId();
 
-    const updateBudget = await this.budgetRepo.save(budget);
-    if (!updateBudget) {
-      throw new BadRequestException();
-    }
+  //   const updateBudget = await this.budgetRepo.save(budget);
+  //   if (!updateBudget) {
+  //     throw new BadRequestException();
+  //   }
 
-    return new BudgetResponse(updateBudget as any);
-  }
+  //   return new BudgetResponse(updateBudget as any);
+  // }
 
-  public async approve_by_spv(id: string): Promise<any> {
-    const budgetExists = await this.budgetRepo.findOne({
-      where: { id, isDeleted: false },
-    });
-    if (!budgetExists) {
-      throw new NotFoundException(`Budget ID ${id} not found!`);
-    }
+  // public async approve_by_spv(id: string): Promise<any> {
+  //   const budgetExists = await this.budgetRepo.findOne({
+  //     where: { id, isDeleted: false },
+  //   });
+  //   if (!budgetExists) {
+  //     throw new NotFoundException(`Budget ID ${id} not found!`);
+  //   }
 
-    if (budgetExists.state === BudgetState.APPROVED_BY_SPV || budgetExists.state === BudgetState.APPROVED_BY_SS) {
-      throw new BadRequestException(
-        `Budget ${budgetExists.number} already approved!`,
-      );
-    }
+  //   if (budgetExists.state === BudgetState.APPROVED_BY_SPV || budgetExists.state === BudgetState.APPROVED_BY_SS) {
+  //     throw new BadRequestException(
+  //       `Budget ${budgetExists.number} already approved!`,
+  //     );
+  //   }
 
-    const budget = this.budgetRepo.create(budgetExists);
-    budget.state = BudgetState.APPROVED_BY_SPV;
-    budget.updateUserId = await this.getUserId();
+  //   const budget = this.budgetRepo.create(budgetExists);
+  //   budget.state = BudgetState.APPROVED_BY_SPV;
+  //   budget.updateUserId = await this.getUserId();
 
-    const updateBudget = await this.budgetRepo.save(budget);
-    if (!updateBudget) {
-      throw new BadRequestException();
-    }
+  //   const updateBudget = await this.budgetRepo.save(budget);
+  //   if (!updateBudget) {
+  //     throw new BadRequestException();
+  //   }
 
-    return new BudgetResponse(updateBudget as any);
-  }
+  //   return new BudgetResponse(updateBudget as any);
+  // }
 
   public async approve(id: string): Promise<any> {
     const budgetExists = await this.budgetRepo.findOne({
@@ -524,6 +524,8 @@ export class BudgetService {
       }
   
       return new BudgetResponse(updateBudget as any);
+    } else {
+      throw new HttpException('Role is not SPV or SS!', HttpStatus.BAD_REQUEST);
     }
   }
 

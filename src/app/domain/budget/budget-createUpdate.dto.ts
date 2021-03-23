@@ -19,7 +19,7 @@ export class CreateBudgetDTO {
 
   @ApiProperty({
     description: 'Responsible User ID',
-    example: 'b7726b7b-6882-42ea-b623-d8f8a347ba0b',
+    example: '3aa3eac8-a62f-44c3-b53c-31372492f9a0',
   })
   responsibleUserId: string;
 
@@ -51,12 +51,12 @@ export class CreateBudgetDTO {
   @IsOptional()
   totalAmount: number;
 
-  @ApiProperty({
-    description: 'Budget State',
-    example: BudgetState.DRAFT,
-    enum: BudgetState,
-  })
-  state: BudgetState;
+  // @ApiProperty({
+  //   description: 'Budget State',
+  //   example: BudgetState.DRAFT,
+  //   enum: BudgetState,
+  // })
+  // state: BudgetState;
 
   @ApiProperty({
     description: 'Budget Items',
@@ -83,7 +83,7 @@ export class UpdateBudgetDTO {
 
   @ApiProperty({
     description: 'Responsible User ID',
-    example: 'b7726b7b-6882-42ea-b623-d8f8a347ba0b',
+    example: '3aa3eac8-a62f-44c3-b53c-31372492f9a0',
   })
   @IsUUID()
   responsibleUserId: string;
@@ -93,6 +93,7 @@ export class UpdateBudgetDTO {
     example: '2021-01-10',
   })
   @IsDate()
+  @IsOptional()
   startDate: Date;
 
   @ApiProperty({
