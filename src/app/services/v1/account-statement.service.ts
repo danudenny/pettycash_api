@@ -71,10 +71,10 @@ export class AccountStatementService {
     const user = await AuthService.getUser({ relations: ['branches'] });
     const userBranches = user?.branches?.map((v) => v.id);
 
-    qb.fieldResolverMap['startDate__gte'] = 'transactionDate';
-    qb.fieldResolverMap['endDate__gte'] = 'transactionDate';
-    qb.fieldResolverMap['branchId'] = 'branchId';
-    qb.fieldResolverMap['type'] = 'type';
+    qb.fieldResolverMap['startDate__gte'] = 'stmt.transaction_date';
+    qb.fieldResolverMap['endDate__lte'] = 'stmt.transaction_date';
+    qb.fieldResolverMap['branchId'] = 'brnc.id';
+    qb.fieldResolverMap['type'] = 'stmt."type"';
 
     qb.applyFilterPagination();
     qb.selectRaw(
