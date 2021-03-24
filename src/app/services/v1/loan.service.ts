@@ -26,16 +26,18 @@ export class LoanService {
   public async list(query?: QueryLoanDTO): Promise<LoanWithPaginationResponse> {
     const params = { ...query };
     const qb = new QueryBuilder(Loan, 'l', params);
+    const user = await AuthService.getUser({ relations: ['branches'] });
+    const userBranches = user?.branches?.map((v) => v.id);
 
-    qb.fieldResolverMap['startDate__gte'] = 'l.transactionDate';
-    qb.fieldResolverMap['endDate__lte'] = 'l.transactionDate';
+    qb.fieldResolverMap['startDate__gte'] = 'l.transaction_date';
+    qb.fieldResolverMap['endDate__lte'] = 'l.transaction_date';
     qb.fieldResolverMap['number__icontains'] = 'l.number';
-    qb.fieldResolverMap['sourceDocument__icontains'] = 'l.sourceDocument';
-    qb.fieldResolverMap['branchId'] = 'l.branchId';
-    qb.fieldResolverMap['employeeId'] = 'l.employeeId';
+    qb.fieldResolverMap['sourceDocument__icontains'] = 'l.source_document';
+    qb.fieldResolverMap['branchId'] = 'l.branch_id';
+    qb.fieldResolverMap['employeeId'] = 'l.employee_id';
     qb.fieldResolverMap['state'] = 'l.state';
     qb.fieldResolverMap['type'] = 'l.type';
-    qb.fieldResolverMap['createdAt'] = 'l.createdAt';
+    qb.fieldResolverMap['createdAt'] = 'l.created_at';
 
     qb.applyFilterPagination();
     qb.selectRaw(
@@ -63,6 +65,12 @@ export class LoanService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    if (userBranches?.length) {
+      qb.andWhere(
+        (e) => e.branchId,
+        (v) => v.in(userBranches),
+      );
+    }
 
     const loan: LoanDTO[] = await qb.exec();
     return new LoanWithPaginationResponse(loan, params);
