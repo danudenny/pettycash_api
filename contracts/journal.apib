@@ -5,13 +5,13 @@ HOST: http://pettycash.api.url
 
 # Group Journal 
 
-## List Journal [GET /v1/journals{?start_date__gte,end_date__lte,state,partner__icontains,number__icontains,reference__icontains,order}]
+## List Journal [GET /v1/journals{?startDate__gte,endDate__lte,state,partner__icontains,number__icontains,reference__icontains,order}]
 
 Get list all Journal.
 
 + Parameters
-    + start_date__gte: `2021-01-01` (date, optional) - Start Date to filter.
-    + end_date__lte: `2021-12-31` (date, optional) - End Date to filter.
+    + startDate__gte: `2021-01-01` (date, optional) - Start Date to filter.
+    + endDate__lte: `2021-12-31` (date, optional) - End Date to filter.
     + state: `draft` (enum[string], optional) - Journal Status.
         + draft
         + approved_by_ss_ho
