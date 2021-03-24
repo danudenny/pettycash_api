@@ -21,6 +21,8 @@ import { AccountTax } from '../model/account-tax.entity';
 import { AccountTaxSeed } from '../seeders/tax.seed';
 import GenerateEmployeeRandom from '../seeders/employee.seed';
 import { Employee } from '../model/employee.entity';
+import { Department } from '../model/department.entity';
+import { DepartmentSeed } from '../seeders/department.seed';
 
 async function run() {
   // init connection
@@ -34,6 +36,9 @@ async function run() {
   // seed data employee
   const employes = GenerateEmployeeRandom(15);
   await connection.getRepository(Employee).insert(employes);
+
+  // seed data department
+  await connection.getRepository(Department).save(DepartmentSeed);
 
   // seed data user
   await connection.getRepository(User).insert(UserSeed);
