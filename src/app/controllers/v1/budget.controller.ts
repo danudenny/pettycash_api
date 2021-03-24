@@ -12,13 +12,14 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { BudgetService } from '../../services/v1/budget.service';
 import { BudgetResponse, BudgetWithPaginationResponse } from '../../domain/budget/budget-response.dto';
 import { QueryBugdetDTO } from '../../domain/budget/budget.payload.dto';
 import FindIdParams from '../../domain/common/findId-param.dto';
 import { CreateBudgetDTO, RejectBudgetDTO, UpdateBudgetDTO } from '../../domain/budget/budget-createUpdate.dto';
 import { FindBudgetIdParams } from '../../domain/budget/budget.dto';
+import { BudgetDetailResponse } from '../../domain/budget/budget-detail-response.dto';
 
 @Controller('v1/budgets')
 @ApiTags('Budget')
@@ -34,85 +35,82 @@ export class BudgetController {
     return await this.budgetService.list(query);
   }
 
-  @Get('/branch/:branchId')
-  @ApiParam({ name: 'branchId' })
-  @ApiOperation({ summary: 'Get Budget with Branch ID' })
-  @ApiOkResponse({ type: BudgetResponse })
-  @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async getBranch(
-    @Param() { branchId }: FindBudgetIdParams,
-  ) {
-    return await this.budgetService.getBranch(branchId);
-  }
+  // @Get('/branch/:branchId')
+  // @ApiParam({ name: 'branchId' })
+  // @ApiOperation({ summary: 'Get Budget with Branch ID' })
+  // @ApiOkResponse({ type: BudgetResponse })
+  // @ApiBadRequestResponse({ description: 'Bad Request' })
+  // public async getBranch(
+  //   @Param() { branchId }: FindBudgetIdParams,
+  // ) {
+  //   return await this.budgetService.getBranch(branchId);
+  // }
 
   @Get('/:id')
   @ApiParam({ name: 'id' })
   @ApiOperation({ summary: 'Get Budget with ID' })
-  @ApiOkResponse({ type: BudgetResponse })
+  @ApiOkResponse({ type: BudgetDetailResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async show(
     @Param() { id }: FindIdParams,
   ) {
-    return await this.budgetService.show(id);
+    return await this.budgetService.getById(id);
   }
 
   @Post('')
   @ApiOperation({ summary: 'Create Budget' })
-  @ApiOkResponse({ type: BudgetResponse })
+  @ApiCreatedResponse({
+    type: BudgetResponse,
+    description: 'Budget Successfully Created',
+  })
   @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiBody({ type: CreateBudgetDTO })
   public async create(@Body() payload: CreateBudgetDTO) {
     return await this.budgetService.create(payload);
   }
 
-  @Post(':id/duplicate')
+  @Get('/:id/duplicate')
   @ApiParam({ name: 'id' })
-  @ApiOperation({ summary: 'Duplicate Existing Budget' })
-  @ApiOkResponse({ type: BudgetResponse })
+  @ApiOperation({ summary: 'Get Budget with ID For Duplicate' })
+  @ApiOkResponse({ type: BudgetDetailResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async duplicate(
+  public async showDataDuplicate(
     @Param() { id }: FindIdParams,
   ) {
-    const budgetDuplicate = await this.budgetService.duplicate(id);
+    return await this.budgetService.getById(id);
+  }
 
-    if(budgetDuplicate) {
-      return budgetDuplicate;
-    } else {
-      throw new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
-    }
+  @Post('duplicate')
+  @ApiOperation({ summary: 'Duplicate Existing Budget' })
+  @ApiCreatedResponse({
+    type: BudgetResponse,
+    description: 'Budget Successfully Created',
+  })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiBody({ type: CreateBudgetDTO })
+  public async duplicate(@Body() payload: CreateBudgetDTO) {
+    return await this.budgetService.createDuplicate(payload);
   }
 
   @Patch(':id/update')
   @ApiParam({ name: 'id' })
   @ApiOperation({ summary: 'Edit Budget' })
-  @ApiOkResponse({ type: BudgetResponse })
-  @ApiBadRequestResponse({ description: 'Bad Request' })
   public async update(
-    @Param() { id }: FindIdParams,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() payload: UpdateBudgetDTO,
   ) {
     return await this.budgetService.update(id, payload);
   }
 
-  @Put('/:id/approve_by_ss')
-  @ApiOperation({ summary: 'Approve Budget By Senior Supervisor' })
+  @Put('/:id/approve')
+  @ApiOperation({ summary: 'Approve Budget' })
   @ApiOkResponse({
-    description: 'Budget successfully approved by SS',
+    description: 'Budget successfully approved',
     type: BudgetResponse,
   })
   @ApiBadRequestResponse({ description: 'Failed to approve Budget' })
-  public async approve_by_ss(@Param('id', new ParseUUIDPipe()) id: string) {
-    return await this.budgetService.approve_by_ss(id);
-  }
-
-  @Put('/:id/approve_by_spv')
-  @ApiOperation({ summary: 'Approve Budget By Supervisor' })
-  @ApiOkResponse({
-    description: 'Budget successfully approved by SPV',
-    type: BudgetResponse,
-  })
-  @ApiBadRequestResponse({ description: 'Failed to approve Budget' })
-  public async approve_by_spv(@Param('id', new ParseUUIDPipe()) id: string) {
-    return await this.budgetService.approve_by_spv(id);
+  public async approve(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.budgetService.approve(id);
   }
 
   @Put('/:id/reject')

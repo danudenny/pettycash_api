@@ -55,9 +55,9 @@ export class Budget extends PtcBaseEntity {
   @JoinColumn({ name: 'responsible_user_id' })
   users: User;
 
-  @OneToMany(() => BudgetItem, (e) => e.budget)
+  @OneToMany(() => BudgetItem, (e) => e.budget, { cascade: true })
   items: BudgetItem[];
 
-  @OneToMany(() => BudgetHistory, (e) => e.budget)
+  @OneToMany(() => BudgetHistory, (e) => e.budget, { cascade: true })
   histories: BudgetHistory[];
 }

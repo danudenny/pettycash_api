@@ -18,7 +18,7 @@ export class BudgetItem extends PtcBaseEntity {
   @Column({ type: 'numeric', name: 'amount' })
   amount: number;
 
-  @ManyToOne(() => Budget)
+  @ManyToOne(() => Budget, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'budget_id' })
   budget: Budget;
 

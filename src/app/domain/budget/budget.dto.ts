@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
 import { BudgetState } from '../../../model/utils/enum';
 import { Type } from 'class-transformer';
+import { CreateBudgetItemDTO } from '../budget-item/budget-item-create.dto';
 
 export class BudgetDTO {
   @ApiProperty({
@@ -101,7 +102,6 @@ export class BudgetDTO {
   })
   @IsOptional()
   rejectedNote: string
-
 }
 
 export class FindBudgetIdParams {
