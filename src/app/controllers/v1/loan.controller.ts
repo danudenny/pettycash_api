@@ -34,12 +34,20 @@ import { LoanAttachmentResponse } from '../../domain/loan/response-attachment.dt
 import { LoanDetailResponse } from '../../domain/loan/response-detail.dto';
 import { LoanWithPaginationResponse } from '../../domain/loan/response.dto';
 import { LoanService } from '../../services/v1/loan.service';
+import { CreateLoanDTO } from '../../domain/loan/create.dto';
 
 @Controller('v1/loans')
 @ApiTags('Loan')
 @ApiInternalServerErrorResponse({ description: 'General Error' })
 export class LoanController {
   constructor(private svc: LoanService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Create Loan' })
+  @ApiCreatedResponse({ description: 'Loan created' })
+  public async create(@Body() payload: CreateLoanDTO) {
+    return await this.svc.create(payload);
+  }
 
   @Get()
   @ApiOperation({ summary: 'List all loan' })

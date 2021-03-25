@@ -25,6 +25,8 @@ import { LoanAttachmentResponse } from '../../domain/loan/response-attachment.dt
 import { Attachment } from '../../../model/attachment.entity';
 import { AttachmentService } from '../../../common/services/attachment.service';
 import { LoanAttachmentDTO } from '../../domain/loan/loan-attachment.dto';
+import { CreateLoanDTO } from '../../domain/loan/create.dto';
+import { GenerateCode } from '../../../common/services/generate-code.service';
 
 @Injectable()
 export class LoanService {
@@ -34,6 +36,43 @@ export class LoanService {
     @InjectRepository(Attachment)
     private readonly attachmentRepo: Repository<Attachment>,
   ) {}
+
+  public async create(payload: CreateLoanDTO): Promise<any> {
+    const user = await AuthService.getUser({ relations: ['branchers'] });
+    // TODO: branchId should get from requested user.
+    // payload.branchId = user?.branches[0].id;
+
+    if (payload && !payload.number) {
+      payload.number = GenerateCode.loan();
+    }
+
+    const {
+      branchId,
+      number,
+      sourceDocument,
+      transactionDate,
+      periodId,
+      employeeId,
+      amount,
+      type,
+    } = payload;
+
+    const loan = new Loan();
+    loan.branchId = branchId;
+    loan.number = number;
+    loan.sourceDocument = sourceDocument;
+    loan.transactionDate = transactionDate;
+    loan.periodId = periodId;
+    loan.employeeId = employeeId;
+    loan.amount = amount;
+    loan.residualAmount = amount;
+    loan.type = type;
+    loan.createUser = user;
+    loan.updateUser = user;
+
+    const result = await this.loanRepo.save(loan);
+    return result;
+  }
 
   public async list(query?: QueryLoanDTO): Promise<LoanWithPaginationResponse> {
     const params = { ...query };
