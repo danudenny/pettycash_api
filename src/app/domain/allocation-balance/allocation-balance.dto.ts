@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsUUID } from 'class-validator';
 import { CashBalanceAllocationState } from '../../../model/utils/enum';
 
 export class AllocationBalanceDTO {
@@ -23,6 +23,12 @@ export class AllocationBalanceDTO {
   number: string;
 
   @ApiProperty({
+    description: 'Allocation Balance Amount',
+    example: 2000000,
+  })
+  amount: number;
+
+  @ApiProperty({
     description: 'Responsible User Id',
     example: '8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd',
   })
@@ -34,6 +40,12 @@ export class AllocationBalanceDTO {
     example: 'Admin Branch',
   })
   picName: string;
+
+  @ApiProperty({
+    description: 'Responsible User NIK',
+    example: '20090134',
+  })
+  nik: string;
 
   @ApiProperty({
     description: 'Allocation Balance State',
@@ -60,4 +72,13 @@ export class AllocationBalanceDTO {
     example: null,
   })
   receivedUserName: string;
+}
+
+export class RejectAllocationDTO {
+  @ApiPropertyOptional({
+    description: 'Rejection Note',
+    example: 'Alokasi tidak bisa diterima karena ...',
+  })
+  @IsOptional()
+  rejectedNote?: string;
 }

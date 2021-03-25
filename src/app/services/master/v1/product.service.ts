@@ -9,6 +9,7 @@ import { CreateProductDTO } from '../../../domain/product/create-product.dto';
 import UpdateProductDTO from '../../../domain/product/update-product.dto';
 import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../../shared/errors';
 import { GenerateCode } from '../../../../common/services/generate-code.service';
+import { AuthService } from '../../v1/auth.service';
 
 @Injectable()
 export class ProductService {
@@ -17,9 +18,9 @@ export class ProductService {
     private readonly productRepo: Repository<Product>,
   ) {}
 
-  async getUserId() {
-    // TODO: Use From Authentication User.
-    return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
+  private async getUserId() {
+    const user = await AuthService.getUser();
+    return user.id;
   }
 
   public async list(query?: QueryProductDTO): Promise<ProductWithPaginationResponse> {
