@@ -1,14 +1,16 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
-  ApiOperation,
+  ApiOperation, ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { QueryBalanceDTO } from '../../domain/balance/balance.query.dto';
 import { BalanceWithPaginationResponse } from '../../domain/balance/response.dto';
 import { BalanceService } from '../../services/v1/balance.service';
+import FindIdParams from '../../domain/common/findId-param.dto';
+import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
 
 @Controller('v1/balances')
 @ApiTags('Balance')
@@ -22,5 +24,13 @@ export class BalanceController {
   @ApiBadRequestResponse({ description: 'Bad request' })
   async get(@Query() query?: QueryBalanceDTO) {
     return await this.svc.list(query);
+  }
+
+  @Post('/transfer/:id')
+  @ApiParam({name: 'id'})
+  @ApiOperation({ summary: 'Transfer Balance to Branch' })
+  @ApiBadRequestResponse({ description: 'Bad request' })
+  async transfer(@Param() {id} : FindIdParams, @Body() data: TransferBalanceDTO) {
+    return await this.svc.transfer(id, data);
   }
 }

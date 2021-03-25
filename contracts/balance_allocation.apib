@@ -14,13 +14,14 @@ Untuk mendapatkan daftar Cash Balance Allocation.
     + branchId: `142648ab-9624-4a7a-a4b4-2f1c51e648d7` (string, optional) - Filtering alokasi saldo kas by branchID.
     + number: `ASK/2021/03/11/QWER123` (string, optional) - Filtering nomor referensi alokasi saldo kas.
     + state (enum[string], optional) - Cash Balance Allocation status.
-        + Draft
-        + Approve By SS HO
-        + Approve By SPV HO
-        + Rejected
-        + Received
-        + Transferred
-        + Expired
+        + Unapproved `Form yang diajukan pertama kali)`
+        + Confirmed by SS HO `(Konfirmasi setuju dari SS HO)`
+        + Approved by SPV HO `(Approvalsetuju dari SPV HO)`
+        + Rejected `(Konfirmasi tidak setuju)`
+        + Canceled `( Form dibatalkan)`
+        + Received `(Dana diterima oleh Admin Branch)`
+        + Transferred `(Dana sudah ditransfer oleh HO)`
+        + Expired `(Form yang telah lewat batas tanggal transfer)`
     + order: `^number,` (string, optional) - Sort / order alokasi saldo kas by reference number.
 
 
@@ -39,37 +40,48 @@ Untuk mendapatkan daftar Cash Balance Allocation.
                     "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
                     "branchId": "142648ab-9624-4a7a-a4b4-2f1c51e648d7",
                     "branchName": "Kantor Pusat",
-                    "number": "ASK/2021/03/21/QWER123",
+                    "number": "ASK202103121QWER123",
+                    "amount": 2000000,
                     "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "picName": "Admin Branch"
-                    "status": "Draft, 
+                    "responsibleUserFirstName": "Admin",
+                    "responsibleUserLastName": "Branch",
+                    "nik": "20090134",
+                    "state": "Unapproved, 
                     "receivedDate": "2021-03-22", 
                     "receivedUserId": null,
-                    "receivedUserName": null
+                    "receivedUserFirstName": null,
+                    "receivedUserLastName": null,
                 },
                 {
                     "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
                     "branchId": "142648ab-9624-4a7a-a4b4-2f1c51e648d7",
                     "branchName": "Kantor Pusat",
-                    "number": "ASK/2021/03/21/QWER123",
+                    "number": "ASK20210321QWER123",
+                    "amount": 2000000,
                     "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "picName": "Admin Branch"
-                    "status": "Approved By SS HO, 
+                    "responsibleUserFirstName": "Adry",
+                    "responsibleUserLastName": "Andreas",
+                    "nik": "20090134",
+                    "state": "Approved By SS HO, 
                     "receivedDate": "2021-03-22", 
-                    "receivedUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "receivedUserName": "Admin Branch"
-                },
+                    "receivedUserId": null,
+                    "receivedUserFirstName": null,
+                    "receivedUserLastName": null                },
                 {
                     "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
                     "branchId": "142648ab-9624-4a7a-a4b4-2f1c51e648d7",
                     "branchName": "Kantor Pusat",
-                    "number": "ASK/2021/03/21/QWER123",
+                    "number": "ASK20210321QWER123",
+                    "amount": 2000000,
                     "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "picName": "Admin Branch"
-                    "status": "Received, 
+                    "responsibleUserFirstName": "Denny",
+                    "responsibleUserLastName": "Danuwijaya",
+                    "nik": "20090134",
+                    "state": "Received, 
                     "receivedDate": "2021-03-22", 
                     "receivedUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "receivedUserName": "Admin Branch"
+                    "receivedUserFirstName": "Admin",
+                    "receivedUserLastName": "Branch"
                 }
             ],
             "meta": {
@@ -83,10 +95,11 @@ Untuk mendapatkan daftar Cash Balance Allocation.
 + Response 500 (application/json)
     + Body
 
-            {
-                "status": "error",
-                "message": "Internal Server Error"
-            }
+        {
+            "status": "error",
+            "message": "Internal Error!",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
 
 
 ## Get Cash Balance Allocation by ID [GET /v1/balance_allocations/{id}]
@@ -112,21 +125,138 @@ Untuk mendapatkan Cash Balance Allocation by ID.
                     "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
                     "branchId": "142648ab-9624-4a7a-a4b4-2f1c51e648d7",
                     "branchName": "Kantor Pusat",
-                    "number": "ASK/2021/03/21/QWER123",
+                    "number": "ASK20210321QWER123",
                     "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "picName": "Admin Branch"
-                    "status": "Received, 
+                    "responsibleUserFirstName": "Denny",
+                    "responsibleUserLastName": "Danuwijaya",
+                    "state": "Received, 
                     "receivedDate": "2021-03-22", 
                     "receivedUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "receivedUserName": "Admin Branch"
+                    "receivedUserFirstName": "Admin",
+                    "receivedUserLastName": "Branch"
+                    "histories": [
+                        {
+                            "accountStatementId": "915d1d4e-173e-4aad-9bf5-ec55266cf5a4",
+                            "userId": "6e381b42-23c9-4388-ba0a-bb0272d33099",
+                            "userFirstName": "Budi",
+                            "userLastName": "",
+                            "userRole": "SPV HO",
+                            "branchName": "Kebon Jeruk",
+                            "state": "approve_by_spv",
+                            "rejectedNote": null,
+                            "createdAt": "2021-03-24 11:44:32"
+                        },
+                        {
+                            "accountStatementId": "915d1d4e-173e-4aad-9bf5-ec55266cf5a4",
+                            "userId": "6e381b42-23c9-4388-ba0a-bb0272d33099",
+                            "userFirstName": "Pratama",
+                            "userLastName": "Setiawan",
+                            "userRole": "PIC HO",
+                            "branchName": "Kebon Jeruk",
+                            "state": "unapproved",
+                            "rejectedNote": null,
+                            "createdAt": "2021-03-24 11:44:32"
+                        }
+                        
+                    ]
                 },
             ]
+        }
+
++ Response 404 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "ID Alokasi Saldo Cabang tidak ditemukan!",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
         }
 
 + Response 500 (application/json)
     + Body
 
-            {
-                "status": "error",
-                "message": "Internal Server Error"
-            }
+        {
+            "status": "error",
+            "message": "Internal Error!",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Approve Cash Balance Allocation by ID [PATCH /v1/allocation-balance/{id}/approve]
+
+Untuk Approve Cash Balance Allocation by ID.
+
++ Parameters
+    + id: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string).
+
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": [],
+        }
+
++ Response 404 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "ID Alokasi Saldo Cabang tidak ditemukan!",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Reject Cash Balance Allocation by ID [PATCH /v1/allocation-balance/{id}/reject]
+
+Untuk Reject Cash Balance Allocation by ID.
+
++ Parameters
+    + id: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string).
+
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": [],
+        }
+
++ Response 404 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "ID Alokasi Saldo Cabang tidak ditemukan!",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
