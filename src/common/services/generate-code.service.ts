@@ -63,4 +63,11 @@ export class GenerateCode {
     const randomCode = this.randomCode(digit);
     return prefix + randomCode.toString();
   }
+
+  public static transferBalance(dateTime: Date = new Date(), digit: number = 6) {
+    // Format Code: TRF202102ABC123
+    const prefix = `TRF${dayjs(dateTime).format('YYYYMM')}`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
 }

@@ -1,12 +1,13 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { ApiBadRequestResponse, ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/allocation-balance.query.dto';
 import { AllocationBalanceService } from '../../services/v1/allocation-balance.service';
 import { AllocationBalanceResponse, AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response.dto';
 import FindIdParams from '../../domain/common/findId-param.dto';
+import { RejectAllocationDTO } from '../../domain/allocation-balance/allocation-balance.dto';
 
 @Controller('v1/allocation-balance')
-@ApiTags('Allocation Balance')
+@ApiTags('Cash Allocation Balance')
 export class AllocationBalanceController {
   constructor(private allocBallanceService: AllocationBalanceService) {
   }
@@ -26,5 +27,25 @@ export class AllocationBalanceController {
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async find(@Param() {id}: FindIdParams) {
     return await this.allocBallanceService.find(id);
+  }
+
+  @Patch('/:id/approve')
+  @ApiParam({name: 'id'})
+  @ApiOperation({ summary: 'Approve Cash Allocation Balance' })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async approve(@Param() {id}: FindIdParams) {
+    return await this.allocBallanceService.approve(id);
+  }
+
+  @Patch('/:id/reject')
+  @ApiParam({name: 'id'})
+  @ApiBody({ type: RejectAllocationDTO })
+  @ApiOperation({ summary: 'Reject Cash Allocation Balance' })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async reject(
+    @Param() {id}: FindIdParams,
+    @Body() payload: RejectAllocationDTO,
+  ) {
+    return await this.allocBallanceService.reject(id, payload);
   }
 }

@@ -7,8 +7,10 @@ export class AllocationBalanceResponseMapper {
     it.branchId = data.branch_id;
     it.branchName = data.branch_id;
     it.number = data.number;
+    it.amount = data.amount;
     it.responsibleUserId = data.responsibleUserId;
     it.picName = data.picName;
+    it.nik = data.nik;
     it.state = data.state;
     it.receivedDate = data.receivedDate;
     it.receivedUserId = data.receivedUserId;
@@ -22,8 +24,10 @@ export class AllocationBalanceResponseMapper {
       branchId: ety.branchId,
       branchName: ety.branch && ety.branch.branchName,
       number: ety.number,
+      amount: ety.amount,
       responsibleUserId: ety.responsibleUserId,
       picName: ety.responsibleUser && ety.responsibleUser.firstName,
+      nik: ety.responsibleUser && ety.responsibleUser.username,
       state: ety.state,
       receivedDate: ety.receivedDate,
       receivedUserId: ety.receivedUserId,
