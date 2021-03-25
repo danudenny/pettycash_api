@@ -1,0 +1,565 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Request Budget
+
+# Group Request Budget
+
+## List Request Budget [GET /v1/budgets]
+
+Untuk mendapatkan daftar budget.
+
++ Parameters
+    + startDate__gte: `2021-02-09T17:00:00.000Z` (date, optional) - Searching budget with date range from date start.
+    + endDate__gte: `2021-02-15T17:00:00.000Z` (date, optional) - Searching budget with date range from end date.
+    + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string, optional) - Searching budget by branch id.
+    + minAmount__gte: `1000000` (number, optional) - Searching range total amount - min.
+    + maxAmount__gte: `8000000` (number, optional) - Searching range total amount - max.
+    + state: `draft` (enum, optional) - Searching budget status `draft, approve_by_ho, approve_by_ss, rejected`
+    + order: `-minimumAmount` (string, optional) - Sort / order bucget by minimumAmount ascending.
+
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+      "status": "success",
+      "data": [
+          {
+              "id": "d4923882-f5a0-4517-9229-a0d9908a1eb6",
+              "branchId": "eaaf465b-65bc-4784-909e-8d0180c6eb4c",
+              "branchName": "Tangerang Pinang",
+              "number": "BGT00001",
+              "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+              "responsibleUserFirstName": "Adry",
+              "responsibleUserLastName": "Adry",
+              "responsibleUserUsername": "adry",
+              "startDate": "2021-02-09T17:00:00.000Z",
+              "endDate": "2021-02-15T17:00:00.000Z",
+              "minimumAmount": "2000000",
+              "totalAmount": "7000000",
+              "state": "draft",
+              "rejectedNote": null
+          },
+          {
+              "id": "9177edfe-1846-4f6a-8e3d-11feabb9867d",
+              "branchId": "28786cd1-bb9e-4926-a332-3a2e1c302e68",
+              "branchName": "Medan",
+              "number": "BGT00002",
+              "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+              "responsibleUserFirstName": "Adry",
+              "responsibleUserLastName": "Adry",
+              "responsibleUserUsername": "adry",
+              "startDate": "2021-02-16T17:00:00.000Z",
+              "endDate": "2021-02-22T17:00:00.000Z",
+              "minimumAmount": "2285714",
+              "totalAmount": "8000000",
+              "state": "draft",
+              "rejectedNote": null
+          },
+          {
+              "id": "46dc5599-43f0-4569-b5f0-33e25f4cd29c",
+              "branchId": "eaaf465b-65bc-4784-909e-8d0180c6eb4c",
+              "branchName": "Tangerang Pinang",
+              "number": "BGT/2021/02/QHRT0857",
+              "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+              "responsibleUserFirstName": "Adry",
+              "responsibleUserLastName": "Adry",
+              "responsibleUserUsername": "adry",
+              "startDate": "2021-02-16T17:00:00.000Z",
+              "endDate": "2021-02-22T17:00:00.000Z",
+              "minimumAmount": "2000000",
+              "totalAmount": "7000000",
+              "state": "draft",
+              "rejectedNote": null
+          }
+      ],
+      "meta": {
+          "page": 1,
+          "prevPage": null,
+          "nextPage": null,
+          "perPage": 10
+      }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "message": "Internal Server Error"
+            }
+
+
+## Create Budget [POST /v1/budgets]
+
+Create Budget data
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+            + branchId: `b7726b7b-6882-42ea-b623-d8f8a347ba0b` (string) - Branch ID.
+            + number: `BG001` (string) - Number.
+            + responsibleUserId: "3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - User ID.
+            + startDate: `2021-01-10` (string) - Transaction Date.
+            + endDate: `2021-01-16` (string) - Transaction Date.
+            + minimumAmount: 250000 (number) - Minimum Amount.
+            + totalAmount: 5000000 (number) - Total Amount.
+            + items: (array)
+                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
+                + description: `Kebutuhan Pickup` (string) - Description.
+                + amount: 1000000 (number) - Amount.
+
++ Response 201 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": {
+                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "branchId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "branchName": "Kebon Jeruk",
+                "number": "BG001",
+                "responsibleUserId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "responsibleUserFirstName": "Budi",
+                "responsibleUserLastName": "Handoko",
+                "responsibleUserUsername": 18122009,
+                "startDate": "2021-01-29",
+                "endDate": "2021-01-29",
+                "minimumAmount": 2000000,
+                "totalAmount": 5000000,
+                "state": "draft",
+                "rejectedNote": "Budget melebihi batas minimum"
+            }
+        }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "BUDGET_CREATE_FAILED",
+                "message": "failed to create budget",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Get Budget by ID [GET /v1/budgets/{id}]
+
+Get Budget detail.
+
++ Parameters
+    + id: `46dc5599-43f0-4569-b5f0-33e25f4cd29c` (string) - Budget ID to Retrieve.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+          "status": "success",
+          "data": {
+            "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+            "branchId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+            "branchName": "Bandung",
+            "number": "REL-2020/01/AAB112",
+            "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+            "responsibleUserFirstName": "Michael",
+            "responsibleUserLastName": "Jordan",
+            "responsibleUserUsername": "mjordan",
+            "startDate": "2021-01-27",
+            "endDate": "2021-01-27",
+            "totalAmount": 900000,
+            "minimumAmount": 0,
+            "state": "draft",
+            "rejectedNote": "ditolak",
+            "items": [
+              {
+                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "budgetId": "46dc5599-43f0-4569-b5f0-33e25f4cd29c",
+                "productId": "d786c337-39b5-40ab-952b-48cd186027bd",
+                "productName": "Bensin",
+                "productCode": "PRD202003AAA111",
+                "description": "Kebutuhan Pickup",
+                "amount": 1000000
+              }
+            ],
+            "histories": [
+              {
+                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "userId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "userFullName": "Jenny Safitri",
+                "userRole": "PIC HO",
+                "branchName": "Kebon Jeruk",
+                "state": "draft",
+                "rejectedNote": "Not OK",
+                "createdAt": "2021-03-23T08:22:44.765Z"
+              }
+            ]
+          }
+        }
+
++ Response 404 (application/json)
+    + Body
+
+          {
+              "status": "fail",
+              "code": "BUDGET_NOT_FOUND",
+              "message": "budget {id} not found",
+              "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+          }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Get Budget by ID For Duplicate [GET /v1/budgets/{id}/duplicate]
+
+Get Budget detail for Duplicate Budget.
+
++ Parameters
+    + id: `46dc5599-43f0-4569-b5f0-33e25f4cd29c` (string) - Budget ID to Retrieve.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+          "status": "success",
+          "data": {
+            "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+            "branchId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+            "branchName": "Bandung",
+            "number": "REL-2020/01/AAB112",
+            "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+            "responsibleUserFirstName": "Michael",
+            "responsibleUserLastName": "Jordan",
+            "responsibleUserUsername": "mjordan",
+            "startDate": "2021-01-27",
+            "endDate": "2021-01-27",
+            "totalAmount": 900000,
+            "minimumAmount": 0,
+            "state": "draft",
+            "rejectedNote": "ditolak",
+            "items": [
+              {
+                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "budgetId": "46dc5599-43f0-4569-b5f0-33e25f4cd29c",
+                "productId": "d786c337-39b5-40ab-952b-48cd186027bd",
+                "productName": "Bensin",
+                "productCode": "PRD202003AAA111",
+                "description": "Kebutuhan Pickup",
+                "amount": 1000000
+              }
+            ],
+            "histories": [
+              {
+                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "userId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "userFullName": "Jenny Safitri",
+                "userRole": "PIC HO",
+                "branchName": "Kebon Jeruk",
+                "state": "draft",
+                "rejectedNote": "Not OK",
+                "createdAt": "2021-03-23T08:22:44.765Z"
+              }
+            ]
+          }
+        }
+
++ Response 404 (application/json)
+    + Body
+
+          {
+              "status": "fail",
+              "code": "BUDGET_NOT_FOUND",
+              "message": "budget {id} not found",
+              "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+          }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Duplicate Existing Budget [POST /v1/budgets/duplicate]
+
+Duplicate data Budget
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+            + branchId: `b7726b7b-6882-42ea-b623-d8f8a347ba0b` (string) - Branch ID.
+            + number: `BG001` (string) - Number.
+            + responsibleUserId: "3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - User ID.
+            + startDate: `2021-01-10` (string) - Transaction Date.
+            + endDate: `2021-01-16` (string) - Transaction Date.
+            + minimumAmount: 250000 (number) - Minimum Amount.
+            + totalAmount: 5000000 (number) - Total Amount.
+            + items: (array)
+                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
+                + description: `Kebutuhan Pickup` (string) - Description.
+                + amount: 1000000 (number) - Amount.
+
++ Response 201 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": {
+                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "branchId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "branchName": "Kebon Jeruk",
+                "number": "BG001",
+                "responsibleUserId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "responsibleUserFirstName": "Budi",
+                "responsibleUserLastName": "Handoko",
+                "responsibleUserUsername": 18122009,
+                "startDate": "2021-01-29",
+                "endDate": "2021-01-29",
+                "minimumAmount": 2000000,
+                "totalAmount": 5000000,
+                "state": "draft",
+                "rejectedNote": "Budget melebihi batas minimum"
+            }
+        }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "BUDGET_DUPLICATE_FAILED",
+                "message": "failed to duplicate budget",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Edit Budget  [PATCH /v1/budgets/{id}/update]
+
+Duplicate data Budget
+
++ Parameters
+    + id: `46dc5599-43f0-4569-b5f0-33e25f4cd29c` (string) - Budget ID to Retrieve.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+            + branchId: `b7726b7b-6882-42ea-b623-d8f8a347ba0b` (string) - Branch ID.
+            + number: `BG001` (string) - Number.
+            + responsibleUserId: "3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - User ID.
+            + startDate: `2021-01-10` (string) - Transaction Date.
+            + endDate: `2021-01-16` (string) - Transaction Date.
+            + minimumAmount: 250000 (number) - Minimum Amount.
+            + totalAmount: 5000000 (number) - Total Amount.
+            + items: (array)
+                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
+                + description: `Kebutuhan Pickup` (string) - Description.
+                + amount: 1000000 (number) - Amount.
+
++ Response 201 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": {
+                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "branchId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "branchName": "Kebon Jeruk",
+                "number": "BG001",
+                "responsibleUserId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                "responsibleUserFirstName": "Budi",
+                "responsibleUserLastName": "Handoko",
+                "responsibleUserUsername": 18122009,
+                "startDate": "2021-01-29",
+                "endDate": "2021-01-29",
+                "minimumAmount": 2000000,
+                "totalAmount": 5000000,
+                "state": "draft",
+                "rejectedNote": "Budget melebihi batas minimum"
+            }
+        }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "BUDGET_EDIT_FAILED",
+                "message": "failed to edit budget",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Approve Budget [PUT /v1/budgets/{id}/approve]
+
+Approve Budget
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Budget ID.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "BUDGET_APPROVE_FAILED",
+                "message": "failed to approve budget",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Reject Budget [PATCH /v1/budgets/{id}/reject]
+
+Reject Budget
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Budget ID.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + rejectedNote: `Salah nominal` (string, required) - Rejected Note.
+
++ Response 200 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "BUDGET_REJECT_FAILED",
+                "message": "failed to reject budget",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+
+## Delete Budget [PATCH /v1/budgets/{id}/delete]
+
+Delete Budget
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Budget ID.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "BUDGET_DELETE_FAILED",
+                "message": "failed to delete budget",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
