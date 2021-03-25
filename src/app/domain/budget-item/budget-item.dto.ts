@@ -30,6 +30,12 @@ export class BudgetItemDTO {
   productName: string;
 
   @ApiProperty({
+    description: 'Product Code',
+    example: 'PRD202003AAA111',
+  })
+  productCode: string;
+
+  @ApiProperty({
     description: 'Budget Item Description',
     example: 'Kebutuhan Pickup',
   })
@@ -42,7 +48,6 @@ export class BudgetItemDTO {
   })
   @IsOptional()
   amount: number;
-
 }
 
 export class FindBudgetItemIdParams {

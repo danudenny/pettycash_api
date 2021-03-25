@@ -1,4 +1,4 @@
-import { Entity, Column, JoinColumn, Index } from 'typeorm';
+import { Entity, Column, JoinColumn, Index, ManyToOne } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { Budget } from './budget.entity';
 import { BudgetState } from './utils/enum';
@@ -18,6 +18,7 @@ export class BudgetHistory extends PtcBaseEntity {
   @Column({ type: 'enum', enum: BudgetState, default: BudgetState.DRAFT })
   state: BudgetState;
 
+  @ManyToOne(() => Budget, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'budget_id' })
   budget: Budget;
 }
