@@ -2,7 +2,7 @@ import { BasePayload } from '../common/base-payload.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BudgetState } from '../../../model/utils/enum';
 
-export class QueryBugdetDTO extends BasePayload {
+export class QueryBudgetDTO extends BasePayload {
   @ApiPropertyOptional({
     description: 'Budget Start Date',
     example: '2021-01-29T09:00:29.803Z',
