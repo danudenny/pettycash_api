@@ -1,4 +1,9 @@
-import { Repository, getManager, EntityManager } from 'typeorm';
+import {
+  Repository,
+  getManager,
+  EntityManager,
+  createQueryBuilder,
+} from 'typeorm';
 import {
   BadRequestException,
   Injectable,
@@ -6,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
+import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { Loan } from '../../../model/loan.entity';
 import { LoanDTO } from '../../domain/loan/loan.dto';
 import { QueryLoanDTO } from '../../domain/loan/loan.query.dto';
@@ -15,27 +21,74 @@ import { CreatePaymentLoanDTO } from '../../domain/loan/create-payment.dto';
 import { AccountPayment } from '../../../model/account-payment.entity';
 import { AuthService } from './auth.service';
 import { AccountPaymentType, LoanState } from '../../../model/utils/enum';
+import { LoanAttachmentResponse } from '../../domain/loan/response-attachment.dto';
+import { Attachment } from '../../../model/attachment.entity';
+import { AttachmentService } from '../../../common/services/attachment.service';
+import { LoanAttachmentDTO } from '../../domain/loan/loan-attachment.dto';
+import { CreateLoanDTO } from '../../domain/loan/create.dto';
+import { GenerateCode } from '../../../common/services/generate-code.service';
 
 @Injectable()
 export class LoanService {
   constructor(
     @InjectRepository(Loan)
     private readonly loanRepo: Repository<Loan>,
+    @InjectRepository(Attachment)
+    private readonly attachmentRepo: Repository<Attachment>,
   ) {}
+
+  public async create(payload: CreateLoanDTO): Promise<any> {
+    const user = await AuthService.getUser({ relations: ['branchers'] });
+    // TODO: branchId should get from requested user.
+    // payload.branchId = user?.branches[0].id;
+
+    if (payload && !payload.number) {
+      payload.number = GenerateCode.loan();
+    }
+
+    const {
+      branchId,
+      number,
+      sourceDocument,
+      transactionDate,
+      periodId,
+      employeeId,
+      amount,
+      type,
+    } = payload;
+
+    const loan = new Loan();
+    loan.branchId = branchId;
+    loan.number = number;
+    loan.sourceDocument = sourceDocument;
+    loan.transactionDate = transactionDate;
+    loan.periodId = periodId;
+    loan.employeeId = employeeId;
+    loan.amount = amount;
+    loan.residualAmount = amount;
+    loan.type = type;
+    loan.createUser = user;
+    loan.updateUser = user;
+
+    const result = await this.loanRepo.save(loan);
+    return result;
+  }
 
   public async list(query?: QueryLoanDTO): Promise<LoanWithPaginationResponse> {
     const params = { ...query };
     const qb = new QueryBuilder(Loan, 'l', params);
+    const user = await AuthService.getUser({ relations: ['branches'] });
+    const userBranches = user?.branches?.map((v) => v.id);
 
-    qb.fieldResolverMap['startDate__gte'] = 'l.transactionDate';
-    qb.fieldResolverMap['endDate__lte'] = 'l.transactionDate';
+    qb.fieldResolverMap['startDate__gte'] = 'l.transaction_date';
+    qb.fieldResolverMap['endDate__lte'] = 'l.transaction_date';
     qb.fieldResolverMap['number__icontains'] = 'l.number';
-    qb.fieldResolverMap['sourceDocument__icontains'] = 'l.sourceDocument';
-    qb.fieldResolverMap['branchId'] = 'l.branchId';
-    qb.fieldResolverMap['employeeId'] = 'l.employeeId';
+    qb.fieldResolverMap['sourceDocument__icontains'] = 'l.source_document';
+    qb.fieldResolverMap['branchId'] = 'l.branch_id';
+    qb.fieldResolverMap['employeeId'] = 'l.employee_id';
     qb.fieldResolverMap['state'] = 'l.state';
     qb.fieldResolverMap['type'] = 'l.type';
-    qb.fieldResolverMap['createdAt'] = 'l.createdAt';
+    qb.fieldResolverMap['createdAt'] = 'l.created_at';
 
     qb.applyFilterPagination();
     qb.selectRaw(
@@ -63,6 +116,12 @@ export class LoanService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    if (userBranches?.length) {
+      qb.andWhere(
+        (e) => e.branchId,
+        (v) => v.in(userBranches),
+      );
+    }
 
     const loan: LoanDTO[] = await qb.exec();
     return new LoanWithPaginationResponse(loan, params);
@@ -74,6 +133,140 @@ export class LoanService {
       relations: ['employee', 'payments'],
     });
     return new LoanDetailResponse(loan);
+  }
+
+  /**
+   * List all Attachments of Loan
+   *
+   * @param {string} loanId ID of Loan
+   * @return {*}  {Promise<LoanAttachmentResponse>}
+   * @memberof LoanService
+   */
+  public async listAttachment(loanId: string): Promise<LoanAttachmentResponse> {
+    const qb = new QueryBuilder(Loan, 'l', {});
+
+    qb.selectRaw(
+      ['l.id', 'loanId'],
+      ['att.id', 'id'],
+      ['att."name"', 'name'],
+      ['att.filename', 'fileName'],
+      ['att.file_mime', 'fileMime'],
+      ['att.url', 'url'],
+    );
+    qb.innerJoin(
+      (e) => e.attachments,
+      'att',
+      (j) =>
+        j.andWhere(
+          (e) => e.isDeleted,
+          (v) => v.isFalse(),
+        ),
+    );
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+    qb.andWhere(
+      (e) => e.id,
+      (v) => v.equals(loanId),
+    );
+
+    const attachments = await qb.exec();
+    if (!attachments) {
+      throw new NotFoundException(`Attachments not found!`);
+    }
+
+    return new LoanAttachmentResponse(attachments);
+  }
+
+  /**
+   * Upload Attachment to S3 and attach to Loan
+   *
+   * @param {string} loanId ID of Loan
+   * @param {*} [files] Attachment files
+   * @return {*}  {Promise<LoanAttachmentResponse>}
+   * @memberof LoanService
+   */
+  public async createAttachment(
+    loanId: string,
+    files?: any,
+  ): Promise<LoanAttachmentResponse> {
+    try {
+      const createAttachment = await getManager().transaction(
+        async (manager) => {
+          const loan = await manager.findOne(Loan, {
+            where: { id: loanId, isDeleted: false },
+            relations: ['attachments'],
+          });
+          if (!loan) {
+            throw new NotFoundException(`Loan with ID ${loanId} not found!`);
+          }
+
+          // Upload file attachments
+          let newAttachments: Attachment[];
+          if (files && files.length) {
+            const loanPath = `loan/${loanId}`;
+            const attachments = await AttachmentService.uploadFiles(
+              files,
+              (file) => {
+                const rid = uuid().split('-')[0];
+                const pathId = `${loanPath}_${rid}_${file.originalname}`;
+                return pathId;
+              },
+              manager,
+            );
+            newAttachments = attachments;
+          }
+
+          const existingAttachments = loan.attachments;
+
+          loan.attachments = [].concat(existingAttachments, newAttachments);
+          loan.updateUser = await AuthService.getUser();
+
+          await manager.save(loan);
+          return newAttachments;
+        },
+      );
+
+      return new LoanAttachmentResponse(
+        createAttachment as LoanAttachmentDTO[],
+      );
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  /**
+   * Soft Delete Attachment
+   *
+   * @param {string} loanId ID of Loan
+   * @param {string} attachmentId Attachment ID to delete.
+   * @return {*}  {Promise<void>}
+   * @memberof LoanService
+   */
+  public async deleteAttachment(
+    loanId: string,
+    attachmentId: string,
+  ): Promise<void> {
+    const attachment = await createQueryBuilder('attachment', 'att')
+      .innerJoin('loan_attachment', 'lat', 'att.id = lat.attachment_id')
+      .where('lat.loan_id = :loanId', { loanId })
+      .andWhere('lat.attachment_id = :attachmentId', { attachmentId })
+      .andWhere('att.isDeleted = false')
+      .getOne();
+
+    if (!attachment) {
+      throw new NotFoundException(
+        `Attachment with ID ${attachmentId} not found!`,
+      );
+    }
+    // SoftDelete
+    const deleteAttachment = await this.attachmentRepo.update(attachmentId, {
+      isDeleted: true,
+    });
+    if (!deleteAttachment) {
+      throw new BadRequestException('Failed to delete attachment!');
+    }
   }
 
   /**

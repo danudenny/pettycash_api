@@ -32,8 +32,10 @@ export class BalanceService {
   ): Promise<BalanceWithPaginationResponse> {
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(Branch, 'b', params);
+    const user = await AuthService.getUser({ relations: ['branches'] });
+    const userBranches = user?.branches?.map((v) => v.id);
 
-    qb.fieldResolverMap['branchId'] = 'id';
+    qb.fieldResolverMap['branchId'] = 'b.id';
 
     qb.applyFilterPagination();
     qb.selectRaw(
@@ -93,7 +95,12 @@ export class BalanceService {
     qb.qb.andWhere(
       `(bgt.state = 'approved_by_ss' OR bgt.state = 'approved_by_spv')`,
     );
-
+    if (userBranches?.length) {
+      qb.andWhere(
+        (e) => e.id,
+        (v) => v.in(userBranches),
+      );
+    }
     if (params.balanceDate__lte) {
       qb.qb.andWhere(
         `(:balanceDate >= bgt.start_date AND :balanceDate <= bgt.end_date)`,

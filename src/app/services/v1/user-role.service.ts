@@ -60,15 +60,23 @@ export class UserRoleService {
     );
     // Custom Search in multiple column
     if (params.employee_name__icontains) {
+      let firstName = params.employee_name__icontains;
+      let lastName = params.employee_name__icontains;
+      const names = params.employee_name__icontains.split(' ');
+      if (names.length > 1) {
+        firstName = names[0];
+        names.shift();
+        lastName = names.join(' ');
+      }
       qb.andWhereIsolated((q) =>
         q
           .andWhere(
             (e) => e.firstName,
-            (v) => v.contains(params.employee_name__icontains, true),
+            (v) => v.contains(firstName, true),
           )
           .orWhere(
             (e) => e.lastName,
-            (v) => v.contains(params.employee_name__icontains, true),
+            (v) => v.contains(lastName, true),
           ),
       );
     }
