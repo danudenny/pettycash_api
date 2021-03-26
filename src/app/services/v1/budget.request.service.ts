@@ -206,47 +206,40 @@ export class BudgetRequestService {
       const user = await this.getUser(true);
       const branchId = user && user.branches && user.branches[0].id;
 
-      const endDateData = await this.getBranch(branchId);
-      const checkDate = new Date(data.needDate);
-
-      if (checkDate >= endDateData) {
-        // Build BudgetItem
-        const items: BudgetRequestItem[] = [];
-        let totalAmountItem = 0;
-        for (const v of data.items) {
-          const item = new BudgetRequestItem();
-          item.productId = v.productId;
-          item.description = v.description;
-          item.amount = v.amount;
-          item.createUser = budgetExist.createUser;
-          item.updateUser = user;
-          totalAmountItem = totalAmountItem + v.amount;
-          items.push(item);
-        }
-
-        // Build Budget
-        const budgetRequest = new BudgetRequest();
-        budgetRequest.branchId = branchId;
-        budgetRequest.budgetId = data.budgetId;
-        budgetRequest.number = data.number;
-        budgetRequest.responsibleUserId = data.responsibleUserId;
-        budgetRequest.needDate = data.needDate;
-        budgetRequest.totalAmount = totalAmountItem;
-        budgetRequest.rejectedNote = null;
-        budgetRequest.state = BudgetRequestState.DRAFT;
-        budgetRequest.histories = await this.buildHistory(budgetRequest, {
-          state: BudgetRequestState.DRAFT,
-          needDate: data.needDate,
-        });
-        budgetRequest.items = items;
-        budgetRequest.createUser = budgetExist.createUser;
-        budgetRequest.updateUser = user;
-
-        const result = await this.budgetRequestRepo.update(id, budgetRequest);
-        return new BudgetRequestResponse(result as any);
-      } else {
-        throw new HttpException('Cannot Edit, Range Date is not Available!', HttpStatus.BAD_REQUEST);
+      // Build BudgetItem
+      const items: BudgetRequestItem[] = [];
+      let totalAmountItem = 0;
+      for (const v of data.items) {
+        const item = new BudgetRequestItem();
+        item.productId = v.productId;
+        item.description = v.description;
+        item.amount = v.amount;
+        item.createUser = budgetExist.createUser;
+        item.updateUser = user;
+        totalAmountItem = totalAmountItem + v.amount;
+        items.push(item);
       }
+
+      // Build Budget
+      const budgetRequest = new BudgetRequest();
+      budgetRequest.branchId = branchId;
+      budgetRequest.budgetId = data.budgetId;
+      budgetRequest.number = data.number;
+      budgetRequest.responsibleUserId = data.responsibleUserId;
+      budgetRequest.needDate = data.needDate;
+      budgetRequest.totalAmount = totalAmountItem;
+      budgetRequest.rejectedNote = null;
+      budgetRequest.state = BudgetRequestState.DRAFT;
+      budgetRequest.histories = await this.buildHistory(budgetRequest, {
+        state: BudgetRequestState.DRAFT,
+        needDate: data.needDate,
+      });
+      budgetRequest.items = items;
+      budgetRequest.createUser = budgetExist.createUser;
+      budgetRequest.updateUser = user;
+
+      const result = await this.budgetRequestRepo.update(id, budgetRequest);
+      return new BudgetRequestResponse(result as any);
     } 
   }
 
