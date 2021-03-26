@@ -228,7 +228,7 @@ export class ExpenseService {
       const approveExpense = await getManager().transaction(async (manager) => {
         const expense = await manager.findOne(Expense, {
           where: { id: expenseId, isDeleted: false },
-          relations: ['attachments', 'partner', 'items', 'histories'],
+          relations: ['attachments', 'partner', 'histories'],
         });
         if (!expense) {
           throw new NotFoundException(`Expense ID ${expenseId} not found!`);
@@ -255,8 +255,15 @@ export class ExpenseService {
 
         // if any payload.items, we should update it first.
         // because the Journal Entries depends on items value.
+        let updatedExpenseItem: Expense;
         if (payload.items) {
           await this.updateExpenseItem(manager, payload.items, user);
+          // NOTE: we need to refetch expense to get latest `items`,
+          updatedExpenseItem = await manager.findOne(Expense, {
+            where: { id: expenseId, isDeleted: false },
+            relations: ['items'],
+          });
+          expense.items = updatedExpenseItem.items;
         }
 
         // TODO: Implement State Machine for approval flow?
@@ -275,6 +282,13 @@ export class ExpenseService {
 
           state = ExpenseState.APPROVED_BY_PIC;
 
+          if (updatedExpenseItem) {
+            expense.totalAmount = updatedExpenseItem?.items
+              .map((m) => Number(m.picHoAmount))
+              .filter((i) => i)
+              .reduce((a, b) => a + b, 0);
+          }
+
           // Create Journal for PIC HO
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
@@ -291,6 +305,13 @@ export class ExpenseService {
           }
 
           state = ExpenseState.APPROVED_BY_SS_SPV;
+
+          if (updatedExpenseItem) {
+            expense.totalAmount = updatedExpenseItem?.items
+              .map((m) => Number(m.ssHoAmount))
+              .filter((i) => i)
+              .reduce((a, b) => a + b, 0);
+          }
 
           // (Re)Create Journal for SS/SPV HO
           await this.removeJournal(manager, expense);
