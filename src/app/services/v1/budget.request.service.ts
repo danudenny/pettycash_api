@@ -1,6 +1,6 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, createQueryBuilder } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Budget } from '../../../model/budget.entity';
 import { BudgetResponse } from '../../domain/budget/budget-response.dto';
@@ -14,10 +14,14 @@ import { BudgetRequest } from '../../../model/budget.request.entity';
 import { BudgetRequestItem } from '../../../model/budget.request-item.entity';
 import { BudgetRequestHistory } from '../../../model/budget.request-history.entity';
 import { BudgetRequestDetailResponse } from '../../domain/budget-request/budget-request-detail-response.dto';
+import { createProvidersForDecorated } from 'nestjs-pino/dist/InjectPinoLogger';
+import { runInThisContext } from 'vm';
 
 @Injectable()
 export class BudgetRequestService {
   constructor(
+    @InjectRepository(Budget)
+    private readonly budgetRepo: Repository<Budget>,
     @InjectRepository(BudgetRequest)
     private readonly budgetRequestRepo: Repository<BudgetRequest>,
     @InjectRepository(BudgetRequestItem)
@@ -60,33 +64,31 @@ export class BudgetRequestService {
   }
 
   public async list(query?: QueryBudgetRequestDTO): Promise<BudgetRequestWithPaginationResponse> {
-    const params = { order: '-minimumAmount', limit: 10, ...query };
-    const qb = new QueryBuilder(Budget, 'bgt', params);
+    const params = { order: '-totalAmount', limit: 10, ...query };
+    const qb = new QueryBuilder(BudgetRequest, 'bgtr', params);
 
-    qb.fieldResolverMap['startDate__gte'] = 'bgt.startDate';
-    qb.fieldResolverMap['endDate__lte'] = 'bgt.endDate';
-    qb.fieldResolverMap['branchId'] = 'bgt.branchId';
-    qb.fieldResolverMap['minAmount__gte'] = 'bgt.totalAmount';
-    qb.fieldResolverMap['maxAmount__lte'] = 'bgt.totalAmount';
-    qb.fieldResolverMap['state'] = 'bgt.state';
-    qb.fieldResolverMap['number__icontains'] = 'bgt.number';
+    qb.fieldResolverMap['startDate__gte'] = 'bgtr.startDate';
+    qb.fieldResolverMap['endDate__lte'] = 'bgtr.endDate';
+    qb.fieldResolverMap['branchId'] = 'bgtr.branchId';
+    qb.fieldResolverMap['minAmount__gte'] = 'bgtr.totalAmount';
+    qb.fieldResolverMap['maxAmount__lte'] = 'bgtr.totalAmount';
+    qb.fieldResolverMap['state'] = 'bgtr.state';
+    qb.fieldResolverMap['number__icontains'] = 'bgtr.number';
 
     qb.applyFilterPagination();
     qb.selectRaw(
-      ['bgt.id', 'id'],
-      ['bgt.branch_id', 'branchId'],
+      ['bgtr.id', 'id'],
+      ['bgtr.branch_id', 'branchId'],
       ['br.branch_name', 'branchName'],
-      ['bgt.number', 'number'],
-      ['bgt.responsible_user_id', 'responsibleUserId'],
+      ['bgtr.number', 'number'],
+      ['bgtr.responsible_user_id', 'responsibleUserId'],
       ['us.first_name', 'responsibleUserFirstName'],
       ['us.last_name', 'responsibleUserLastName'],
       ['us.username', 'responsibleUserUsername'],
-      ['bgt.start_date', 'startDate'],
-      ['bgt.end_date', 'endDate'],
-      ['bgt.minimum_amount', 'minimumAmount'],
-      ['bgt.total_amount', 'totalAmount'],
-      ['bgt.state', 'state'],
-      ['bgt.rejected_note', 'rejectedNote']
+      ['bgtr.need_date', 'needDate'],
+      ['bgtr.total_amount', 'totalAmount'],
+      ['bgtr.state', 'state'],
+      ['bgtr.rejected_note', 'rejectedNote']
     );
     qb.leftJoin(
       (e) => e.branch,
@@ -101,8 +103,8 @@ export class BudgetRequestService {
       (v) => v.isFalse(),
     );
 
-    const budgets = await qb.exec();
-    return new BudgetRequestWithPaginationResponse(budgets, params);
+    const budgetsReq = await qb.exec();
+    return new BudgetRequestWithPaginationResponse(budgetsReq, params);
   }
 
   public async getById(id: string): Promise<BudgetRequestDetailResponse> {
@@ -125,48 +127,6 @@ export class BudgetRequestService {
     return new BudgetRequestDetailResponse(budgetRequest);
   }
 
-  public async show(id?: string): Promise<BudgetResponse> {
-    const qb = new QueryBuilder(Budget, 'bgt');
-
-    qb.fieldResolverMap['id'] = 'bgt.id';
-
-    qb.selectRaw(
-      ['bgt.id', 'id'],
-      ['bgt.branch_id', 'branchId'],
-      ['br.branch_name', 'branchName'],
-      ['bgt.number', 'number'],
-      ['bgt.responsible_user_id', 'responsibleUserId'],
-      ['us.first_name', 'firstName'],
-      ['us.last_name', 'lastName'],
-      ['us.username', 'username'],
-      ['bgt.start_date', 'startDate'],
-      ['bgt.end_date', 'endDate'],
-      ['bgt.minimum_amount', 'minimumAmount'],
-      ['bgt.total_amount', 'totalAmount'],
-      ['bgt.state', 'state'],
-      ['bgt.rejected_note', 'rejectedNote']
-    );
-    qb.leftJoin(
-      (e) => e.branch,
-      'br'
-    );
-    qb.leftJoin(
-      (e) => e.users,
-      'us'
-    );
-    qb.andWhere(
-      (e) => e.isDeleted,
-      (v) => v.isFalse(),
-    );
-    qb.andWhere(
-      (e) => e.id,
-      (v) => v.equals(id),
-    );
-
-    const budget = await qb.exec();
-    return new BudgetResponse(budget);
-  }
-
   public async getBranch(branchId?: string): Promise<any> {
     const getEndDate = await this.budgetRequestRepo.findOne(
       { branchId, isDeleted: false },
@@ -176,9 +136,27 @@ export class BudgetRequestService {
     return start;
   }
 
+  public async getBudget(needDate?: Date): Promise<BudgetResponse> {
+    try {
+      
+      const bgtExist = await this.budgetRepo.createQueryBuilder('bgt')
+        .where(`'${needDate}' BETWEEN bgt.startDate AND bgt.endDate`)
+        .getOne();
+  
+      if (!bgtExist) {
+        throw new NotFoundException('Tidak ditemukan Budget!');
+      }
+  
+      return new BudgetResponse(bgtExist);;
+    } catch (error) {
+      console.log(error);
+      throw error
+    }
+  }
+
   public async create(data: CreateBudgetRequestDTO): Promise<BudgetRequestResponse> {
     if (data && !data.number) {
-      data.number = GenerateCode.budget();
+      data.number = GenerateCode.budgetRequest();
     }
 
     const user = await this.getUser(true);
@@ -201,6 +179,7 @@ export class BudgetRequestService {
     // Build BudgetRequest
     const budgetRequest = new BudgetRequest();
     budgetRequest.branchId = branchId;
+    budgetRequest.budgetId = data.budgetId;
     budgetRequest.number = data.number;
     budgetRequest.responsibleUserId = data.responsibleUserId;
     budgetRequest.needDate = data.needDate;
@@ -227,46 +206,40 @@ export class BudgetRequestService {
       const user = await this.getUser(true);
       const branchId = user && user.branches && user.branches[0].id;
 
-      const endDateData = await this.getBranch(branchId);
-      const checkDate = new Date(data.needDate);
-
-      if (checkDate >= endDateData) {
-        // Build BudgetItem
-        const items: BudgetRequestItem[] = [];
-        let totalAmountItem = 0;
-        for (const v of data.items) {
-          const item = new BudgetRequestItem();
-          item.productId = v.productId;
-          item.description = v.description;
-          item.amount = v.amount;
-          item.createUser = budgetExist.createUser;
-          item.updateUser = user;
-          totalAmountItem = totalAmountItem + v.amount;
-          items.push(item);
-        }
-
-        // Build Budget
-        const budgetRequest = new BudgetRequest();
-        budgetRequest.branchId = branchId;
-        budgetRequest.number = data.number;
-        budgetRequest.responsibleUserId = data.responsibleUserId;
-        budgetRequest.needDate = data.needDate;
-        budgetRequest.totalAmount = totalAmountItem;
-        budgetRequest.rejectedNote = null;
-        budgetRequest.state = BudgetRequestState.DRAFT;
-        budgetRequest.histories = await this.buildHistory(budgetRequest, {
-          state: BudgetRequestState.DRAFT,
-          needDate: data.needDate,
-        });
-        budgetRequest.items = items;
-        budgetRequest.createUser = budgetExist.createUser;
-        budgetRequest.updateUser = user;
-
-        const result = await this.budgetRequestRepo.update(id, budgetRequest);
-        return new BudgetRequestResponse(result as any);
-      } else {
-        throw new HttpException('Cannot Edit, Range Date is not Available!', HttpStatus.BAD_REQUEST);
+      // Build BudgetItem
+      const items: BudgetRequestItem[] = [];
+      let totalAmountItem = 0;
+      for (const v of data.items) {
+        const item = new BudgetRequestItem();
+        item.productId = v.productId;
+        item.description = v.description;
+        item.amount = v.amount;
+        item.createUser = budgetExist.createUser;
+        item.updateUser = user;
+        totalAmountItem = totalAmountItem + v.amount;
+        items.push(item);
       }
+
+      // Build Budget
+      const budgetRequest = new BudgetRequest();
+      budgetRequest.branchId = branchId;
+      budgetRequest.budgetId = data.budgetId;
+      budgetRequest.number = data.number;
+      budgetRequest.responsibleUserId = data.responsibleUserId;
+      budgetRequest.needDate = data.needDate;
+      budgetRequest.totalAmount = totalAmountItem;
+      budgetRequest.rejectedNote = null;
+      budgetRequest.state = BudgetRequestState.DRAFT;
+      budgetRequest.histories = await this.buildHistory(budgetRequest, {
+        state: BudgetRequestState.DRAFT,
+        needDate: data.needDate,
+      });
+      budgetRequest.items = items;
+      budgetRequest.createUser = budgetExist.createUser;
+      budgetRequest.updateUser = user;
+
+      const result = await this.budgetRequestRepo.update(id, budgetRequest);
+      return new BudgetRequestResponse(result as any);
     } 
   }
 
@@ -300,7 +273,7 @@ export class BudgetRequestService {
     const user = await this.getUser(true);
     const userRole = user?.role?.name;
 
-    if (userRole === MASTER_ROLES.SPV_HO) {
+    if (userRole === MASTER_ROLES.OPS) {
       if (budgetRequestExists.state === BudgetRequestState.APPROVED_BY_OPS || budgetRequestExists.state === BudgetRequestState.APPROVED_BY_PIC) {
         throw new BadRequestException(
           `Budget ${budgetRequestExists.number} already approved!`,
@@ -317,8 +290,8 @@ export class BudgetRequestService {
       }
   
       return new BudgetResponse(updateBudget as any);
-    } else if (userRole === MASTER_ROLES.SS_HO) {
-      if (budgetRequestExists.state === BudgetRequestState.APPROVED_BY_OPS) {
+    } else if (userRole === MASTER_ROLES.PIC_HO) {
+      if (budgetRequestExists.state === BudgetRequestState.APPROVED_BY_PIC) {
         throw new BadRequestException(
           `Budget ${budgetRequestExists.number} already approved!`,
         );
@@ -331,7 +304,7 @@ export class BudgetRequestService {
       }
   
       const budgetRequest = this.budgetRequestRepo.create(budgetRequestExists);
-      budgetRequest.state = BudgetRequestState.APPROVED_BY_OPS;
+      budgetRequest.state = BudgetRequestState.APPROVED_BY_PIC;
       budgetRequest.updateUserId = await this.getUserId();
   
       const updateBudgetRequest = await this.budgetRequestRepo.save(budgetRequest);
@@ -341,7 +314,7 @@ export class BudgetRequestService {
   
       return new BudgetRequestResponse(updateBudgetRequest as any);
     } else {
-      throw new HttpException('Role is not SPV or SS!', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Role is not OPS or PIC!', HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -373,7 +346,7 @@ export class BudgetRequestService {
 
     if (budgetRequestExist.state === BudgetRequestState.CANCELED) {
       throw new BadRequestException(
-        `Budget ${budgetRequestExist.number} already rejected!`,
+        `Budget ${budgetRequestExist.number} already canceled!`,
       );
     }
 

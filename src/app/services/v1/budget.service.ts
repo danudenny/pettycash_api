@@ -200,58 +200,15 @@ export class BudgetService {
       data.number = GenerateCode.budget();
     }
 
-    const user = await this.getUser(true);
-    const branchId = user && user.branches && user.branches[0].id;
+    const checStartkDate = new Date(data.startDate);
+    const checkEndDate = new Date(data.endDate);
 
-    // Build BudgetItem
-    const items: BudgetItem[] = [];
-    let totalAmountItem = 0;
-    for (const v of data.items) {
-      const item = new BudgetItem();
-      item.productId = v.productId;
-      item.description = v.description;
-      item.amount = v.amount;
-      item.createUser = user;
-      item.updateUser = user;
-      totalAmountItem = totalAmountItem + v.amount;
-      items.push(item);
-    }
+    if (checStartkDate >= checkEndDate) {
+      throw new HttpException('End Date Cannot Greater Than Start Date!', HttpStatus.BAD_REQUEST);
+    } else {
+      const user = await this.getUser(true);
+      const branchId = user && user.branches && user.branches[0].id;
 
-    // Build Budget
-    const budget = new Budget();
-    budget.branchId = branchId;
-    budget.number = data.number;
-    budget.responsibleUserId = data.responsibleUserId;
-    budget.startDate = data.startDate;
-    budget.endDate = data.endDate;
-    budget.totalAmount = totalAmountItem;
-    budget.minimumAmount = data.minimumAmount;
-    budget.rejectedNote = null;
-    budget.state = BudgetState.DRAFT;
-    budget.histories = await this.buildHistory(budget, {
-      state: BudgetState.DRAFT,
-      endDate: data.endDate,
-    });
-    budget.items = items;
-    budget.createUser = user;
-    budget.updateUser = user;
-
-    const result = await this.budgetRepo.save(budget);
-    return new BudgetResponse(result);
-  }
-
-  public async createDuplicate(data: CreateBudgetDTO): Promise<BudgetResponse> {
-    if (data && !data.number) {
-      data.number = GenerateCode.budget();
-    }
-
-    const user = await this.getUser(true);
-    const branchId = user && user.branches && user.branches[0].id;
-
-    const endDateData = await this.getBranch(branchId);
-    const checkDate = new Date(data.startDate);
-
-    if (checkDate >= endDateData) {
       // Build BudgetItem
       const items: BudgetItem[] = [];
       let totalAmountItem = 0;
@@ -287,8 +244,65 @@ export class BudgetService {
 
       const result = await this.budgetRepo.save(budget);
       return new BudgetResponse(result);
+    }
+  }
+
+  public async createDuplicate(data: CreateBudgetDTO): Promise<BudgetResponse> {
+    if (data && !data.number) {
+      data.number = GenerateCode.budget();
+    }
+
+    const checStartkDate = new Date(data.startDate);
+    const checkEndDate = new Date(data.endDate);
+
+    if (checStartkDate >= checkEndDate) {
+      throw new HttpException('End Date Cannot Greater Than Start Date!', HttpStatus.BAD_REQUEST);
     } else {
-      throw new HttpException('Cannot Duplicate, Range Date is not Available!', HttpStatus.BAD_REQUEST);
+      const user = await this.getUser(true);
+      const branchId = user && user.branches && user.branches[0].id;
+  
+      const endDateData = await this.getBranch(branchId);
+      const checkDate = new Date(data.startDate);
+  
+      if (checkDate >= endDateData) {
+        // Build BudgetItem
+        const items: BudgetItem[] = [];
+        let totalAmountItem = 0;
+        for (const v of data.items) {
+          const item = new BudgetItem();
+          item.productId = v.productId;
+          item.description = v.description;
+          item.amount = v.amount;
+          item.createUser = user;
+          item.updateUser = user;
+          totalAmountItem = totalAmountItem + v.amount;
+          items.push(item);
+        }
+  
+        // Build Budget
+        const budget = new Budget();
+        budget.branchId = branchId;
+        budget.number = data.number;
+        budget.responsibleUserId = data.responsibleUserId;
+        budget.startDate = data.startDate;
+        budget.endDate = data.endDate;
+        budget.totalAmount = totalAmountItem;
+        budget.minimumAmount = data.minimumAmount;
+        budget.rejectedNote = null;
+        budget.state = BudgetState.DRAFT;
+        budget.histories = await this.buildHistory(budget, {
+          state: BudgetState.DRAFT,
+          endDate: data.endDate,
+        });
+        budget.items = items;
+        budget.createUser = user;
+        budget.updateUser = user;
+  
+        const result = await this.budgetRepo.save(budget);
+        return new BudgetResponse(result);
+      } else {
+        throw new HttpException('Cannot Duplicate, Range Date is not Available!', HttpStatus.BAD_REQUEST);
+      }
     }
   }
 
@@ -344,54 +358,66 @@ export class BudgetService {
 
   public async update(id: string, data: UpdateBudgetDTO): Promise<BudgetResponse> {
     const budgetExist = await this.budgetRepo.findOne({ id, isDeleted: false });
-    console.log(budgetExist);
     if (!budgetExist) {
       throw new NotFoundException();
     } else {
-      const user = await this.getUser(true);
-      const branchId = user && user.branches && user.branches[0].id;
+      if (budgetExist.state !== BudgetState.DRAFT) {
+        throw new HttpException('Cannot Edit, Status Budget is Not DRAFT!', HttpStatus.BAD_REQUEST);
+      } else {
+        const user = await this.getUser(true);
+        const branchId = user && user.branches && user.branches[0].id;
 
-      const endDateData = await this.getBranch(branchId);
-      const checkDate = new Date(data.startDate);
+        // const budgetItemExist = await this.budgetItemRepo.find({ budgetId: budgetExist.id, isDeleted: false });
+        // if (budgetItemExist) {
+        //   for (const v of budgetItemExist) {
+        //     data.items.forEach(element => {
+        //       if (element.) {
 
-      if (checkDate >= endDateData) {
+        //       }
+        //     });
+        //     const budget = await this.budgetItemRepo.update(v.id, { isDeleted: true });
+        //   }
+        // }
+  
+        // const endDateData = await this.getBranch(branchId);
+        // const checkDate = new Date(data.startDate);
+  
         // Build BudgetItem
-        const items: BudgetItem[] = [];
-        let totalAmountItem = 0;
-        for (const v of data.items) {
-          const item = new BudgetItem();
-          item.productId = v.productId;
-          item.description = v.description;
-          item.amount = v.amount;
-          item.createUser = budgetExist.createUser;
-          item.updateUser = user;
-          totalAmountItem = totalAmountItem + v.amount;
-          items.push(item);
-        }
+        // const items = budgetItemExist;
+        // let totalAmountItem = 0;
+        // for (const v of data.items) {
+        //   const item = items;
+        //   item.productId = v.productId;
+        //   item.description = v.description;
+        //   item.amount = v.amount;
+        //   item.createUser = user;
+        //   item.updateUser = user;
+        //   totalAmountItem = totalAmountItem + v.amount;
+        //   items.push(item);
+        // }
 
         // Build Budget
-        const budget = new Budget();
-        budget.branchId = branchId;
-        budget.number = data.number;
-        budget.responsibleUserId = data.responsibleUserId;
-        budget.startDate = data.startDate;
-        budget.endDate = data.endDate;
-        budget.totalAmount = totalAmountItem;
-        budget.minimumAmount = data.minimumAmount;
-        budget.rejectedNote = null;
-        budget.state = BudgetState.DRAFT;
-        budget.histories = await this.buildHistory(budget, {
-          state: BudgetState.DRAFT,
-          endDate: data.endDate,
-        });
-        budget.items = items;
-        budget.createUser = budgetExist.createUser;
-        budget.updateUser = user;
+        // const budget = new Budget();
+        budgetExist.branchId = branchId;
+        budgetExist.number = budgetExist.number;
+        budgetExist.responsibleUserId = data.responsibleUserId;
+        budgetExist.startDate = data.startDate;
+        budgetExist.endDate = data.endDate;
+        // budgetExist.totalAmount = totalAmountItem;
+        budgetExist.minimumAmount = data.minimumAmount;
+        budgetExist.rejectedNote = null;
+        budgetExist.state = BudgetState.DRAFT;
+        // budgetExist.histories = await this.buildHistory(budgetExist, {
+        //   budgetId: id,
+        //   state: BudgetState.DRAFT,
+        //   endDate: data.endDate,
+        // });
+        // budgetExist.items = items;
+        budgetExist.createUser = user;
+        budgetExist.updateUser = user;
 
-        const result = await this.budgetRepo.update(id, budget);
+        const result = await this.budgetRepo.save(budgetExist);
         return new BudgetResponse(result as any);
-      } else {
-        throw new HttpException('Cannot Edit, Range Date is not Available!', HttpStatus.BAD_REQUEST);
       }
     } 
   }
