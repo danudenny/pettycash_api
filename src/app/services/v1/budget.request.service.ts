@@ -156,7 +156,7 @@ export class BudgetRequestService {
 
   public async create(data: CreateBudgetRequestDTO): Promise<BudgetRequestResponse> {
     if (data && !data.number) {
-      data.number = GenerateCode.budget();
+      data.number = GenerateCode.budgetRequest();
     }
 
     const user = await this.getUser(true);

@@ -54,6 +54,7 @@ export class BudgetRequestDetailResponseMapper {
     return this.toDTO({
       id: ety.id,
       branchId: ety.branchId,
+      budgetId: ety.budgetId,
       branchName: ety?.branch && ety.branch.branchName,
       number: ety.number,
       responsibleUserId: ety.responsibleUserId,

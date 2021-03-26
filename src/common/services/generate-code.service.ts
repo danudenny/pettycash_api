@@ -36,6 +36,13 @@ export class GenerateCode {
     return prefix + randomCode.toString();
   }
 
+  public static budgetRequest(dateTime: Date = new Date(), digit: number = 8) {
+    // Format Code: BGTR/2020/12/XYZA1234
+    const prefix = `BGTR/${dayjs(dateTime).format('YYYY/MM')}/`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
+
   public static product(dateTime: Date = new Date(), digit: number = 8) {
     // Format Code: PRD/2020/12/XYZA1234
     const prefix = `PRD/${dayjs(dateTime).format('YYYY/MM')}/`;
