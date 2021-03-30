@@ -18,6 +18,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { BatchApproveJournalDTO } from '../../domain/journal/approve.dto';
+import { QueryJournalDTO } from '../../domain/journal/journal.payload.dto';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
 import { ReverseJournalDTO } from '../../domain/journal/reverse.dto';
 import { JournalService } from '../../services/v1/journal.service';
@@ -33,7 +34,7 @@ export class JournalController {
   @ApiOkResponse({ type: JournalWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async list(
-    @Query() query: any,
+    @Query() query: QueryJournalDTO,
   ): Promise<JournalWithPaginationResponse> {
     return await this.svc.list(query);
   }

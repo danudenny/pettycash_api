@@ -23,6 +23,8 @@ import { Period } from '../../../model/period.entity';
 import { User } from '../../../model/user.entity';
 import { ReverseJournalDTO } from '../../domain/journal/reverse.dto';
 import { BatchApproveJournalDTO } from '../../domain/journal/approve.dto';
+import { QueryJournalDTO } from '../../domain/journal/journal.payload.dto';
+import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 
 @Injectable()
 export class JournalService {
@@ -31,13 +33,32 @@ export class JournalService {
     private readonly journalRepo: Repository<Journal>,
   ) {}
 
-  public async list(query?: any): Promise<JournalWithPaginationResponse> {
-    // TODO: Implement API list journal
-    const journals = await this.journalRepo.find({
-      where: { isDeleted: false },
-      relations: ['items', 'period'],
-    });
-    return new JournalWithPaginationResponse(journals, {});
+  public async list(
+    query: QueryJournalDTO,
+  ): Promise<JournalWithPaginationResponse> {
+    const params = { order: '-createdAt', ...query };
+    const qb = new QueryBuilder(Journal, 'j', params);
+
+    qb.fieldResolverMap['startDate__gte'] = 'j.transaction_date';
+    qb.fieldResolverMap['endDate__lte'] = 'j.transaction_date';
+    qb.fieldResolverMap['state'] = 'j.state';
+    qb.fieldResolverMap['partner__icontains'] = 'j.partner_name';
+    qb.fieldResolverMap['number__icontains'] = 'j.number';
+    qb.fieldResolverMap['reference__icontains'] = 'j.reference';
+
+    qb.applyFilterPagination();
+    qb.qb.leftJoinAndSelect('j.period', 'period');
+    qb.qb.leftJoinAndSelect('j.items', 'item');
+    qb.qb.leftJoinAndSelect('item.period', 'iperiod');
+    qb.qb.leftJoinAndSelect('item.coa', 'icoa');
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+
+    const journals: Journal[] = await qb.qb.getMany();
+
+    return new JournalWithPaginationResponse(journals, params);
   }
 
   public async approve(id: string): Promise<any> {
