@@ -21,7 +21,7 @@ import { BudgetRequestDetailResponse } from '../../domain/budget-request/budget-
 import { CreateBudgetRequestDTO, RejectBudgetRequestDTO, UpdateBudgetRequestDTO } from '../../domain/budget-request/budget-request-createUpdate.dto';
 import { BudgetResponse } from '../../domain/budget/budget-response.dto';
 
-@Controller('v1/budgets-requests')
+@Controller('v1/budget-requests')
 @ApiTags('Budget Request')
 export class BudgetRequestController {
   constructor(private budgetRequestService: BudgetRequestService) {
