@@ -1,14 +1,39 @@
 const RoleSSHO = [
   'period:read',
-  'budget:read',
+
+  'menu.budget:read',
   'budget.budget:read',
-  'budget.budget:create',
   'budget.budget:update',
-  'budget.budget:cancel',
   'budget.budget:confirm',
   'budget.budget:approve',
   'budget.budget:reject',
-  'budget.budget:revisi',
+  'budget.budget:revise',
+
+  'menu.cash.balance.allocation:read',
+
+  'cash.balance.allocation:read',
+  'cash.balance.allocation:confirm',
+  'cash.balance.allocation:approve',
+  'cash.balance.allocation:reject',
+
+  'menu.expense:read',
+  'down.payment:update',
+  'down.payment:approve',
+  'down.payment:reject',
+
+  'expense:read',
+  'expense:update',
+  'expense:approve',
+  'expense:reject',
+  'expense.attachment:read',
+
+  'menu.journal:read',
+  'journal:read',
+  'journal:approve',
+
+  'setting.partner:read',
+  'setting.employee:read',
+
   'setting:read',
   'setting.global:read',
 ];
