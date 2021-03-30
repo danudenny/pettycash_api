@@ -38,7 +38,7 @@ export class LoanService {
   ) {}
 
   public async create(payload: CreateLoanDTO): Promise<any> {
-    const user = await AuthService.getUser({ relations: ['branchers'] });
+    const user = await AuthService.getUser({ relations: ['branches'] });
     // TODO: branchId should get from requested user.
     // payload.branchId = user?.branches[0].id;
 
