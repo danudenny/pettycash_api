@@ -75,13 +75,6 @@ export class UpdateBudgetDTO {
   branchId: string;
 
   @ApiProperty({
-    description: 'Budget Number',
-    example: 'BG001',
-  })
-  @IsString()
-  number: string;
-
-  @ApiProperty({
     description: 'Responsible User ID',
     example: '3aa3eac8-a62f-44c3-b53c-31372492f9a0',
   })
@@ -92,7 +85,6 @@ export class UpdateBudgetDTO {
     description: 'Budget Start Date',
     example: '2021-01-10',
   })
-  @IsDate()
   @IsOptional()
   startDate: Date;
 
@@ -100,7 +92,6 @@ export class UpdateBudgetDTO {
     description: 'Budget End Date',
     example: '2021-01-16',
   })
-  @IsDate()
   @IsOptional()
   endDate: Date;
 
