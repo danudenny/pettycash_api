@@ -5,26 +5,26 @@ HOST: http://pettycash.api.url
 
 # Group Expense
 
-## List Expense [GET /v1/expenses{?start_date__gte,end_date__lte,branchId,type,amount__gte,amount__lte,state,down_payment_number__contains,number__contains}]
+## List Expense [GET /v1/expenses{?startDate__gte,endDate__lte,branchId,type,totalAmount__gte,totalAmount__lte,state,downPaymentNumber__contains,number__contains}]
 
 Get list all expense.
 
 + Parameters
-    + start_date__gte: `2021-01-01` (date, optional) - Start Date to filter.
-    + end_date__lte: `2021-12-31` (date, optional) - End Date to filter.
+    + startDate__gte: `2021-01-01` (date, optional) - Start Date to filter.
+    + endDate__lte: `2021-12-31` (date, optional) - End Date to filter.
     + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string, optional) - Branch to filter.
     + type: `expense` (enum[string], optional) - Expense Type.
         + down_payment
         + expense
-    + amount__gte: `100000` (number, optional) - Amount Min to filter.
-    + amount__lte: `900000` (number, optional) - Amount Max to filter.
+    + totalAmount__gte: `100000` (number, optional) - Amount Min to filter.
+    + totalAmount__lte: `900000` (number, optional) - Amount Max to filter.
     + state: `draft` (enum[string], optional) - Expense Status.
         + draft
         + approved_by_pic_ho
         + approved_by_ss_spv_ho
         + reversed
         + rejected
-    + down_payment_number__contains: `UM0002` (string, optional) - Nomor Uang Muka to search.
+    + downPaymentNumber__contains: `UM0002` (string, optional) - Nomor Uang Muka to search.
     + number__contains: `REL-2020/01/AAB112` (string, optional) - Nomor Expense to search.
 
 + Request (application/json)
@@ -218,7 +218,9 @@ Create Expense
         + periodId:         `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - Period ID.
         + partnerId:        `d659d65c-fcf3-45c8-956e-5baf9dee2522` (string) - Partner ID.
         + sourceDocument:   `Bensin001` (string) - Source Document.
-        + paymentType:      `cash` (string) - Expense Payment Type.
+        + paymentType:      `cash` (enum[string]) - Expense Payment Type.
+            + cash
+            + bank
         + attachments:      (array) - Attachments.
         + items: (array)
             + item:
