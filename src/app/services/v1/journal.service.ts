@@ -36,7 +36,7 @@ export class JournalService {
   public async list(
     query: QueryJournalDTO,
   ): Promise<JournalWithPaginationResponse> {
-    const params = { order: '-createdAt', ...query };
+    const params = { order: '-transactionDate', ...query };
     const qb = new QueryBuilder(Journal, 'j', params);
 
     qb.fieldResolverMap['startDate__gte'] = 'j.transaction_date';
@@ -47,16 +47,65 @@ export class JournalService {
     qb.fieldResolverMap['reference__icontains'] = 'j.reference';
 
     qb.applyFilterPagination();
-    qb.qb.leftJoinAndSelect('j.period', 'period');
-    qb.qb.leftJoinAndSelect('j.items', 'item');
-    qb.qb.leftJoinAndSelect('item.period', 'iperiod');
-    qb.qb.leftJoinAndSelect('item.coa', 'icoa');
+    qb.selectRaw(
+      ['j.id', 'id'],
+      ['j."number"', 'number'],
+      ['j.partner_code', 'partnerCode'],
+      ['j.partner_name', 'partnerName'],
+      ['j.reference', 'reference'],
+      ['j.state', 'state'],
+      ['j.total_amount', 'totalAmount'],
+      ['j.transaction_date', 'transactionDate'],
+      ['j.created_at', 'createdAt'],
+      ['(array_agg(p.periods))[1]', 'period'],
+      ['(array_agg(jitem.items))[1]', 'items'],
+    );
+    qb.qb.leftJoin(
+      `(SELECT
+        ji.journal_id,
+        jsonb_agg(
+          json_build_object(
+            'id', ji.id,
+            'journal_id', ji.journal_id,
+            'coaId', ac2.id,
+            'coa', json_build_object(
+              'name', ac2.name,
+              'code', ac2.code
+            ),
+            'debit', ji.debit ,
+            'credit', ji.credit,
+            'partnerCode', ji.partner_code,
+            'partnerName', ji.partner_name,
+            'reference', ji.reference,
+            'transactionDate', ji.transaction_date
+            )
+        ) AS items
+      FROM journal_item ji
+      LEFT JOIN account_coa ac2 ON ac2.id = ji.coa_id
+      GROUP BY ji.journal_id)`,
+      'jitem',
+      'jitem.journal_id = j.id',
+    );
+    qb.qb.leftJoin(
+      `(SELECT
+        p2.id,
+        json_build_object(
+          'id', p2.id,
+          'month', p2.month,
+          'year', p2.year
+        ) AS periods
+      FROM "period" p2
+      GROUP BY p2.id)`,
+      'p',
+      'p.id = j.period_id',
+    );
+    qb.qb.groupBy('j.id');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
 
-    const journals: Journal[] = await qb.qb.getMany();
+    const journals = await qb.exec();
 
     return new JournalWithPaginationResponse(journals, params);
   }
