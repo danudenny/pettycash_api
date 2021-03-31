@@ -24,8 +24,8 @@ export class JournalResponseMapper {
       const i = new JournalItemDTO();
       i.id = v.id;
       i.transactionDate = v.transactionDate;
-      i.periodMonth = v?.period?.month;
-      i.periodYear = v?.period?.year;
+      i.periodMonth = journal?.period?.month;
+      i.periodYear = journal?.period?.year;
       i.number = journal?.number;
       i.reference = v.reference;
       i.partnerName = v.partnerName;
