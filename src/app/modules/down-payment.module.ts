@@ -8,13 +8,8 @@ import { DownPaymentService } from './../services/v1/down-payment.service';
 import { DownPaymentController } from './../controllers/v1/down-payment.controller';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            DownPayment,
-            DownPaymentHistory
-        ]),
-    ],
-    controllers: [DownPaymentController, ],
-    providers: [DownPaymentService, ],
+  imports: [TypeOrmModule.forFeature([DownPayment, DownPaymentHistory])],
+  controllers: [DownPaymentController],
+  providers: [DownPaymentService],
 })
 export class DownPaymentModule {}

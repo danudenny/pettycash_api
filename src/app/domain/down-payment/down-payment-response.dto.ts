@@ -11,41 +11,41 @@ import { DownPaymentResponseMapper } from './down-payment-response.mapper.dto';
 import { ShowDownPaymentResponseMapper } from './down-payment-detail-response.mapper.dto';
 
 export class DownPaymentResponse extends BaseResponse {
-    constructor(data?: Partial<DownPaymentDTO | DownPaymentDTO[]>) {
-      super();
-      if (data) {
-        this.data = DownPaymentResponseMapper.fromDTO(data);
-      }
-    } 
-  
-    @ApiPropertyOptional({ type: () => DownPaymentDTO })
-    data?: DownPaymentDTO | DownPaymentDTO[] = null;
+  constructor(data?: Partial<DownPaymentDTO | DownPaymentDTO[]>) {
+    super();
+    if (data) {
+      this.data = DownPaymentResponseMapper.fromDTO(data);
+    }
+  }
+
+  @ApiPropertyOptional({ type: () => DownPaymentDTO })
+  data?: DownPaymentDTO | DownPaymentDTO[] = null;
 }
 
 export class DownPaymentsWithPaginationResponse extends BaseResponse {
-    constructor(data?: Partial<DownPaymentDTO | DownPaymentDTO[]>, params?: any) {
-        super();
-        if (data) {
-            this.data = DownPaymentResponseMapper.fromDTO(data);
-            this.meta = PaginationBuilder.build(data, params);
-        }
+  constructor(data?: Partial<DownPaymentDTO | DownPaymentDTO[]>, params?: any) {
+    super();
+    if (data) {
+      this.data = DownPaymentResponseMapper.fromDTO(data);
+      this.meta = PaginationBuilder.build(data, params);
     }
+  }
 
-    @ApiPropertyOptional({ type: () => [DownPaymentDTO] })
-    data?: DownPaymentDTO | DownPaymentDTO[] = null;
+  @ApiPropertyOptional({ type: () => [DownPaymentDTO] })
+  data?: DownPaymentDTO | DownPaymentDTO[] = null;
 
-    @ApiPropertyOptional({ type: () => BasePaginationResponse })
-    meta?: BasePaginationResponse;
+  @ApiPropertyOptional({ type: () => BasePaginationResponse })
+  meta?: BasePaginationResponse;
 }
 
 export class ShowDownPaymentResponse extends BaseResponse {
-    constructor(data?: Partial<DownPayment>) {
-        super();
-        if (data) {
-            this.data = ShowDownPaymentResponseMapper.fromEntity(data);
-        }
+  constructor(data?: Partial<DownPayment>) {
+    super();
+    if (data) {
+      this.data = ShowDownPaymentResponseMapper.fromEntity(data);
     }
+  }
 
-    @ApiPropertyOptional({ type: () => ShowDownPaymentDTO })
-    data?: ShowDownPaymentDTO = null;
+  @ApiPropertyOptional({ type: () => ShowDownPaymentDTO })
+  data?: ShowDownPaymentDTO = null;
 }
