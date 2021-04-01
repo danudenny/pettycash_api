@@ -1,4 +1,3 @@
-import { AccountPayment } from '../../../model/account-payment.entity';
 import { Loan } from '../../../model/loan.entity';
 import { LoanDetailDTO } from './loan-detail.dto';
 import { LoanPaymentDTO } from './loan-payment.dto';
@@ -13,18 +12,21 @@ export class LoanDetailResponseMapper {
     dto.amount = ety.amount;
     dto.residualAmount = ety.residualAmount;
     dto.state = ety.state;
-    dto.payments = this.toPaymentDTO(ety.payments);
+    dto.payments = this.toPaymentDTO(ety);
     return dto;
   }
 
-  private static toPaymentDTO(datas: AccountPayment[]): LoanPaymentDTO[] {
-    const payments = datas.map((v) => {
+  private static toPaymentDTO(ety: Loan): LoanPaymentDTO[] {
+    const { name, nik } = ety?.employee;
+    const payments = ety?.payments?.map((v) => {
       const payment = new LoanPaymentDTO();
       payment.id = v.id;
       payment.transactionDate = v.transactionDate;
       payment.amount = v.amount;
       payment.type = v.type;
       payment.paymentMethod = v.paymentMethod;
+      payment.receiverName = name;
+      payment.receiverNik = nik;
       return payment;
     });
     return payments;
