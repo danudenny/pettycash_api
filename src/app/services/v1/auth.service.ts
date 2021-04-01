@@ -33,9 +33,9 @@ export class AuthService {
     try {
       // Find User
       const user = await User.findOne({
+        cache: LoaderEnv.envs.AUTH_CACHE_DURATION_IN_MINUTES * 60000,
         ...options,
         where: { username, isDeleted: false },
-        cache: LoaderEnv.envs.AUTH_CACHE_DURATION_IN_MINUTES * 60000,
       });
       return user;
     } catch (error) {

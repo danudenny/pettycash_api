@@ -32,8 +32,10 @@ export class BalanceService {
   ): Promise<BalanceWithPaginationResponse> {
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(Branch, 'b', params);
+    const user = await AuthService.getUser({ relations: ['branches'] });
+    const userBranches = user?.branches?.map((v) => v.id);
 
-    qb.fieldResolverMap['branchId'] = 'id';
+    qb.fieldResolverMap['branchId'] = 'b.id';
 
     qb.applyFilterPagination();
     qb.selectRaw(
@@ -93,7 +95,12 @@ export class BalanceService {
     qb.qb.andWhere(
       `(bgt.state = 'approved_by_ss' OR bgt.state = 'approved_by_spv')`,
     );
-
+    if (userBranches?.length) {
+      qb.andWhere(
+        (e) => e.id,
+        (v) => v.in(userBranches),
+      );
+    }
     if (params.balanceDate__lte) {
       qb.qb.andWhere(
         `(:balanceDate >= bgt.start_date AND :balanceDate <= bgt.end_date)`,
@@ -122,32 +129,5 @@ export class BalanceService {
 
     const result = await qb.exec();
     return new BalanceWithPaginationResponse(result, params);
-  }
-
-  public async transfer(id: string, data: TransferBalanceDTO): Promise<any> {
-    const transferDto = await this.allocationRepo.create(data);
-    const getBalance = this.repoStatement.findOne({
-      where : {
-        id,
-        isDeleted: false
-      }
-    })
-
-    transferDto.createUserId = await this.getUserId();
-    transferDto.updateUserId = await this.getUserId();
-    transferDto.number = GenerateCode.transferBalance();
-
-    if(!transferDto.amount) {
-      throw new BadRequestException(
-        `Nominal tidak boleh kosong!`,
-      );
-    }
-
-    try {
-      const transfer = await this.allocationRepo.save(transferDto);
-      return transfer;
-    } catch (err) {
-      throw new BadRequestException(err);
-    }
   }
 }

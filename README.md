@@ -37,7 +37,7 @@ We are using [dotenv-extended](https://github.com/keithmorris/node-dotenv-extend
 Create `.env` file from defaults example and edit the configuration if needed.
 
 ```sh
-cp .env.dev.defaults .env.dev
+cp .env.defaults .env
 ```
 
 #### Run the application

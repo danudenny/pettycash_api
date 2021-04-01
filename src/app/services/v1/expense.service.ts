@@ -394,10 +394,8 @@ export class ExpenseService {
   public async listAttachment(
     expenseId: string,
   ): Promise<ExpenseAttachmentResponse> {
-    const params = { expenseId };
-    const qb = new QueryBuilder(Expense, 'exp', params);
+    const qb = new QueryBuilder(Expense, 'exp', {});
 
-    qb.fieldResolverMap['exp.id'] = 'expenseId';
     qb.selectRaw(
       ['exp.id', 'expenseId'],
       ['att.id', 'id'],
@@ -418,6 +416,10 @@ export class ExpenseService {
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
+    );
+    qb.andWhere(
+      (e) => e.id,
+      (v) => v.equals(expenseId),
     );
 
     const attachments = await qb.exec();

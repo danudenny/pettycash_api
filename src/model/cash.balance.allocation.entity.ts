@@ -23,7 +23,7 @@ export class CashBalanceAllocation extends PtcBaseEntity {
   responsibleUserId: string;
 
   @Column({ type: 'numeric', name: 'amount', default: 0 })
-  amount: Number;
+  amount: number;
 
   @Column({ type: 'uuid', name: 'destination_bank_id' })
   destinationBankId: string;
