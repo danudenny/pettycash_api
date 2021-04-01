@@ -26,11 +26,4 @@ export class BalanceController {
     return await this.svc.list(query);
   }
 
-  @Post('/transfer/:id')
-  @ApiParam({name: 'id'})
-  @ApiOperation({ summary: 'Transfer Balance to Branch' })
-  @ApiBadRequestResponse({ description: 'Bad request' })
-  async transfer(@Param() {id} : FindIdParams, @Body() data: TransferBalanceDTO) {
-    return await this.svc.transfer(id, data);
-  }
 }

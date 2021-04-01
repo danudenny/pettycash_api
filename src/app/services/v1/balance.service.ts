@@ -130,31 +130,4 @@ export class BalanceService {
     const result = await qb.exec();
     return new BalanceWithPaginationResponse(result, params);
   }
-
-  public async transfer(id: string, data: TransferBalanceDTO): Promise<any> {
-    const transferDto = await this.allocationRepo.create(data);
-    const getBalance = this.repoStatement.findOne({
-      where : {
-        id,
-        isDeleted: false
-      }
-    })
-
-    transferDto.createUserId = await this.getUserId();
-    transferDto.updateUserId = await this.getUserId();
-    transferDto.number = GenerateCode.transferBalance();
-
-    if(!transferDto.amount) {
-      throw new BadRequestException(
-        `Nominal tidak boleh kosong!`,
-      );
-    }
-
-    try {
-      const transfer = await this.allocationRepo.save(transferDto);
-      return transfer;
-    } catch (err) {
-      throw new BadRequestException(err);
-    }
-  }
 }
