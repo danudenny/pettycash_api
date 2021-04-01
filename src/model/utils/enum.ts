@@ -100,6 +100,10 @@ export enum AccountPaymentType {
   FULL = 'full',
 }
 
+/**
+ * receivable -> Piutang = Hutang perusahaan terhadap karyawan.
+ * payable ->  Hutang = Hutang karyawan terhadap perusahaan.
+ */
 export enum LoanType {
   PAYABLE = 'payable',
   RECEIVABLE = 'receivable',

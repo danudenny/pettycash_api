@@ -20,13 +20,22 @@ import { LoanDetailResponse } from '../../domain/loan/response-detail.dto';
 import { CreatePaymentLoanDTO } from '../../domain/loan/create-payment.dto';
 import { AccountPayment } from '../../../model/account-payment.entity';
 import { AuthService } from './auth.service';
-import { AccountPaymentType, LoanState } from '../../../model/utils/enum';
+import {
+  AccountPaymentPayMethod,
+  AccountPaymentType,
+  AccountStatementAmountPosition,
+  AccountStatementType,
+  LoanState,
+  LoanType,
+} from '../../../model/utils/enum';
 import { LoanAttachmentResponse } from '../../domain/loan/response-attachment.dto';
 import { Attachment } from '../../../model/attachment.entity';
 import { AttachmentService } from '../../../common/services/attachment.service';
 import { LoanAttachmentDTO } from '../../domain/loan/loan-attachment.dto';
 import { CreateLoanDTO } from '../../domain/loan/create.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
+import { PeriodService } from './period.service';
+import { AccountStatement } from '../../../model/account-statement.entity';
 
 @Injectable()
 export class LoanService {
@@ -307,6 +316,10 @@ export class LoanService {
         const buildPayment = await this.buildPayment(loan, payload);
         const payment = await this.createPayment(manager, buildPayment);
 
+        // Create AccountStatement (Mutasi Saldo)
+        const buildStmt = await this.buildStatement(loan, payment);
+        await this.createStatement(manager, buildStmt);
+
         // Update Loan Payments
         const existingPayments = loan.payments || [];
         loan.payments = existingPayments.concat([payment]);
@@ -317,7 +330,7 @@ export class LoanService {
 
         const residualAmount = loan.residualAmount - payload.amount;
         if (residualAmount < 0) {
-          const residualPaymentAmount = payload.amount - loan.residualAmount;
+          const residualPaymentAmount = -1 * residualAmount;
           await this.createLoanFromOverPayment(
             manager,
             loan,
@@ -339,13 +352,32 @@ export class LoanService {
     }
   }
 
-  private createLoanFromOverPayment(
+  private async createLoanFromOverPayment(
     manager: EntityManager,
     loan: Loan,
     amount: number,
   ): Promise<Loan> {
-    // TODO: Create new Loan from OverPayment
-    return;
+    let loanType: LoanType;
+    if (loan?.type === LoanType.PAYABLE) {
+      loanType = LoanType.RECEIVABLE;
+    } else {
+      loanType = LoanType.PAYABLE;
+    }
+
+    const newLoan = new Loan();
+    newLoan.branchId = loan.branchId;
+    newLoan.employeeId = loan.employeeId;
+    newLoan.transactionDate = new Date();
+    newLoan.period = await PeriodService.findByDate(newLoan.transactionDate);
+    newLoan.number = GenerateCode.loan();
+    newLoan.sourceDocument = loan.number;
+    newLoan.amount = amount;
+    newLoan.residualAmount = amount;
+    newLoan.type = loanType;
+    newLoan.createUserId = loan.createUserId;
+    newLoan.updateUserId = loan.updateUserId;
+
+    return await manager.save(newLoan);
   }
 
   private async createPayment(
@@ -354,9 +386,6 @@ export class LoanService {
   ): Promise<AccountPayment> {
     const repo = manager.getRepository(AccountPayment);
     const payment = await repo.save(paymentEntity);
-
-    // TODO: Add Save data to mutasi.kas
-
     return payment;
   }
 
@@ -364,7 +393,6 @@ export class LoanService {
     loan: Loan,
     payload: CreatePaymentLoanDTO,
   ): Promise<AccountPayment> {
-    // const residualLoanAmount = this.getResidualLoanAmount(loan, payload);
     const payment = new AccountPayment();
     payment.branchId = loan.branchId;
     payment.transactionDate = new Date();
@@ -381,5 +409,41 @@ export class LoanService {
     }
 
     return payment;
+  }
+
+  private async createStatement(
+    manager: EntityManager,
+    stmt: AccountStatement,
+  ): Promise<AccountStatement> {
+    const repo = manager.getRepository(AccountStatement);
+    const statement = repo.save(stmt);
+    return statement;
+  }
+
+  private async buildStatement(
+    loan: Loan,
+    payment: AccountPayment,
+  ): Promise<AccountStatement> {
+    const stmt = new AccountStatement();
+    stmt.reference = loan.number;
+    stmt.amount = payment.amount;
+    stmt.transactionDate = payment.transactionDate;
+    stmt.branchId = payment.branchId;
+    stmt.createUserId = payment.createUserId;
+    stmt.updateUserId = payment.updateUserId;
+
+    if (payment.paymentMethod === AccountPaymentPayMethod.BANK) {
+      stmt.type = AccountStatementType.BANK;
+    } else {
+      stmt.type = AccountStatementType.CASH;
+    }
+
+    if (loan.type === LoanType.PAYABLE) {
+      stmt.amountPosition = AccountStatementAmountPosition.CREDIT;
+    } else {
+      stmt.amountPosition = AccountStatementAmountPosition.DEBIT;
+    }
+
+    return stmt;
   }
 }
