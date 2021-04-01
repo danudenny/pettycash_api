@@ -15,7 +15,7 @@ import {
 import { ApiBadRequestResponse, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { BudgetService } from '../../services/v1/budget.service';
 import { BudgetResponse, BudgetWithPaginationResponse } from '../../domain/budget/budget-response.dto';
-import { QueryBugdetDTO } from '../../domain/budget/budget.payload.dto';
+import { QueryBudgetDTO } from '../../domain/budget/budget.payload.dto';
 import FindIdParams from '../../domain/common/findId-param.dto';
 import { CreateBudgetDTO, RejectBudgetDTO, UpdateBudgetDTO } from '../../domain/budget/budget-createUpdate.dto';
 import { FindBudgetIdParams } from '../../domain/budget/budget.dto';
@@ -31,7 +31,7 @@ export class BudgetController {
   @ApiOperation({ summary: 'List all Budgets' })
   @ApiOkResponse({ type: BudgetWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async list(@Query() query: QueryBugdetDTO) {
+  public async list(@Query() query: QueryBudgetDTO) {
     return await this.budgetService.list(query);
   }
 

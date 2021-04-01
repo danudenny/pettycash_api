@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
+import { Budget } from './budget.entity';
 import { BudgetRequestHistory } from './budget.request-history.entity';
 import { BudgetRequestItem } from './budget.request-item.entity';
 import { User } from './user.entity';
@@ -35,7 +36,7 @@ export class BudgetRequest extends PtcBaseEntity {
 
   // Sum of Items
   @Column({ type: 'numeric', name: 'total_amount', default: 0 })
-  totalAmount: Number;
+  totalAmount: number;
 
   @Column({
     type: 'enum',
@@ -54,13 +55,17 @@ export class BudgetRequest extends PtcBaseEntity {
   @JoinColumn({ name: 'branch_id' })
   branch: Branch;
 
+  @ManyToOne(() => Budget)
+  @JoinColumn({ name: 'budget_id' })
+  budget: Budget;
+
   @ManyToOne(() => User)
   @JoinColumn({ name: 'responsible_user_id' })
-  responsibleUser: User;
+  users: User;
 
-  @OneToMany(() => BudgetRequestItem, (e) => e.budgetRequest)
+  @OneToMany(() => BudgetRequestItem, (e) => e.budgetRequest, { cascade: true })
   items: BudgetRequestItem[];
 
-  @OneToMany(() => BudgetRequestHistory, (e) => e.budgetRequest)
+  @OneToMany(() => BudgetRequestHistory, (e) => e.budgetRequest, { cascade: true })
   histories: BudgetRequestHistory[];
 }

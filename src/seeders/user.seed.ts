@@ -1,9 +1,8 @@
-import { User } from '../model/user.entity';
 import * as uuid from 'uuid';
 
 const genId = () => {
   return uuid.v4();
-}
+};
 
 export const UserSeed = [
   {
@@ -205,5 +204,5 @@ export const UserSeed = [
     email: 'general@sicepat.com',
     passwordReset: null,
     otpReset: null,
-  }
+  },
 ];

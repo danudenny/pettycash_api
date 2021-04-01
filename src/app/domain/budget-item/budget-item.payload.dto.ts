@@ -1,7 +1,7 @@
 import { BasePayload } from '../common/base-payload.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class QueryBugdetItemDTO extends BasePayload {
+export class QueryBudgetItemDTO extends BasePayload {
   @ApiPropertyOptional({
     description: 'Budget ID',
     example: '46dc5599-43f0-4569-b5f0-33e25f4cd29c',

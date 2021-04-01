@@ -16,10 +16,13 @@ import { ExpenseItemAttribute } from '../../../model/expense-item-attribute.enti
 import { ExpenseItem } from '../../../model/expense-item.entity';
 import { Expense } from '../../../model/expense.entity';
 import {
+  DownPaymentState,
+  DownPaymentType,
   ExpenseState,
   ExpenseType,
   JournalSourceType,
   JournalState,
+  LoanType,
   MASTER_ROLES,
   PartnerState,
   PeriodState,
@@ -52,6 +55,9 @@ import { getPercentage, roundToTwo } from '../../../shared/utils';
 import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 import { Period } from '../../../model/period.entity';
 import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
+import { GlobalSetting } from '../../../model/global-setting.entity';
+import { DownPayment } from '../../../model/down-payment.entity';
+import { Loan } from '../../../model/loan.entity';
 
 @Injectable()
 export class ExpenseService {
@@ -148,68 +154,131 @@ export class ExpenseService {
    * @memberof ExpenseService
    */
   public async create(payload: CreateExpenseDTO): Promise<ExpenseResponse> {
-    if (payload && !payload.number) {
-      payload.number = GenerateCode.expense();
-    }
+    try {
+      const createExpense = await getManager().transaction(async (manager) => {
+        if (payload && !payload.number) {
+          payload.number = GenerateCode.expense();
+        }
 
-    const user = await this.getUser(true);
-    const branchId = user && user.branches && user.branches[0].id;
+        const user = await this.getUser(true);
+        const branchId = user && user.branches && user.branches[0].id;
 
-    // Build ExpenseItem
-    const items: ExpenseItem[] = [];
-    for (const v of payload.items) {
-      const item = new ExpenseItem();
-      item.productId = v.productId;
-      item.description = v.description;
-      item.amount = v.amount;
-      item.picHoAmount = v.amount;
-      item.ssHoAmount = v.amount;
-      // FIXME: Optimize this query!
-      item.tax = await this.getTaxValue(payload.partnerId, v.productId);
-      item.createUser = user;
-      item.updateUser = user;
-      item.attributes =
-        v.atrributes &&
-        v.atrributes.map((a) => {
-          const attr = new ExpenseItemAttribute();
-          attr.key = a.key;
-          attr.value = a.value;
-          attr.updateUser = user;
-          attr.createUser = user;
-          return attr;
+        // Build ExpenseItem
+        const items: ExpenseItem[] = [];
+        for (const v of payload.items) {
+          const item = new ExpenseItem();
+          item.productId = v.productId;
+          item.description = v.description;
+          item.amount = v.amount;
+          item.picHoAmount = v.amount;
+          item.ssHoAmount = v.amount;
+          // FIXME: Optimize this query!
+          item.tax = await this.getTaxValue(payload.partnerId, v.productId);
+          item.createUser = user;
+          item.updateUser = user;
+          item.attributes =
+            v.atrributes &&
+            v.atrributes.map((a) => {
+              const attr = new ExpenseItemAttribute();
+              attr.key = a.key;
+              attr.value = a.value;
+              attr.updateUser = user;
+              attr.createUser = user;
+              return attr;
+            });
+          items.push(item);
+        }
+
+        // Build Expense
+        const expense = new Expense();
+        expense.branchId = branchId;
+        expense.number = payload.number;
+        expense.sourceDocument = payload.sourceDocument;
+        expense.transactionDate = payload.transactionDate;
+        expense.periodId = payload.periodId;
+        expense.partnerId = payload.partnerId;
+        expense.type = ExpenseType.EXPENSE;
+        expense.paymentType = payload.paymentType;
+        expense.state = ExpenseState.DRAFT;
+        expense.items = items;
+        expense.totalAmount =
+          items &&
+          items
+            .map((m) => Number(m.amount))
+            .filter((i) => i)
+            .reduce((a, b) => a + b, 0);
+        expense.histories = await this.buildHistory(expense, {
+          state: ExpenseState.DRAFT,
         });
-      items.push(item);
+        expense.createUser = user;
+        expense.updateUser = user;
+
+        if (payload?.downPaymentId) {
+          const dp = await manager.getRepository(DownPayment).findOne({
+            where: {
+              id: payload?.downPaymentId,
+              isDeleted: false,
+            },
+          });
+
+          if (!dp) {
+            throw new BadRequestException(
+              `Down Payment with ID ${payload?.downPaymentId} not found!`,
+            );
+          }
+
+          if (
+            ![
+              DownPaymentState.APPROVED_BY_PIC_HO,
+              DownPaymentState.APPROVED_BY_SS_SPV,
+            ].includes(dp.state)
+          ) {
+            throw new BadRequestException(`Down Payment not approved!`);
+          }
+
+          expense.type = ExpenseType.DOWN_PAYMENT;
+          expense.downPaymentId = dp.id;
+          expense.downPaymentAmount = dp.amount;
+          expense.differenceAmount = expense.totalAmount - expense.downPaymentAmount;
+
+          // Create Loan if any `differenceAmount`
+          if (expense.differenceAmount !== 0) {
+            // If minus mean Piutang/Receivable otherwise Hutang/Payable.
+            // Piutang = Hutang perusahaan terhadap karyawan
+            // Hutang = Hutang karyawan terhadap perusahaan
+            let loanType: LoanType;
+            let loanAmount: number = expense.differenceAmount;
+            if (expense.differenceAmount < 0) {
+              loanType = LoanType.RECEIVABLE;
+              loanAmount = -1 * expense.differenceAmount;
+            } else {
+              loanType = LoanType.PAYABLE;
+            }
+
+            const loan = new Loan();
+            loan.branchId = expense.branchId;
+            loan.periodId = expense.periodId;
+            loan.transactionDate = expense.transactionDate;
+            loan.number = GenerateCode.loan(loan.transactionDate);
+            loan.sourceDocument = expense.number;
+            loan.type = loanType;
+            loan.amount = loanAmount;
+            loan.residualAmount = loanAmount;
+            loan.employeeId = dp?.employeeId;
+            loan.createUser = user;
+            loan.updateUser = user;
+
+            await manager.save(loan);
+          }
+        }
+
+        const result = await manager.save(expense);
+        return result;
+      });
+      return new ExpenseResponse(createExpense);
+    } catch (error) {
+      throw error;
     }
-
-    // Build Expense
-    const expense = new Expense();
-    expense.branchId = branchId;
-    expense.number = payload.number;
-    expense.sourceDocument = payload.sourceDocument;
-    expense.transactionDate = payload.transactionDate;
-    expense.periodId = payload.periodId;
-    // TODO: Add when work in DownPayment feature
-    // expense.downPaymentId = null;
-    expense.downPaymentAmount = 0;
-    expense.partnerId = payload.partnerId;
-    expense.type = ExpenseType.EXPENSE; // TODO: Add condition when work in DownPayment feature.
-    expense.paymentType = payload.paymentType;
-    expense.state = ExpenseState.DRAFT;
-    expense.items = items;
-    expense.totalAmount =
-      items &&
-      items
-        .map((m) => Number(m.amount))
-        .filter((i) => i)
-        .reduce((a, b) => a + b, 0);
-    expense.histories = await this.buildHistory(expense, {
-      state: ExpenseState.DRAFT,
-    });
-    expense.createUser = user;
-    expense.updateUser = user;
-
-    const result = await this.expenseRepo.save(expense);
-    return new ExpenseResponse(result);
   }
 
   /**
@@ -228,7 +297,7 @@ export class ExpenseService {
       const approveExpense = await getManager().transaction(async (manager) => {
         const expense = await manager.findOne(Expense, {
           where: { id: expenseId, isDeleted: false },
-          relations: ['attachments', 'partner', 'items', 'histories'],
+          relations: ['attachments', 'partner', 'histories'],
         });
         if (!expense) {
           throw new NotFoundException(`Expense ID ${expenseId} not found!`);
@@ -255,8 +324,15 @@ export class ExpenseService {
 
         // if any payload.items, we should update it first.
         // because the Journal Entries depends on items value.
+        let updatedExpenseItem: Expense;
         if (payload.items) {
           await this.updateExpenseItem(manager, payload.items, user);
+          // NOTE: we need to refetch expense to get latest `items`,
+          updatedExpenseItem = await manager.findOne(Expense, {
+            where: { id: expenseId, isDeleted: false },
+            relations: ['items'],
+          });
+          expense.items = updatedExpenseItem.items;
         }
 
         // TODO: Implement State Machine for approval flow?
@@ -275,6 +351,13 @@ export class ExpenseService {
 
           state = ExpenseState.APPROVED_BY_PIC;
 
+          if (updatedExpenseItem) {
+            expense.totalAmount = updatedExpenseItem?.items
+              .map((m) => Number(m.picHoAmount))
+              .filter((i) => i)
+              .reduce((a, b) => a + b, 0);
+          }
+
           // Create Journal for PIC HO
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
@@ -291,6 +374,13 @@ export class ExpenseService {
           }
 
           state = ExpenseState.APPROVED_BY_SS_SPV;
+
+          if (updatedExpenseItem) {
+            expense.totalAmount = updatedExpenseItem?.items
+              .map((m) => Number(m.ssHoAmount))
+              .filter((i) => i)
+              .reduce((a, b) => a + b, 0);
+          }
 
           // (Re)Create Journal for SS/SPV HO
           await this.removeJournal(manager, expense);
@@ -640,7 +730,7 @@ export class ExpenseService {
     // re-fetch data to get latest updated ExpenseItems
     const data = await manager.findOne(Expense, {
       where: { id: expenseId, isDeleted: false },
-      relations: ['items', 'items.product', 'partner', 'branch'],
+      relations: ['items', 'items.product', 'partner', 'branch', 'downPayment'],
     });
     const j = new Journal();
     j.createUser = user;
@@ -721,7 +811,7 @@ export class ExpenseService {
     user: User,
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
-    const items: JournalItem[] = [];
+    let items: JournalItem[] = [];
     const taxedItems = data?.items.filter((v) => v.tax);
     const cashCoaId = data.branch && data.branch.cashCoaId;
     let taxedAmount: number;
@@ -787,6 +877,40 @@ export class ExpenseService {
     }
 
     items.push(i);
+
+    // If Expense from DownPayment
+    if (data?.downPayment) {
+      const downPayment = data?.downPayment;
+      const downPaymentType = downPayment?.type;
+      const setting = await getManager().getRepository(GlobalSetting).findOne();
+
+      const dpJournalItem = new JournalItem();
+      dpJournalItem.createUser = user;
+      dpJournalItem.updateUser = user;
+      dpJournalItem.branchId = data.branchId;
+      dpJournalItem.transactionDate = data.transactionDate;
+      dpJournalItem.periodId = data.periodId;
+      dpJournalItem.reference = data.number;
+      dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+      dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+
+      if (downPaymentType === DownPaymentType.PERDIN) {
+        dpJournalItem.coaId = setting?.downPaymentPerdinCoaId;
+        dpJournalItem.credit = downPayment?.amount;
+        items.push(dpJournalItem);
+      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
+        const totalItemCredit = items
+          .map((m) => Number(m.credit))
+          .reduce((a, b) => a + b, 0);
+
+        dpJournalItem.coaId = setting?.downPaymentReimbursementCoaId;
+        dpJournalItem.credit = totalItemCredit + downPayment?.amount;
+
+        // merge all items to use single CoA
+        items = [dpJournalItem];
+      }
+    }
+
     return items;
   }
 
@@ -805,7 +929,7 @@ export class ExpenseService {
     user: User,
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
-    const items: JournalItem[] = [];
+    let items: JournalItem[] = [];
     const taxes: number[] = [];
     for (const v of data?.items) {
       const i = new JournalItem();
@@ -858,6 +982,36 @@ export class ExpenseService {
       jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
       jTax.debit = roundToTwo(taxes.reduce((a, b) => a + b, 0));
       items.push(jTax);
+    }
+
+    // If Expense from DownPayment
+    if (data?.downPayment) {
+      const downPayment = data?.downPayment;
+      const downPaymentType = downPayment?.type;
+
+      const dpJournalItem = new JournalItem();
+      dpJournalItem.createUser = user;
+      dpJournalItem.updateUser = user;
+      dpJournalItem.branchId = data.branchId;
+      dpJournalItem.transactionDate = data.transactionDate;
+      dpJournalItem.periodId = data.periodId;
+      dpJournalItem.reference = data.number;
+      dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+      dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+      dpJournalItem.coaId = data?.branch?.cashCoaId;
+
+      if (downPaymentType === DownPaymentType.PERDIN) {
+        dpJournalItem.debit = downPayment?.amount;
+        items.push(dpJournalItem);
+      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
+        const totalItemDebit = items
+          .map((m) => Number(m.debit))
+          .reduce((a, b) => a + b, 0);
+        dpJournalItem.debit = totalItemDebit + downPayment?.amount;
+
+        // merge all items to use single CoA
+        items = [dpJournalItem];
+      }
     }
 
     return items;

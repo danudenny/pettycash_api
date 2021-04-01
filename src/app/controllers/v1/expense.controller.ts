@@ -16,6 +16,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiHeader,
   ApiInternalServerErrorResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -76,6 +77,7 @@ export class ExpenseController {
 
   @Patch('/:id/approve')
   @ApiOperation({ summary: 'Approve Expense' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiBody({ type: ApproveExpenseDTO })
   public async approve(
     @Param('id', new ParseUUIDPipe()) id: string,

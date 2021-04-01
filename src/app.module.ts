@@ -1,3 +1,4 @@
+import { DownPaymentModule } from './app/modules/down-payment.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from 'nestjs-pino';
@@ -23,6 +24,8 @@ import { LoanModule } from './app/modules/loan.module';
 import { BalanceModule } from './app/modules/balance.module';
 import { AllocationBalanceModule } from './app/modules/allocation-balance.module';
 import { AccountStatementModule } from './app/modules/account-statement.module';
+// import { BudgetRequestModule } from './app/modules/budget.request.module';
+// import { BudgetRequestItemModule } from './app/modules/budget.request-item.module';
 
 @Module({
   imports: [
@@ -47,14 +50,17 @@ import { AccountStatementModule } from './app/modules/account-statement.module';
     UserRoleModule,
     BudgetModule,
     BudgetItemModule,
+    // BudgetRequestModule,
+    // BudgetRequestItemModule,
     ExpenseModule,
     JournalModule,
     LoanModule,
     BalanceModule,
     AllocationBalanceModule,
     AccountStatementModule,
+    DownPaymentModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

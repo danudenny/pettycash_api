@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Budget } from '../../../model/budget.entity';
-import { QueryBugdetDTO } from '../../domain/budget/budget.payload.dto';
+import { QueryBudgetDTO } from '../../domain/budget/budget.payload.dto';
 import { BudgetResponse, BudgetWithPaginationResponse } from '../../domain/budget/budget-response.dto';
 import { CreateBudgetDTO, UpdateBudgetDTO, RejectBudgetDTO } from '../../domain/budget/budget-createUpdate.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
@@ -31,7 +31,7 @@ export class BudgetService {
 
   private async getUser(includeBranch: boolean = false) {
     if (includeBranch) {
-      return await AuthService.getUser({ relations: ['branches'] });
+      return await AuthService.getUser({ relations: ['branches', 'role'] });
     } else {
       return await AuthService.getUser();
     }
@@ -58,7 +58,7 @@ export class BudgetService {
     return history.filter((v) => v);
   }
 
-  public async list(query?: QueryBugdetDTO): Promise<BudgetWithPaginationResponse> {
+  public async list(query?: QueryBudgetDTO): Promise<BudgetWithPaginationResponse> {
     const params = { order: '-minimumAmount', limit: 10, ...query };
     const qb = new QueryBuilder(Budget, 'bgt', params);
 

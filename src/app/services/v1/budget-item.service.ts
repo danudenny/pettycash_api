@@ -5,7 +5,7 @@ import { CreateBudgetItemDTO, UpdateBudgetItemDTO } from '../../domain/budget-it
 import { BudgetItem } from '../../../model/budget-item.entity';
 import { BudgetItemResponse, BudgetItemWithPaginationResponse } from '../../domain/budget-item/budgetItem-response.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
-import { QueryBugdetItemDTO } from '../../domain/budget-item/budget-item.payload.dto';
+import { QueryBudgetItemDTO } from '../../domain/budget-item/budget-item.payload.dto';
 
 @Injectable()
 export class BudgetItemService {
@@ -20,7 +20,7 @@ export class BudgetItemService {
     return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
   }
 
-  public async list(query?: QueryBugdetItemDTO): Promise<BudgetItemWithPaginationResponse> {
+  public async list(query?: QueryBudgetItemDTO): Promise<BudgetItemWithPaginationResponse> {
     const params = { order: '^createdAt', limit: 10, ...query };
     const qb = new QueryBuilder(BudgetItem, 'bgt', params);
 

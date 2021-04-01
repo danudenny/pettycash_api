@@ -38,7 +38,7 @@ export class LoanService {
   ) {}
 
   public async create(payload: CreateLoanDTO): Promise<any> {
-    const user = await AuthService.getUser({ relations: ['branchers'] });
+    const user = await AuthService.getUser({ relations: ['branches'] });
     // TODO: branchId should get from requested user.
     // payload.branchId = user?.branches[0].id;
 
@@ -132,6 +132,10 @@ export class LoanService {
       where: { id, isDeleted: false },
       relations: ['employee', 'payments'],
     });
+
+    if (!loan) {
+      throw new NotFoundException(`Loan with ID ${id} not found!`);
+    }
     return new LoanDetailResponse(loan);
   }
 

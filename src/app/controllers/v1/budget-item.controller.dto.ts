@@ -3,7 +3,7 @@ import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags }
 import { BudgetItemService } from '../../services/v1/budget-item.service';
 import { CreateBudgetItemDTO, UpdateBudgetItemDTO } from '../../domain/budget-item/budget-item-create.dto';
 import { BudgetItemResponse, BudgetItemWithPaginationResponse } from '../../domain/budget-item/budgetItem-response.dto';
-import { QueryBugdetItemDTO } from '../../domain/budget-item/budget-item.payload.dto';
+import { QueryBudgetItemDTO } from '../../domain/budget-item/budget-item.payload.dto';
 import { FindBudgetItemIdParams } from '../../domain/budget-item/budget-item.dto';
 import FindIdParams from '../../domain/common/findId-param.dto';
 
@@ -16,7 +16,7 @@ export class BudgetItemController {
   @ApiOperation({ summary: 'List all Budget Items' })
   @ApiOkResponse({ type: BudgetItemWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async find(@Query() query: QueryBugdetItemDTO) {
+  public async find(@Query() query: QueryBudgetItemDTO) {
     return await this.budgetService.list(query);
   }
 
