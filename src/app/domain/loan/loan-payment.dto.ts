@@ -26,6 +26,18 @@ export class LoanPaymentDTO {
   amount: number;
 
   @ApiProperty({
+    description: 'Receiver Name',
+    example: 'Arianty Silvia',
+  })
+  receiverName: string;
+
+  @ApiProperty({
+    description: 'Receiver NIK',
+    example: '2020081991',
+  })
+  receiverNik: string;
+
+  @ApiProperty({
     description: 'Payment Type: `partially` or `full`',
     example: AccountPaymentType.PARTIALLY,
     enum: AccountPaymentType,
