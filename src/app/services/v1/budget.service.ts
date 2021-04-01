@@ -358,8 +358,6 @@ export class BudgetService {
 
   public async update(id: string, data: UpdateBudgetDTO): Promise<BudgetResponse> {
     const budgetExist = await this.budgetRepo.findOne({ id, isDeleted: false });
-    console.log(data);
-    console.log(budgetExist);
     if (!budgetExist) {
       throw new NotFoundException();
     } else {
@@ -368,6 +366,13 @@ export class BudgetService {
       } else {
         const user = await this.getUser(true);
         const branchId = user && user.branches && user.branches[0].id;
+
+        const budgetItemExist = await this.budgetItemRepo.find({ budgetId: budgetExist.id, isDeleted: false });
+        if (budgetItemExist) {
+          for (const v of budgetItemExist) {
+            const budget = await this.budgetItemRepo.update(v.id, { isDeleted: true });
+          }
+        }
   
         // const endDateData = await this.getBranch(branchId);
         // const checkDate = new Date(data.startDate);
@@ -387,25 +392,25 @@ export class BudgetService {
         }
 
         // Build Budget
-        const budget = new Budget();
-        budget.branchId = branchId;
-        budget.number = budgetExist.number;
-        budget.responsibleUserId = data.responsibleUserId;
-        budget.startDate = data.startDate;
-        budget.endDate = data.endDate;
-        budget.totalAmount = totalAmountItem;
-        budget.minimumAmount = data.minimumAmount;
-        budget.rejectedNote = null;
-        budget.state = BudgetState.DRAFT;
-        // budget.histories = await this.buildHistory(budget, {
-        //   state: BudgetState.DRAFT,
-        //   endDate: data.endDate,
-        // });
-        // budget.items = items;
-        budget.createUser = user;
-        budget.updateUser = user;
+        // const budget = new Budget();
+        budgetExist.branchId = branchId;
+        budgetExist.number = budgetExist.number;
+        budgetExist.responsibleUserId = data.responsibleUserId;
+        budgetExist.startDate = data.startDate;
+        budgetExist.endDate = data.endDate;
+        budgetExist.totalAmount = totalAmountItem;
+        budgetExist.minimumAmount = data.minimumAmount;
+        budgetExist.rejectedNote = null;
+        budgetExist.state = BudgetState.DRAFT;
+        budgetExist.histories = await this.buildHistory(budgetExist, {
+          state: BudgetState.DRAFT,
+          endDate: data.endDate,
+        });
+        budgetExist.items = items;
+        budgetExist.createUser = user;
+        budgetExist.updateUser = user;
 
-        const result = await this.budgetRepo.update(id, budget);
+        const result = await this.budgetRepo.save(budgetExist);
         return new BudgetResponse(result as any);
       }
     } 
