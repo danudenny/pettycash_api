@@ -20,13 +20,18 @@ import { LoanDetailResponse } from '../../domain/loan/response-detail.dto';
 import { CreatePaymentLoanDTO } from '../../domain/loan/create-payment.dto';
 import { AccountPayment } from '../../../model/account-payment.entity';
 import { AuthService } from './auth.service';
-import { AccountPaymentType, LoanState } from '../../../model/utils/enum';
+import {
+  AccountPaymentType,
+  LoanState,
+  LoanType,
+} from '../../../model/utils/enum';
 import { LoanAttachmentResponse } from '../../domain/loan/response-attachment.dto';
 import { Attachment } from '../../../model/attachment.entity';
 import { AttachmentService } from '../../../common/services/attachment.service';
 import { LoanAttachmentDTO } from '../../domain/loan/loan-attachment.dto';
 import { CreateLoanDTO } from '../../domain/loan/create.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
+import { PeriodService } from './period.service';
 
 @Injectable()
 export class LoanService {
@@ -317,7 +322,7 @@ export class LoanService {
 
         const residualAmount = loan.residualAmount - payload.amount;
         if (residualAmount < 0) {
-          const residualPaymentAmount = payload.amount - loan.residualAmount;
+          const residualPaymentAmount = -1 * residualAmount;
           await this.createLoanFromOverPayment(
             manager,
             loan,
@@ -339,13 +344,32 @@ export class LoanService {
     }
   }
 
-  private createLoanFromOverPayment(
+  private async createLoanFromOverPayment(
     manager: EntityManager,
     loan: Loan,
     amount: number,
   ): Promise<Loan> {
-    // TODO: Create new Loan from OverPayment
-    return;
+    let loanType: LoanType;
+    if (loan?.type === LoanType.PAYABLE) {
+      loanType = LoanType.RECEIVABLE;
+    } else {
+      loanType = LoanType.PAYABLE;
+    }
+
+    const newLoan = new Loan();
+    newLoan.branchId = loan.branchId;
+    newLoan.employeeId = loan.employeeId;
+    newLoan.transactionDate = new Date();
+    newLoan.period = await PeriodService.findByDate(newLoan.transactionDate);
+    newLoan.number = GenerateCode.loan();
+    newLoan.sourceDocument = loan.number;
+    newLoan.amount = amount;
+    newLoan.residualAmount = amount;
+    newLoan.type = loanType;
+    newLoan.createUserId = loan.createUserId;
+    newLoan.updateUserId = loan.updateUserId;
+
+    return await manager.save(newLoan);
   }
 
   private async createPayment(
