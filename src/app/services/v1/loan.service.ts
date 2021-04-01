@@ -132,6 +132,10 @@ export class LoanService {
       where: { id, isDeleted: false },
       relations: ['employee', 'payments'],
     });
+
+    if (!loan) {
+      throw new NotFoundException(`Loan with ID ${id} not found!`);
+    }
     return new LoanDetailResponse(loan);
   }
 
