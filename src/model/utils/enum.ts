@@ -133,6 +133,11 @@ export enum JournalSourceType {
   // Add other type
 }
 
+export enum AccountCoaInternalType {
+  TAX = 'tax',
+  // Add other type
+}
+
 export enum AccountFinancialReportType {
   SUM = 'sum',
   COA = 'coa',

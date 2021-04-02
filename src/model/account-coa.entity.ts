@@ -1,4 +1,10 @@
-import { BaseEntity, Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  Index,
+} from 'typeorm';
 
 @Entity('account_coa')
 export class AccountCoa extends BaseEntity {
@@ -11,7 +17,9 @@ export class AccountCoa extends BaseEntity {
   @Column({ type: 'varchar', length: 250 })
   name: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  // FIXME: use ENUM `AccountCoaInternalType`?
+  @Column({ type: 'varchar', name: 'internal_type', nullable: true })
+  @Index()
   internalType?: string;
 
   // TODO: add data from masterdata

@@ -11,6 +11,7 @@ import {
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiHeader,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -31,6 +32,7 @@ export class JournalController {
 
   @Get()
   @ApiOperation({ summary: 'List all journal' })
+  @ApiHeader({name: 'x-username', description: 'Custom User Request'})
   @ApiOkResponse({ type: JournalWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async list(

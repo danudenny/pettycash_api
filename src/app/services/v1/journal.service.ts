@@ -10,6 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Journal } from '../../../model/journal.entity';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
 import {
+  AccountCoaInternalType,
   ExpenseState,
   JournalSourceType,
   MASTER_ROLES,
@@ -36,6 +37,10 @@ export class JournalService {
   public async list(
     query: QueryJournalDTO,
   ): Promise<JournalWithPaginationResponse> {
+    const user = await AuthService.getUser({ relations: ['role', 'branches'] });
+    const userRole = user?.role?.name;
+    const userBranches = user?.branches?.map((v) => v.id);
+
     const params = { order: '-transactionDate', ...query };
     const qb = new QueryBuilder(Journal, 'j', params);
 
@@ -104,6 +109,19 @@ export class JournalService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+
+    // if userRole is Tax, only show journal that contains tax
+    if (userRole === MASTER_ROLES.TAX) {
+      if (userBranches?.length) {
+        const journalTaxSql = `SELECT tji.journal_id
+          FROM journal_item tji
+          INNER JOIN account_coa tac ON tac.id = tji.coa_id
+          WHERE tac.internal_type = '${AccountCoaInternalType.TAX}'
+          GROUP BY tji.journal_id`;
+
+        qb.qb.andWhere(`(j.id IN (${journalTaxSql}))`);
+      }
+    }
 
     const journals = await qb.exec();
 
