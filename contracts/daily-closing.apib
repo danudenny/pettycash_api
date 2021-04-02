@@ -1,0 +1,286 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Daily Closing
+
+# Group Daily Closing
+
+## List Daily Closing [GET /v1/daily-closing-accounts{?startDate__gte,endDate__lte}]
+
+Get all of daily closing
+
++ Parameters
+    + startDate__gte: `2021-01-01` (date, optional) - Start Date to filter.
+    + endDate__lte: `2021-12-31` (date, optional) - End Date to filter.
+
++ Request (application/json)
+    + Header
+    
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "data": [
+                    {
+                        "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                        "closingDate": "2021-01-27",
+                        "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
+                        "responsibleUserFirstName": "Eva",
+                        "responsibleUserLastName": "Nurwati",
+                        "openingBankAmount": 2000000,
+                        "closingBankAmount": 2000000,
+                        "openingCashAmount": 2000000,
+                        "closingCashAmount": 2000000
+                    },
+                    {
+                        "id": "d691d65c-fcf3-45c8-956e-5baf9dee9833",
+                        "closingDate": "2021-01-28",
+                        "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8uid",
+                        "responsibleUserFirstName": "Eva",
+                        "responsibleUserLastName": "Nurwati",
+                        "openingBankAmount": 2000000,
+                        "closingBankAmount": 2000000,
+                        "openingCashAmount": -1000000,
+                        "closingCashAmount": 2000000
+                    }
+                ],
+                "meta": {
+                    "page": 1,
+                    "prevPage": 1,
+                    "nextPage": null,
+                    "perPage": 10,
+                },
+                "status": "success"
+            }
+
++ Response 500 (application/json)
+    + Body
+    
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Get Daily Closing [GET /v1/daily-closing-accounts/{id}']
+
+Get daily closing detail
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Daily closing account id to retrieve.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "data": {
+                        "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                        "closingDate": "2021-01-27",
+                        "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
+                        "responsibleUserFirstName": "Eva",
+                        "responsibleUserLastName": "Nurwati",
+                        "openingBankAmount": 2000000,
+                        "closingBankAmount": 2000000,
+                        "openingCashAmount": 2000000,
+                        "closingCashAmount": 2000000,
+                        "accountCashboxItems": [
+                            {
+                                "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                                "pieces": "100000",
+                                "number": "15",
+                                "total": "1500000"
+                            },
+                            {
+                                "id": "d659d65c-fcf3-45c8-956e-5baf9dee4098",
+                                "pieces": "50000",
+                                "number": "10",
+                                "total": "500000"
+                            }
+                        ]
+                },
+                "status": "success"
+            }
+
++ Response 404 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "DAILY_CLOSING_NOT_FOUND",
+                "message": "daily closing {id} not found",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+    
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Create Daily Closing [POST /v1/daily-closing-accounts]
+
+Create Daily Closing
+
++ Request (multipart/form-data)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + closingDate:          `2021-01-27` (string) - Closing Date.
+        + closingBankAmount:     2000000 (number) - Closing Bank Amount.
+        + closingCashAmount:     2000000 (number) - Closing Cash Amount.
+        + openingBankAmount:     2000000 (number) - Opening Bank Amount.
+        + openingCashAmount:     2000000 (number) - Opening Cash Amount.
+        + accountCashboxItems (array) - List of account cashbox item
+            + (object)
+                + pieces: 100000 (enum[number]) - Denom of money
+                    + 100000
+                    + 50000
+                    + 20000
+                    + 10000
+                    + 2000
+                    + 1000
+                    + 500
+                    + 200
+                    + 100
+                + number: 5 (number) - Number of physical cash
+                + total: 500000 (number) - Total amount of cash
+
++ Response 201 (application/json)
+    + Body
+
+            {
+                "data": {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                },
+                "status": "success"
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "DAILY_CLOSING_CREATE_FAILED",
+                "message": "failed to create daily closing",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+## Create Attachment [GET /v1/daily-closing-accounts/{id}/attachments']
+
+Create Attachment
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Daily closing account id.
+
++ Request (multipart/form-data)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (array)
+        + file (string) - File to upload (file data).
+
++ Response 201 (application/json)
+    + Body
+        
+            {
+                "data": [
+                    {
+                        "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                        "name": "imagename.jpg",
+                        "fileName": "imagename.jpg",
+                        "fileMime": "image/jpeg",
+                        "url": "https://sicepatresi.s3.amazonaws.com/0009775/000977539725.jpg"
+                    },
+                    {
+                        "id": "d659d65c-fcf3-45c8-956e-5baf9dee2533",
+                        "name": "imagename1.jpg",
+                        "fileName": "imagename1.jpg",
+                        "fileMime": "image/jpeg",
+                        "url": "https://sicepatresi.s3.amazonaws.com/0009775/000977539799.jpg"
+                    },
+                ],
+                "status": "success"
+            }
+        
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "DAILY_CLOSING_ATTACHMENT_CREATE_FAILED",
+                "message": "failed to create daily closing attachment",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+            
+## Delete Attachment [DELETE /v1/daily-closing-accounts/{id}/attachments/{attachmentId}]
+
+Delete Attachment by Attachment ID
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Daily Closing ID.
+    + attachmentId: `d97a5ba7-60c0-4326-85fe-76452e3b416c` (string) - Attachment ID to Delete.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 204 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "CLOSING_DAILY_ATTACHMENT_DELETE_FAILED",
+                "message": "failed to delete daily closing attachment",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
