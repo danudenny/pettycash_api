@@ -16,6 +16,7 @@ import { Employee } from './employee.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Department } from './department.entity';
 import { DownPaymentHistory } from './down-payment-history.entity';
+import { Expense } from './expense.entity';
 
 @Entity('down_payment')
 export class DownPayment extends PtcBaseEntity {
@@ -61,13 +62,13 @@ export class DownPayment extends PtcBaseEntity {
   })
   state: DownPaymentState;
 
-  @Column({
-    type: 'boolean',
-    nullable: false,
-    default: () => 'false',
-    name: 'is_realized',
-  })
-  isRealized?: boolean;
+  @Column({ type: 'uuid', name: 'expense_id', nullable: true })
+  @Index()
+  expenseId?: string;
+
+  @ManyToOne(() => Expense, (e) => e.downPayment, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'expense_id' })
+  expense?: Expense;
 
   @ManyToOne(() => Branch)
   @JoinColumn({ name: 'branch_id' })

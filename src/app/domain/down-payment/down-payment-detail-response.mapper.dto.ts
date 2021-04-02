@@ -51,7 +51,7 @@ export class ShowDownPaymentResponseMapper {
       destinationPlace: ety.destinationPlace,
       description: ety.description,
       state: ety.state,
-      isRealized: ety.isRealized,
+      isRealized: ety.expenseId ? true : false,
       transactionDate: ety.transactionDate,
       histories: this.toDownPaymenteHistoryDTO(ety.histories, ety.branch),
     });
