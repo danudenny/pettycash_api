@@ -24,6 +24,7 @@ import { LoanModule } from './app/modules/loan.module';
 import { BalanceModule } from './app/modules/balance.module';
 import { AllocationBalanceModule } from './app/modules/allocation-balance.module';
 import { AccountStatementModule } from './app/modules/account-statement.module';
+import { VoucherModule } from './app/modules/voucher.module';
 // import { BudgetRequestModule } from './app/modules/budget.request.module';
 // import { BudgetRequestItemModule } from './app/modules/budget.request-item.module';
 
@@ -59,6 +60,7 @@ import { AccountStatementModule } from './app/modules/account-statement.module';
     AllocationBalanceModule,
     AccountStatementModule,
     DownPaymentModule,
+    VoucherModule
   ],
   controllers: [],
   providers: [],

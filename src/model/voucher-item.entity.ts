@@ -1,6 +1,8 @@
-import { Column, Entity, JoinColumn, Index } from 'typeorm';
+import { Column, Entity, JoinColumn, Index, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { Voucher } from './voucher.entity';
+import { IsUUID } from 'class-validator';
+import { Product } from './product.entity';
 
 @Entity('voucher_item')
 export class VoucherItem extends PtcBaseEntity {
@@ -26,6 +28,11 @@ export class VoucherItem extends PtcBaseEntity {
   })
   amount: number;
 
+  @ManyToOne(() => Voucher)
   @JoinColumn({ name: 'voucher_id' })
   voucher: Voucher;
+
+  @ManyToOne(() => Product)
+  @JoinColumn({ name: 'product_id' })
+  products: Product;
 }
