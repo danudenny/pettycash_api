@@ -162,6 +162,7 @@ export class ExpenseService {
 
         const user = await this.getUser(true);
         const branchId = user && user.branches && user.branches[0].id;
+        let downPayment: DownPayment;
 
         // Build ExpenseItem
         const items: ExpenseItem[] = [];
@@ -214,31 +215,35 @@ export class ExpenseService {
         expense.updateUser = user;
 
         if (payload?.downPaymentId) {
-          const dp = await manager.getRepository(DownPayment).findOne({
+          downPayment = await manager.getRepository(DownPayment).findOne({
             where: {
               id: payload?.downPaymentId,
               isDeleted: false,
             },
           });
 
-          if (!dp) {
+          if (!downPayment) {
             throw new BadRequestException(
               `Down Payment with ID ${payload?.downPaymentId} not found!`,
             );
+          }
+
+          if (downPayment?.expenseId) {
+            throw new BadRequestException(`Down Payment already realized!`);
           }
 
           if (
             ![
               DownPaymentState.APPROVED_BY_PIC_HO,
               DownPaymentState.APPROVED_BY_SS_SPV,
-            ].includes(dp.state)
+            ].includes(downPayment.state)
           ) {
             throw new BadRequestException(`Down Payment not approved!`);
           }
 
           expense.type = ExpenseType.DOWN_PAYMENT;
-          expense.downPaymentId = dp.id;
-          expense.downPaymentAmount = dp.amount;
+          expense.downPaymentId = downPayment.id;
+          expense.downPaymentAmount = downPayment.amount;
           expense.differenceAmount = expense.totalAmount - expense.downPaymentAmount;
 
           // Create Loan if any `differenceAmount`
@@ -264,7 +269,7 @@ export class ExpenseService {
             loan.type = loanType;
             loan.amount = loanAmount;
             loan.residualAmount = loanAmount;
-            loan.employeeId = dp?.employeeId;
+            loan.employeeId = downPayment?.employeeId;
             loan.createUser = user;
             loan.updateUser = user;
 
@@ -272,8 +277,16 @@ export class ExpenseService {
           }
         }
 
-        const result = await manager.save(expense);
-        return result;
+        const expenseResult = await manager.save(expense);
+
+        // After Expense created we should update DownPayment.expenseId
+        if (!!downPayment) {
+          downPayment.expenseId = expenseResult?.id;
+          downPayment.updateUser = user;
+          await manager.save(downPayment);
+        }
+
+        return expenseResult;
       });
       return new ExpenseResponse(createExpense);
     } catch (error) {
