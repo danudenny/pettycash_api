@@ -5,7 +5,7 @@ HOST: http://pettycash.api.url
 
 # Group Daily Closing
 
-## List Daily Closing [GET /v1/daily-closing-accounts{?startDate__gte,endDate__lte}]
+## List Daily Closing [GET /v1/daily-closing{?startDate__gte,endDate__lte}]
 
 Get all of daily closing
 
@@ -66,12 +66,12 @@ Get all of daily closing
             }
 
 
-## Get Daily Closing [GET /v1/daily-closing-accounts/{id}']
+## Get Daily Closing [GET /v1/daily-closing/{id}]
 
 Get daily closing detail
 
 + Parameters
-    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Daily closing account id to retrieve.
+    + id: `d659d65c-fcf3-45c8-956e-5baf9dee2522` (string) - Daily closing id to retrieve.
 
 + Request (application/json)
     + Header
@@ -95,15 +95,15 @@ Get daily closing detail
                         "accountCashboxItems": [
                             {
                                 "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                                "pieces": "100000",
-                                "number": "15",
-                                "total": "1500000"
+                                "pieces": 100000,
+                                "number": 15,
+                                "total": 1500000
                             },
                             {
                                 "id": "d659d65c-fcf3-45c8-956e-5baf9dee4098",
-                                "pieces": "50000",
-                                "number": "10",
-                                "total": "500000"
+                                "pieces": 50000,
+                                "number": 10,
+                                "total": 500000
                             }
                         ]
                 },
@@ -131,7 +131,7 @@ Get daily closing detail
             }
 
 
-## Create Daily Closing [POST /v1/daily-closing-accounts]
+## Create Daily Closing [POST /v1/daily-closing]
 
 Create Daily Closing
 
@@ -191,12 +191,12 @@ Create Daily Closing
                 "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
             }
 
-## Create Attachment [GET /v1/daily-closing-accounts/{id}/attachments']
+## Create Attachment [POST /v1/daily-closing/{id}/attachments]
 
 Create Attachment
 
 + Parameters
-    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Daily closing account id.
+    + id: `d659d65c-fcf3-45c8-956e-5baf9dee2522` (string) - Daily closing id.
 
 + Request (multipart/form-data)
     + Header
@@ -249,13 +249,13 @@ Create Attachment
                 "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
             }
             
-## Delete Attachment [DELETE /v1/daily-closing-accounts/{id}/attachments/{attachmentId}]
+## Delete Attachment [DELETE /v1/daily-closing/{id}/attachments/{attachmentId}]
 
 Delete Attachment by Attachment ID
 
 + Parameters
-    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Daily Closing ID.
-    + attachmentId: `d97a5ba7-60c0-4326-85fe-76452e3b416c` (string) - Attachment ID to Delete.
+    + id: `d659d65c-fcf3-45c8-956e-5baf9dee2522` (string) - Daily Closing ID.
+    + attachmentId: `d659d65c-fcf3-45c8-956e-5baf9dee2522` (string) - Attachment ID to Delete.
 
 + Request (application/json)
     + Header
