@@ -14,13 +14,14 @@ Untuk mendapatkan daftar Cash Balance Allocation.
     + branchId: `142648ab-9624-4a7a-a4b4-2f1c51e648d7` (string, optional) - Filtering alokasi saldo kas by branchID.
     + number: `ASK/2021/03/11/QWER123` (string, optional) - Filtering nomor referensi alokasi saldo kas.
     + state (enum[string], optional) - Cash Balance Allocation status.
-        + Draft
-        + Approve By SS HO
-        + Approve By SPV HO
-        + Rejected
-        + Received
-        + Transferred
-        + Expired
+        + Unapproved `Form yang diajukan pertama kali)`
+        + Confirmed by SS HO `(Konfirmasi setuju dari SS HO)`
+        + Approved by SPV HO `(Approvalsetuju dari SPV HO)`
+        + Rejected `(Konfirmasi tidak setuju)`
+        + Canceled `( Form dibatalkan)`
+        + Received `(Dana diterima oleh Admin Branch)`
+        + Transferred `(Dana sudah ditransfer oleh HO)`
+        + Expired `(Form yang telah lewat batas tanggal transfer)`
     + order: `^number,` (string, optional) - Sort / order alokasi saldo kas by reference number.
 
 
@@ -36,40 +37,26 @@ Untuk mendapatkan daftar Cash Balance Allocation.
             "status": "success",
             "data": [
                 {
-                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                    "branchId": "142648ab-9624-4a7a-a4b4-2f1c51e648d7",
-                    "branchName": "Kantor Pusat",
-                    "number": "ASK/2021/03/21/QWER123",
-                    "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "picName": "Admin Branch"
-                    "status": "Draft, 
-                    "receivedDate": "2021-03-22", 
-                    "receivedUserId": null,
+                    "id": "1af3bd58-1bb2-475c-bb18-08e256ae3310",
+                    "branchName": "Medan",
+                    "number": "TRF202104XUN249",
+                    "amount": "2000000",
+                    "picName": "Adry",
+                    "nik": "adry",
+                    "state": "received",
+                    "receivedDate": "2021-03-31T17:00:00.000Z",
+                    "receivedUserName": "Adry"
+                },
+                {
+                    "id": "1af3bd58-1bb2-475c-bb18-08e256ae3310",
+                    "branchName": "Medan",
+                    "number": "TRF202104XUN249",
+                    "amount": "2000000",
+                    "picName": "Adry",
+                    "nik": "adry",
+                    "state": "draft",
+                    "receivedDate": null,
                     "receivedUserName": null
-                },
-                {
-                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                    "branchId": "142648ab-9624-4a7a-a4b4-2f1c51e648d7",
-                    "branchName": "Kantor Pusat",
-                    "number": "ASK/2021/03/21/QWER123",
-                    "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "picName": "Admin Branch"
-                    "status": "Approved By SS HO, 
-                    "receivedDate": "2021-03-22", 
-                    "receivedUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "receivedUserName": "Admin Branch"
-                },
-                {
-                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                    "branchId": "142648ab-9624-4a7a-a4b4-2f1c51e648d7",
-                    "branchName": "Kantor Pusat",
-                    "number": "ASK/2021/03/21/QWER123",
-                    "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "picName": "Admin Branch"
-                    "status": "Received, 
-                    "receivedDate": "2021-03-22", 
-                    "receivedUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "receivedUserName": "Admin Branch"
                 }
             ],
             "meta": {
@@ -83,10 +70,11 @@ Untuk mendapatkan daftar Cash Balance Allocation.
 + Response 500 (application/json)
     + Body
 
-            {
-                "status": "error",
-                "message": "Internal Server Error"
-            }
+        {
+            "status": "error",
+            "message": "Internal Error!",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
 
 
 ## Get Cash Balance Allocation by ID [GET /v1/balance_allocations/{id}]
@@ -107,26 +95,206 @@ Untuk mendapatkan Cash Balance Allocation by ID.
 
         {
             "status": "success",
-            "data": [
+            "data": {
+                "id": "1af3bd58-1bb2-475c-bb18-08e256ae3310",
+                "number": "TRF202104XUN249",
+                "amount": "2000000",
+                "branchId": "28786cd1-bb9e-4926-a332-3a2e1c302e68",
+                "branchName": "Medan",
+                "transferDate": "2021-04-01",
+                "state": "received",
+                "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                "picName": "Adry Adry",
+                "nik": "adry",
+                "receivedUserId": "6dd75167-5b01-475c-8374-de3d6b99cf65",
+                "receivedUserName": "Admin Branch",
+                "description": "This is Not Mandatory field",
+                "receivedDate": "2021-04-01",
+                "destinationBankId": "deff953a-107e-4d5f-b811-fd41fa957808",
+                "bankName": "BCA",
+                "accountNumber": "6805069591",
+                "histories": [
                 {
-                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                    "branchId": "142648ab-9624-4a7a-a4b4-2f1c51e648d7",
-                    "branchName": "Kantor Pusat",
-                    "number": "ASK/2021/03/21/QWER123",
-                    "responsibleUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "picName": "Admin Branch"
-                    "status": "Received, 
-                    "receivedDate": "2021-03-22", 
-                    "receivedUserId": "8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd",
-                    "receivedUserName": "Admin Branch"
+                    "id": "a2a9199f-2028-4ff0-998d-287bec6be8c9",
+                    "userId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                    "userFullName": "Adry Adry",
+                    "branchName": "Medan",
+                    "state": "draft",
+                    "rejectedNote": null,
+                    "createdAt": "2021-04-01T08:26:19.610Z"
                 },
-            ]
+                {
+                    "id": "b1e53921-b53f-4128-9d60-3ba65e88c94b",
+                    "userId": "db150f56-56c6-40d4-910d-af7a1d2e6c48",
+                    "userFullName": "SS HO",
+                    "branchName": "Medan",
+                    "state": "approved_by_ss_ho",
+                    "rejectedNote": null,
+                    "createdAt": "2021-04-01T08:27:08.069Z"
+                },
+                {
+                    "id": "3ed5a7ab-9bec-4087-be07-4a2aa7879db5",
+                    "userId": "50afa108-fb7d-47c7-bc9d-c81d4c657561",
+                    "userFullName": "SPV HO",
+                    "branchName": "Medan",
+                    "state": "approved_by_spv_ho",
+                    "rejectedNote": null,
+                    "createdAt": "2021-04-01T08:27:14.154Z"
+                },
+                {
+                    "id": "7b888882-538b-4dd3-a9d1-5ee37fec7ea9",
+                    "userId": "6dd75167-5b01-475c-8374-de3d6b99cf65",
+                    "userFullName": "Admin Branch",
+                    "branchName": "Medan",
+                    "state": "received",
+                    "rejectedNote": null,
+                    "createdAt": "2021-04-01T08:27:26.837Z"
+                }
+                ]
+            }
+        }
+
++ Response 404 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "ID Alokasi Saldo Cabang tidak ditemukan!",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
         }
 
 + Response 500 (application/json)
     + Body
 
-            {
-                "status": "error",
-                "message": "Internal Server Error"
+        {
+            "status": "error",
+            "message": "Internal Error!",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+## Transfer Balance [POST /v1/balance_allocations/transfer]
+
+API untuk transfer saldo dari HO ke Cabang.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + number:           `TRF20210311QWERTY12` (string) - Transfer Number.
+        + branchId:         `28786cd1-bb9e-4926-a332-3a2e1c302e68` (string) - Branch ID.
+        + responsibleUserId:`3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - Responsible User Id.
+        + transferDate:     `d659d65c-fcf3-45c8-956e-5baf9dee2522` (string, optional) - Transferred Date.
+        + amount:           `2000000` (number) - Amount.
+        + destinationBankId:`28786cd1-bb9e-4926-a332-3a2e1c302e68` (string) - Bank Branch ID.
+        + description:      `This is Not Mandatory field` (string, optional) - Description.
+
+
++ Response 201 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": {
+                "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
             }
+        }
+
++ Response 404 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "ID Saldo Cabang tidak ditemukan!",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "Internal Error!",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Approve Cash Balance Allocation by ID [PATCH /v1/allocation-balance/{id}/approve]
+
+Untuk Approve Cash Balance Allocation by ID.
+
++ Parameters
+    + id: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string).
+
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": [],
+        }
+
++ Response 404 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "ID Alokasi Saldo Cabang tidak ditemukan!",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Reject Cash Balance Allocation by ID [PATCH /v1/allocation-balance/{id}/reject]
+
+Untuk Reject Cash Balance Allocation by ID.
+
++ Parameters
+    + id: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string).
+
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": [],
+        }
+
++ Response 404 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "ID Alokasi Saldo Cabang tidak ditemukan!",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }

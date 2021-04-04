@@ -36,6 +36,13 @@ export class GenerateCode {
     return prefix + randomCode.toString();
   }
 
+  public static downPayment(dateTime: Date = new Date(), digit: number = 8) {
+    // Format Code:UM/2020/12/XYZA1234
+    const prefix = `UM/${dayjs(dateTime).format('YYYY/MM')}/`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
+
   public static product(dateTime: Date = new Date(), digit: number = 8) {
     // Format Code: PRD/2020/12/XYZA1234
     const prefix = `PRD/${dayjs(dateTime).format('YYYY/MM')}/`;
@@ -46,6 +53,34 @@ export class GenerateCode {
   public static expense(dateTime: Date = new Date(), digit: number = 6) {
     // Format Code: REL202102ABC123
     const prefix = `REL${dayjs(dateTime).format('YYYYMM')}`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
+
+  public static loan(dateTime: Date = new Date(), digit: number = 6) {
+    // Format Code: REL202102ABC123
+    const prefix = `LOAN${dayjs(dateTime).format('YYYYMM')}`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
+
+  public static accountStatement(dateTime: Date = new Date(), digit: number = 6) {
+    // Format Code: MUT202102ABC123
+    const prefix = `MUT${dayjs(dateTime).format('YYYYMM')}`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
+
+  public static transferBalance(dateTime: Date = new Date(), digit: number = 6) {
+    // Format Code: TRF202102ABC123
+    const prefix = `TRF${dayjs(dateTime).format('YYYYMM')}`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
+
+  public static voucher(dateTime: Date = new Date(), digit: number = 6) {
+    // Format Code: VCR202102ABC123
+    const prefix = `VCR${dayjs(dateTime).format('YYYYMM')}`;
     const randomCode = this.randomCode(digit);
     return prefix + randomCode.toString();
   }

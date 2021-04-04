@@ -1,9 +1,10 @@
-import { Entity, Column, JoinColumn, ManyToOne, Index } from 'typeorm';
+import { Entity, Column, JoinColumn, ManyToOne, Index, OneToMany } from 'typeorm';
 import { BankBranch } from './bank-branch.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { User } from './user.entity';
 import { CashBalanceAllocationState } from './utils/enum';
+import { AccountStatementHistory } from './account-statement-history.entity';
 
 @Entity('cash_balance_allocation')
 export class CashBalanceAllocation extends PtcBaseEntity {
@@ -22,7 +23,7 @@ export class CashBalanceAllocation extends PtcBaseEntity {
   responsibleUserId: string;
 
   @Column({ type: 'numeric', name: 'amount', default: 0 })
-  amount: Number;
+  amount: number;
 
   @Column({ type: 'uuid', name: 'destination_bank_id' })
   destinationBankId: string;
@@ -59,4 +60,7 @@ export class CashBalanceAllocation extends PtcBaseEntity {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'received_user_id', referencedColumnName: 'id' })
   receivedUser: User;
+
+  @OneToMany(() => AccountStatementHistory, (e) => e.cashBalance)
+  allocationHistory: AccountStatementHistory[];
 }

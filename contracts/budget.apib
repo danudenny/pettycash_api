@@ -5,7 +5,7 @@ HOST: http://pettycash.api.url
 
 # Group Budget
 
-## List Budget [GET /v1/budgets]
+## List Budget [GET /v1/budgets{?startDate__gte,endDate__gte,branchId,minAmount__gte,maxAmount__gte,state,order}]
 
 Untuk mendapatkan daftar budget.
 
@@ -27,63 +27,65 @@ Untuk mendapatkan daftar budget.
 + Response 200 (application/json)
     + Body
 
-      "status": "success",
-      "data": [
-          {
-              "id": "d4923882-f5a0-4517-9229-a0d9908a1eb6",
-              "branchId": "eaaf465b-65bc-4784-909e-8d0180c6eb4c",
-              "branchName": "Tangerang Pinang",
-              "number": "BGT00001",
-              "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
-              "responsibleUserFirstName": "Adry",
-              "responsibleUserLastName": "Adry",
-              "responsibleUserUsername": "adry",
-              "startDate": "2021-02-09",
-              "endDate": "2021-02-15",
-              "minimumAmount": "2000000",
-              "totalAmount": "7000000",
-              "state": "draft",
-              "rejectedNote": null
-          },
-          {
-              "id": "9177edfe-1846-4f6a-8e3d-11feabb9867d",
-              "branchId": "28786cd1-bb9e-4926-a332-3a2e1c302e68",
-              "branchName": "Medan",
-              "number": "BGT00002",
-              "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
-              "responsibleUserFirstName": "Adry",
-              "responsibleUserLastName": "Adry",
-              "responsibleUserUsername": "adry",
-              "startDate": "2021-02-16",
-              "endDate": "2021-02-22",
-              "minimumAmount": "2285714",
-              "totalAmount": "8000000",
-              "state": "draft",
-              "rejectedNote": null
-          },
-          {
-              "id": "46dc5599-43f0-4569-b5f0-33e25f4cd29c",
-              "branchId": "eaaf465b-65bc-4784-909e-8d0180c6eb4c",
-              "branchName": "Tangerang Pinang",
-              "number": "BGT/2021/02/QHRT0857",
-              "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
-              "responsibleUserFirstName": "Adry",
-              "responsibleUserLastName": "Adry",
-              "responsibleUserUsername": "adry",
-              "startDate": "2021-02-16",
-              "endDate": "2021-02-22",
-              "minimumAmount": "2000000",
-              "totalAmount": "7000000",
-              "state": "draft",
-              "rejectedNote": null
-          }
-      ],
-      "meta": {
-          "page": 1,
-          "prevPage": null,
-          "nextPage": null,
-          "perPage": 10
-      }
+            {
+                "status": "success",
+                "data": [
+                    {
+                        "id": "d4923882-f5a0-4517-9229-a0d9908a1eb6",
+                        "branchId": "eaaf465b-65bc-4784-909e-8d0180c6eb4c",
+                        "branchName": "Tangerang Pinang",
+                        "number": "BGT00001",
+                        "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                        "responsibleUserFirstName": "Adry",
+                        "responsibleUserLastName": "Adry",
+                        "responsibleUserUsername": "adry",
+                        "startDate": "2021-02-09T17:00:00.000Z",
+                        "endDate": "2021-02-15T17:00:00.000Z",
+                        "minimumAmount": "2000000",
+                        "totalAmount": "7000000",
+                        "state": "draft",
+                        "rejectedNote": null
+                    },
+                    {
+                        "id": "9177edfe-1846-4f6a-8e3d-11feabb9867d",
+                        "branchId": "28786cd1-bb9e-4926-a332-3a2e1c302e68",
+                        "branchName": "Medan",
+                        "number": "BGT00002",
+                        "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                        "responsibleUserFirstName": "Adry",
+                        "responsibleUserLastName": "Adry",
+                        "responsibleUserUsername": "adry",
+                        "startDate": "2021-02-16T17:00:00.000Z",
+                        "endDate": "2021-02-22T17:00:00.000Z",
+                        "minimumAmount": "2285714",
+                        "totalAmount": "8000000",
+                        "state": "draft",
+                        "rejectedNote": null
+                    },
+                    {
+                        "id": "46dc5599-43f0-4569-b5f0-33e25f4cd29c",
+                        "branchId": "eaaf465b-65bc-4784-909e-8d0180c6eb4c",
+                        "branchName": "Tangerang Pinang",
+                        "number": "BGT/2021/02/QHRT0857",
+                        "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                        "responsibleUserFirstName": "Adry",
+                        "responsibleUserLastName": "Adry",
+                        "responsibleUserUsername": "adry",
+                        "startDate": "2021-02-16T17:00:00.000Z",
+                        "endDate": "2021-02-22T17:00:00.000Z",
+                        "minimumAmount": "2000000",
+                        "totalAmount": "7000000",
+                        "state": "draft",
+                        "rejectedNote": null
+                    }
+                ],
+                "meta": {
+                    "page": 1,
+                    "prevPage": null,
+                    "nextPage": null,
+                    "perPage": 10
+                }
+            }
 
 + Response 500 (application/json)
     + Body
@@ -119,25 +121,25 @@ Create Budget data
 + Response 201 (application/json)
     + Body
 
-        {
-            "status": "success",
-            "data": {
-                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "branchId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "branchName": "Kebon Jeruk",
-                "number": "BG001",
-                "responsibleUserId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "responsibleUserFirstName": "Budi",
-                "responsibleUserLastName": "Handoko",
-                "responsibleUserUsername": 18122009,
-                "startDate": "2021-01-29",
-                "endDate": "2021-01-29",
-                "minimumAmount": 2000000,
-                "totalAmount": 5000000,
-                "state": "draft",
-                "rejectedNote": "Budget melebihi batas minimum"
+            {
+                "status": "success",
+                "data": {
+                    "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "branchId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "branchName": "Kebon Jeruk",
+                    "number": "BG001",
+                    "responsibleUserId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "responsibleUserFirstName": "Budi",
+                    "responsibleUserLastName": "Handoko",
+                    "responsibleUserUsername": 18122009,
+                    "startDate": "2021-01-29",
+                    "endDate": "2021-01-29",
+                    "minimumAmount": 2000000,
+                    "totalAmount": 5000000,
+                    "state": "draft",
+                    "rejectedNote": "Budget melebihi batas minimum"
+                }
             }
-        }
 
 + Response 400 (application/json)
     + Body
@@ -175,68 +177,68 @@ Get Budget detail.
 + Response 200 (application/json)
     + Body
 
-        {
-          "status": "success",
-          "data": {
-            "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-            "branchId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
-            "branchName": "Bandung",
-            "number": "REL-2020/01/AAB112",
-            "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
-            "responsibleUserFirstName": "Michael",
-            "responsibleUserLastName": "Jordan",
-            "responsibleUserUsername": "mjordan",
-            "startDate": "2021-01-27",
-            "endDate": "2021-01-27",
-            "totalAmount": 900000,
-            "minimumAmount": 0,
-            "state": "draft",
-            "rejectedNote": "ditolak",
-            "items": [
-              {
-                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "budgetId": "46dc5599-43f0-4569-b5f0-33e25f4cd29c",
-                "productId": "d786c337-39b5-40ab-952b-48cd186027bd",
-                "productName": "Bensin",
-                "productCode": "PRD202003AAA111",
-                "description": "Kebutuhan Pickup",
-                "amount": 1000000
-              }
-            ],
-            "histories": [
-              {
-                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "userId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "userFullName": "Jenny Safitri",
-                "userRole": "PIC HO",
-                "branchName": "Kebon Jeruk",
-                "state": "draft",
-                "rejectedNote": "Not OK",
-                "createdAt": "2021-03-23T08:22:44.765Z"
-              }
-            ]
-          }
-        }
+            {
+                "status": "success",
+                "data": {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "branchId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                    "branchName": "Bandung",
+                    "number": "REL-2020/01/AAB112",
+                    "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                    "responsibleUserFirstName": "Michael",
+                    "responsibleUserLastName": "Jordan",
+                    "responsibleUserUsername": "mjordan",
+                    "startDate": "2021-01-27",
+                    "endDate": "2021-01-27",
+                    "totalAmount": 900000,
+                    "minimumAmount": 0,
+                    "state": "draft",
+                    "rejectedNote": "ditolak",
+                    "items": [
+                    {
+                        "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                        "budgetId": "46dc5599-43f0-4569-b5f0-33e25f4cd29c",
+                        "productId": "d786c337-39b5-40ab-952b-48cd186027bd",
+                        "productName": "Bensin",
+                        "productCode": "PRD202003AAA111",
+                        "description": "Kebutuhan Pickup",
+                        "amount": 1000000
+                    }
+                    ],
+                    "histories": [
+                    {
+                        "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                        "userId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                        "userFullName": "Jenny Safitri",
+                        "userRole": "PIC HO",
+                        "branchName": "Kebon Jeruk",
+                        "state": "draft",
+                        "rejectedNote": "Not OK",
+                        "createdAt": "2021-03-23T08:22:44.765Z"
+                    }
+                    ]
+                }
+            }
 
 + Response 404 (application/json)
     + Body
 
-          {
-              "status": "fail",
-              "code": "BUDGET_NOT_FOUND",
-              "message": "budget {id} not found",
-              "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-          }
+            {
+                "status": "fail",
+                "code": "BUDGET_NOT_FOUND",
+                "message": "budget {id} not found",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
 
 + Response 500 (application/json)
     + Body
 
-        {
-            "status": "error",
-            "code": "GENERAL_ERROR",
-            "message": "Internal Server Error",
-            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-        }
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
 
 
 
@@ -295,68 +297,68 @@ Get Budget detail for Duplicate Budget.
 + Response 200 (application/json)
     + Body
 
-        {
-          "status": "success",
-          "data": {
-            "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-            "branchId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
-            "branchName": "Bandung",
-            "number": "REL-2020/01/AAB112",
-            "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
-            "responsibleUserFirstName": "Michael",
-            "responsibleUserLastName": "Jordan",
-            "responsibleUserUsername": "mjordan",
-            "startDate": "2021-01-27",
-            "endDate": "2021-01-27",
-            "totalAmount": 900000,
-            "minimumAmount": 0,
-            "state": "draft",
-            "rejectedNote": "ditolak",
-            "items": [
-              {
-                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "budgetId": "46dc5599-43f0-4569-b5f0-33e25f4cd29c",
-                "productId": "d786c337-39b5-40ab-952b-48cd186027bd",
-                "productName": "Bensin",
-                "productCode": "PRD202003AAA111",
-                "description": "Kebutuhan Pickup",
-                "amount": 1000000
-              }
-            ],
-            "histories": [
-              {
-                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "userId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "userFullName": "Jenny Safitri",
-                "userRole": "PIC HO",
-                "branchName": "Kebon Jeruk",
-                "state": "draft",
-                "rejectedNote": "Not OK",
-                "createdAt": "2021-03-23T08:22:44.765Z"
-              }
-            ]
-          }
-        }
+            {
+                "status": "success",
+                "data": {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "branchId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                    "branchName": "Bandung",
+                    "number": "REL-2020/01/AAB112",
+                    "responsibleUserId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
+                    "responsibleUserFirstName": "Michael",
+                    "responsibleUserLastName": "Jordan",
+                    "responsibleUserUsername": "mjordan",
+                    "startDate": "2021-01-27",
+                    "endDate": "2021-01-27",
+                    "totalAmount": 900000,
+                    "minimumAmount": 0,
+                    "state": "draft",
+                    "rejectedNote": "ditolak",
+                    "items": [
+                    {
+                        "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                        "budgetId": "46dc5599-43f0-4569-b5f0-33e25f4cd29c",
+                        "productId": "d786c337-39b5-40ab-952b-48cd186027bd",
+                        "productName": "Bensin",
+                        "productCode": "PRD202003AAA111",
+                        "description": "Kebutuhan Pickup",
+                        "amount": 1000000
+                    }
+                    ],
+                    "histories": [
+                    {
+                        "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                        "userId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                        "userFullName": "Jenny Safitri",
+                        "userRole": "PIC HO",
+                        "branchName": "Kebon Jeruk",
+                        "state": "draft",
+                        "rejectedNote": "Not OK",
+                        "createdAt": "2021-03-23T08:22:44.765Z"
+                    }
+                    ]
+                }
+            }
 
 + Response 404 (application/json)
     + Body
 
-          {
-              "status": "fail",
-              "code": "BUDGET_NOT_FOUND",
-              "message": "budget {id} not found",
-              "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-          }
+            {
+                "status": "fail",
+                "code": "BUDGET_NOT_FOUND",
+                "message": "budget {id} not found",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
 
 + Response 500 (application/json)
     + Body
 
-        {
-            "status": "error",
-            "code": "GENERAL_ERROR",
-            "message": "Internal Server Error",
-            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-        }
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
 
 
 ## Duplicate Existing Budget [POST /v1/budgets/duplicate]
@@ -384,25 +386,25 @@ Duplicate data Budget
 + Response 201 (application/json)
     + Body
 
-        {
-            "status": "success",
-            "data": {
-                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "branchId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "branchName": "Kebon Jeruk",
-                "number": "BG001",
-                "responsibleUserId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "responsibleUserFirstName": "Budi",
-                "responsibleUserLastName": "Handoko",
-                "responsibleUserUsername": 18122009,
-                "startDate": "2021-01-29",
-                "endDate": "2021-01-29",
-                "minimumAmount": 2000000,
-                "totalAmount": 5000000,
-                "state": "draft",
-                "rejectedNote": "Budget melebihi batas minimum"
+            {
+                "status": "success",
+                "data": {
+                    "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "branchId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "branchName": "Kebon Jeruk",
+                    "number": "BG001",
+                    "responsibleUserId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "responsibleUserFirstName": "Budi",
+                    "responsibleUserLastName": "Handoko",
+                    "responsibleUserUsername": 18122009,
+                    "startDate": "2021-01-29",
+                    "endDate": "2021-01-29",
+                    "minimumAmount": 2000000,
+                    "totalAmount": 5000000,
+                    "state": "draft",
+                    "rejectedNote": "Budget melebihi batas minimum"
+                }
             }
-        }
 
 + Response 400 (application/json)
     + Body
@@ -453,25 +455,25 @@ Duplicate data Budget
 + Response 201 (application/json)
     + Body
 
-        {
-            "status": "success",
-            "data": {
-                "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "branchId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "branchName": "Kebon Jeruk",
-                "number": "BG001",
-                "responsibleUserId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
-                "responsibleUserFirstName": "Budi",
-                "responsibleUserLastName": "Handoko",
-                "responsibleUserUsername": 18122009,
-                "startDate": "2021-01-29",
-                "endDate": "2021-01-29",
-                "minimumAmount": 2000000,
-                "totalAmount": 5000000,
-                "state": "draft",
-                "rejectedNote": "Budget melebihi batas minimum"
+            {
+                "status": "success",
+                "data": {
+                    "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "branchId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "branchName": "Kebon Jeruk",
+                    "number": "BG001",
+                    "responsibleUserId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "responsibleUserFirstName": "Budi",
+                    "responsibleUserLastName": "Handoko",
+                    "responsibleUserUsername": 18122009,
+                    "startDate": "2021-01-29",
+                    "endDate": "2021-01-29",
+                    "minimumAmount": 2000000,
+                    "totalAmount": 5000000,
+                    "state": "draft",
+                    "rejectedNote": "Budget melebihi batas minimum"
+                }
             }
-        }
 
 + Response 400 (application/json)
     + Body

@@ -378,10 +378,10 @@ export class BudgetService {
         // const checkDate = new Date(data.startDate);
   
         // Build BudgetItem
-        const items: BudgetItem[] = [];
+        const items = budgetItemExist;
         let totalAmountItem = 0;
         for (const v of data.items) {
-          const item = new BudgetItem();
+          const item = items;
           item.productId = v.productId;
           item.description = v.description;
           item.amount = v.amount;
@@ -402,10 +402,11 @@ export class BudgetService {
         budgetExist.minimumAmount = data.minimumAmount;
         budgetExist.rejectedNote = null;
         budgetExist.state = BudgetState.DRAFT;
-        budgetExist.histories = await this.buildHistory(budgetExist, {
-          state: BudgetState.DRAFT,
-          endDate: data.endDate,
-        });
+        // budgetExist.histories = await this.buildHistory(budgetExist, {
+        //   budgetId: id,
+        //   state: BudgetState.DRAFT,
+        //   endDate: data.endDate,
+        // });
         budgetExist.items = items;
         budgetExist.createUser = user;
         budgetExist.updateUser = user;

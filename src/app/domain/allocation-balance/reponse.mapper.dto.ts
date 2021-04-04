@@ -4,11 +4,14 @@ import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.en
 export class AllocationBalanceResponseMapper {
   public static toDTO(data: any): AllocationBalanceDTO {
     const it = new AllocationBalanceDTO();
-    it.branchId = data.branch_id;
-    it.branchName = data.branch_id;
+    it.id = data.id
+    it.branchId = data.branchId;
+    it.branchName = data.branchName;
     it.number = data.number;
+    it.amount = data.amount;
     it.responsibleUserId = data.responsibleUserId;
     it.picName = data.picName;
+    it.nik = data.nik;
     it.state = data.state;
     it.receivedDate = data.receivedDate;
     it.receivedUserId = data.receivedUserId;
@@ -22,12 +25,12 @@ export class AllocationBalanceResponseMapper {
       branchId: ety.branchId,
       branchName: ety.branch && ety.branch.branchName,
       number: ety.number,
-      responsibleUserId: ety.responsibleUserId,
-      picName: ety.responsibleUser && ety.responsibleUser.firstName,
+      amount: ety.amount,
+      picName: ety.responsibleUser && `${ety.responsibleUser?.firstName} ${ety.responsibleUser?.lastName}`,
+      nik: ety.responsibleUser && ety.responsibleUser.username,
       state: ety.state,
       receivedDate: ety.receivedDate,
-      receivedUserId: ety.receivedUserId,
-      receivedUserName: ety.receivedUser && ety.receivedUser.firstName,
+      receivedUserName: ety.receivedUser && `${ety.receivedUser?.firstName} ${ety.receivedUser?.lastName}`,
     });
   }
 

@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { getManager, Repository, Not } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Period } from '../../../model/period.entity';
 import {
@@ -209,5 +209,23 @@ export class PeriodService {
     await this.periodRepo.save(period);
 
     return new PeriodActionResponse(period);
+  }
+
+  public static async findByDate(date: Date = new Date()): Promise<Period> {
+    const period = await getManager()
+      .getRepository(Period)
+      .findOne({
+        where: {
+          month: date.getMonth() + 1,
+          year: date.getFullYear(),
+          isDeleted: false,
+        },
+      });
+
+    if (!period) {
+      throw new NotFoundException(`Period for ${date} not found!`);
+    }
+
+    return period;
   }
 }

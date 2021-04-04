@@ -33,6 +33,14 @@ export class CreateExpenseDTO {
   partnerId: string;
 
   @ApiPropertyOptional({
+    description: 'Down Payment ID',
+    example: 'b60b522a-d2d9-429c-83da-6f9c0f32bbf9',
+  })
+  @IsUUID()
+  @IsOptional()
+  downPaymentId: string;
+
+  @ApiPropertyOptional({
     description: 'Source Document',
     example: 'PARKIR-001',
   })

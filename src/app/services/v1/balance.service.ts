@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -6,21 +6,36 @@ import { AccountStatement } from '../../../model/account-statement.entity';
 import { Branch } from '../../../model/branch.entity';
 import { QueryBalanceDTO } from '../../domain/balance/balance.query.dto';
 import { BalanceWithPaginationResponse } from '../../domain/balance/response.dto';
+import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
+import { GenerateCode } from '../../../common/services/generate-code.service';
+import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.entity';
+import { AuthService } from './auth.service';
+import { ProductResponse } from '../../domain/product/response.dto';
+import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../shared/errors';
 
 @Injectable()
 export class BalanceService {
   constructor(
     @InjectRepository(AccountStatement)
     private readonly repoStatement: Repository<AccountStatement>,
+    @InjectRepository(CashBalanceAllocation)
+    private readonly allocationRepo: Repository<CashBalanceAllocation>,
   ) {}
+
+  private async getUserId() {
+    const user = await AuthService.getUser();
+    return user.id;
+  }
 
   public async list(
     query: QueryBalanceDTO,
   ): Promise<BalanceWithPaginationResponse> {
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(Branch, 'b', params);
+    const user = await AuthService.getUser({ relations: ['branches'] });
+    const userBranches = user?.branches?.map((v) => v.id);
 
-    qb.fieldResolverMap['branchId'] = 'id';
+    qb.fieldResolverMap['branchId'] = 'b.id';
 
     qb.applyFilterPagination();
     qb.selectRaw(
@@ -80,7 +95,12 @@ export class BalanceService {
     qb.qb.andWhere(
       `(bgt.state = 'approved_by_ss' OR bgt.state = 'approved_by_spv')`,
     );
-
+    if (userBranches?.length) {
+      qb.andWhere(
+        (e) => e.id,
+        (v) => v.in(userBranches),
+      );
+    }
     if (params.balanceDate__lte) {
       qb.qb.andWhere(
         `(:balanceDate >= bgt.start_date AND :balanceDate <= bgt.end_date)`,

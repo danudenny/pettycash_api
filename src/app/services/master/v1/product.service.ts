@@ -9,6 +9,7 @@ import { CreateProductDTO } from '../../../domain/product/create-product.dto';
 import UpdateProductDTO from '../../../domain/product/update-product.dto';
 import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../../shared/errors';
 import { GenerateCode } from '../../../../common/services/generate-code.service';
+import { AuthService } from '../../v1/auth.service';
 
 @Injectable()
 export class ProductService {
@@ -17,9 +18,9 @@ export class ProductService {
     private readonly productRepo: Repository<Product>,
   ) {}
 
-  async getUserId() {
-    // TODO: Use From Authentication User.
-    return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
+  private async getUserId() {
+    const user = await AuthService.getUser();
+    return user.id;
   }
 
   public async list(query?: QueryProductDTO): Promise<ProductWithPaginationResponse> {
@@ -87,27 +88,27 @@ export class ProductService {
   }
 
   public async update(id: string, data: UpdateProductDTO): Promise<ProductResponse> {
-    const values = await this.productRepo.create(data);
-    const prodExist = await this.productRepo.findOne({ id,isDeleted: false });
-    const prodNameExist = await this.productRepo.findOne({ name: values.name,isDeleted: false });
-    if (!prodExist) {
-      throw new NotFoundException('Product ID Tidak Ditemukan');
+    const product = await this.productRepo.findOne({
+      where: { id, isDeleted: false },
+    });
+    if (!product) {
+      throw new NotFoundException(`Produk ID ${id} not found!`);
     }
-    values.updateUserId = await this.getUserId();
 
-    if(prodNameExist) {
-      throw new BadRequestException(`Nama produk sudah terdaftar!`);
-    }
+    const updatedProduct = this.productRepo.create(data as Product);
+    updatedProduct.updateUserId = await this.getUserId();
 
     try {
-      const product = await this.productRepo.update(id, values);
-      return new ProductResponse(product as any);
+      await this.productRepo.update(id, updatedProduct);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(`Nama produk sudah terdaftar!`);
+        throw new BadRequestException(
+          `Nama product sudah pernah dibuat`,
+        );
       }
       throw err;
     }
+    return new ProductResponse;
 
   }
 
