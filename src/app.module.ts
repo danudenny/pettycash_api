@@ -27,6 +27,7 @@ import { AccountStatementModule } from './app/modules/account-statement.module';
 import { VoucherModule } from './app/modules/voucher.module';
 import { BudgetRequestModule } from './app/modules/budget.request.module';
 // import { BudgetRequestItemModule } from './app/modules/budget.request-item.module';
+import { AccountDailyClosingModule } from './app/modules/account-daily-closing.module';
 
 @Module({
   imports: [
@@ -61,7 +62,8 @@ import { BudgetRequestModule } from './app/modules/budget.request.module';
     AllocationBalanceModule,
     AccountStatementModule,
     VoucherModule,
-  ],
+    AccountDailyClosingModule,
+],
   controllers: [],
   providers: [],
 })
