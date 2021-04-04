@@ -367,29 +367,34 @@ export class BudgetService {
         const user = await this.getUser(true);
         const branchId = user && user.branches && user.branches[0].id;
 
-        const budgetItemExist = await this.budgetItemRepo.find({ budgetId: budgetExist.id, isDeleted: false });
-        if (budgetItemExist) {
-          for (const v of budgetItemExist) {
-            const budget = await this.budgetItemRepo.update(v.id, { isDeleted: true });
-          }
-        }
+        // const budgetItemExist = await this.budgetItemRepo.find({ budgetId: budgetExist.id, isDeleted: false });
+        // if (budgetItemExist) {
+        //   for (const v of budgetItemExist) {
+        //     data.items.forEach(element => {
+        //       if (element.) {
+
+        //       }
+        //     });
+        //     const budget = await this.budgetItemRepo.update(v.id, { isDeleted: true });
+        //   }
+        // }
   
         // const endDateData = await this.getBranch(branchId);
         // const checkDate = new Date(data.startDate);
   
         // Build BudgetItem
-        const items = budgetItemExist;
-        let totalAmountItem = 0;
-        for (const v of data.items) {
-          const item = items;
-          item.productId = v.productId;
-          item.description = v.description;
-          item.amount = v.amount;
-          item.createUser = user;
-          item.updateUser = user;
-          totalAmountItem = totalAmountItem + v.amount;
-          items.push(item);
-        }
+        // const items = budgetItemExist;
+        // let totalAmountItem = 0;
+        // for (const v of data.items) {
+        //   const item = items;
+        //   item.productId = v.productId;
+        //   item.description = v.description;
+        //   item.amount = v.amount;
+        //   item.createUser = user;
+        //   item.updateUser = user;
+        //   totalAmountItem = totalAmountItem + v.amount;
+        //   items.push(item);
+        // }
 
         // Build Budget
         // const budget = new Budget();
@@ -398,7 +403,7 @@ export class BudgetService {
         budgetExist.responsibleUserId = data.responsibleUserId;
         budgetExist.startDate = data.startDate;
         budgetExist.endDate = data.endDate;
-        budgetExist.totalAmount = totalAmountItem;
+        // budgetExist.totalAmount = totalAmountItem;
         budgetExist.minimumAmount = data.minimumAmount;
         budgetExist.rejectedNote = null;
         budgetExist.state = BudgetState.DRAFT;
@@ -407,7 +412,7 @@ export class BudgetService {
         //   state: BudgetState.DRAFT,
         //   endDate: data.endDate,
         // });
-        budgetExist.items = items;
+        // budgetExist.items = items;
         budgetExist.createUser = user;
         budgetExist.updateUser = user;
 

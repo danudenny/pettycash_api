@@ -19,6 +19,12 @@ export class BudgetRequestDetailDTO {
   branchId: string;
 
   @ApiProperty({
+    description: 'Budget Id',
+    example: '04e431ee-058c-4e61-a1a0-f5c7cd21e9f3',
+  })
+  budgetId: string;
+
+  @ApiProperty({
     description: 'Budget Request Branch Name',
     example: 'Bandung',
   })

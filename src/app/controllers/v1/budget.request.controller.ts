@@ -19,8 +19,9 @@ import { BudgetRequestResponse, BudgetRequestWithPaginationResponse } from '../.
 import { QueryBudgetRequestDTO } from '../../domain/budget-request/budget-request.payload.dto';
 import { BudgetRequestDetailResponse } from '../../domain/budget-request/budget-request-detail-response.dto';
 import { CreateBudgetRequestDTO, RejectBudgetRequestDTO, UpdateBudgetRequestDTO } from '../../domain/budget-request/budget-request-createUpdate.dto';
+import { BudgetResponse } from '../../domain/budget/budget-response.dto';
 
-@Controller('v1/budgets-request')
+@Controller('v1/budget-requests')
 @ApiTags('Budget Request')
 export class BudgetRequestController {
   constructor(private budgetRequestService: BudgetRequestService) {
@@ -43,6 +44,18 @@ export class BudgetRequestController {
     @Param() { id }: FindIdParams,
   ) {
     return await this.budgetRequestService.getById(id);
+  }
+
+  @Get('/get-budget/:needDate')
+  @ApiParam({ name: 'needDate' })
+  @ApiOperation({ summary: 'Get Budget Data by Need Date' })
+  @ApiOkResponse({ type: BudgetResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async getBudget(
+    @Param('needDate') needDate: Date,
+  ) {
+    console.log(needDate);
+    return await this.budgetRequestService.getBudget(needDate);
   }
 
   @Post('')

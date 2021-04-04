@@ -5,15 +5,15 @@ import { BudgetState } from '../../../model/utils/enum';
 export class QueryBudgetDTO extends BasePayload {
   @ApiPropertyOptional({
     description: 'Budget Start Date',
-    example: '2021-01-29T09:00:29.803Z',
+    example: '2021-01-01',
   })
-  startDate: Date;
+  startDate__gte: Date;
 
   @ApiPropertyOptional({
     description: 'Budget End Date',
-    example: '2021-01-30T09:00:29.803Z',
+    example: '2021-12-31',
   })
-  endDate: Date;
+  endDate__lte: Date;
 
   @ApiPropertyOptional({
     description: 'Branch Id',
@@ -25,13 +25,13 @@ export class QueryBudgetDTO extends BasePayload {
     description: 'Minimum Range Total Amount',
     example: 1000000.0,
   })
-  minAmount: number;
+  minAmount__gte: number;
 
   @ApiPropertyOptional({
     description: 'Maximum Range Total Amount',
     example: 5000000.0,
   })
-  maxAmount: number;
+  maxAmount__lte: number;
 
   @ApiPropertyOptional({
     description: 'Budget State',
