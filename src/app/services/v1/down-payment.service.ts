@@ -84,7 +84,6 @@ export class DownPaymentService {
         ['dp.amount', 'amount'],
         ['dp.branch_id', 'branchId'],
         ['dp.employee_id', 'employeeId'],
-        ['dp.is_realized', 'isRealized'],
         ['dp.description', 'description'],
         ['dp.payment_type', 'paymentType'],
         ['dp.department_id', 'departmentId'],
