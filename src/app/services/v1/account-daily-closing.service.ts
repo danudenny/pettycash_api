@@ -1,7 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getManager, EntityManager } from 'typeorm';
+import { 
+  Repository, 
+  getManager, 
+  EntityManager,
+  createQueryBuilder 
+} from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { AttachmentService } from '../../../common/services/attachment.service';
 import { AccountCashboxItem } from '../../../model/account-cashbox-item.entity';
@@ -23,7 +28,9 @@ export class AccountDailyClosingService {
 
   constructor(
     @InjectRepository(AccountDailyClosing)
-    private readonly accountDailyClosingRepo: Repository<AccountDailyClosing>
+    private readonly accountDailyClosingRepo: Repository<AccountDailyClosing>,
+    @InjectRepository(Attachment)
+    private readonly attachmentRepo: Repository<Attachment>
   ) {}
 
   public async list(
@@ -157,6 +164,32 @@ export class AccountDailyClosingService {
     } catch (error) {
       throw new BadRequestException(error);
     }
+  }
+
+  public async deleteAttachment(
+    id: string,
+    attachmentId: string,
+  ): Promise<CreateAccountDailyClosingResponse> {
+    const attExist = await createQueryBuilder('attachment', 'att')
+      .leftJoin('account_daily_closing_attachment', 'adct', 'att.id = adct.attachment_id')
+      .where('adct.account_daily_closing_id = :id', { id })
+      .andWhere('adct.attachment_id = :attachmentId', { attachmentId })
+      .andWhere('att.isDeleted = false')
+      .getOne();
+
+    if (!attExist) {
+      throw new NotFoundException(`Attachment ${attachmentId} not found!`);
+    }
+
+    const deleteAttachment = await this.attachmentRepo.update(attachmentId, {
+      isDeleted: true,
+    });
+
+    if (!deleteAttachment) {
+      throw new BadRequestException('Gagal menghapus attachment!');
+    }
+    
+    return new CreateAccountDailyClosingResponse(attExist);
   }
 
   private async getAccountDailyClosingFromDTO(payload: CreateAccountDailyClosingDTO) {

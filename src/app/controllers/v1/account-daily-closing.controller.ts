@@ -1,6 +1,7 @@
 import { 
   Body, 
   Controller, 
+  Delete, 
   Get, 
   Param, 
   ParseUUIDPipe, 
@@ -16,9 +17,11 @@ import {
   ApiConsumes, 
   ApiCreatedResponse, 
   ApiInternalServerErrorResponse, 
+  ApiNoContentResponse, 
   ApiNotFoundResponse, 
   ApiOkResponse, 
   ApiOperation, 
+  ApiParam, 
   ApiTags 
 } from '@nestjs/swagger';
 import { CreateAccountDailyClosingAttachmentDTO } from '../../domain/account-daily-closing/dto/create-account-daily-closing-attachment.dto';
@@ -29,6 +32,7 @@ import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-cl
 import { AccountDailyClosingWithPaginationResponse } from '../../domain/account-daily-closing/response/get-all-account-daily-closing.response';
 import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/dto/query-account-daily-closing.payload.dto';
 import { AccountDailyClosingService } from '../../services/v1/account-daily-closing.service';
+import FindIdParams, { FindAttachmentIdParams } from '../../domain/common/findId-param.dto';
 
 @Controller('v1/account-daily-closing')
 @ApiTags('Account Daily Closing')
@@ -87,5 +91,17 @@ export class AccountDailyClosingController {
     @UploadedFiles() attachments: any,
   ) {
     return await this.svc.createAttachment(id, attachments);
+  }
+
+  @Delete('/:id/attachments/:attachmentId')
+  @ApiParam({ name: 'attachmentId' })
+  @ApiParam({ name: 'id' })
+  @ApiOperation({ summary: 'Delete Account Daily Closing Attachment' })
+  @ApiNoContentResponse({ description: 'Successfully delete attachment' })
+  public async deleteAttachment(
+    @Param() { id }: FindIdParams,
+    @Param() { attachmentId }: FindAttachmentIdParams,
+  ) {
+    return await this.svc.deleteAttachment(id, attachmentId);
   }
 }
