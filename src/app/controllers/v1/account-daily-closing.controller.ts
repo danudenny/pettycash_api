@@ -22,7 +22,7 @@ import {
   ApiTags 
 } from '@nestjs/swagger';
 import { CreateAccountDailyClosingAttachmentDTO } from '../../domain/account-daily-closing/dto/create-account-daily-closing-attachment.dto';
-import { CreateAccountDailyClosingAttachmentResponse } from '../../domain/account-daily-closing/response/create-account-daily-closing-attachments.response';
+import { AccountDailyClosingAttachmentResponse } from '../../domain/account-daily-closing/response/account-daily-closing-attachments.response';
 import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/dto/create-account-daily-closing.dto';
 import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/response/create-account-daily-closing.response';
 import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-closing/response/get-account-daily-closing.response';
@@ -67,11 +67,19 @@ export class AccountDailyClosingController {
     return await this.svc.create(payload);
   }
 
+  @Get('/:id/attachments')
+  @ApiOperation({ summary: 'List of Account Daily Closing Attachment' })
+  @ApiOkResponse({ type: AccountDailyClosingAttachmentResponse })
+  @ApiNotFoundResponse({ description: 'Attachments not found.' })
+  public async listAttachment(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.svc.listAttachment(id);
+  }
+
   @Post('/:id/attachments')
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Create Account Daily Closing Attachment' })
   @UseInterceptors(FilesInterceptor('attachments'))
-  @ApiCreatedResponse({ type: CreateAccountDailyClosingAttachmentResponse })
+  @ApiCreatedResponse({ type: AccountDailyClosingAttachmentResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   @ApiBody({ type: CreateAccountDailyClosingAttachmentDTO })
   public async createAttachment(

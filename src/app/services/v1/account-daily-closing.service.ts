@@ -10,7 +10,7 @@ import { Attachment } from '../../../model/attachment.entity';
 import { User } from '../../../model/user.entity';
 import { AccountDailyClosingAttachmentDTO } from '../../domain/account-daily-closing/dto/account-daily-closing-attachment.dto';
 import { CreateAccountCashboxItemsDTO } from '../../domain/account-daily-closing/dto/create-account-cashbox-items.dto';
-import { CreateAccountDailyClosingAttachmentResponse } from '../../domain/account-daily-closing/response/create-account-daily-closing-attachments.response';
+import { AccountDailyClosingAttachmentResponse } from '../../domain/account-daily-closing/response/account-daily-closing-attachments.response';
 import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/dto/create-account-daily-closing.dto';
 import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/response/create-account-daily-closing.response';
 import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-closing/response/get-account-daily-closing.response';
@@ -64,7 +64,7 @@ export class AccountDailyClosingService {
     });
     
     if (!accountDailyClosing) {
-      throw new NotFoundException(`Expense ID ${id} not found!`);
+      throw new NotFoundException(`Account Daily Closing ID ${id} not found!`);
     }
 
     return new AccountDailyClosingDetailResponse(accountDailyClosing);
@@ -79,10 +79,49 @@ export class AccountDailyClosingService {
     return new CreateAccountDailyClosingResponse(result);
   }
 
+  public async listAttachment(
+    accountDailyClosingId: string,
+  ): Promise<AccountDailyClosingAttachmentResponse> {
+    const qb = new QueryBuilder(AccountDailyClosing, 'adc', {});
+
+    qb.selectRaw(
+      ['adc.id', 'accountDailyClosingId'],
+      ['att.id', 'id'],
+      ['att."name"', 'name'],
+      ['att.filename', 'fileName'],
+      ['att.file_mime', 'fileMime'],
+      ['att.url', 'url'],
+    );
+    qb.innerJoin(
+      (e) => e.attachments,
+      'att',
+      (j) =>
+        j.andWhere(
+          (e) => e.isDeleted,
+          (v) => v.isFalse(),
+        ),
+    );
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+    qb.andWhere(
+      (e) => e.id,
+      (v) => v.equals(accountDailyClosingId),
+    );
+
+    const attachments = await qb.exec();
+    if (!attachments) {
+      throw new NotFoundException(`Attachments not found!`);
+    }
+
+    return new AccountDailyClosingAttachmentResponse(attachments);
+  }
+
   public async createAttachment(
     accountDailyClosingId: string,
     files?: any,
-  ): Promise<CreateAccountDailyClosingAttachmentResponse> {
+  ): Promise<AccountDailyClosingAttachmentResponse> {
     try {
       const createAttachment = await getManager().transaction(
         async (manager) => {
@@ -111,7 +150,7 @@ export class AccountDailyClosingService {
         }
       );
       
-      return new CreateAccountDailyClosingAttachmentResponse(
+      return new AccountDailyClosingAttachmentResponse(
         createAttachment as AccountDailyClosingAttachmentDTO[]
       );
 
