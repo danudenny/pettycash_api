@@ -10,8 +10,8 @@ HOST: http://pettycash.api.url
 Untuk mendapatkan daftar budget.
 
 + Parameters
-    + startDate__gte: `2021-02-09T17:00:00.000Z` (date, optional) - Searching budget with date range from date start.
-    + endDate__gte: `2021-02-15T17:00:00.000Z` (date, optional) - Searching budget with date range from end date.
+    + startDate__gte: `2021-02-09` (date, optional) - Searching budget with date range from date start.
+    + endDate__gte: `2021-02-15` (date, optional) - Searching budget with date range from end date.
     + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string, optional) - Searching budget by branch id.
     + minAmount__gte: `1000000` (number, optional) - Searching range total amount - min.
     + maxAmount__gte: `8000000` (number, optional) - Searching range total amount - max.
@@ -86,6 +86,7 @@ Untuk mendapatkan daftar budget.
                     "perPage": 10
                 }
             }
+
 + Response 500 (application/json)
     + Body
 
@@ -238,6 +239,47 @@ Get Budget detail.
                 "message": "Internal Server Error",
                 "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
             }
+
+
+
+## Get Budget by ID [GET /v1/budgets/branch/{branchId}]
+
+Get Budget Time data.
+
++ Parameters
+    + id: `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - Branch ID to Retrieve.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+          "2021-03-23"
+        }
+
++ Response 404 (application/json)
+    + Body
+
+          {
+              "status": "fail",
+              "code": "BUDGET_NOT_FOUND",
+              "message": "budget {id} not found",
+              "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+          }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
 
 
 ## Get Budget by ID For Duplicate [GET /v1/budgets/{id}/duplicate]

@@ -35,16 +35,16 @@ export class BudgetController {
     return await this.budgetService.list(query);
   }
 
-  // @Get('/branch/:branchId')
-  // @ApiParam({ name: 'branchId' })
-  // @ApiOperation({ summary: 'Get Budget with Branch ID' })
-  // @ApiOkResponse({ type: BudgetResponse })
-  // @ApiBadRequestResponse({ description: 'Bad Request' })
-  // public async getBranch(
-  //   @Param() { branchId }: FindBudgetIdParams,
-  // ) {
-  //   return await this.budgetService.getBranch(branchId);
-  // }
+  @Get('/branch/:branchId')
+  @ApiParam({ name: 'branchId' })
+  @ApiOperation({ summary: 'Get Budget Time with Branch ID' })
+  @ApiOkResponse({ type: BudgetResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async getBranch(
+    @Param() { branchId }: FindBudgetIdParams,
+  ) {
+    return await this.budgetService.getBranch(branchId);
+  }
 
   @Get('/:id')
   @ApiParam({ name: 'id' })
