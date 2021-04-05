@@ -8,4 +8,20 @@ export class AccountDailyClosingMapper {
 
     return it;
   }
+
+  public static fromArrayDTO(dto: Partial<AccountDailyClosingDTO[]>) {
+    const it = dto.map((accountDailyClosingDTO) => {
+      const item = new AccountDailyClosingDTO();
+      item.id = accountDailyClosingDTO.id;
+      item.closingDate = accountDailyClosingDTO.closingDate;
+      item.openingBankAmount = accountDailyClosingDTO.openingBankAmount;
+      item.closingBankAmount = accountDailyClosingDTO.closingBankAmount;
+      item.openingCashAmount = accountDailyClosingDTO.openingCashAmount;
+      item.closingCashAmount = accountDailyClosingDTO.closingCashAmount;
+
+      return item;
+    })
+
+    return it;
+  }
 }

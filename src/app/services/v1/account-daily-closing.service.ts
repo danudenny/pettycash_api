@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { AccountCashboxItem } from '../../../model/account-cashbox-item.entity';
 import { AccountDailyClosing } from '../../../model/account-daily-closing.entity';
 import { CreateAccountCashboxItemsDTO } from '../../domain/account-daily-closing/create-account-cashbox-items.dto';
 import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/create-account-daily-closing.dto';
-import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/create-account-daily-closing.response';
+import { 
+  AccountDailyClosingWithPaginationResponse, 
+  CreateAccountDailyClosingResponse 
+} from '../../domain/account-daily-closing/create-account-daily-closing.response';
+import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/query-account-daily-closing.payload.dto';
 import { AuthService } from './auth.service';
 
 @Injectable()
@@ -15,6 +20,37 @@ export class AccountDailyClosingService {
     @InjectRepository(AccountDailyClosing)
     private readonly accountDailyClosingRepo: Repository<AccountDailyClosing>
   ) {}
+
+  public async list(
+    query?: QueryAccountDailyClosingDTO,
+  ): Promise<AccountDailyClosingWithPaginationResponse> {
+    const params = { order: '^created_at', limit: 10, ...query };
+    const qb = new QueryBuilder(AccountDailyClosing, 'adc', params);
+
+    qb.fieldResolverMap['startDate__gte'] = 'adc.closingDate';
+    qb.fieldResolverMap['endDate__gte'] = 'adc.closingDate';
+
+    qb.applyFilterPagination();
+    qb.selectRaw(
+      ['adc.id', 'id'],
+      ['adc.closing_date', 'closingDate'],
+      ['adc.responsible_user_id', 'responsibleUserId'],
+      ['usr.first_name', 'responsibleUserFirstName'],
+      ['usr.last_name', 'responsibleUserLastName'],
+      ['adc.opening_bank_amount', 'openingBankAmount'],
+      ['adc.closing_bank_amount', 'closingBankAmount'],
+      ['adc.opening_cash_amount', 'openingCashAmount'],
+      ['adc.closing_cash_amount', 'closingCashAmount']
+    );
+    qb.leftJoin((e) => e.createUser, 'usr');
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse()
+    )
+
+    const accountDailyClosing = await qb.exec();
+    return new AccountDailyClosingWithPaginationResponse(accountDailyClosing, params);
+  }
 
   public async create(
     payload: CreateAccountDailyClosingDTO

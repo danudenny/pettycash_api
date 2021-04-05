@@ -1,14 +1,25 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { 
+  Body, 
+  Controller, 
+  Get, 
+  Post, 
+  Query
+} from '@nestjs/common';
 import { 
   ApiBadRequestResponse, 
   ApiBody, 
   ApiCreatedResponse, 
   ApiInternalServerErrorResponse, 
+  ApiOkResponse, 
   ApiOperation, 
   ApiTags 
 } from '@nestjs/swagger';
 import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/create-account-daily-closing.dto';
-import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/create-account-daily-closing.response';
+import { 
+  AccountDailyClosingWithPaginationResponse, 
+  CreateAccountDailyClosingResponse 
+} from '../../domain/account-daily-closing/create-account-daily-closing.response';
+import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/query-account-daily-closing.payload.dto';
 import { AccountDailyClosingService } from '../../services/v1/account-daily-closing.service';
 
 @Controller('v1/daily-closing')
@@ -17,6 +28,16 @@ import { AccountDailyClosingService } from '../../services/v1/account-daily-clos
 export class AccountDailyClosingController {
 
   constructor(private svc: AccountDailyClosingService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List all Account daily closing' })
+  @ApiOkResponse({ type: AccountDailyClosingWithPaginationResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async list(
+    @Query() query: QueryAccountDailyClosingDTO,
+  ): Promise<AccountDailyClosingWithPaginationResponse> {
+    return await this.svc.list(query);
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create Account Daily Closing' })
