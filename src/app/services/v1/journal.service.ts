@@ -41,8 +41,9 @@ export class JournalService {
     query: QueryJournalDTO,
   ): Promise<JournalWithPaginationResponse> {
     const user = await AuthService.getUser({ relations: ['role', 'branches'] });
-    const userRole = user?.role?.name;
+    const userRole = user?.role?.name as MASTER_ROLES;
     const userBranches = user?.branches?.map((v) => v.id);
+    const SS_SPV_ROLES = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO];
 
     const params = { order: '-transactionDate', ...query };
     const qb = new QueryBuilder(Journal, 'j', params);
@@ -113,17 +114,25 @@ export class JournalService {
       (v) => v.isFalse(),
     );
 
+    // filter by assigned branch if userRole SS/SPV HO.
+    if (SS_SPV_ROLES.includes(userRole)) {
+      if (userBranches?.length) {
+        qb.andWhere(
+          (e) => e.branchId,
+          (v) => v.in(userBranches),
+        );
+      }
+    }
+
     // if userRole is Tax, only show journal that contains tax
     if (userRole === MASTER_ROLES.TAX) {
-      if (userBranches?.length) {
-        const journalTaxSql = `SELECT tji.journal_id
-          FROM journal_item tji
-          INNER JOIN account_coa tac ON tac.id = tji.coa_id
-          WHERE tac.internal_type = '${AccountCoaInternalType.TAX}'
-          GROUP BY tji.journal_id`;
+      const journalTaxSql = `SELECT tji.journal_id
+        FROM journal_item tji
+        INNER JOIN account_coa tac ON tac.id = tji.coa_id
+        WHERE tac.internal_type = '${AccountCoaInternalType.TAX}'
+        GROUP BY tji.journal_id`;
 
-        qb.qb.andWhere(`(j.id IN (${journalTaxSql}))`);
-      }
+      qb.qb.andWhere(`(j.id IN (${journalTaxSql}))`);
     }
 
     const journals = await qb.exec();
