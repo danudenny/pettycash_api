@@ -24,7 +24,7 @@ import { AccountDailyClosingWithPaginationResponse } from '../../domain/account-
 import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/query-account-daily-closing.payload.dto';
 import { AccountDailyClosingService } from '../../services/v1/account-daily-closing.service';
 
-@Controller('v1/daily-closing')
+@Controller('v1/account-daily-closing')
 @ApiTags('Account Daily Closing')
 @ApiInternalServerErrorResponse({ description: 'General Error' })
 export class AccountDailyClosingController {
