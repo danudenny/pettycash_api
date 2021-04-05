@@ -5,11 +5,15 @@ import {
   Param, 
   ParseUUIDPipe, 
   Post, 
-  Query
+  Query,
+  UploadedFiles,
+  UseInterceptors
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { 
   ApiBadRequestResponse, 
   ApiBody, 
+  ApiConsumes, 
   ApiCreatedResponse, 
   ApiInternalServerErrorResponse, 
   ApiNotFoundResponse, 
@@ -17,6 +21,8 @@ import {
   ApiOperation, 
   ApiTags 
 } from '@nestjs/swagger';
+import { CreateAccountDailyClosingAttachmentDTO } from '../../domain/account-daily-closing/create-account-daily-closing-attachment.dto';
+import { CreateAccountDailyClosingAttachmentResponse } from '../../domain/account-daily-closing/create-account-daily-closing-attachments.response';
 import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/create-account-daily-closing.dto';
 import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/create-account-daily-closing.response';
 import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-closing/get-account-daily-closing.response';
@@ -59,5 +65,19 @@ export class AccountDailyClosingController {
   @ApiBody({ type: CreateAccountDailyClosingDTO })
   public async create(@Body() payload: CreateAccountDailyClosingDTO) {
     return await this.svc.create(payload);
+  }
+
+  @Post('/:id/attachments')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Create Account Daily Closing Attachment' })
+  @UseInterceptors(FilesInterceptor('attachments'))
+  @ApiCreatedResponse({ type: CreateAccountDailyClosingAttachmentResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiBody({ type: CreateAccountDailyClosingAttachmentDTO })
+  public async createAttachment(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @UploadedFiles() attachments: any,
+  ) {
+    return await this.svc.createAttachment(id, attachments);
   }
 }

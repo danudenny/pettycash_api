@@ -1,11 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, getManager, EntityManager } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
+import { AttachmentService } from '../../../common/services/attachment.service';
 import { AccountCashboxItem } from '../../../model/account-cashbox-item.entity';
 import { AccountDailyClosing } from '../../../model/account-daily-closing.entity';
+import { Attachment } from '../../../model/attachment.entity';
 import { User } from '../../../model/user.entity';
+import { AccountDailyClosingAttachmentDTO } from '../../domain/account-daily-closing/account-daily-closing-attachment.dto';
 import { CreateAccountCashboxItemsDTO } from '../../domain/account-daily-closing/create-account-cashbox-items.dto';
+import { CreateAccountDailyClosingAttachmentResponse } from '../../domain/account-daily-closing/create-account-daily-closing-attachments.response';
 import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/create-account-daily-closing.dto';
 import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/create-account-daily-closing.response';
 import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-closing/get-account-daily-closing.response';
@@ -74,6 +79,47 @@ export class AccountDailyClosingService {
     return new CreateAccountDailyClosingResponse(result);
   }
 
+  public async createAttachment(
+    accountDailyClosingId: string,
+    files?: any,
+  ): Promise<CreateAccountDailyClosingAttachmentResponse> {
+    try {
+      const createAttachment = await getManager().transaction(
+        async (manager) => {
+          const accountDailyClosing = await manager.findOne(AccountDailyClosing, {
+            where: { id: accountDailyClosingId, isDeleted: false },
+            relations: ['attachments']
+          });
+
+          if (!accountDailyClosing) {
+            throw new NotFoundException(`Account Daily Closing ${accountDailyClosingId} not found!`);
+          }
+
+          const existingAttachments = accountDailyClosing.attachments;
+          const newAttachments: Attachment[] = await this.uploadAndRetrieveFiles(
+            accountDailyClosingId, 
+            manager, 
+            files
+          );
+          
+          accountDailyClosing.attachments = [].concat(existingAttachments, newAttachments);
+          accountDailyClosing.updateUser = await AuthService.getUser();
+
+          await manager.save(accountDailyClosing);
+
+          return newAttachments;
+        }
+      );
+      
+      return new CreateAccountDailyClosingAttachmentResponse(
+        createAttachment as AccountDailyClosingAttachmentDTO[]
+      );
+
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
   private async getAccountDailyClosingFromDTO(payload: CreateAccountDailyClosingDTO) {
     const user = await AuthService.getUser({ relations: ['branches'] });
     const branchId = user && user.branches && user.branches[0].id;
@@ -114,5 +160,29 @@ export class AccountDailyClosingService {
     });
 
     return items;
+  }
+
+  private async uploadAndRetrieveFiles(
+    accountDailyClosingId: string,
+    manager: EntityManager,
+    files?: any
+  ): Promise<Attachment[]> {
+    let newAttachments: Attachment[] = []
+
+    if (files && files.length) {
+      const accountDailyClosingPath = `accountDailyClosingPath/${accountDailyClosingId}`
+      newAttachments = await AttachmentService.uploadFiles(
+        files,
+        (file) => {
+          const rid = randomStringGenerator().split('-')[0];
+          const pathId = `${accountDailyClosingPath}_${rid}_${file.originalname}`;
+
+          return pathId;
+        },
+        manager
+      );
+    }
+
+    return newAttachments;
   }
 }
