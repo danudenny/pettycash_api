@@ -1,7 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsUUID } from "class-validator";
+import { AccountCashboxItemsDTO } from "./account-cashbox-items.dto";
 
-export class AccountDailyClosingDTO {
+export class AccountDailyClosingDetailDTO {
 
   @ApiProperty({
     description: 'Account Daily Closing ID',
@@ -57,4 +58,10 @@ export class AccountDailyClosingDTO {
     example: 2000000,
   })
   closingCashAmount: number;
+
+  @ApiProperty({
+    description: 'Account Cashbox Items',
+    type: [AccountCashboxItemsDTO],
+  })
+  accountCashboxItems: AccountCashboxItemsDTO[];
 }

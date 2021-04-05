@@ -2,6 +2,8 @@ import {
   Body, 
   Controller, 
   Get, 
+  Param, 
+  ParseUUIDPipe, 
   Post, 
   Query
 } from '@nestjs/common';
@@ -10,15 +12,15 @@ import {
   ApiBody, 
   ApiCreatedResponse, 
   ApiInternalServerErrorResponse, 
+  ApiNotFoundResponse, 
   ApiOkResponse, 
   ApiOperation, 
   ApiTags 
 } from '@nestjs/swagger';
 import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/create-account-daily-closing.dto';
-import { 
-  AccountDailyClosingWithPaginationResponse, 
-  CreateAccountDailyClosingResponse 
-} from '../../domain/account-daily-closing/create-account-daily-closing.response';
+import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/create-account-daily-closing.response';
+import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-closing/get-account-daily-closing.response';
+import { AccountDailyClosingWithPaginationResponse } from '../../domain/account-daily-closing/get-all-account-daily-closing.response';
 import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/query-account-daily-closing.payload.dto';
 import { AccountDailyClosingService } from '../../services/v1/account-daily-closing.service';
 
@@ -37,6 +39,14 @@ export class AccountDailyClosingController {
     @Query() query: QueryAccountDailyClosingDTO,
   ): Promise<AccountDailyClosingWithPaginationResponse> {
     return await this.svc.list(query);
+  }
+
+  @Get('/:id')
+  @ApiOperation({ summary: 'Get Account Daily Closing Details' })
+  @ApiOkResponse({ type: AccountDailyClosingDetailResponse })
+  @ApiNotFoundResponse({ description: 'Account Daily Closing not found' })
+  public async get(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.svc.getById(id);
   }
 
   @Post()

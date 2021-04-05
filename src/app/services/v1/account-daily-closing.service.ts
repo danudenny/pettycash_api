@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -6,10 +6,9 @@ import { AccountCashboxItem } from '../../../model/account-cashbox-item.entity';
 import { AccountDailyClosing } from '../../../model/account-daily-closing.entity';
 import { CreateAccountCashboxItemsDTO } from '../../domain/account-daily-closing/create-account-cashbox-items.dto';
 import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/create-account-daily-closing.dto';
-import { 
-  AccountDailyClosingWithPaginationResponse, 
-  CreateAccountDailyClosingResponse 
-} from '../../domain/account-daily-closing/create-account-daily-closing.response';
+import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/create-account-daily-closing.response';
+import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-closing/get-account-daily-closing.response';
+import { AccountDailyClosingWithPaginationResponse } from '../../domain/account-daily-closing/get-all-account-daily-closing.response';
 import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/query-account-daily-closing.payload.dto';
 import { AuthService } from './auth.service';
 
@@ -50,6 +49,19 @@ export class AccountDailyClosingService {
 
     const accountDailyClosing = await qb.exec();
     return new AccountDailyClosingWithPaginationResponse(accountDailyClosing, params);
+  }
+
+  public async getById(id: string): Promise<AccountDailyClosingDetailResponse> {
+    const accountDailyClosing = await this.accountDailyClosingRepo.findOne({
+      where: { id, isDeleted: false },
+      relations: ['createUser', 'cashItems']
+    });
+    
+    if (!accountDailyClosing) {
+      throw new NotFoundException(`Expense ID ${id} not found!`);
+    }
+
+    return new AccountDailyClosingDetailResponse(accountDailyClosing);
   }
 
   public async create(

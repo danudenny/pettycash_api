@@ -1,3 +1,7 @@
+import { AccountCashboxItem } from '../../../model/account-cashbox-item.entity';
+import { AccountDailyClosing } from '../../../model/account-daily-closing.entity';
+import { AccountCashboxItemsDTO } from './account-cashbox-items.dto';
+import { AccountDailyClosingDetailDTO } from './account-daily-closing-detail.dto';
 import { AccountDailyClosingDTO } from './account-daily-closing.dto';
 
 export class AccountDailyClosingMapper {
@@ -23,5 +27,35 @@ export class AccountDailyClosingMapper {
     })
 
     return it;
+  }
+
+  public static fromEntity(entity: Partial<AccountDailyClosing>) {
+    const item = new AccountDailyClosingDetailDTO();
+    item.id = entity.id;
+    item.closingDate = entity.closingDate;
+    item.responsibleUserId = entity.responsibleUserId;
+    item.responsibleUserFirstName = entity.createUser && entity.createUser.firstName;
+    item.responsibleUserLastName = entity.createUser && entity.createUser.lastName;
+    item.openingBankAmount = entity.openingBankAmount;
+    item.closingBankAmount = entity.closingBankAmount;
+    item.openingCashAmount = entity.openingCashAmount;
+    item.closingCashAmount = entity.closingCashAmount;
+    item.accountCashboxItems = this.toAccountCashboxItemsDTO(entity.cashItems);
+
+    return item;
+  }
+
+  private static toAccountCashboxItemsDTO(entities: AccountCashboxItem[]) {
+    const items = entities.map((entity) => {
+      const item = new AccountCashboxItemsDTO();
+      item.id = entity.id;
+      item.pieces = entity.pieces;
+      item.total = entity.total;
+      item.totalAmount = entity.totalAmount;
+
+      return item;
+    })
+
+    return items;
   }
 }
