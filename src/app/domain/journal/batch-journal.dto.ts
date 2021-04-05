@@ -23,5 +23,5 @@ export class BatchJournalDTO {
     type: [BatchJournalIdDTO],
   })
   @IsArray()
-  fail: BatchJournalIdDTO[]
+  fail: BatchJournalIdDTO[];
 }

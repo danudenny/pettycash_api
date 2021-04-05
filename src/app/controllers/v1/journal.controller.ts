@@ -18,7 +18,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { BatchApproveJournalDTO } from '../../domain/journal/approve.dto';
+import { BatchPayloadJournalDTO } from '../../domain/journal/approve.dto';
 import { QueryJournalDTO } from '../../domain/journal/journal.payload.dto';
 import { JournalBatchResponse } from '../../domain/journal/response-batch.dto';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
@@ -42,14 +42,6 @@ export class JournalController {
     return await this.svc.list(query);
   }
 
-  @Patch('/:id/approve')
-  @ApiOperation({ summary: 'Approve Journal' })
-  @ApiNotFoundResponse({ description: 'Journal not found' })
-  @ApiBody({})
-  public async approve(@Param('id', new ParseUUIDPipe()) id: string) {
-    return await this.svc.approve(id);
-  }
-
   @Put('/batch-approve')
   @ApiOperation({ summary: 'Batch Approve Journal' })
   @ApiOkResponse({
@@ -58,17 +50,22 @@ export class JournalController {
   })
   @ApiBadRequestResponse({ description: 'Failed to batch approve journal' })
   @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
-  @ApiBody({ type: BatchApproveJournalDTO })
-  public async batchApprove(@Body() data: BatchApproveJournalDTO) {
+  @ApiBody({ type: BatchPayloadJournalDTO })
+  public async batchApprove(@Body() data: BatchPayloadJournalDTO) {
     return await this.svc.batchApprove(data);
   }
 
-  @Patch('/:id/post')
-  @ApiOperation({ summary: 'Post Journal' })
-  @ApiNotFoundResponse({ description: 'Journal not found' })
-  @ApiBody({})
-  public async post(@Param('id', new ParseUUIDPipe()) id: string) {
-    return await this.svc.post(id);
+  @Put('/batch-post')
+  @ApiOperation({ summary: 'Batch Post Journal' })
+  @ApiOkResponse({
+    type: JournalBatchResponse,
+    description: 'Successfully post journal',
+  })
+  @ApiBadRequestResponse({ description: 'Failed to batch post journal' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
+  @ApiBody({ type: BatchPayloadJournalDTO })
+  public async batchPost(@Body() data: BatchPayloadJournalDTO) {
+    return await this.svc.batchPost(data);
   }
 
   @Patch('/:id/reverse')

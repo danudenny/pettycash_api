@@ -25,7 +25,7 @@ import { JournalItem } from '../../../model/journal-item.entity';
 import { Period } from '../../../model/period.entity';
 import { User } from '../../../model/user.entity';
 import { ReverseJournalDTO } from '../../domain/journal/reverse.dto';
-import { BatchApproveJournalDTO } from '../../domain/journal/approve.dto';
+import { BatchPayloadJournalDTO } from '../../domain/journal/approve.dto';
 import { QueryJournalDTO } from '../../domain/journal/journal.payload.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { JournalBatchResponse } from '../../domain/journal/response-batch.dto';
@@ -140,25 +140,34 @@ export class JournalService {
     return new JournalWithPaginationResponse(journals, params);
   }
 
-  public async approve(id: string): Promise<any> {
-    // TODO: Implement API approve journal
-  }
-
   /**
    * Approve journal in Batch
    *
-   * @param {BatchApproveJournalDTO} payload Array of Journal ID
+   * @param {BatchPayloadJournalDTO} payload Array of Journal ID
    * @return {*}  {Promise<JournalBatchResponse>}
    * @memberof JournalService
    */
-  public async batchApprove(payload: BatchApproveJournalDTO): Promise<JournalBatchResponse> {
+  public async batchApprove(
+    payload: BatchPayloadJournalDTO,
+  ): Promise<JournalBatchResponse> {
     const journalIds = payload?.datas?.map((data) => data.id);
     const result = await this.approveJournal(journalIds);
     return new JournalBatchResponse(result);
   }
 
-  public async post(id: string): Promise<any> {
-    // TODO: Implement API post journal
+  /**
+   * Post journal in Batch
+   *
+   * @param {BatchPayloadJournalDTO} payload Array of Journal ID
+   * @return {*}  {Promise<JournalBatchResponse>}
+   * @memberof JournalService
+   */
+  public async batchPost(
+    payload: BatchPayloadJournalDTO,
+  ): Promise<JournalBatchResponse> {
+    const journalIds = payload?.datas?.map((data) => data.id);
+    const result = await this.postJournal(journalIds);
+    return new JournalBatchResponse(result);
   }
 
   public async reverse(id: string, payload: ReverseJournalDTO): Promise<void> {
@@ -385,6 +394,60 @@ export class JournalService {
       { id: In(journalToUpdateIds) },
       { state, updateUser: user },
     );
+
+    const successIds = journalToUpdateIds?.map((id) => {
+      return { id };
+    });
+    const result = { success: successIds, fail: failedIds };
+    return result;
+  }
+
+  /**
+   * Internal helper to post journal in batch.
+   *
+   * @private
+   * @param {string[]} ids
+   * @return {*}  {Promise<{ success: object[]; fail: object[] }>}
+   * @memberof JournalService
+   */
+  private async postJournal(
+    ids: string[],
+  ): Promise<{ success: object[]; fail: object[] }> {
+    const user = await AuthService.getUser({ relations: ['role'] });
+    const userRole = user?.role?.name as MASTER_ROLES;
+
+    if (userRole !== MASTER_ROLES.ACCOUNTING) {
+      throw new BadRequestException(
+        `Only user with role ACCOUNTING can post journal!`,
+      );
+    }
+
+    const journalToUpdateIds: string[] = [];
+    const failedIds: object[] = [];
+    const journals = await this.journalRepo.find({
+      where: {
+        id: In(ids),
+        isDeleted: false,
+      },
+    });
+
+    for (const journal of journals) {
+      if (journal.state === JournalState.POSTED) {
+        failedIds.push({ id: journal.id });
+        continue;
+      }
+      journalToUpdateIds.push(journal.id);
+    }
+
+    await this.journalRepo.update(
+      { id: In(journalToUpdateIds) },
+      {
+        state: JournalState.POSTED,
+        updateUser: user,
+      },
+    );
+
+    // TODO: publish message to kafka?
 
     const successIds = journalToUpdateIds?.map((id) => {
       return { id };

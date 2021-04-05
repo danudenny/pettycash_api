@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsUUID } from 'class-validator';
 
-export class BatchApproveJournalDataDTO {
+export class BatchPayloadJournalDataDTO {
   @ApiProperty({
     description: 'Journal ID',
     example: 'b7726b7b-6882-42ea-b623-d8f8a347ba0b',
@@ -10,11 +10,11 @@ export class BatchApproveJournalDataDTO {
   id: string;
 }
 
-export class BatchApproveJournalDTO {
+export class BatchPayloadJournalDTO {
   @ApiProperty({
     description: 'Journal Datas',
-    type: [BatchApproveJournalDataDTO],
+    type: [BatchPayloadJournalDataDTO],
   })
   @IsArray()
-  datas: BatchApproveJournalDataDTO[];
+  datas: BatchPayloadJournalDataDTO[];
 }
