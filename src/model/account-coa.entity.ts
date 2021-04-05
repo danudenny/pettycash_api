@@ -5,11 +5,21 @@ import {
   PrimaryGeneratedColumn,
   Index,
 } from 'typeorm';
+import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('account_coa')
 export class AccountCoa extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column('bigint', {
+    nullable: true,
+    name: 'coa_id',
+    unique: true,
+    transformer: new ColumnNumericTransformer(),
+    comment: 'Legacy field master data `account_coa_id`',
+  })
+  coaId?: number;
 
   @Column({ type: 'varchar', length: 50 })
   code: string;
