@@ -55,7 +55,7 @@ export class AccountDailyClosingDetailDTO {
 
   @ApiProperty({
     description: 'Closing Cash Amount (Saldo Uang Fisik)',
-    example: 2000000,
+    example: 50000,
   })
   closingCashAmount: number;
 

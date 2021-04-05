@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { IsOptional } from "class-validator";
 
 export class CreateAccountCashboxItemsDTO {
 
@@ -18,5 +19,6 @@ export class CreateAccountCashboxItemsDTO {
     description: 'Total Amount',
     example: 500000,
   })
+  @IsOptional()
   total: number;
 }

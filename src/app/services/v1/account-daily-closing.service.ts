@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { AccountCashboxItem } from '../../../model/account-cashbox-item.entity';
 import { AccountDailyClosing } from '../../../model/account-daily-closing.entity';
+import { User } from '../../../model/user.entity';
 import { CreateAccountCashboxItemsDTO } from '../../domain/account-daily-closing/create-account-cashbox-items.dto';
 import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/create-account-daily-closing.dto';
 import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/create-account-daily-closing.response';
@@ -86,7 +87,8 @@ export class AccountDailyClosingService {
     accountDailyClosing.openingCashAmount = payload.openingCashAmount;
     accountDailyClosing.closingCashAmount = payload.closingCashAmount;
     accountDailyClosing.cashItems = this.getAccountCashboxItemsFromDTO(
-      payload.accountCashboxItems
+      payload.accountCashboxItems,
+      user
     );
     accountDailyClosing.createUser = user;
     accountDailyClosing.updateUser = user;
@@ -95,7 +97,8 @@ export class AccountDailyClosingService {
   }
 
   private getAccountCashboxItemsFromDTO(
-    accountCashboxItems: CreateAccountCashboxItemsDTO[]
+    accountCashboxItems: CreateAccountCashboxItemsDTO[],
+    user: User
   ): AccountCashboxItem[] {
     const items: AccountCashboxItem[] = [];
     
@@ -104,6 +107,8 @@ export class AccountDailyClosingService {
       item.pieces = accountCashboxItem.pieces;
       item.total = accountCashboxItem.number;
       item.totalAmount = accountCashboxItem.total;
+      item.createUser = user,
+      item.updateUser = user
 
       items.push(item);
     });
