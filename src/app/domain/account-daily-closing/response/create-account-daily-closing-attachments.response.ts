@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { BaseResponse } from "../common/base-response.dto";
-import { AccountDailyClosingAttachmentDTO } from "./account-daily-closing-attachment.dto";
-import { AccountDailyClosingAttachmentMapper } from "./account-daily-closing-attachment.mapper";
+import { BaseResponse } from "../../common/base-response.dto";
+import { AccountDailyClosingAttachmentDTO } from "../dto/account-daily-closing-attachment.dto";
+import { AccountDailyClosingAttachmentMapper } from "../mapper/account-daily-closing-attachment.mapper";
 
 export class CreateAccountDailyClosingAttachmentResponse extends BaseResponse {
 

@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { BasePayload } from "../common/base-payload.dto";
+import { BasePayload } from "../../common/base-payload.dto";
 
 export class QueryAccountDailyClosingDTO extends BasePayload {
   

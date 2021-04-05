@@ -21,13 +21,13 @@ import {
   ApiOperation, 
   ApiTags 
 } from '@nestjs/swagger';
-import { CreateAccountDailyClosingAttachmentDTO } from '../../domain/account-daily-closing/create-account-daily-closing-attachment.dto';
-import { CreateAccountDailyClosingAttachmentResponse } from '../../domain/account-daily-closing/create-account-daily-closing-attachments.response';
-import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/create-account-daily-closing.dto';
-import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/create-account-daily-closing.response';
-import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-closing/get-account-daily-closing.response';
-import { AccountDailyClosingWithPaginationResponse } from '../../domain/account-daily-closing/get-all-account-daily-closing.response';
-import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/query-account-daily-closing.payload.dto';
+import { CreateAccountDailyClosingAttachmentDTO } from '../../domain/account-daily-closing/dto/create-account-daily-closing-attachment.dto';
+import { CreateAccountDailyClosingAttachmentResponse } from '../../domain/account-daily-closing/response/create-account-daily-closing-attachments.response';
+import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/dto/create-account-daily-closing.dto';
+import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/response/create-account-daily-closing.response';
+import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-closing/response/get-account-daily-closing.response';
+import { AccountDailyClosingWithPaginationResponse } from '../../domain/account-daily-closing/response/get-all-account-daily-closing.response';
+import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/dto/query-account-daily-closing.payload.dto';
 import { AccountDailyClosingService } from '../../services/v1/account-daily-closing.service';
 
 @Controller('v1/account-daily-closing')

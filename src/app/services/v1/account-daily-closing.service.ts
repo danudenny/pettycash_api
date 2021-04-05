@@ -8,14 +8,14 @@ import { AccountCashboxItem } from '../../../model/account-cashbox-item.entity';
 import { AccountDailyClosing } from '../../../model/account-daily-closing.entity';
 import { Attachment } from '../../../model/attachment.entity';
 import { User } from '../../../model/user.entity';
-import { AccountDailyClosingAttachmentDTO } from '../../domain/account-daily-closing/account-daily-closing-attachment.dto';
-import { CreateAccountCashboxItemsDTO } from '../../domain/account-daily-closing/create-account-cashbox-items.dto';
-import { CreateAccountDailyClosingAttachmentResponse } from '../../domain/account-daily-closing/create-account-daily-closing-attachments.response';
-import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/create-account-daily-closing.dto';
-import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/create-account-daily-closing.response';
-import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-closing/get-account-daily-closing.response';
-import { AccountDailyClosingWithPaginationResponse } from '../../domain/account-daily-closing/get-all-account-daily-closing.response';
-import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/query-account-daily-closing.payload.dto';
+import { AccountDailyClosingAttachmentDTO } from '../../domain/account-daily-closing/dto/account-daily-closing-attachment.dto';
+import { CreateAccountCashboxItemsDTO } from '../../domain/account-daily-closing/dto/create-account-cashbox-items.dto';
+import { CreateAccountDailyClosingAttachmentResponse } from '../../domain/account-daily-closing/response/create-account-daily-closing-attachments.response';
+import { CreateAccountDailyClosingDTO } from '../../domain/account-daily-closing/dto/create-account-daily-closing.dto';
+import { CreateAccountDailyClosingResponse } from '../../domain/account-daily-closing/response/create-account-daily-closing.response';
+import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-closing/response/get-account-daily-closing.response';
+import { AccountDailyClosingWithPaginationResponse } from '../../domain/account-daily-closing/response/get-all-account-daily-closing.response';
+import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/dto/query-account-daily-closing.payload.dto';
 import { AuthService } from './auth.service';
 
 @Injectable()

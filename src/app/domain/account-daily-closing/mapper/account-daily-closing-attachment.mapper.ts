@@ -1,4 +1,4 @@
-import { AccountDailyClosingAttachmentDTO } from "./account-daily-closing-attachment.dto";
+import { AccountDailyClosingAttachmentDTO } from "../dto/account-daily-closing-attachment.dto";
 
 export class AccountDailyClosingAttachmentMapper {
 

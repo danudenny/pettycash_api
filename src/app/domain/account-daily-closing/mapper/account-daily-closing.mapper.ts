@@ -1,8 +1,8 @@
-import { AccountCashboxItem } from '../../../model/account-cashbox-item.entity';
-import { AccountDailyClosing } from '../../../model/account-daily-closing.entity';
-import { AccountCashboxItemsDTO } from './account-cashbox-items.dto';
-import { AccountDailyClosingDetailDTO } from './account-daily-closing-detail.dto';
-import { AccountDailyClosingDTO } from './account-daily-closing.dto';
+import { AccountCashboxItem } from '../../../../model/account-cashbox-item.entity';
+import { AccountDailyClosing } from '../../../../model/account-daily-closing.entity';
+import { AccountCashboxItemsDTO } from '../dto/account-cashbox-items.dto';
+import { AccountDailyClosingDetailDTO } from '../dto/account-daily-closing-detail.dto';
+import { AccountDailyClosingDTO } from '../dto/account-daily-closing.dto';
 
 export class AccountDailyClosingMapper {
 
