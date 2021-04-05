@@ -20,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { BatchApproveJournalDTO } from '../../domain/journal/approve.dto';
 import { QueryJournalDTO } from '../../domain/journal/journal.payload.dto';
+import { JournalBatchResponse } from '../../domain/journal/response-batch.dto';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
 import { ReverseJournalDTO } from '../../domain/journal/reverse.dto';
 import { JournalService } from '../../services/v1/journal.service';
@@ -32,7 +33,7 @@ export class JournalController {
 
   @Get()
   @ApiOperation({ summary: 'List all journal' })
-  @ApiHeader({name: 'x-username', description: 'Custom User Request'})
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiOkResponse({ type: JournalWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async list(
@@ -51,8 +52,12 @@ export class JournalController {
 
   @Put('/batch-approve')
   @ApiOperation({ summary: 'Batch Approve Journal' })
-  @ApiOkResponse({ description: 'Successfully approve journal' })
+  @ApiOkResponse({
+    type: JournalBatchResponse,
+    description: 'Successfully approve journal',
+  })
   @ApiBadRequestResponse({ description: 'Failed to batch approve journal' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiBody({ type: BatchApproveJournalDTO })
   public async batchApprove(@Body() data: BatchApproveJournalDTO) {
     return await this.svc.batchApprove(data);
