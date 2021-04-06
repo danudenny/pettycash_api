@@ -26,6 +26,7 @@ import {
 import { QueryDownPaymentDTO } from '../../domain/down-payment/down-payment-query.dto';
 import { CreateDownPaymentDTO } from '../../domain/down-payment/down-payment-create.dto';
 import { RejectDownPaymentDTO } from '../../domain/down-payment/down-payment-reject.dto';
+import { ApproveDownPaymentDTO } from '../../domain/down-payment/down-payment-approve.dto';
 import {
   DownPaymentResponse,
   ShowDownPaymentResponse,
@@ -106,13 +107,13 @@ export class DownPaymentController {
   @Patch('/:id/approve')
   @ApiOperation({ summary: 'Approve Down Payment' })
   @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
-  @ApiBody({ type: Object })
+  @ApiBody({ type: ApproveDownPaymentDTO })
   async approveDownPaymant(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() actApprove: object,
+    @Body() actApprove: ApproveDownPaymentDTO,
   ) {
     try {
-      return await this.downPaymentService.approveDownPayment(id);
+      return await this.downPaymentService.approveDownPayment(id, actApprove);
     } catch (err) {
       throw new HttpException(
         err.message,
