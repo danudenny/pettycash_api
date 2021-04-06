@@ -1,14 +1,17 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
 import { DownPaymentPayType } from '../../../model/utils/enum';
 
 export class ApproveDownPaymentDTO {
-  @ApiProperty({ description: 'Amount Down Payment', example: 20000 })
-  amount: number;
+  @ApiPropertyOptional({ description: 'Amount Down Payment', example: 20000 })
+  @IsOptional()
+  amount?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Payment Type',
     example: DownPaymentPayType.CASH,
     enum: DownPaymentPayType,
   })
-  paymentType: DownPaymentPayType;
+  @IsOptional()
+  paymentType?: DownPaymentPayType;
 }
