@@ -11,7 +11,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Journal } from '../../../model/journal.entity';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
 import {
-  AccountCoaInternalType,
   ExpenseState,
   JournalSourceType,
   JournalState,
@@ -129,7 +128,7 @@ export class JournalService {
       const journalTaxSql = `SELECT tji.journal_id
         FROM journal_item tji
         INNER JOIN account_coa tac ON tac.id = tji.coa_id
-        WHERE tac.internal_type = '${AccountCoaInternalType.TAX}'
+        WHERE tac.id IN (SELECT coa_id FROM account_tax WHERE is_deleted = FALSE AND coa_id IS NOT NULL GROUP BY coa_id)
         GROUP BY tji.journal_id`;
 
       qb.qb.andWhere(`(j.id IN (${journalTaxSql}))`);
