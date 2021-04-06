@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
 import { BudgetState } from '../../../model/utils/enum';
 
 export class CreateBudgetItemDTO {
@@ -27,10 +27,19 @@ export class CreateBudgetItemDTO {
 
 export class UpdateBudgetItemDTO {
   @ApiProperty({
+    description: 'Budget Item ID',
+    example: '46dc5599-43f0-4569-b5f0-33e25f4cd29c',
+  })
+  @IsUUID()
+  @IsOptional()
+  id: string;
+
+  @ApiProperty({
     description: 'Product ID',
     example: 'd786c337-39b5-40ab-952b-48cd186027bd',
   })
   @IsUUID()
+  @IsOptional()
   productId: string;
 
   @ApiProperty({
@@ -38,6 +47,7 @@ export class UpdateBudgetItemDTO {
     example: 'Kebutuhan Pickup',
   })
   @IsString()
+  @IsOptional()
   description: string;
 
   @ApiProperty({
@@ -46,4 +56,12 @@ export class UpdateBudgetItemDTO {
   })
   @IsOptional()
   amount: number;
+
+  @ApiProperty({
+    description: 'Budget Item Status Is Deleted',
+    example: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  isDeleted: boolean;
 }

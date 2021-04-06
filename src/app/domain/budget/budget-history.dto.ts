@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { BudgetState, MASTER_ROLES } from '../../../model/utils/enum';
 
 export class BudgetHistoryDTO {
@@ -27,6 +27,7 @@ export class BudgetHistoryDTO {
     description: 'User Role',
     example: MASTER_ROLES.PIC_HO,
   })
+  @IsOptional()
   userRole: MASTER_ROLES;
 
   @ApiProperty({
