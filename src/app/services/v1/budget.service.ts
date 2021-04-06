@@ -429,14 +429,12 @@ export class BudgetService {
             // }
             budgetExist.createUser = user;
             budgetExist.updateUser = user;
-            console.log(budgetExist);
     
             const result = await this.budgetRepo.save(budgetExist);
             return new BudgetResponse(result as any);
           }
         }
       });
-      console.log(updateBudget);
       return updateBudget as any;
     } catch (error) {
       throw error;
