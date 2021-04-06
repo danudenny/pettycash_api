@@ -11,6 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Journal } from '../../../model/journal.entity';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
 import {
+  DownPaymentState,
   ExpenseState,
   JournalSourceType,
   JournalState,
@@ -28,6 +29,8 @@ import { BatchPayloadJournalDTO } from '../../domain/journal/approve.dto';
 import { QueryJournalDTO } from '../../domain/journal/journal.payload.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { JournalBatchResponse } from '../../domain/journal/response-batch.dto';
+import { DownPayment } from '../../../model/down-payment.entity';
+import { DownPaymentHistory } from '../../../model/down-payment-history.entity';
 
 @Injectable()
 export class JournalService {
@@ -244,7 +247,7 @@ export class JournalService {
         if (sourceType === JournalSourceType.EXPENSE) {
           await this.reverseExpense(manager, journal);
         } else if (sourceType === JournalSourceType.DP) {
-          // TODO: Update DownPayment
+          await this.reverseDownPayment(manager, journal);
         }
 
         // Clone Journal for Creating new Reversal Journal
@@ -293,8 +296,8 @@ export class JournalService {
     }
 
     const rJournal = journal;
-    rJournal.number = GenerateCode.journal(journal.transactionDate);
     rJournal.reference = `Reversal of: ${journal.number}`;
+    rJournal.number = GenerateCode.journal(journal.transactionDate);
     rJournal.items = await this.buildReversalJournalItem(rJournal);
     rJournal.createUser = journal.updateUser;
     rJournal.createdAt = new Date();
@@ -378,6 +381,34 @@ export class JournalService {
     expense.updateUser = journal.updateUser;
 
     return await manager.save(expense);
+  }
+
+  private async reverseDownPayment(
+    manager: EntityManager,
+    journal: Journal,
+  ): Promise<DownPayment> {
+    const downPayment = await manager.findOne(DownPayment, {
+      where: { number: journal.reference, isDeleted: false },
+    });
+
+    if (!downPayment) {
+      // FIXME: throw error?
+      return;
+    }
+
+    downPayment.state = DownPaymentState.REVERSED;
+    downPayment.updateUser = journal.updateUser;
+
+    // create history
+    const history = new DownPaymentHistory();
+    history.downPaymentId = downPayment.id;
+    history.state = DownPaymentState.REVERSED;
+    history.rejectedNote = `Journal reversed by ${journal?.updateUser?.firstName} ${journal?.updateUser?.lastName}`;
+    history.createUser = journal.updateUser;
+    history.updateUser = journal.updateUser;
+    await manager.save(history);
+
+    return await manager.save(downPayment);
   }
 
   /**
