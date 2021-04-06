@@ -170,7 +170,51 @@ export class JournalService {
     return new JournalBatchResponse(result);
   }
 
-  public async reverse(id: string, payload: ReverseJournalDTO): Promise<void> {
+  /**
+   * Reverse journal in Batch
+   *
+   * @param {BatchPayloadJournalDTO} payload Array if Journal ID
+   * @return {*}  {Promise<JournalBatchResponse>}
+   * @memberof JournalService
+   */
+  public async batchReverse(
+    payload: BatchPayloadJournalDTO,
+  ): Promise<JournalBatchResponse> {
+    const journalIds = payload?.datas?.map((data) => data.id);
+    const successIds = [];
+    const failedIds = [];
+
+    for (const journalId of journalIds) {
+      try {
+        const reverse = await this.reverseJournal(journalId);
+        if (reverse) {
+          successIds.push({ id: journalId });
+        } else {
+          failedIds.push({ id: journalId });
+        }
+      } catch (error) {
+        failedIds.push({ id: journalId });
+        continue;
+      }
+    }
+
+    const result = { success: successIds, fail: failedIds };
+    return new JournalBatchResponse(result);
+  }
+
+  /**
+   * Internal helper to reverse journal
+   *
+   * @private
+   * @param {string} id Journal ID
+   * @param {ReverseJournalDTO} [payload]
+   * @return {*}  {Promise<Journal>}
+   * @memberof JournalService
+   */
+  private async reverseJournal(
+    id: string,
+    payload?: ReverseJournalDTO,
+  ): Promise<Journal> {
     try {
       const reverseJournal = await getManager().transaction(async (manager) => {
         const user = await AuthService.getUser({ relations: ['role'] });
@@ -206,7 +250,7 @@ export class JournalService {
 
         // Clone Journal for Creating new Reversal Journal
         const cJournal = cloneDeep(journal);
-        cJournal.transactionDate = payload.reverseDate ?? new Date();
+        cJournal.transactionDate = payload?.reverseDate ?? new Date();
 
         const rJournal = await this.createReversalJournal(manager, cJournal);
         journal.reverseJournal = rJournal;
@@ -214,7 +258,7 @@ export class JournalService {
         return await manager.save(journal);
       });
 
-      return;
+      return reverseJournal;
     } catch (error) {
       throw error;
     }

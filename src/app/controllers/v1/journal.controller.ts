@@ -68,15 +68,16 @@ export class JournalController {
     return await this.svc.batchPost(data);
   }
 
-  @Patch('/:id/reverse')
-  @ApiOperation({ summary: 'Reverse Journal' })
-  @ApiOkResponse({ description: 'Successfully reversing journal' })
-  @ApiNotFoundResponse({ description: 'Journal not found' })
-  @ApiBody({ type: ReverseJournalDTO })
-  public async reverse(
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() payload: ReverseJournalDTO,
-  ) {
-    return await this.svc.reverse(id, payload);
+  @Put('/batch-reverse')
+  @ApiOperation({ summary: 'Batch Reverse Journal' })
+  @ApiOkResponse({
+    type: JournalBatchResponse,
+    description: 'Successfully reverse journal',
+  })
+  @ApiBadRequestResponse({ description: 'Failed to batch reverse journal' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
+  @ApiBody({ type: BatchPayloadJournalDTO })
+  public async batchReverse(@Body() data: BatchPayloadJournalDTO) {
+    return await this.svc.batchReverse(data);
   }
 }
