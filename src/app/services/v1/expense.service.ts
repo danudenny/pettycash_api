@@ -82,22 +82,27 @@ export class ExpenseService {
     }
   }
 
+  /**
+   * List all Expense with filter.
+   *
+   * @param {QueryExpenseDTO} [query] Params to filter.
+   * @return {*}  {Promise<ExpenseWithPaginationResponse>}
+   * @memberof ExpenseService
+   */
   public async list(
     query?: QueryExpenseDTO,
   ): Promise<ExpenseWithPaginationResponse> {
-    // TODO: Implement API List Expense
-    const params = { order: '^created_at', limit: 10, ...query };
+    const params = { order: '-updatedAt', limit: 10, ...query };
     const qb = new QueryBuilder(Expense, 'exp', params);
 
-    qb.fieldResolverMap['startDate__gte'] = 'exp.transactionDate';
-    qb.fieldResolverMap['endDate__lte'] = 'exp.transactionDate';
-    qb.fieldResolverMap['branchId'] = 'exp.branchId';
+    qb.fieldResolverMap['startDate__gte'] = 'exp.transaction_date';
+    qb.fieldResolverMap['endDate__lte'] = 'exp.transaction_date';
+    qb.fieldResolverMap['branchId'] = 'exp.branch_id';
     qb.fieldResolverMap['type'] = 'exp.type';
-    qb.fieldResolverMap['totalAmount__gte'] = 'exp.totalAmount';
-    qb.fieldResolverMap['totalAmount__lte'] = 'exp.totalAmount';
+    qb.fieldResolverMap['totalAmount__gte'] = 'exp.total_amount';
+    qb.fieldResolverMap['totalAmount__lte'] = 'exp.total_amount';
     qb.fieldResolverMap['state'] = 'exp.state';
-    qb.fieldResolverMap['downPaymentNumber__icontains'] =
-      'exp.downPaymentNumber';
+    qb.fieldResolverMap['downPaymentNumber__icontains'] = 'adp.number';
     qb.fieldResolverMap['number__icontains'] = 'exp.number';
 
     qb.applyFilterPagination();
