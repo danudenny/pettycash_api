@@ -1,7 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
+import { BudgetHistory } from '../../../model/budget-history.entity';
 import { BudgetState } from '../../../model/utils/enum';
 import { CreateBudgetItemDTO, UpdateBudgetItemDTO } from '../budget-item/budget-item-create.dto';
+import { BudgetHistoryDTO } from './budget-history.dto';
 
 export class CreateBudgetDTO {
   @ApiProperty({
@@ -129,6 +131,13 @@ export class UpdateBudgetDTO {
   })
   @IsArray()
   items: UpdateBudgetItemDTO[];
+
+  // @ApiProperty({
+  //   description: 'Histories Budget',
+  //   type: [BudgetHistoryDTO],
+  // })
+  // @IsArray()
+  // histories: BudgetHistoryDTO[];
 }
 
 export class RejectBudgetDTO {
