@@ -215,49 +215,39 @@ export class DownPaymentService {
         const userRole = user?.role?.name;
 
         let state: DownPaymentState;
+        let isCreateJurnal = false;
         const currentState = downPayment.state;
+
         if (userRole === MASTER_ROLES.PIC_HO) {
-          if (
-            currentState === DownPaymentState.APPROVED_BY_PIC_HO ||
-            currentState === DownPaymentState.APPROVED_BY_SS_SPV
-          ) {
-            throw new BadRequestException(
-              `Can't approve down payment with current state ${currentState}`,
-            );
+          if (currentState === DownPaymentState.APPROVED_BY_PIC_HO ||currentState === DownPaymentState.APPROVED_BY_SS_SPV) {
+            throw new BadRequestException( `Can't approve down payment with current state ${currentState}`);
           }
 
           state = DownPaymentState.APPROVED_BY_PIC_HO;
+          isCreateJurnal = true;
 
-          // Create Journal for PIC HO
-          await this.removeJournal(manager, downPayment);
-          await this.createJournal(manager, downPaymentId, userRole);
-        } else if (
-          userRole === MASTER_ROLES.SS_HO ||
-          userRole === MASTER_ROLES.SPV_HO
-        ) {
+        } else if (userRole === MASTER_ROLES.SS_HO || userRole === MASTER_ROLES.SPV_HO) {
           if (currentState === DownPaymentState.APPROVED_BY_SS_SPV) {
-            throw new BadRequestException(
-              `Can't approve down payment with current state ${currentState}`,
-            );
+            throw new BadRequestException(`Can't approve down payment with current state ${currentState}`);
           }
 
           state = DownPaymentState.APPROVED_BY_SS_SPV;
-
-          // (Re)Create Journal for SS/SPV HO
-          await this.removeJournal(manager, downPayment);
-          await this.createJournal(manager, downPaymentId, userRole);
+          isCreateJurnal = true;
         }
 
-        if (!state)
-          throw new BadRequestException(
-            `Failed to approve down payment due unknown user role!`,
-          );
+        if (!state) throw new BadRequestException(`Failed to approve down payment due unknown user role!`);
 
         downPayment.state = state;
         downPayment.amount = payload.amount;
         downPayment.paymentType = payload.paymentType;
 
         const result = await manager.save(downPayment);
+
+        if (isCreateJurnal) {
+          // Create Journal for PIC HO OR for SS/SPV HO
+          await this.removeJournal(manager, result);
+          await this.createJournal(manager, downPaymentId);
+        }
 
         await this.createHistory(downPayment, {
           state,
@@ -404,7 +394,6 @@ export class DownPaymentService {
   private async createJournal(
     manager: EntityManager,
     downPayId: string,
-    userRole: MASTER_ROLES,
   ): Promise<any> {
     try {
       const jurnalEntity = manager.getRepository<Journal>(Journal);
