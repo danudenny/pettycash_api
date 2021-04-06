@@ -12,6 +12,7 @@ import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { QueryDownPaymentDTO } from '../../domain/down-payment/down-payment-query.dto';
 import { CreateDownPaymentDTO } from '../../domain/down-payment/down-payment-create.dto';
 import { RejectDownPaymentDTO } from '../../domain/down-payment/down-payment-reject.dto';
+import { ApproveDownPaymentDTO } from '../../domain/down-payment/down-payment-approve.dto';
 import {
   DownPaymentState,
   DownPaymentType,
@@ -198,7 +199,7 @@ export class DownPaymentService {
     }
   }
 
-  public async approveDownPayment(downPaymentId: string): Promise<any> {
+  public async approveDownPayment(downPaymentId: string, payload: ApproveDownPaymentDTO,): Promise<any> {
     try {
       const approve = await getManager().transaction(async (manager) => {
         const downPayment = await manager.findOne(DownPayment, {
@@ -253,7 +254,8 @@ export class DownPaymentService {
           );
 
         downPayment.state = state;
-        // downPayment.updateUser = user
+        downPayment.amount = payload.amount;
+        downPayment.paymentType = payload.paymentType;
 
         const result = await manager.save(downPayment);
 
