@@ -11,14 +11,16 @@ import {
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiHeader,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { BatchApproveJournalDTO } from '../../domain/journal/approve.dto';
+import { BatchPayloadJournalDTO } from '../../domain/journal/approve.dto';
 import { QueryJournalDTO } from '../../domain/journal/journal.payload.dto';
+import { JournalBatchResponse } from '../../domain/journal/response-batch.dto';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
 import { ReverseJournalDTO } from '../../domain/journal/reverse.dto';
 import { JournalService } from '../../services/v1/journal.service';
@@ -31,6 +33,7 @@ export class JournalController {
 
   @Get()
   @ApiOperation({ summary: 'List all journal' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiOkResponse({ type: JournalWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async list(
@@ -39,40 +42,42 @@ export class JournalController {
     return await this.svc.list(query);
   }
 
-  @Patch('/:id/approve')
-  @ApiOperation({ summary: 'Approve Journal' })
-  @ApiNotFoundResponse({ description: 'Journal not found' })
-  @ApiBody({})
-  public async approve(@Param('id', new ParseUUIDPipe()) id: string) {
-    return await this.svc.approve(id);
-  }
-
   @Put('/batch-approve')
   @ApiOperation({ summary: 'Batch Approve Journal' })
-  @ApiOkResponse({ description: 'Successfully approve journal' })
+  @ApiOkResponse({
+    type: JournalBatchResponse,
+    description: 'Successfully approve journal',
+  })
   @ApiBadRequestResponse({ description: 'Failed to batch approve journal' })
-  @ApiBody({ type: BatchApproveJournalDTO })
-  public async batchApprove(@Body() data: BatchApproveJournalDTO) {
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
+  @ApiBody({ type: BatchPayloadJournalDTO })
+  public async batchApprove(@Body() data: BatchPayloadJournalDTO) {
     return await this.svc.batchApprove(data);
   }
 
-  @Patch('/:id/post')
-  @ApiOperation({ summary: 'Post Journal' })
-  @ApiNotFoundResponse({ description: 'Journal not found' })
-  @ApiBody({})
-  public async post(@Param('id', new ParseUUIDPipe()) id: string) {
-    return await this.svc.post(id);
+  @Put('/batch-post')
+  @ApiOperation({ summary: 'Batch Post Journal' })
+  @ApiOkResponse({
+    type: JournalBatchResponse,
+    description: 'Successfully post journal',
+  })
+  @ApiBadRequestResponse({ description: 'Failed to batch post journal' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
+  @ApiBody({ type: BatchPayloadJournalDTO })
+  public async batchPost(@Body() data: BatchPayloadJournalDTO) {
+    return await this.svc.batchPost(data);
   }
 
-  @Patch('/:id/reverse')
-  @ApiOperation({ summary: 'Reverse Journal' })
-  @ApiOkResponse({ description: 'Successfully reversing journal' })
-  @ApiNotFoundResponse({ description: 'Journal not found' })
-  @ApiBody({ type: ReverseJournalDTO })
-  public async reverse(
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() payload: ReverseJournalDTO,
-  ) {
-    return await this.svc.reverse(id, payload);
+  @Put('/batch-reverse')
+  @ApiOperation({ summary: 'Batch Reverse Journal' })
+  @ApiOkResponse({
+    type: JournalBatchResponse,
+    description: 'Successfully reverse journal',
+  })
+  @ApiBadRequestResponse({ description: 'Failed to batch reverse journal' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
+  @ApiBody({ type: BatchPayloadJournalDTO })
+  public async batchReverse(@Body() data: BatchPayloadJournalDTO) {
+    return await this.svc.batchReverse(data);
   }
 }

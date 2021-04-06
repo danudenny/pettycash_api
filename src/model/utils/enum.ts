@@ -121,8 +121,7 @@ export enum AccountTaxPartnerType {
 
 export enum JournalState {
   DRAFT = 'draft',
-  APPROVED_BY_SS_HO = 'approved_by_ss_ho',
-  APPROVED_BY_SPV_HO = 'approved_by_spv_ho',
+  APPROVED_BY_SS_SPV_HO = 'approved_by_ss_spv_ho',
   APPROVED_BY_TAX = 'approved_by_tax',
   POSTED = 'posted',
 }
@@ -130,6 +129,11 @@ export enum JournalState {
 export enum JournalSourceType {
   DP = 'down_payment',
   EXPENSE = 'expense',
+  // Add other type
+}
+
+export enum AccountCoaInternalType {
+  TAX = 'tax',
   // Add other type
 }
 

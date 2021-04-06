@@ -1,17 +1,20 @@
 import { cloneDeep } from 'lodash';
-import { Repository, getManager, EntityManager } from 'typeorm';
+import { Repository, getManager, EntityManager, In } from 'typeorm';
 import {
   BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Journal } from '../../../model/journal.entity';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
 import {
+  AccountCoaInternalType,
   ExpenseState,
   JournalSourceType,
+  JournalState,
   MASTER_ROLES,
   PeriodState,
 } from '../../../model/utils/enum';
@@ -22,9 +25,10 @@ import { JournalItem } from '../../../model/journal-item.entity';
 import { Period } from '../../../model/period.entity';
 import { User } from '../../../model/user.entity';
 import { ReverseJournalDTO } from '../../domain/journal/reverse.dto';
-import { BatchApproveJournalDTO } from '../../domain/journal/approve.dto';
+import { BatchPayloadJournalDTO } from '../../domain/journal/approve.dto';
 import { QueryJournalDTO } from '../../domain/journal/journal.payload.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
+import { JournalBatchResponse } from '../../domain/journal/response-batch.dto';
 
 @Injectable()
 export class JournalService {
@@ -36,6 +40,11 @@ export class JournalService {
   public async list(
     query: QueryJournalDTO,
   ): Promise<JournalWithPaginationResponse> {
+    const user = await AuthService.getUser({ relations: ['role', 'branches'] });
+    const userRole = user?.role?.name as MASTER_ROLES;
+    const userBranches = user?.branches?.map((v) => v.id);
+    const SS_SPV_ROLES = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO];
+
     const params = { order: '-transactionDate', ...query };
     const qb = new QueryBuilder(Journal, 'j', params);
 
@@ -105,25 +114,107 @@ export class JournalService {
       (v) => v.isFalse(),
     );
 
+    // filter by assigned branch if userRole SS/SPV HO.
+    if (SS_SPV_ROLES.includes(userRole)) {
+      if (userBranches?.length) {
+        qb.andWhere(
+          (e) => e.branchId,
+          (v) => v.in(userBranches),
+        );
+      }
+    }
+
+    // if userRole is Tax, only show journal that contains tax
+    if (userRole === MASTER_ROLES.TAX) {
+      const journalTaxSql = `SELECT tji.journal_id
+        FROM journal_item tji
+        INNER JOIN account_coa tac ON tac.id = tji.coa_id
+        WHERE tac.internal_type = '${AccountCoaInternalType.TAX}'
+        GROUP BY tji.journal_id`;
+
+      qb.qb.andWhere(`(j.id IN (${journalTaxSql}))`);
+    }
+
     const journals = await qb.exec();
 
     return new JournalWithPaginationResponse(journals, params);
   }
 
-  public async approve(id: string): Promise<any> {
-    // TODO: Implement API approve journal
+  /**
+   * Approve journal in Batch
+   *
+   * @param {BatchPayloadJournalDTO} payload Array of Journal ID
+   * @return {*}  {Promise<JournalBatchResponse>}
+   * @memberof JournalService
+   */
+  public async batchApprove(
+    payload: BatchPayloadJournalDTO,
+  ): Promise<JournalBatchResponse> {
+    const journalIds = payload?.datas?.map((data) => data.id);
+    const result = await this.approveJournal(journalIds);
+    return new JournalBatchResponse(result);
   }
 
-  public async batchApprove(payload: BatchApproveJournalDTO): Promise<any> {
-    // TODO: Implement API approve journal
-    return payload;
+  /**
+   * Post journal in Batch
+   *
+   * @param {BatchPayloadJournalDTO} payload Array of Journal ID
+   * @return {*}  {Promise<JournalBatchResponse>}
+   * @memberof JournalService
+   */
+  public async batchPost(
+    payload: BatchPayloadJournalDTO,
+  ): Promise<JournalBatchResponse> {
+    const journalIds = payload?.datas?.map((data) => data.id);
+    const result = await this.postJournal(journalIds);
+    return new JournalBatchResponse(result);
   }
 
-  public async post(id: string): Promise<any> {
-    // TODO: Implement API post journal
+  /**
+   * Reverse journal in Batch
+   *
+   * @param {BatchPayloadJournalDTO} payload Array if Journal ID
+   * @return {*}  {Promise<JournalBatchResponse>}
+   * @memberof JournalService
+   */
+  public async batchReverse(
+    payload: BatchPayloadJournalDTO,
+  ): Promise<JournalBatchResponse> {
+    const journalIds = payload?.datas?.map((data) => data.id);
+    const successIds = [];
+    const failedIds = [];
+
+    for (const journalId of journalIds) {
+      try {
+        const reverse = await this.reverseJournal(journalId);
+        if (reverse) {
+          successIds.push({ id: journalId });
+        } else {
+          failedIds.push({ id: journalId });
+        }
+      } catch (error) {
+        failedIds.push({ id: journalId });
+        continue;
+      }
+    }
+
+    const result = { success: successIds, fail: failedIds };
+    return new JournalBatchResponse(result);
   }
 
-  public async reverse(id: string, payload: ReverseJournalDTO): Promise<void> {
+  /**
+   * Internal helper to reverse journal
+   *
+   * @private
+   * @param {string} id Journal ID
+   * @param {ReverseJournalDTO} [payload]
+   * @return {*}  {Promise<Journal>}
+   * @memberof JournalService
+   */
+  private async reverseJournal(
+    id: string,
+    payload?: ReverseJournalDTO,
+  ): Promise<Journal> {
     try {
       const reverseJournal = await getManager().transaction(async (manager) => {
         const user = await AuthService.getUser({ relations: ['role'] });
@@ -159,7 +250,7 @@ export class JournalService {
 
         // Clone Journal for Creating new Reversal Journal
         const cJournal = cloneDeep(journal);
-        cJournal.transactionDate = payload.reverseDate ?? new Date();
+        cJournal.transactionDate = payload?.reverseDate ?? new Date();
 
         const rJournal = await this.createReversalJournal(manager, cJournal);
         journal.reverseJournal = rJournal;
@@ -167,7 +258,7 @@ export class JournalService {
         return await manager.save(journal);
       });
 
-      return;
+      return reverseJournal;
     } catch (error) {
       throw error;
     }
@@ -288,5 +379,124 @@ export class JournalService {
     expense.updateUser = journal.updateUser;
 
     return await manager.save(expense);
+  }
+
+  /**
+   * Internal helper to approve journal in batch.
+   *
+   * @private
+   * @param {string[]} ids Array of Journal ID
+   * @return {*}  {Promise<{ success: object[], fail: object[] }>}
+   * @memberof JournalService
+   */
+  private async approveJournal(
+    ids: string[],
+  ): Promise<{ success: object[]; fail: object[] }> {
+    const { APPROVED_BY_SS_SPV_HO, APPROVED_BY_TAX, POSTED } = JournalState;
+    const user = await AuthService.getUser({ relations: ['role'] });
+    const userRole = user?.role?.name as MASTER_ROLES;
+    const SS_SPV_ROLES = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO];
+
+    let state: JournalState;
+    if (SS_SPV_ROLES.includes(userRole)) {
+      state = APPROVED_BY_SS_SPV_HO;
+    } else if (userRole === MASTER_ROLES.TAX) {
+      state = APPROVED_BY_TAX;
+    }
+
+    const journalToUpdateIds: string[] = [];
+    const failedIds: object[] = [];
+    const journals = await this.journalRepo.find({
+      where: {
+        id: In(ids),
+        isDeleted: false,
+      },
+    });
+
+    for (const journal of journals) {
+      if ([state, POSTED].includes(journal.state)) {
+        failedIds.push({ id: journal.id });
+        continue;
+      }
+      // journal appproved by tax can't be approve (again) by ss/spv ho.
+      if (SS_SPV_ROLES.includes(userRole)) {
+        if (journal.state === APPROVED_BY_TAX) {
+          failedIds.push({ id: journal.id });
+          continue;
+        }
+      }
+      journalToUpdateIds.push(journal.id);
+    }
+
+    if (!state) {
+      throw new UnprocessableEntityException(
+        `Failed to approve journals due unknown state!`,
+      );
+    }
+
+    await this.journalRepo.update(
+      { id: In(journalToUpdateIds) },
+      { state, updateUser: user },
+    );
+
+    const successIds = journalToUpdateIds?.map((id) => {
+      return { id };
+    });
+    const result = { success: successIds, fail: failedIds };
+    return result;
+  }
+
+  /**
+   * Internal helper to post journal in batch.
+   *
+   * @private
+   * @param {string[]} ids
+   * @return {*}  {Promise<{ success: object[]; fail: object[] }>}
+   * @memberof JournalService
+   */
+  private async postJournal(
+    ids: string[],
+  ): Promise<{ success: object[]; fail: object[] }> {
+    const user = await AuthService.getUser({ relations: ['role'] });
+    const userRole = user?.role?.name as MASTER_ROLES;
+
+    if (userRole !== MASTER_ROLES.ACCOUNTING) {
+      throw new BadRequestException(
+        `Only user with role ACCOUNTING can post journal!`,
+      );
+    }
+
+    const journalToUpdateIds: string[] = [];
+    const failedIds: object[] = [];
+    const journals = await this.journalRepo.find({
+      where: {
+        id: In(ids),
+        isDeleted: false,
+      },
+    });
+
+    for (const journal of journals) {
+      if (journal.state === JournalState.POSTED) {
+        failedIds.push({ id: journal.id });
+        continue;
+      }
+      journalToUpdateIds.push(journal.id);
+    }
+
+    await this.journalRepo.update(
+      { id: In(journalToUpdateIds) },
+      {
+        state: JournalState.POSTED,
+        updateUser: user,
+      },
+    );
+
+    // TODO: publish message to kafka?
+
+    const successIds = journalToUpdateIds?.map((id) => {
+      return { id };
+    });
+    const result = { success: successIds, fail: failedIds };
+    return result;
   }
 }
