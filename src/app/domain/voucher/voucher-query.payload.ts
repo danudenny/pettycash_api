@@ -1,16 +1,17 @@
 import { BasePayload } from '../common/base-payload.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { VoucherState } from '../../../model/utils/enum';
+import { IsOptional } from 'class-validator';
 
 export class QueryVoucherDTO extends BasePayload {
 	@ApiPropertyOptional({
-		description: 'Expense Start Date',
+		description: 'Voucher Start Date',
 		example: '2021-01-01',
 	})
 	startDate__gte: Date;
 
 	@ApiPropertyOptional({
-		description: 'Expense End Date',
+		description: 'Voucher End Date',
 		example: '2021-12-31',
 	})
 	endDate__lte: Date;
@@ -28,9 +29,25 @@ export class QueryVoucherDTO extends BasePayload {
 	employeeId: string;
 
 	@ApiPropertyOptional({
-		description: 'Expense State',
+		description: 'Voucher State',
 		example: 'draft',
 		enum: VoucherState,
 	})
 	state: VoucherState;
+}
+
+export class QueryVoucherSunfishDTO {
+	@ApiPropertyOptional({
+		description: 'Sigesit Attendance Date',
+		example: '2021-04-02',
+	})
+	@IsOptional()
+	attendance_date?: Date;
+
+	@ApiPropertyOptional({
+		description: 'Employee NIK',
+		example: '19100155',
+	})
+	@IsOptional()
+	nik?: string;
 }

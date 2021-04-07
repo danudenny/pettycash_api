@@ -1,18 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpService, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { getManager, Repository } from 'typeorm';
+import axios, { AxiosResponse } from 'axios';
 import { AuthService } from './auth.service';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Voucher } from '../../../model/voucher.entity';
-import { VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
-import { QueryVoucherDTO } from '../../domain/voucher/voucher-query.payload';
+import { VoucherResponse, VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
+import { QueryVoucherDTO, QueryVoucherSunfishDTO } from '../../domain/voucher/voucher-query.payload';
 import { VoucherDetailResponse } from '../../domain/voucher/response/voucher-detail.response.dto';
+import { VoucherItemDTO } from '../../domain/voucher/dto/voucher-item.dto';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class VoucherService {
 	constructor(
 		@InjectRepository(Voucher)
 		private readonly voucherRepo: Repository<Voucher>,
+		private httpService: HttpService,
 	) {
 	}
 
@@ -76,4 +80,35 @@ export class VoucherService {
 		}
 		return new VoucherDetailResponse(voucher);
 	}
+
+	public async getSunfish(
+		query?: QueryVoucherSunfishDTO
+	): Promise<AxiosResponse<any>> {
+		const headersRequest = {
+			'X-SFAPI-Account': process.env.X_SFAPI_ACCOUNT,
+			'X-SFAPI-AppName': process.env.X_SFAPI_APPNAME,
+			'X-SFAPI-RSAKey': process.env.X_SFAPI_RSAKEY,
+			'Content-Type': 'application/json',
+			'Accept-Encoding': '*'
+		};
+
+		try {
+				const response = await axios.get(process.env.SUNFISH_URL, {
+					headers: headersRequest,
+					params: {
+						'attendance_date': dayjs(new Date).format('YYYY-MM-DD'),
+						'nik': query.nik
+					}
+				})
+				console.log(response.data['RESULT'].length)
+				return response.data
+			} catch (error) {
+				return {
+					status: error.response,
+					...error.response,
+				};
+			}
+		}
+
+
 }
