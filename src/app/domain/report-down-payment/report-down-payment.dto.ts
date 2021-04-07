@@ -6,30 +6,23 @@ export class ReportDownPaymentDTO {
   @IsUUID()
   id: string;
 
-  @ApiProperty({ description: 'Number Down Payment', example: 'UM001' })
-  number: string;
+  @ApiProperty({ description: 'Down Payment Number', example: 'UM001' })
+  numberDownPayment: string;
 
-  @ApiProperty({ description: 'Amount Down Payment', example: 20000 })
-  amount: number;
-  
-  @ApiProperty({ description: 'total Realize', example: 20000 })
-  totalRealized: number;
-
-  @ApiProperty({ description: 'Branch ID', example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',})
-  @IsUUID()
-  branchId: string;
+  @ApiProperty({ description: 'Expense Number', example: 'REL202002AAB112',})
+  sourceDocument : string;
 
   @ApiProperty({ description: 'Branch Name', example: 'Kebun Jeruk' })
   branchName: string;
- 
-  @ApiProperty({ description: 'Expense ID', example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',})
-  @IsUUID()
-  expenseId: string;
+  
+  @ApiProperty({ description: ' Down Payment Amount', example: 20000 })
+  amountDownPayment: number;
+  
+  @ApiProperty({ description: 'Expense amount', example: 20000 })
+  totalRealized: number;
+  
+  @ApiProperty({ description: 'Loan amount', example: 20000 })
+  amountRepayment: number;
 
-  @ApiProperty({ description: 'Realized', example: false })
-  isRealized?: boolean;
-
-  @ApiProperty({ description: 'Date', example: '2021-01-29T09:00:29.803Z' })
-  transactionDate: Date;
 }
 

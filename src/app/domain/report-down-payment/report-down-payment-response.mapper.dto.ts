@@ -7,28 +7,24 @@ export class ReportDownPaymentResponseMapper {
   public static toDTO(dto: Partial<ReportDownPaymentDTO>): ReportDownPaymentDTO {
     const dp = new ReportDownPaymentDTO();
     dp.id = dto.id;
-    dp.number = dto.number;
-    dp.amount = dto.amount;
-    dp.totalRealized = dto.totalRealized;
-    dp.branchId = dto.branchId;
+    dp.numberDownPayment = dto.numberDownPayment;
+    dp.sourceDocument = dto.sourceDocument;
     dp.branchName = dto.branchName;
-    dp.expenseId = dto.expenseId;
-    dp.isRealized = dto.isRealized;
-    dp.transactionDate = dto.transactionDate;
+    dp.amountDownPayment = dto.totalRealized;
+    dp.totalRealized = dto.totalRealized;
+    dp.amountRepayment = dto.amountRepayment;
     return dp;
   }
 
   public static fromOneEntity(ety: Partial<any>) {
     return this.toDTO({
       id: ety.id,
-      number: ety.number,
-      amount: ety.amount,
-      branchId: ety.branchId,
-      branchName: ety.branch.branchName,
-      expenseId: ety.expenseId,
-      totalRealized: ety.expense.totalAmount,
-      isRealized: ety.expenseId ? true : false,
-      transactionDate: ety.transactionDate,
+      numberDownPayment: ety.numberDownPayment,
+      sourceDocument: ety.sourceDocument,
+      branchName: ety.branchName,
+      amountDownPayment: ety.totalRealized,
+      totalRealized: ety.totalRealized,
+      amountRepayment: ety.amountRepayment,
     });
   }
 
