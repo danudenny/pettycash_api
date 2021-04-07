@@ -9,7 +9,7 @@ import {
 @Entity('account_financial_report')
 export class AccountFinancialReport extends PtcBaseEntity {
   @Column({ type: 'smallint', name: 'sequence', default: 0 })
-  sequence?: Number;
+  sequence?: number;
 
   @Column({ type: 'varchar', name: 'name' })
   name: string;
@@ -18,7 +18,7 @@ export class AccountFinancialReport extends PtcBaseEntity {
   parentId?: string;
 
   @Column({ type: 'smallint', name: 'level', default: 0 })
-  level?: Number;
+  level?: number;
 
   @Column({
     type: 'enum',
@@ -40,7 +40,7 @@ export class AccountFinancialReport extends PtcBaseEntity {
     default: () => '-1',
     comment: `Sign value of report (Nominal Pembalik), value only -1 or 1`,
   })
-  sign?: Number;
+  sign?: number;
 
   @Column({
     type: 'uuid',

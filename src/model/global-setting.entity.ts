@@ -28,7 +28,7 @@ export class GlobalSetting extends BaseEntity {
     nullable: true,
     transformer: new ColumnNumericTransformer(),
   })
-  deviationAmount: Number;
+  deviationAmount: number;
 
   @Column({
     type: 'uuid',

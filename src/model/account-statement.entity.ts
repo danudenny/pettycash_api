@@ -22,7 +22,7 @@ export class AccountStatement extends PtcBaseEntity {
   type: AccountStatementType;
 
   @Column({ type: 'decimal', name: 'amount', default: 0 })
-  amount: Number;
+  amount: number;
 
   @Column({
     type: 'enum',

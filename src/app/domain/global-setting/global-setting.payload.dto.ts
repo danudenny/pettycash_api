@@ -14,7 +14,7 @@ export class UpdateGlobalSettingDTO {
     example: 1000,
   })
   @IsNumber()
-  deviationAmount: Number;
+  deviationAmount: number;
 
   @ApiProperty({
     description: 'Cash Transit CoA ID',
