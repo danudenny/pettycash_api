@@ -33,7 +33,6 @@ export class Journal extends PtcBaseEntity {
   @Column({
     type: 'date',
     name: 'transaction_date',
-    default: () => 'CURRENT_DATE',
   })
   transactionDate: Date;
 

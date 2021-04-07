@@ -27,7 +27,6 @@ export class JournalItem extends PtcBaseEntity {
     type: 'date',
     name: 'transaction_date',
     nullable: false,
-    default: () => 'CURRENT_DATE',
   })
   transactionDate: Date;
 
