@@ -27,7 +27,6 @@ export class Voucher extends PtcBaseEntity {
     type: 'date',
     nullable: false,
     name: 'transaction_date',
-    default: () => 'CURRENT_DATE',
   })
   transactionDate: Date;
 

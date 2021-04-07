@@ -37,7 +37,7 @@ export class AccountFinancialReport extends PtcBaseEntity {
   @Column({
     type: 'smallint',
     nullable: false,
-    default: () => '-1',
+    default: -1,
     comment: `Sign value of report (Nominal Pembalik), value only -1 or 1`,
   })
   sign?: number;

@@ -1,4 +1,4 @@
-import { Entity, Column, JoinColumn, Index } from 'typeorm';
+import { Entity, Column, JoinColumn, ManyToOne, Index } from 'typeorm';
 import { AccountDailyClosing } from './account-daily-closing.entity';
 import { PtcBaseEntity } from './base.entity';
 
@@ -13,7 +13,7 @@ export class AccountCashboxItem extends PtcBaseEntity {
   accountDailyClosingId: string;
 
   @Column({
-    type: 'smallint',
+    type: 'integer',
     name: 'pieces',
     nullable: false,
   })
@@ -29,10 +29,11 @@ export class AccountCashboxItem extends PtcBaseEntity {
   @Column({
     type: 'decimal',
     name: 'total_amount',
-    default: () => 0,
+    default: 0,
   })
   totalAmount?: number;
 
+  @ManyToOne(() => AccountDailyClosing, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'account_daily_closing_id' })
   accountDailyClosing: AccountDailyClosing;
 }

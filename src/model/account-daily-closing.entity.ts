@@ -29,32 +29,34 @@ export class AccountDailyClosing extends PtcBaseEntity {
   @Column({
     type: 'decimal',
     name: 'opening_bank_amount',
-    default: () => 0,
+    default: 0,
   })
   openingBankAmount: number;
 
   @Column({
     type: 'decimal',
     name: 'closing_bank_amount',
-    default: () => 0,
+    default: 0,
   })
   closingBankAmount: number;
 
   @Column({
     type: 'decimal',
     name: 'opening_cash_amount',
-    default: () => 0,
+    default: 0,
   })
   openingCashAmount: number;
 
   @Column({
     type: 'decimal',
     name: 'closing_cash_amount',
-    default: () => 0,
+    default: 0,
   })
   closingCashAmount: number;
 
-  @OneToMany(() => AccountCashboxItem, (e) => e.accountDailyClosing)
+  @OneToMany(() => AccountCashboxItem, (e) => e.accountDailyClosing, {
+    cascade: true,
+  })
   cashItems: AccountCashboxItem[];
 
   @ManyToMany(() => Attachment)
