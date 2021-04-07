@@ -1,8 +1,29 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
+import { IsUUID } from 'class-validator';
+import { Branch } from './branch.entity';
 
 @Entity('voucher_sunfish')
 export class VoucherSunfish extends PtcBaseEntity {
+
+  @Column({
+    nullable: false,
+    name: 'start_time',
+  })
+  startTime: Date;
+
+  @Column({
+    name: 'end_time',
+  })
+  end_time: Date;
+
+  @Column({
+    nullable: false,
+    name: 'branch_id',
+  })
+  @IsUUID()
+  branchId: string;
+
   @Column({
     type: 'date',
     nullable: false,
@@ -31,4 +52,9 @@ export class VoucherSunfish extends PtcBaseEntity {
     default: () => 'false',
   })
   isProcessed: boolean;
+
+  @ManyToOne(() => Branch)
+  @JoinColumn({ name: 'branch_id' })
+  branch: Branch
+
 }

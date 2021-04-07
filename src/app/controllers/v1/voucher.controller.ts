@@ -1,8 +1,15 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpStatus, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import {
+	ApiBadRequestResponse,
+	ApiInternalServerErrorResponse,
+	ApiNotFoundResponse,
+	ApiOkResponse,
+	ApiOperation,
+	ApiTags,
+} from '@nestjs/swagger';
 import { VoucherService } from '../../services/v1/voucher.service';
 import { VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
-import { QueryVoucherDTO } from '../../domain/voucher/voucher-query.payload';
+import { QueryVoucherDTO, QueryVoucherSunfishDTO } from '../../domain/voucher/voucher-query.payload';
 import { VoucherDetailResponse } from '../../domain/voucher/response/voucher-detail.response.dto';
 
 @Controller('v1/vouchers')
@@ -14,7 +21,7 @@ export class VoucherController {
 
 	@Get('')
 	@ApiOperation({ summary: 'List all Voucher' })
-	@ApiOkResponse({ type: VoucherWithPaginationResponse })
+	@ApiOkResponse({ status: HttpStatus.OK, type: VoucherWithPaginationResponse })
 	@ApiBadRequestResponse({ description: 'Bad Request' })
 	public async list(
 		@Query() query: QueryVoucherDTO,
@@ -22,12 +29,23 @@ export class VoucherController {
 		return await this.vcrService.list(query);
 	}
 
+	@Get('/sunfish')
+	@ApiOkResponse({ status: HttpStatus.OK, description: 'Success Get Data' })
+	@ApiBadRequestResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request',
+	})
+	public async getSunfish(@Query() query: QueryVoucherSunfishDTO,) {
+		return await this.vcrService.getSunfish(query);
+	}
+
 	@Get('/:id')
 	@ApiOperation({ summary: 'Get Voucher by ID' })
-	@ApiOkResponse({ type: VoucherDetailResponse })
+	@ApiOkResponse({ status: HttpStatus.OK, type: VoucherDetailResponse })
 	@ApiNotFoundResponse({ description: 'Voucher not found' })
 	public async get(@Param('id', new ParseUUIDPipe()) id: string) {
 		return await this.vcrService.getById(id);
 	}
+
 
 }

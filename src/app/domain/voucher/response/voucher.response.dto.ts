@@ -31,4 +31,6 @@ export class VoucherWithPaginationResponse extends BaseResponse {
 
 	@ApiPropertyOptional({ type: () => BasePaginationResponse })
 	meta?: BasePaginationResponse;
+
 }
+
