@@ -252,7 +252,7 @@ export class BudgetRequestService {
               totalAmountItem = totalAmountItem + Number(y.amount);
             }
     
-            // Build Budget
+            // Build Budget Request
             budgetExist.branchId = branchId;
             budgetExist.budgetId = data.budgetId;
             budgetExist.number = data.number;
