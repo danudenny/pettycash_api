@@ -206,10 +206,7 @@ export class DownPaymentService {
           where: { id: downPaymentId, isDeleted: false },
           relations: ['branch', 'employee', 'department', 'histories'],
         });
-        if (!downPayment)
-          throw new NotFoundException(
-            `Down Payment ID ${downPaymentId} not found!`,
-          );
+        if (!downPayment) throw new NotFoundException(`Down Payment ID ${downPaymentId} not found!`,);
 
         const user = await AuthService.getUser({ relations: ['role'] });
         const userRole = user?.role?.name;
@@ -217,6 +214,10 @@ export class DownPaymentService {
         let state: DownPaymentState;
         let isCreateJurnal = false;
         const currentState = downPayment.state;
+
+        if (currentState == DownPaymentState.REJECTED) { 
+          throw new BadRequestException(`Can't approve down payment with current state ${currentState}`);
+        }
 
         if (userRole === MASTER_ROLES.PIC_HO) {
           if (currentState === DownPaymentState.APPROVED_BY_PIC_HO ||currentState === DownPaymentState.APPROVED_BY_SS_SPV) {
@@ -276,7 +277,7 @@ export class DownPaymentService {
           where: { id, isDeleted: false },
           relations: ['branch', 'employee', 'department', 'histories'],
         });
-        if (!downPayment)
+        if (!downPayment) 
           throw new NotFoundException(`Down payment ID ${id} not found!`);
 
         if (downPayment.state === DownPaymentState.REJECTED) {
@@ -297,6 +298,12 @@ export class DownPaymentService {
           throw new BadRequestException(
             `Only PIC/SS/SPV HO can reject down payment!`,
           );
+        }
+
+        if (userRole == MASTER_ROLES.PIC_HO) {
+          if (downPayment.state == DownPaymentState.APPROVED_BY_SS_SPV) {
+            throw new BadRequestException(`Can't reject it because the down payment has been approved by SS/SPV HO!`);
+          }
         }
 
         const state = DownPaymentState.REJECTED;
