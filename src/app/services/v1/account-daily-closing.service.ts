@@ -22,6 +22,7 @@ import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-cl
 import { AccountDailyClosingWithPaginationResponse } from '../../domain/account-daily-closing/response/get-all-account-daily-closing.response';
 import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/dto/query-account-daily-closing.payload.dto';
 import { AuthService } from './auth.service';
+import { GlobalSetting } from '../../../model/global-setting.entity';
 
 @Injectable()
 export class AccountDailyClosingService {
@@ -30,7 +31,9 @@ export class AccountDailyClosingService {
     @InjectRepository(AccountDailyClosing)
     private readonly accountDailyClosingRepo: Repository<AccountDailyClosing>,
     @InjectRepository(Attachment)
-    private readonly attachmentRepo: Repository<Attachment>
+    private readonly attachmentRepo: Repository<Attachment>,
+    @InjectRepository(GlobalSetting)
+    private readonly settingRepo: Repository<GlobalSetting>
   ) {}
 
   public async list(
@@ -80,6 +83,12 @@ export class AccountDailyClosingService {
   public async create(
     payload: CreateAccountDailyClosingDTO
   ): Promise<CreateAccountDailyClosingResponse>{
+    const isDailyClosingGreaterThanDeviationAmount = await this.isDailyClosingGreaterThanDeviationAmount(payload);
+
+    if (!isDailyClosingGreaterThanDeviationAmount) {
+      throw new Error("Unable to create Daily Closing: Deviation Amount not meets");
+    }
+
     const accountDailyClosing = await this.getAccountDailyClosingFromDTO(payload);
     const result = await this.accountDailyClosingRepo.save(accountDailyClosing);
 
@@ -256,5 +265,24 @@ export class AccountDailyClosingService {
     }
 
     return newAttachments;
+  }
+
+  private async isDailyClosingGreaterThanDeviationAmount(
+    payload: CreateAccountDailyClosingDTO
+  ): Promise<Boolean> {
+    const setting = await this.settingRepo.findOne({
+      relations: [
+        'voucherPartner',
+        'cashTransitCoa',
+        'downPaymentPerdinCoa',
+        'downPaymentReimbursementCoa',
+      ],
+    });
+    const deviationAmount = setting.deviationAmount;
+
+    const openingAmount = payload.openingBankAmount + payload.openingCashAmount;
+    const closingAmount = payload.closingBankAmount + payload.closingCashAmount;
+
+    return (openingAmount - closingAmount) > deviationAmount;
   }
 }
