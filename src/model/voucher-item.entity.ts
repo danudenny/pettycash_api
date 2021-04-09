@@ -28,7 +28,7 @@ export class VoucherItem extends PtcBaseEntity {
   })
   amount: number;
 
-  @ManyToOne(() => Voucher)
+  @ManyToOne(() => Voucher, {onDelete: 'CASCADE'})
   @JoinColumn({ name: 'voucher_id' })
   voucher: Voucher;
 

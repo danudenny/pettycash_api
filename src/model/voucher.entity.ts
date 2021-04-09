@@ -1,9 +1,10 @@
-import { Column, Entity, JoinColumn, OneToMany, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Employee } from './employee.entity';
 import { VoucherState } from './utils/enum';
 import { VoucherItem } from './voucher-item.entity';
+import { IsUUID } from 'class-validator';
 
 @Entity('voucher')
 export class Voucher extends PtcBaseEntity {
@@ -82,7 +83,7 @@ export class Voucher extends PtcBaseEntity {
   })
   state: VoucherState;
 
-  @OneToMany(() => VoucherItem, (voucherItem) => voucherItem.voucher)
+  @OneToMany(() => VoucherItem, (voucherItem) => voucherItem.voucher, { cascade: true })
   items: VoucherItem[];
 
   @ManyToOne(() => Branch)

@@ -1,22 +1,33 @@
-import { BadRequestException, HttpService, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpService, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import axios, { AxiosResponse } from 'axios';
 import { AuthService } from './auth.service';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Voucher } from '../../../model/voucher.entity';
-import { VoucherResponse, VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
+import { VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
 import { QueryVoucherDTO, QueryVoucherSunfishDTO } from '../../domain/voucher/voucher-query.payload';
 import { VoucherDetailResponse } from '../../domain/voucher/response/voucher-detail.response.dto';
-import { VoucherItemDTO } from '../../domain/voucher/dto/voucher-item.dto';
+import { CreateVoucherItemDTO } from '../../domain/voucher/dto/voucher-item.dto';
 import dayjs from 'dayjs';
+import { VoucherSunfish } from '../../../model/voucher-sunfish.entity';
+import { CreateVoucherDTO } from '../../domain/voucher/dto/voucher-create.dto';
+import { GenerateCode } from '../../../common/services/generate-code.service';
+import { VoucherState } from '../../../model/utils/enum';
+import { Product } from '../../../model/product.entity';
+import { VoucherItem } from '../../../model/voucher-item.entity';
 
 @Injectable()
 export class VoucherService {
 	constructor(
 		@InjectRepository(Voucher)
 		private readonly voucherRepo: Repository<Voucher>,
-		private httpService: HttpService,
+		@InjectRepository(VoucherSunfish)
+		private readonly voucherSunfishRepo: Repository<VoucherSunfish>,
+		@InjectRepository(VoucherItem)
+		private readonly voucherItemRepo: Repository<VoucherItem>,
+		@InjectRepository(Product)
+		private readonly productRepo: Repository<Product>,
 	) {
 	}
 
@@ -100,13 +111,92 @@ export class VoucherService {
 						'nik': query.nik
 					}
 				})
-				console.log(response.data['RESULT'].length)
+
 				return response.data
 			} catch (error) {
 				return {
 					status: error.response,
 					...error.response,
 				};
+			}
+		}
+
+		public async getTempTable() {
+			return await this.voucherSunfishRepo.find({
+				where: {
+					isDeleted: false,
+					isProcessed: false
+				},
+				relations: ['branch']
+			});
+		}
+
+		public async tempToVoucher(data: CreateVoucherDTO, itemData?: CreateVoucherItemDTO) : Promise<any> {
+			const arrTemp: Voucher[] = [];
+			const itemVoucher: VoucherItem[] = [];
+			const getTempData = await this.getTempTable()
+			const getUserData = await this.getUser()
+
+			if(getTempData.length === 0) {
+				return {
+					status: HttpStatus.BAD_REQUEST,
+					message: 'Semua Data Sudah Diproses'
+				}
+			}
+
+			for (let i = 0; i < getTempData.length; i++) {
+				const dataTemp = getTempData[i];
+				const vcrItemDto = await this.voucherItemRepo.create(itemData);
+				const getProduct = await this.productRepo.find({
+					where: {
+						isDeleted: false,
+						name: dataTemp.data[i]['allowance_name']
+					}
+				});
+
+				const prodId = getProduct.map(({ id }) => id);
+
+				let totalAmount = 0;
+				for (let j = 0; j < Object.keys(dataTemp.data).length; j++) {
+					const data = dataTemp.data[j]['allowance_amount'];
+					vcrItemDto.productId = prodId.toString();
+					vcrItemDto.amount = dataTemp.data[i]['allowance_amount'];
+					vcrItemDto.createUserId = getUserData.id;
+					vcrItemDto.updateUserId = getUserData.id;
+					itemVoucher.push(vcrItemDto);
+					totalAmount += data
+				}
+
+				const voucher = new Voucher();
+				voucher.createUserId = getUserData.id;
+				voucher.updateUserId = getUserData.id;
+				voucher.number = GenerateCode.voucher();
+				voucher.state = VoucherState.DRAFT;
+				voucher.checkinTime = dataTemp.startTime;
+				voucher.checkoutTime = dataTemp.end_time;
+				voucher.transactionDate = new Date();
+				voucher.branchId = dataTemp.branchId;
+				voucher.employeeId = data.employeeId;
+				voucher.employeePosition = data.employeePosition;
+				voucher.totalAmount = totalAmount;
+				voucher.items = itemVoucher;
+
+				arrTemp.push(voucher);
+				console.log(vcrItemDto.amount);
+
+				// await this.voucherSunfishRepo.update(dataTemp.id, { isProcessed : true });
+			}
+
+			try {
+				const result = await this.voucherRepo.save(arrTemp);
+
+				return {
+					status: HttpStatus.OK,
+					message: 'Sukses Generate Voucher',
+					data: result
+				}
+			} catch (err) {
+				throw new Error(err);
 			}
 		}
 
