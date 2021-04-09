@@ -17,6 +17,7 @@ export class DownPaymentResponseMapper {
     dp.departmentName = dto.departmentName;
     dp.employeeId = dto.employeeId;
     dp.employeeName = dto.employeeName;
+    dp.employeeNik = dto.employeeNik;
     dp.destinationPlace = dto.destinationPlace;
     dp.description = dto.description;
     dp.state = dto.state;
@@ -38,6 +39,7 @@ export class DownPaymentResponseMapper {
       departmentName: ety.department.name,
       employeeId: ety.employeeId,
       employeeName: ety.employee.name,
+      employeeNik: ety.employee.nik,
       destinationPlace: ety.destinationPlace,
       description: ety.description,
       state: ety.state,

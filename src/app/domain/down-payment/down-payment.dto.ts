@@ -65,6 +65,9 @@ export class DownPaymentDTO {
   @ApiProperty({ description: 'Employee Name', example: 'Jeny' })
   employeeName: string;
 
+  @ApiProperty({ description: 'Employee Nik', example: '998736762732172' })
+  employeeNik: string;
+
   @ApiProperty({ description: 'Description', example: 'Isi Description' })
   description?: string;
 

@@ -93,6 +93,7 @@ export class DownPaymentService {
         ['brc.branch_name', 'branchName'],
         ['dpr.name', 'departmentName'],
         ['epl.name', 'employeeName'],
+        ['epl.nik', 'employeeNik'],
       );
       qb.leftJoin((e) => e.branch, 'brc');
       qb.leftJoin((e) => e.department, 'dpr');
