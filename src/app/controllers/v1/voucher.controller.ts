@@ -11,6 +11,7 @@ import { VoucherService } from '../../services/v1/voucher.service';
 import { VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
 import { QueryVoucherDTO, QueryVoucherSunfishDTO } from '../../domain/voucher/voucher-query.payload';
 import { VoucherDetailResponse } from '../../domain/voucher/response/voucher-detail.response.dto';
+import { CreateVoucherDTO } from '../../domain/voucher/dto/voucher-create.dto';
 
 @Controller('v1/vouchers')
 @ApiTags('Voucher')
@@ -47,5 +48,11 @@ export class VoucherController {
 		return await this.vcrService.getById(id);
 	}
 
+	@Post('/load')
+	@ApiOkResponse({ status: HttpStatus.OK })
+	@ApiOperation({ summary: 'Create Voucher from Temp Table' })
+	public async load(@Body() data: CreateVoucherDTO) {
+		return this.vcrService.tempToVoucher(data)
+	}
 
 }
