@@ -24,7 +24,7 @@ export class ReportDownPaymentResponseMapper {
       branchName: ety.branchName,
       amountDownPayment: ety.totalRealized,
       totalRealized: ety.totalRealized,
-      amountRepayment: ety.amountRepayment,
+      amountRepayment: ety.amountRepayment || 0,
     });
   }
 
