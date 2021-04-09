@@ -11,7 +11,7 @@ import { QueryBudgetItemDTO } from '../../domain/budget-item/budget-item.payload
 export class BudgetItemService {
   constructor(
     @InjectRepository(BudgetItem)
-    private readonly budgetRepo: Repository<BudgetItem>,
+    private readonly budgetItemRepo: Repository<BudgetItem>,
   ) {
   }
 
@@ -50,12 +50,12 @@ export class BudgetItemService {
   }
 
   public async create(data: CreateBudgetItemDTO): Promise<BudgetItemResponse> {
-    const budgetDTO = await this.budgetRepo.create(data);
+    const budgetDTO = await this.budgetItemRepo.create(data);
     budgetDTO.createUserId = await this.getUserId();
     budgetDTO.updateUserId = await this.getUserId();
 
     try {
-      const budgetItem = await this.budgetRepo.save(budgetDTO);
+      const budgetItem = await this.budgetItemRepo.save(budgetDTO);
       return new BudgetItemResponse(budgetItem);
     } catch (error) {
       throw new BadRequestException(error.message);
@@ -93,25 +93,25 @@ export class BudgetItemService {
   }
 
   public async update(id: string, data: UpdateBudgetItemDTO): Promise<BudgetItemResponse> {
-    const budgetExist = await this.budgetRepo.findOne({ id, isDeleted: false });
+    const budgetExist = await this.budgetItemRepo.findOne({ id, isDeleted: false });
     if (!budgetExist) {
       throw new NotFoundException();
     }
-    const values = await this.budgetRepo.create(data);
+    const values = await this.budgetItemRepo.create(data);
     values.updateUserId = await this.getUserId();
 
-    const budget = await this.budgetRepo.update(id, values);
+    const budget = await this.budgetItemRepo.update(id, values);
     return new BudgetItemResponse(budget as any);
   }
 
   public async delete(id: string): Promise<any> {
-    const budgetExists = await this.budgetRepo.findOne({ id, isDeleted: false });
+    const budgetExists = await this.budgetItemRepo.findOne({ id, isDeleted: false });
     if (!budgetExists) {
       throw new NotFoundException();
     }
 
     // SoftDelete
-    const budget = await this.budgetRepo.update(id, { isDeleted: true });
+    const budget = await this.budgetItemRepo.update(id, { isDeleted: true });
     if (!budget) {
       throw new BadRequestException();
     }
