@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { 
+  BadRequestException, 
+  Injectable, 
+  NotFoundException, 
+  UnprocessableEntityException 
+} from '@nestjs/common';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { InjectRepository } from '@nestjs/typeorm';
 import { 
@@ -83,10 +88,10 @@ export class AccountDailyClosingService {
   public async create(
     payload: CreateAccountDailyClosingDTO
   ): Promise<CreateAccountDailyClosingResponse>{
-    const isDailyClosingGreaterThanDeviationAmount = await this.isDailyClosingGreaterThanDeviationAmount(payload);
+    const isDailyClosingMeetsDeviationAmount = await this.isDailyClosingMeetsDeviationAmount(payload);
 
-    if (!isDailyClosingGreaterThanDeviationAmount) {
-      throw new Error("Unable to create Daily Closing: Deviation Amount not meets");
+    if (!isDailyClosingMeetsDeviationAmount) {
+      throw new UnprocessableEntityException("Unable to create Daily Closing: Deviation Amount not meets");
     }
 
     const accountDailyClosing = await this.getAccountDailyClosingFromDTO(payload);
@@ -267,7 +272,7 @@ export class AccountDailyClosingService {
     return newAttachments;
   }
 
-  private async isDailyClosingGreaterThanDeviationAmount(
+  private async isDailyClosingMeetsDeviationAmount(
     payload: CreateAccountDailyClosingDTO
   ): Promise<Boolean> {
     const setting = await this.settingRepo.findOne({
@@ -283,6 +288,7 @@ export class AccountDailyClosingService {
     const openingAmount = payload.openingBankAmount + payload.openingCashAmount;
     const closingAmount = payload.closingBankAmount + payload.closingCashAmount;
 
-    return (openingAmount - closingAmount) > deviationAmount;
+    return ((openingAmount > closingAmount) && (openingAmount - closingAmount) <= deviationAmount) 
+      || ((closingAmount > openingAmount) && (closingAmount - openingAmount) <= deviationAmount);
   }
 }
