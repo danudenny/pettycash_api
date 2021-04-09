@@ -183,7 +183,7 @@ export class AccountDailyClosingService {
   public async deleteAttachment(
     id: string,
     attachmentId: string,
-  ): Promise<CreateAccountDailyClosingResponse> {
+  ): Promise<void> {
     const attExist = await createQueryBuilder('attachment', 'att')
       .leftJoin('account_daily_closing_attachment', 'adct', 'att.id = adct.attachment_id')
       .where('adct.account_daily_closing_id = :id', { id })
@@ -202,8 +202,6 @@ export class AccountDailyClosingService {
     if (!deleteAttachment) {
       throw new BadRequestException('Gagal menghapus attachment!');
     }
-    
-    return new CreateAccountDailyClosingResponse(attExist);
   }
 
   private async getAccountDailyClosingFromDTO(payload: CreateAccountDailyClosingDTO) {

@@ -3,14 +3,17 @@ import {
   Controller, 
   Delete, 
   Get, 
+  HttpStatus, 
   Param, 
   ParseUUIDPipe, 
   Post, 
   Query,
+  Res,
   UploadedFiles,
   UseInterceptors
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 import { 
   ApiBadRequestResponse, 
   ApiBody, 
@@ -97,11 +100,14 @@ export class AccountDailyClosingController {
   @ApiParam({ name: 'attachmentId' })
   @ApiParam({ name: 'id' })
   @ApiOperation({ summary: 'Delete Account Daily Closing Attachment' })
+  @ApiNotFoundResponse({ description: 'Attachment not found' })
   @ApiNoContentResponse({ description: 'Successfully delete attachment' })
   public async deleteAttachment(
     @Param() { id }: FindIdParams,
     @Param() { attachmentId }: FindAttachmentIdParams,
+    @Res() res: Response,
   ) {
-    return await this.svc.deleteAttachment(id, attachmentId);
+    await this.svc.deleteAttachment(id, attachmentId);
+    return res.status(HttpStatus.NO_CONTENT).json();
   }
 }
