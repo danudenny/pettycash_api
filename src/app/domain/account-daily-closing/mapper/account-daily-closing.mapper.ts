@@ -17,6 +17,9 @@ export class AccountDailyClosingMapper {
     const it = dto.map((accountDailyClosingDTO) => {
       const item = new AccountDailyClosingDTO();
       item.id = accountDailyClosingDTO.id;
+      item.responsibleUserId = accountDailyClosingDTO.responsibleUserId;
+      item.responsibleUserFirstName = accountDailyClosingDTO.responsibleUserFirstName;
+      item.responsibleUserLastName = accountDailyClosingDTO.responsibleUserLastName;
       item.closingDate = accountDailyClosingDTO.closingDate;
       item.openingBankAmount = accountDailyClosingDTO.openingBankAmount;
       item.closingBankAmount = accountDailyClosingDTO.closingBankAmount;
