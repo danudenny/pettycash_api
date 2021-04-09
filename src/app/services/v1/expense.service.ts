@@ -600,7 +600,7 @@ export class ExpenseService {
   public async deleteAttachment(
     expenseId: string,
     attachmentId: string,
-  ): Promise<ExpenseResponse> {
+  ): Promise<void> {
     // TODO: Implement API Delete Expense Attachments
     const attExist = await createQueryBuilder('attachment', 'att')
       .leftJoin('expense_attachment', 'eat', 'att.id = eat.attachment_id')
@@ -617,9 +617,8 @@ export class ExpenseService {
       isDeleted: true,
     });
     if (!deleteAttachment) {
-      throw new BadRequestException('Gagal menghapus attachment!');
+      throw new BadRequestException('Failed to delete attachment!');
     }
-    return new ExpenseResponse(attExist);
   }
 
   private async getTax(

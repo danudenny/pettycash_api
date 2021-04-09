@@ -2,12 +2,12 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
+  Get, HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
-  Query,
+  Query, Res,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
@@ -38,6 +38,7 @@ import { ApproveExpenseDTO } from '../../domain/expense/approve.dto';
 import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
 import FindIdParams, { FindAttachmentIdParams, FindExpenseIdParams } from '../../domain/common/findId-param.dto';
+import { Response } from 'express';
 
 @Controller('v1/expenses')
 @ApiTags('Expense')
@@ -126,7 +127,9 @@ export class ExpenseController {
   public async deleteAttachment(
     @Param() { expenseId }: FindExpenseIdParams,
     @Param() { attachmentId }: FindAttachmentIdParams,
+    @Res() res: Response,
   ) {
-    return await this.svc.deleteAttachment(expenseId, attachmentId);
+    await this.svc.deleteAttachment(expenseId, attachmentId);
+    return res.status(HttpStatus.NO_CONTENT).json();
   }
 }
