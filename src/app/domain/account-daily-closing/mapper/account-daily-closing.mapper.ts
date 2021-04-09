@@ -21,10 +21,10 @@ export class AccountDailyClosingMapper {
       item.responsibleUserFirstName = accountDailyClosingDTO.responsibleUserFirstName;
       item.responsibleUserLastName = accountDailyClosingDTO.responsibleUserLastName;
       item.closingDate = accountDailyClosingDTO.closingDate;
-      item.openingBankAmount = accountDailyClosingDTO.openingBankAmount;
-      item.closingBankAmount = accountDailyClosingDTO.closingBankAmount;
-      item.openingCashAmount = accountDailyClosingDTO.openingCashAmount;
-      item.closingCashAmount = accountDailyClosingDTO.closingCashAmount;
+      item.openingBankAmount = +accountDailyClosingDTO.openingBankAmount;
+      item.closingBankAmount = +accountDailyClosingDTO.closingBankAmount;
+      item.openingCashAmount = +accountDailyClosingDTO.openingCashAmount;
+      item.closingCashAmount = +accountDailyClosingDTO.closingCashAmount;
 
       return item;
     })
