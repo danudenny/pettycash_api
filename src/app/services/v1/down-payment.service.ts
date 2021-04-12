@@ -63,7 +63,7 @@ export class DownPaymentService {
     query?: QueryDownPaymentDTO,
   ): Promise<DownPaymentsWithPaginationResponse> {
     try {
-      const params = { order: '^created_at', limit: 10, ...query };
+      const params = { order: '^updated_at', limit: 10, ...query };
       const qb = new QueryBuilder(DownPayment, 'dp', params);
 
       qb.fieldResolverMap['type'] = 'dp.type';
@@ -151,12 +151,12 @@ export class DownPaymentService {
           isDeleted: false,
         });
 
-        console.log(date, month, year, period);
-        if (!period || (period && period.state === PeriodState.CLOSE)) {
-          throw new BadRequestException(
-            `Failed create due period already closed!`,
-          );
-        }
+        // console.log(date, month, year, period);
+        // if (!period || (period && period.state === PeriodState.CLOSE)) {
+        //   throw new BadRequestException(
+        //     `Failed create due period already closed!`,
+        //   );
+        // }
 
         if (payload && !payload.number) {
           payload.number = GenerateCode.downPayment();
