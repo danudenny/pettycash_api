@@ -98,6 +98,7 @@ export class BudgetRequestController {
   //   type: BudgetRequestResponse,
   // })
   // @ApiBadRequestResponse({ description: 'Failed to reject Budget Request' })
+  @ApiBody({ type: RejectBudgetRequestDTO })
   public async reject(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() data: RejectBudgetRequestDTO
