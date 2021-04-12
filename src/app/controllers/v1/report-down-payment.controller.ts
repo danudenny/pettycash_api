@@ -16,12 +16,12 @@ export class ReportDownPaymentController {
 
     @Get()
     @ApiOperation({ summary: 'List all reports down payments' })
-    @ApiOkResponse({ type: QueryReportDownPaymentDTO })
+    @ApiOkResponse({ type: ReportDownPaymentsWithPaginationResponse })
     @ApiBadRequestResponse({ description: 'Bad Request' })
     async getAllReports(@Query() query: QueryReportDownPaymentDTO,): Promise<ReportDownPaymentsWithPaginationResponse> {
         try {
             return this.reportDownPaymentService.getAllReport(query);
-        } catch (err) { 
+        } catch (err) {
             throw new HttpException( err.message, err.status || HttpStatus.BAD_REQUEST,);
         }
     }
@@ -29,7 +29,7 @@ export class ReportDownPaymentController {
     @Get('/export')
     @ApiOperation({ summary: 'Exports down payment' })
     @ApiOkResponse({ type: Object })
-    @ApiBadRequestResponse({ description: 'Bad Request' })    
+    @ApiBadRequestResponse({ description: 'Bad Request' })
     async exportReports(@Query() query: Object,) {
         try {
             return null
