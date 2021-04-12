@@ -13,6 +13,7 @@ Untuk mendapatkan daftar budget request.
     + startDate__gte: `2021-02-09T17:00:00.000Z` (date, optional) - Searching budget with date range from date start.
     + endDate__gte: `2021-02-15T17:00:00.000Z` (date, optional) - Searching budget with date range from end date.
     + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string, optional) - Searching budget by branch id.
+    + minAmount__lte: `4000000` (number, optional) - Searching range total amount - min.
     + maxAmount__gte: `8000000` (number, optional) - Searching range total amount - max.
     + state: `draft` (enum, optional) - Searching budget status `draft, approve_by_ops, approve_by_pic, rejected, canceled`
     + order: `-totalAmount` (string, optional) - Sort / order bucget by totalAmount ascending.
