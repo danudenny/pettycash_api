@@ -2,6 +2,7 @@ import { Entity, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { AccountCashboxItem } from './account-cashbox-item.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Attachment } from './attachment.entity';
+import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('account_daily_closing')
 export class AccountDailyClosing extends PtcBaseEntity {
@@ -30,6 +31,7 @@ export class AccountDailyClosing extends PtcBaseEntity {
     type: 'decimal',
     name: 'opening_bank_amount',
     default: 0,
+    transformer: new ColumnNumericTransformer(),
   })
   openingBankAmount: number;
 
@@ -37,6 +39,7 @@ export class AccountDailyClosing extends PtcBaseEntity {
     type: 'decimal',
     name: 'closing_bank_amount',
     default: 0,
+    transformer: new ColumnNumericTransformer(),
   })
   closingBankAmount: number;
 
@@ -44,6 +47,7 @@ export class AccountDailyClosing extends PtcBaseEntity {
     type: 'decimal',
     name: 'opening_cash_amount',
     default: 0,
+    transformer: new ColumnNumericTransformer(),
   })
   openingCashAmount: number;
 
@@ -51,6 +55,7 @@ export class AccountDailyClosing extends PtcBaseEntity {
     type: 'decimal',
     name: 'closing_cash_amount',
     default: 0,
+    transformer: new ColumnNumericTransformer(),
   })
   closingCashAmount: number;
 
