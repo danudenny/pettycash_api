@@ -208,7 +208,7 @@ export class BudgetRequestService {
         if (!budgetExist) {
           throw new NotFoundException();
         } else {
-          if (budgetExist.state !== BudgetRequestState.DRAFT) {
+          if (budgetExist.state !== BudgetRequestState.DRAFT && budgetExist.state !== BudgetRequestState.REJECTED && budgetExist.state !== BudgetRequestState.CANCELED) {
             throw new HttpException('Cannot Edit, Status Budget Request is Not DRAFT!', HttpStatus.BAD_REQUEST);
           } else {
             const user = await this.getUser(true);
@@ -266,7 +266,7 @@ export class BudgetRequestService {
             //   needDate: data.needDate,
             // });
             // budgetExist.items = items;
-            budgetExist.createUser = budgetExist.createUser;
+            // budgetExist.createUser = budgetExist.createUser;
             budgetExist.updateUser = user;
     
             const result = await this.budgetRequestRepo.save(budgetExist);
