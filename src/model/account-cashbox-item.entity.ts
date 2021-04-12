@@ -1,6 +1,7 @@
 import { Entity, Column, JoinColumn, ManyToOne, Index } from 'typeorm';
 import { AccountDailyClosing } from './account-daily-closing.entity';
 import { PtcBaseEntity } from './base.entity';
+import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('account_cashbox_item')
 export class AccountCashboxItem extends PtcBaseEntity {
@@ -30,6 +31,7 @@ export class AccountCashboxItem extends PtcBaseEntity {
     type: 'decimal',
     name: 'total_amount',
     default: 0,
+    transformer: new ColumnNumericTransformer(),
   })
   totalAmount?: number;
 
