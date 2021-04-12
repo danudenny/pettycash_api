@@ -26,6 +26,8 @@ import { AllocationBalanceModule } from './app/modules/allocation-balance.module
 import { AccountStatementModule } from './app/modules/account-statement.module';
 import { VoucherModule } from './app/modules/voucher.module';
 import { BudgetRequestModule } from './app/modules/budget.request.module';
+import { ReportDownPaymentModule } from './app/modules/report-down-payment.module';
+// import { BudgetRequestModule } from './app/modules/budget.request.module';
 // import { BudgetRequestItemModule } from './app/modules/budget.request-item.module';
 import { AccountDailyClosingModule } from './app/modules/account-daily-closing.module';
 
@@ -63,6 +65,7 @@ import { AccountDailyClosingModule } from './app/modules/account-daily-closing.m
     AccountStatementModule,
     VoucherModule,
     AccountDailyClosingModule,
+    ReportDownPaymentModule,
   ],
   controllers: [],
   providers: [],

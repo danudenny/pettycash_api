@@ -1,0 +1,82 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Report Down Payment
+
+# Group Report Down Payment
+
+## List Report Down Payment [GET /v1/reports/down-payments{?startDate__gte,endDate__lte,branchId,isRealized}]
+
+API to get all report down payments
+
++ Parameters
+    + startDate__gte: `2021-01-29T09:00:29.803Z`    (date) - Start Date to filter.
+    + endDate__lte: `2021-01-29T09:00:29.803Z`  (date) - Start Date to filter.
+    + branchId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb`  (string) - Branch to filter.
+    + realized: `belum_realisasi `  (string) - Realized to filter.
+        + sudah_realisasi
+        + belum_realisasi
+
++ Request (application/json)
+    + Header
+         Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+        {
+            "status": "success",
+            "data": [
+                {
+                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "numberDownPayment": "UM001",
+                    "branchName": "Kebon Jeruk",
+                    "amountDownPayment": 20000,
+                    "amountRealized": 18000,
+                    "amountRepayment": 2000
+                }
+            ],
+            "meta": {
+                "page": 1,
+                "prevPage": null,
+                "nextPage": null,
+                "perPage": 10
+            }
+        }
+        
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "Internal Server Error"
+        }
+
+## Export Report Down Payment [GET /v1/reports/down-payments/export{?startDate__gte,endDate__lte,branchId,isRealized}]
+
+API export report down payments
+
++ Parameters
+    + startDate__gte: `2021-01-29T09:00:29.803Z`    (date) - Start Date to filter.
+    + endDate__lte: `2021-01-29T09:00:29.803Z`  (date) - Start Date to filter.
+    + branchId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb`  (string) - Branch to filter.
+    + isRealized: `false`  (boolean) - Realized to filter.
+        + true = "Sudah Realisasi"
+        + false = "Belum Realisasi"
+
++ Request (application/json)
+    + Header
+        + Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+        + Content-disposition : "attachment; filename=[yourFileName]" 
+        + Content-Type : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
++ Response 200 (application/vnd.openxmlfo)
+    + Body
+        Buffer
+        
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "Internal Server Error"
+        }
