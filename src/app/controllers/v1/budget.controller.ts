@@ -12,7 +12,7 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiBody, ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { BudgetService } from '../../services/v1/budget.service';
 import { BudgetResponse, BudgetWithPaginationResponse } from '../../domain/budget/budget-response.dto';
 import { QueryBudgetDTO } from '../../domain/budget/budget.payload.dto';
@@ -104,22 +104,24 @@ export class BudgetController {
 
   @Put('/:id/approve')
   @ApiOperation({ summary: 'Approve Budget' })
-  @ApiOkResponse({
-    description: 'Budget successfully approved',
-    type: BudgetResponse,
-  })
-  @ApiBadRequestResponse({ description: 'Failed to approve Budget' })
+  // @ApiOkResponse({
+  //   description: 'Budget successfully approved',
+  //   type: BudgetResponse,
+  // })
+  // @ApiBadRequestResponse({ description: 'Failed to approve Budget' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   public async approve(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.budgetService.approve(id);
   }
 
-  @Put('/:id/reject')
+  @Patch('/:id/reject')
   @ApiOperation({ summary: 'Reject Budget' })
-  @ApiOkResponse({
-    description: 'Budget successfully rejected',
-    type: BudgetResponse,
-  })
-  @ApiBadRequestResponse({ description: 'Failed to reject Budget' })
+  // @ApiOkResponse({
+  //   description: 'Budget successfully rejected',
+  //   type: BudgetResponse,
+  // })
+  // @ApiBadRequestResponse({ description: 'Failed to reject Budget' })
+  @ApiBody({ type: RejectBudgetDTO })
   public async reject(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() data: RejectBudgetDTO
