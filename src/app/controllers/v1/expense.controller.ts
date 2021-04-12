@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query, Res,
   UploadedFiles,
   UseInterceptors,
@@ -39,6 +40,7 @@ import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
 import FindIdParams, { FindAttachmentIdParams, FindExpenseIdParams } from '../../domain/common/findId-param.dto';
 import { Response } from 'express';
+import { UpdateExpenseDTO } from '../../domain/expense/update.dto';
 
 @Controller('v1/expenses')
 @ApiTags('Expense')
@@ -62,6 +64,17 @@ export class ExpenseController {
   @ApiNotFoundResponse({ description: 'Expense not found' })
   public async get(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.svc.getById(id);
+  }
+
+  @Put('/:id')
+  @ApiOperation({ summary: 'Update Expense' })
+  @ApiOkResponse({ type: ExpenseDetailResponse })
+  @ApiNotFoundResponse({ description: 'Expense not found' })
+  public async update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() payload: UpdateExpenseDTO,
+  ) {
+    return await this.svc.update(id, payload);
   }
 
   @Post()

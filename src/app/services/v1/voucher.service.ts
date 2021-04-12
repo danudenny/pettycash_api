@@ -182,9 +182,8 @@ export class VoucherService {
 				voucher.items = itemVoucher;
 
 				arrTemp.push(voucher);
-				console.log(vcrItemDto.amount);
 
-				// await this.voucherSunfishRepo.update(dataTemp.id, { isProcessed : true });
+				await this.voucherSunfishRepo.update(dataTemp.id, { isProcessed : true });
 			}
 
 			try {
