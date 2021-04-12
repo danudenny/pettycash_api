@@ -58,6 +58,7 @@ import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto'
 import { GlobalSetting } from '../../../model/global-setting.entity';
 import { DownPayment } from '../../../model/down-payment.entity';
 import { Loan } from '../../../model/loan.entity';
+import { UpdateExpenseDTO } from '../../domain/expense/update.dto';
 
 @Injectable()
 export class ExpenseService {
@@ -297,6 +298,48 @@ export class ExpenseService {
     } catch (error) {
       throw error;
     }
+  }
+
+  /**
+   * Update Expense
+   *
+   * @param {string} id
+   * @param {CreateExpenseDTO} payload
+   * @return {*}  {Promise<ExpenseResponse>}
+   * @memberof ExpenseService
+   */
+  public async update(
+    id: string,
+    payload?: UpdateExpenseDTO,
+  ): Promise<ExpenseResponse> {
+    const exp = await this.expenseRepo.findOne({
+      where: { id, isDeleted: false },
+      relations: ['branch', 'period', 'downPayment', 'partner', 'items'],
+    });
+
+    if (!exp) {
+      throw new NotFoundException(`Expense with ID ${id} not found!`);
+    }
+
+    if (exp.state !== ExpenseState.DRAFT) {
+      throw new UnprocessableEntityException(
+        `Only Draft Expense can be updated!`,
+      );
+    }
+
+    exp.transactionDate = payload?.transactionDate ?? exp.transactionDate;
+    exp.periodId = payload?.periodId ?? exp.periodId;
+    exp.partnerId = payload?.partnerId ?? exp.partnerId;
+    exp.downPaymentId = payload?.downPaymentId ?? exp.downPaymentId;
+    exp.sourceDocument = payload?.sourceDocument ?? exp.sourceDocument;
+    exp.paymentType = payload?.paymentType ?? exp.paymentType;
+
+    // TODO: Update Items
+    // exp.items = exp.items;
+
+    await this.expenseRepo.save(exp);
+
+    return new ExpenseResponse(exp);
   }
 
   /**
