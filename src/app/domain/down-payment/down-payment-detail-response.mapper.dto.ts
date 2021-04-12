@@ -48,6 +48,7 @@ export class ShowDownPaymentResponseMapper {
       departmentName: ety.department.name,
       employeeId: ety.employeeId,
       employeeName: ety.employee.name,
+      periodId: ety.periodId,
       destinationPlace: ety.destinationPlace,
       description: ety.description,
       state: ety.state,

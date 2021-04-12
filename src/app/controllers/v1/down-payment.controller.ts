@@ -42,10 +42,10 @@ export class DownPaymentController {
   constructor(private readonly downPaymentService: DownPaymentService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create Expense' })
+  @ApiOperation({ summary: 'Create Down Payment' })
   @ApiCreatedResponse({
     type: DownPaymentResponse,
-    description: 'Expense Successfully Created',
+    description: 'Create Down Payment Successfully Created',
   })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   @ApiBody({ type: CreateDownPaymentDTO })
