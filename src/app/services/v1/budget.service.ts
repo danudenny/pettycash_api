@@ -427,7 +427,7 @@ export class BudgetService {
             );
           }
       
-          if (budgetExists.state === BudgetState.DRAFT) {
+          if (budgetExists.state === BudgetState.DRAFT || budgetExists.state === BudgetState.REJECTED) {
             throw new BadRequestException(
               `Budget ${budgetExists.number} need confirmed by SS first!`,
             );
@@ -461,11 +461,11 @@ export class BudgetService {
         });
 
         if (!budgetExist) {
-          throw new NotFoundException(`Expense ID ${id} not found!`);
+          throw new NotFoundException(`Budget ID ${id} not found!`);
         }
 
         if (budgetExist.state === BudgetState.REJECTED) {
-          throw new UnprocessableEntityException(`Expense already rejected!`);
+          throw new UnprocessableEntityException(`Budget already rejected!`);
         }
 
         const user = await AuthService.getUser({ relations: ['role'] });
@@ -473,7 +473,7 @@ export class BudgetService {
 
         if (!userRole) {
           throw new BadRequestException(
-            `Failed to approve expense due unknown user role!`,
+            `Failed to approve budget due unknown user role!`,
           );
         }
 
@@ -486,7 +486,7 @@ export class BudgetService {
         //   ].includes(userRole)
         // ) {
         //   throw new BadRequestException(
-        //     `Only PIC/SS/SPV HO can reject expense!`,
+        //     `Only PIC/SS/SPV HO can reject budget!`,
         //   );
         // }
 
