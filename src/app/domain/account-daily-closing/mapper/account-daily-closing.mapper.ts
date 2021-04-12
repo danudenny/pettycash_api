@@ -5,7 +5,6 @@ import { AccountDailyClosingDetailDTO } from '../dto/account-daily-closing-detai
 import { AccountDailyClosingDTO } from '../dto/account-daily-closing.dto';
 
 export class AccountDailyClosingMapper {
-
   public static fromDTO(dto: Partial<AccountDailyClosingDTO>) {
     const it = new AccountDailyClosingDTO();
     it.id = dto.id;
@@ -18,8 +17,10 @@ export class AccountDailyClosingMapper {
       const item = new AccountDailyClosingDTO();
       item.id = accountDailyClosingDTO.id;
       item.responsibleUserId = accountDailyClosingDTO.responsibleUserId;
-      item.responsibleUserFirstName = accountDailyClosingDTO.responsibleUserFirstName;
-      item.responsibleUserLastName = accountDailyClosingDTO.responsibleUserLastName;
+      item.responsibleUserFirstName =
+        accountDailyClosingDTO.responsibleUserFirstName;
+      item.responsibleUserLastName =
+        accountDailyClosingDTO.responsibleUserLastName;
       item.closingDate = accountDailyClosingDTO.closingDate;
       item.openingBankAmount = +accountDailyClosingDTO.openingBankAmount;
       item.closingBankAmount = +accountDailyClosingDTO.closingBankAmount;
@@ -27,7 +28,7 @@ export class AccountDailyClosingMapper {
       item.closingCashAmount = +accountDailyClosingDTO.closingCashAmount;
 
       return item;
-    })
+    });
 
     return it;
   }
@@ -37,8 +38,10 @@ export class AccountDailyClosingMapper {
     item.id = entity.id;
     item.closingDate = entity.closingDate;
     item.responsibleUserId = entity.responsibleUserId;
-    item.responsibleUserFirstName = entity.createUser && entity.createUser.firstName;
-    item.responsibleUserLastName = entity.createUser && entity.createUser.lastName;
+    item.responsibleUserFirstName =
+      entity.createUser && entity.createUser.firstName;
+    item.responsibleUserLastName =
+      entity.createUser && entity.createUser.lastName;
     item.openingBankAmount = entity.openingBankAmount;
     item.closingBankAmount = entity.closingBankAmount;
     item.openingCashAmount = entity.openingCashAmount;
@@ -57,7 +60,7 @@ export class AccountDailyClosingMapper {
       item.totalAmount = entity.totalAmount;
 
       return item;
-    })
+    });
 
     return items;
   }

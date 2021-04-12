@@ -1,16 +1,16 @@
-import { 
-  BadRequestException, 
-  Injectable, 
-  NotFoundException, 
-  UnprocessableEntityException 
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { InjectRepository } from '@nestjs/typeorm';
-import { 
-  Repository, 
-  getManager, 
+import {
+  Repository,
+  getManager,
   EntityManager,
-  createQueryBuilder 
+  createQueryBuilder,
 } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { AttachmentService } from '../../../common/services/attachment.service';
@@ -31,14 +31,13 @@ import { GlobalSetting } from '../../../model/global-setting.entity';
 
 @Injectable()
 export class AccountDailyClosingService {
-
   constructor(
     @InjectRepository(AccountDailyClosing)
     private readonly accountDailyClosingRepo: Repository<AccountDailyClosing>,
     @InjectRepository(Attachment)
     private readonly attachmentRepo: Repository<Attachment>,
     @InjectRepository(GlobalSetting)
-    private readonly settingRepo: Repository<GlobalSetting>
+    private readonly settingRepo: Repository<GlobalSetting>,
   ) {}
 
   public async list(
@@ -60,24 +59,27 @@ export class AccountDailyClosingService {
       ['adc.opening_bank_amount', 'openingBankAmount'],
       ['adc.closing_bank_amount', 'closingBankAmount'],
       ['adc.opening_cash_amount', 'openingCashAmount'],
-      ['adc.closing_cash_amount', 'closingCashAmount']
+      ['adc.closing_cash_amount', 'closingCashAmount'],
     );
     qb.leftJoin((e) => e.createUser, 'usr');
     qb.andWhere(
       (e) => e.isDeleted,
-      (v) => v.isFalse()
-    )
+      (v) => v.isFalse(),
+    );
 
     const accountDailyClosing = await qb.exec();
-    return new AccountDailyClosingWithPaginationResponse(accountDailyClosing, params);
+    return new AccountDailyClosingWithPaginationResponse(
+      accountDailyClosing,
+      params,
+    );
   }
 
   public async getById(id: string): Promise<AccountDailyClosingDetailResponse> {
     const accountDailyClosing = await this.accountDailyClosingRepo.findOne({
       where: { id, isDeleted: false },
-      relations: ['createUser', 'cashItems']
+      relations: ['createUser', 'cashItems'],
     });
-    
+
     if (!accountDailyClosing) {
       throw new NotFoundException(`Account Daily Closing ID ${id} not found!`);
     }
@@ -86,15 +88,21 @@ export class AccountDailyClosingService {
   }
 
   public async create(
-    payload: CreateAccountDailyClosingDTO
-  ): Promise<CreateAccountDailyClosingResponse>{
-    const isDailyClosingMeetsDeviationSetting = await this.isDailyClosingMeetsDeviationSetting(payload);
+    payload: CreateAccountDailyClosingDTO,
+  ): Promise<CreateAccountDailyClosingResponse> {
+    const isDailyClosingMeetsDeviationSetting = await this.isDailyClosingMeetsDeviationSetting(
+      payload,
+    );
 
     if (!isDailyClosingMeetsDeviationSetting) {
-      throw new UnprocessableEntityException("Unable to create Daily Closing: Deviation Amount not meets");
+      throw new UnprocessableEntityException(
+        'Unable to create Daily Closing: Deviation Amount not meets',
+      );
     }
 
-    const accountDailyClosing = await this.getAccountDailyClosingFromDTO(payload);
+    const accountDailyClosing = await this.getAccountDailyClosingFromDTO(
+      payload,
+    );
     const result = await this.accountDailyClosingRepo.save(accountDailyClosing);
 
     return new CreateAccountDailyClosingResponse(result);
@@ -146,35 +154,42 @@ export class AccountDailyClosingService {
     try {
       const createAttachment = await getManager().transaction(
         async (manager) => {
-          const accountDailyClosing = await manager.findOne(AccountDailyClosing, {
-            where: { id: accountDailyClosingId, isDeleted: false },
-            relations: ['attachments']
-          });
+          const accountDailyClosing = await manager.findOne(
+            AccountDailyClosing,
+            {
+              where: { id: accountDailyClosingId, isDeleted: false },
+              relations: ['attachments'],
+            },
+          );
 
           if (!accountDailyClosing) {
-            throw new NotFoundException(`Account Daily Closing ${accountDailyClosingId} not found!`);
+            throw new NotFoundException(
+              `Account Daily Closing ${accountDailyClosingId} not found!`,
+            );
           }
 
           const existingAttachments = accountDailyClosing.attachments;
           const newAttachments: Attachment[] = await this.uploadAndRetrieveFiles(
-            accountDailyClosingId, 
-            manager, 
-            files
+            accountDailyClosingId,
+            manager,
+            files,
           );
-          
-          accountDailyClosing.attachments = [].concat(existingAttachments, newAttachments);
+
+          accountDailyClosing.attachments = [].concat(
+            existingAttachments,
+            newAttachments,
+          );
           accountDailyClosing.updateUser = await AuthService.getUser();
 
           await manager.save(accountDailyClosing);
 
           return newAttachments;
-        }
-      );
-      
-      return new AccountDailyClosingAttachmentResponse(
-        createAttachment as AccountDailyClosingAttachmentDTO[]
+        },
       );
 
+      return new AccountDailyClosingAttachmentResponse(
+        createAttachment as AccountDailyClosingAttachmentDTO[],
+      );
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -185,7 +200,11 @@ export class AccountDailyClosingService {
     attachmentId: string,
   ): Promise<void> {
     const attExist = await createQueryBuilder('attachment', 'att')
-      .leftJoin('account_daily_closing_attachment', 'adct', 'att.id = adct.attachment_id')
+      .leftJoin(
+        'account_daily_closing_attachment',
+        'adct',
+        'att.id = adct.attachment_id',
+      )
       .where('adct.account_daily_closing_id = :id', { id })
       .andWhere('adct.attachment_id = :attachmentId', { attachmentId })
       .andWhere('att.isDeleted = false')
@@ -204,21 +223,23 @@ export class AccountDailyClosingService {
     }
   }
 
-  private async getAccountDailyClosingFromDTO(payload: CreateAccountDailyClosingDTO) {
+  private async getAccountDailyClosingFromDTO(
+    payload: CreateAccountDailyClosingDTO,
+  ) {
     const user = await AuthService.getUser({ relations: ['branches'] });
     const branchId = user && user.branches && user.branches[0].id;
 
     const accountDailyClosing = new AccountDailyClosing();
     accountDailyClosing.branchId = branchId;
     accountDailyClosing.closingDate = payload.closingDate;
-    accountDailyClosing.responsibleUserId = user.id
+    accountDailyClosing.responsibleUserId = user.id;
     accountDailyClosing.openingBankAmount = payload.openingBankAmount;
     accountDailyClosing.closingBankAmount = payload.closingBankAmount;
     accountDailyClosing.openingCashAmount = payload.openingCashAmount;
     accountDailyClosing.closingCashAmount = payload.closingCashAmount;
     accountDailyClosing.cashItems = this.getAccountCashboxItemsFromDTO(
       payload.accountCashboxItems,
-      user
+      user,
     );
     accountDailyClosing.createUser = user;
     accountDailyClosing.updateUser = user;
@@ -228,17 +249,16 @@ export class AccountDailyClosingService {
 
   private getAccountCashboxItemsFromDTO(
     accountCashboxItems: CreateAccountCashboxItemsDTO[],
-    user: User
+    user: User,
   ): AccountCashboxItem[] {
     const items: AccountCashboxItem[] = [];
-    
+
     accountCashboxItems.forEach(function (accountCashboxItem) {
       const item = new AccountCashboxItem();
       item.pieces = accountCashboxItem.pieces;
       item.total = accountCashboxItem.number;
       item.totalAmount = accountCashboxItem.total;
-      item.createUser = user,
-      item.updateUser = user
+      (item.createUser = user), (item.updateUser = user);
 
       items.push(item);
     });
@@ -249,12 +269,12 @@ export class AccountDailyClosingService {
   private async uploadAndRetrieveFiles(
     accountDailyClosingId: string,
     manager: EntityManager,
-    files?: any
+    files?: any,
   ): Promise<Attachment[]> {
-    let newAttachments: Attachment[] = []
+    let newAttachments: Attachment[] = [];
 
     if (files && files.length) {
-      const accountDailyClosingPath = `accountDailyClosingPath/${accountDailyClosingId}`
+      const accountDailyClosingPath = `accountDailyClosingPath/${accountDailyClosingId}`;
       newAttachments = await AttachmentService.uploadFiles(
         files,
         (file) => {
@@ -263,7 +283,7 @@ export class AccountDailyClosingService {
 
           return pathId;
         },
-        manager
+        manager,
       );
     }
 
@@ -271,7 +291,7 @@ export class AccountDailyClosingService {
   }
 
   private async isDailyClosingMeetsDeviationSetting(
-    payload: CreateAccountDailyClosingDTO
+    payload: CreateAccountDailyClosingDTO,
   ): Promise<Boolean> {
     const setting = await this.settingRepo.findOne({
       relations: [
@@ -287,9 +307,9 @@ export class AccountDailyClosingService {
     const closingAmount = payload.closingBankAmount + payload.closingCashAmount;
 
     if (openingAmount >= closingAmount) {
-      return (openingAmount - closingAmount) <= deviationAmount;
+      return openingAmount - closingAmount <= deviationAmount;
     } else {
-      return (closingAmount - openingAmount) <= deviationAmount;
+      return closingAmount - openingAmount <= deviationAmount;
     }
   }
 }

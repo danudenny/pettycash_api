@@ -63,8 +63,8 @@ import { AccountDailyClosingModule } from './app/modules/account-daily-closing.m
     AccountStatementModule,
     VoucherModule,
     AccountDailyClosingModule,
-],
+  ],
   controllers: [],
   providers: [],
 })
-export class AppModule { }
+export class AppModule {}

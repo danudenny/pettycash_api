@@ -1,8 +1,7 @@
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { BasePayload } from "../../common/base-payload.dto";
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { BasePayload } from '../../common/base-payload.dto';
 
 export class QueryAccountDailyClosingDTO extends BasePayload {
-  
   @ApiPropertyOptional({
     description: 'Account Daily Closing Start Date',
     example: '2021-01-01',

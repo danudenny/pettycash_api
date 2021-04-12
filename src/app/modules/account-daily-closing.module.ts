@@ -8,13 +8,9 @@ import { AccountDailyClosingService } from '../services/v1/account-daily-closing
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      AccountDailyClosing,
-      Attachment,
-      GlobalSetting
-    ])
+    TypeOrmModule.forFeature([AccountDailyClosing, Attachment, GlobalSetting]),
   ],
   providers: [AccountDailyClosingService],
-  controllers: [AccountDailyClosingController]
+  controllers: [AccountDailyClosingController],
 })
 export class AccountDailyClosingModule {}

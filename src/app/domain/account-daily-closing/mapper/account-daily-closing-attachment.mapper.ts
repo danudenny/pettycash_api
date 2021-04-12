@@ -1,9 +1,8 @@
-import { AccountDailyClosingAttachmentDTO } from "../dto/account-daily-closing-attachment.dto";
+import { AccountDailyClosingAttachmentDTO } from '../dto/account-daily-closing-attachment.dto';
 
 export class AccountDailyClosingAttachmentMapper {
-
   public static fromDTO(
-    dtoList: Partial<AccountDailyClosingAttachmentDTO[]>
+    dtoList: Partial<AccountDailyClosingAttachmentDTO[]>,
   ): AccountDailyClosingAttachmentDTO[] {
     return dtoList.map((dto) => {
       const item = new AccountDailyClosingAttachmentDTO();

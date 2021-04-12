@@ -1,31 +1,31 @@
-import { 
-  Body, 
-  Controller, 
-  Delete, 
-  Get, 
-  HttpStatus, 
-  Param, 
-  ParseUUIDPipe, 
-  Post, 
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
   Query,
   Res,
   UploadedFiles,
-  UseInterceptors
+  UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import { 
-  ApiBadRequestResponse, 
-  ApiBody, 
-  ApiConsumes, 
-  ApiCreatedResponse, 
-  ApiInternalServerErrorResponse, 
-  ApiNoContentResponse, 
-  ApiNotFoundResponse, 
-  ApiOkResponse, 
-  ApiOperation, 
-  ApiParam, 
-  ApiTags 
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiConsumes,
+  ApiCreatedResponse,
+  ApiInternalServerErrorResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
 } from '@nestjs/swagger';
 import { CreateAccountDailyClosingAttachmentDTO } from '../../domain/account-daily-closing/dto/create-account-daily-closing-attachment.dto';
 import { AccountDailyClosingAttachmentResponse } from '../../domain/account-daily-closing/response/account-daily-closing-attachments.response';
@@ -35,13 +35,14 @@ import { AccountDailyClosingDetailResponse } from '../../domain/account-daily-cl
 import { AccountDailyClosingWithPaginationResponse } from '../../domain/account-daily-closing/response/get-all-account-daily-closing.response';
 import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/dto/query-account-daily-closing.payload.dto';
 import { AccountDailyClosingService } from '../../services/v1/account-daily-closing.service';
-import FindIdParams, { FindAttachmentIdParams } from '../../domain/common/findId-param.dto';
+import FindIdParams, {
+  FindAttachmentIdParams,
+} from '../../domain/common/findId-param.dto';
 
 @Controller('v1/account-daily-closing')
 @ApiTags('Account Daily Closing')
 @ApiInternalServerErrorResponse({ description: 'General Error' })
 export class AccountDailyClosingController {
-
   constructor(private svc: AccountDailyClosingService) {}
 
   @Get()
@@ -66,7 +67,7 @@ export class AccountDailyClosingController {
   @ApiOperation({ summary: 'Create Account Daily Closing' })
   @ApiCreatedResponse({
     type: CreateAccountDailyClosingResponse,
-    description: 'Account Daily Closing Successfully Created'
+    description: 'Account Daily Closing Successfully Created',
   })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   @ApiBody({ type: CreateAccountDailyClosingDTO })
