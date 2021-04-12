@@ -109,7 +109,7 @@ export class BudgetController {
   //   type: BudgetResponse,
   // })
   // @ApiBadRequestResponse({ description: 'Failed to approve Budget' })
-  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
+  // @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   public async approve(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.budgetService.approve(id);
   }
