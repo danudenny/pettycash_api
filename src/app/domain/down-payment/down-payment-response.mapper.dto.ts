@@ -9,7 +9,7 @@ export class DownPaymentResponseMapper {
     dp.id = dto.id;
     dp.type = dto.type;
     dp.number = dto.number;
-    dp.amount = dto.amount;
+    dp.amount = +dto.amount;
     dp.paymentType = dto.paymentType;
     dp.branchId = dto.branchId;
     dp.branchName = dto.branchName;
@@ -32,7 +32,7 @@ export class DownPaymentResponseMapper {
       id: ety.id,
       type: ety.type,
       number: ety.number,
-      amount: ety.amount,
+      amount: +ety.amount,
       paymentType: ety.paymentType,
       branchId: ety.branchId,
       branchName: ety.branch.branchName,
