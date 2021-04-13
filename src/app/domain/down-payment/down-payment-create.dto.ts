@@ -26,6 +26,13 @@ export class CreateDownPaymentDTO {
   })
   @IsUUID()
   employeeId: string;
+  
+  @ApiProperty({
+    description: 'Period ID',
+    example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
+  })
+  @IsUUID()
+  periodId: string;
 
   @ApiProperty({ description: 'Destination Place', example: 'Jakarta' })
   destinationPlace?: string;

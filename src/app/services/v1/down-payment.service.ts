@@ -63,7 +63,7 @@ export class DownPaymentService {
     query?: QueryDownPaymentDTO,
   ): Promise<DownPaymentsWithPaginationResponse> {
     try {
-      const params = { order: '^created_at', limit: 10, ...query };
+      const params = { order: '^updated_at', limit: 10, ...query };
       const qb = new QueryBuilder(DownPayment, 'dp', params);
 
       qb.fieldResolverMap['type'] = 'dp.type';
@@ -140,24 +140,7 @@ export class DownPaymentService {
   ): Promise<DownPaymentResponse> {
     try {
       const create = await getManager().transaction(async (manager) => {
-        const date = new Date(payload.transactionDate),
-          month = date.getMonth() + 1,
-          year = date.getFullYear();
-
-        const periodEntity = manager.getRepository<Period>(Period);
-        const period = await periodEntity.findOne({
-          month,
-          year,
-          isDeleted: false,
-        });
-
-        console.log(date, month, year, period);
-        if (!period || (period && period.state === PeriodState.CLOSE)) {
-          throw new BadRequestException(
-            `Failed create due period already closed!`,
-          );
-        }
-
+        
         if (payload && !payload.number) {
           payload.number = GenerateCode.downPayment();
         }
@@ -171,7 +154,7 @@ export class DownPaymentService {
         downPayment.branchId = branchId;
         downPayment.state = DownPaymentState.DRAFT;
         downPayment.type = payload.type;
-        downPayment.periodId = period.id;
+        downPayment.periodId = payload.periodId;
         downPayment.amount = payload.amount;
         downPayment.number = payload.number;
         downPayment.employeeId = payload.employeeId;

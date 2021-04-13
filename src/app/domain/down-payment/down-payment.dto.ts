@@ -68,6 +68,13 @@ export class DownPaymentDTO {
   @ApiProperty({ description: 'Employee Nik', example: '998736762732172' })
   employeeNik: string;
 
+  @ApiProperty({
+    description: 'Period ID',
+    example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
+  })
+  @IsUUID()
+  periodId: string;
+
   @ApiProperty({ description: 'Description', example: 'Isi Description' })
   description?: string;
 
@@ -146,6 +153,13 @@ export class ShowDownPaymentDTO {
   @ApiProperty({ description: 'Employee Name', example: 'Jeny' })
   employeeName: string;
 
+  @ApiProperty({
+    description: 'Period ID',
+    example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
+  })
+  @IsUUID()
+  periodId: string;
+  
   @ApiProperty({ description: 'Description', example: 'Isi Description' })
   description?: string;
 
