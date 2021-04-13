@@ -10,12 +10,13 @@ HOST: http://pettycash.api.url
 Untuk mendapatkan daftar budget request.
 
 + Parameters
-    + startDate__gte: `2021-02-09T17:00:00.000Z` (date, optional) - Searching budget with date range from date start.
-    + endDate__gte: `2021-02-15T17:00:00.000Z` (date, optional) - Searching budget with date range from end date.
+    + startDate__gte: `2021-02-09` (date, optional) - Searching budget with date range from date start.
+    + endDate__gte: `2021-02-15` (date, optional) - Searching budget with date range from end date.
     + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string, optional) - Searching budget by branch id.
+    + minAmount__lte: `4000000` (number, optional) - Searching range total amount - min.
     + maxAmount__gte: `8000000` (number, optional) - Searching range total amount - max.
     + state: `draft` (enum, optional) - Searching budget status `draft, approve_by_ops, approve_by_pic, rejected, canceled`
-    + order: `-totalAmount` (string, optional) - Sort / order bucget by totalAmount ascending.
+    + order: `-totalAmount` (string, optional) - Sort / order budget by totalAmount ascending.
 
 
 + Request (application/json)
@@ -294,9 +295,22 @@ Edit data Budget Request
             + needDate: `2021-01-10` (string) - Need Date.
             + totalAmount: 5000000 (number) - Total Amount.
             + items: (array)
+                // FOR EDIT BUDGET ITEM
+                + id: `c157c304-f9f7-43e6-8084-1d25bfc0d113` (string) - Budget Item ID.
                 + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
                 + description: `Kebutuhan Pickup` (string) - Description.
                 + amount: 1000000 (number) - Amount.
+                + isDeleted: false (boolean) - Is Deleted Flag.
+                // FOR ADD BUDGET ITEM
+                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
+                + description: `Kebutuhan Pickup` (string) - Description.
+                + amount: 1000000 (number) - Amount.
+                + isDeleted: false (boolean) - Is Deleted Flag
+                // FOR DELETE BUDGET ITEM
+                + id: `c157c304-f9f7-43e6-8084-1d25bfc0d113` (string) - Budget Item ID.
+                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
+                + amount: 1000000 (number) - Amount.
+                + isDeleted: true (boolean) - Is Deleted Flag.
 
 + Response 201 (application/json)
     + Body

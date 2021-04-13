@@ -82,22 +82,23 @@ export class BudgetRequestController {
 
   @Put('/:id/approve')
   @ApiOperation({ summary: 'Approve Budget Request' })
-  @ApiOkResponse({
-    description: 'Budget Request successfully approved',
-    type: BudgetRequestResponse,
-  })
-  @ApiBadRequestResponse({ description: 'Failed to approve Budget Request' })
+  // @ApiOkResponse({
+  //   description: 'Budget Request successfully approved',
+  //   type: BudgetRequestResponse,
+  // })
+  // @ApiBadRequestResponse({ description: 'Failed to approve Budget Request' })
   public async approve(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.budgetRequestService.approve(id);
   }
 
   @Put('/:id/reject')
   @ApiOperation({ summary: 'Reject Budget Request' })
-  @ApiOkResponse({
-    description: 'Budget Request successfully rejected',
-    type: BudgetRequestResponse,
-  })
-  @ApiBadRequestResponse({ description: 'Failed to reject Budget Request' })
+  // @ApiOkResponse({
+  //   description: 'Budget Request successfully rejected',
+  //   type: BudgetRequestResponse,
+  // })
+  // @ApiBadRequestResponse({ description: 'Failed to reject Budget Request' })
+  @ApiBody({ type: RejectBudgetRequestDTO })
   public async reject(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() data: RejectBudgetRequestDTO
@@ -107,11 +108,11 @@ export class BudgetRequestController {
 
   @Put('/:id/cancel')
   @ApiOperation({ summary: 'Cancel Budget Request' })
-  @ApiOkResponse({
-    description: 'Budget Request successfully Canceled',
-    type: BudgetRequestResponse,
-  })
-  @ApiBadRequestResponse({ description: 'Failed to cancel Budget Request' })
+  // @ApiOkResponse({
+  //   description: 'Budget Request successfully Canceled',
+  //   type: BudgetRequestResponse,
+  // })
+  // @ApiBadRequestResponse({ description: 'Failed to cancel Budget Request' })
   public async cancel(
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
