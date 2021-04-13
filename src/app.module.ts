@@ -30,6 +30,7 @@ import { ReportDownPaymentModule } from './app/modules/report-down-payment.modul
 // import { BudgetRequestModule } from './app/modules/budget.request.module';
 // import { BudgetRequestItemModule } from './app/modules/budget.request-item.module';
 import { AccountDailyClosingModule } from './app/modules/account-daily-closing.module';
+import { BankBranchModule } from './app/modules/bank-branch.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AccountDailyClosingModule } from './app/modules/account-daily-closing.m
     LoggerModule.forRoot(),
     // TODO: add Health checks (Terminus)
     BranchModule,
+    BankBranchModule,
     PartnerModule,
     AccountCoaModule,
     PeriodModule,

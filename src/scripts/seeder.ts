@@ -23,6 +23,8 @@ import GenerateEmployeeRandom from '../seeders/employee.seed';
 import { Employee } from '../model/employee.entity';
 import { Department } from '../model/department.entity';
 import { DepartmentSeed } from '../seeders/department.seed';
+import { BankBranch } from '../model/bank-branch.entity';
+import BankBranchSeed from '../seeders/bank-branch.seed';
 
 async function run() {
   // init connection
@@ -32,6 +34,9 @@ async function run() {
 
   // seed data branch
   await connection.getRepository(Branch).insert(BranchSeed);
+
+  // seed data bank branch
+  await connection.getRepository(BankBranch).save(BankBranchSeed);
 
   // seed data employee
   const employes = GenerateEmployeeRandom(15);

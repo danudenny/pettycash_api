@@ -1,0 +1,50 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Bank Branch
+
+# Group Bank Branch
+
+## List Bank Branch [GET /v1/bank-branches]
+
+Untuk mendapatkan daftar list bank branch (gerai).
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": [
+                {
+                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "bankName": "BCA",
+                    "accountNumber": "770990011",
+                    "accountHolderName": "SiCepat Medan"
+                },
+                {
+                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "bankName": "BNI",
+                    "accountNumber": "999901191",
+                    "accountHolderName": "SiCepat Medan BNI"
+                }
+            ],
+            "meta": {
+                "page": 2,
+                "prevPage": 1,
+                "nextPage": null,
+                "perPage": 10,
+            }
+        }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "message": "Internal Server Error"
+            }
