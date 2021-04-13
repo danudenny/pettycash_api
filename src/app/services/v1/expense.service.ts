@@ -22,6 +22,7 @@ import {
   ExpenseType,
   JournalSourceType,
   JournalState,
+  LoanState,
   LoanType,
   MASTER_ROLES,
   PartnerState,
@@ -221,66 +222,15 @@ export class ExpenseService {
         expense.updateUser = user;
 
         if (payload?.downPaymentId) {
-          downPayment = await manager.getRepository(DownPayment).findOne({
-            where: {
-              id: payload?.downPaymentId,
-              isDeleted: false,
-            },
-          });
-
-          if (!downPayment) {
-            throw new BadRequestException(
-              `Down Payment with ID ${payload?.downPaymentId} not found!`,
-            );
-          }
-
-          if (downPayment?.expenseId) {
-            throw new BadRequestException(`Down Payment already realized!`);
-          }
-
-          if (
-            ![
-              DownPaymentState.APPROVED_BY_PIC_HO,
-              DownPaymentState.APPROVED_BY_SS_SPV,
-            ].includes(downPayment.state)
-          ) {
-            throw new BadRequestException(`Down Payment not approved!`);
-          }
+          downPayment = await this.retrieveDownPaymentForExpense(
+            manager,
+            payload?.downPaymentId,
+          );
 
           expense.type = ExpenseType.DOWN_PAYMENT;
           expense.downPaymentId = downPayment.id;
           expense.downPaymentAmount = downPayment.amount;
-          expense.differenceAmount = expense.totalAmount - expense.downPaymentAmount;
-
-          // Create Loan if any `differenceAmount`
-          if (expense.differenceAmount !== 0) {
-            // If minus mean Piutang/Receivable otherwise Hutang/Payable.
-            // Piutang = Hutang perusahaan terhadap karyawan
-            // Hutang = Hutang karyawan terhadap perusahaan
-            let loanType: LoanType;
-            let loanAmount: number = expense.differenceAmount;
-            if (expense.differenceAmount < 0) {
-              loanType = LoanType.RECEIVABLE;
-              loanAmount = -1 * expense.differenceAmount;
-            } else {
-              loanType = LoanType.PAYABLE;
-            }
-
-            const loan = new Loan();
-            loan.branchId = expense.branchId;
-            loan.periodId = expense.periodId;
-            loan.transactionDate = expense.transactionDate;
-            loan.number = GenerateCode.loan(loan.transactionDate);
-            loan.sourceDocument = expense.number;
-            loan.type = loanType;
-            loan.amount = loanAmount;
-            loan.residualAmount = loanAmount;
-            loan.employeeId = downPayment?.employeeId;
-            loan.createUser = user;
-            loan.updateUser = user;
-
-            await manager.save(loan);
-          }
+          expense.differenceAmount = downPayment.amount - expense.totalAmount;
         }
 
         const expenseResult = await manager.save(expense);
@@ -419,6 +369,9 @@ export class ExpenseService {
               .reduce((a, b) => a + b, 0);
           }
 
+          // Update or Insert Loan from Expense.
+          await this.upsertLoanFromExpense(manager, expense);
+
           // Create Journal for PIC HO
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
@@ -443,6 +396,9 @@ export class ExpenseService {
               .reduce((a, b) => a + b, 0);
           }
 
+          // Update or Insert Loan from Expense.
+          await this.upsertLoanFromExpense(manager, expense);
+
           // (Re)Create Journal for SS/SPV HO
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
@@ -453,6 +409,10 @@ export class ExpenseService {
           throw new BadRequestException(
             `Failed to approve expense due unknown user role!`,
           );
+        }
+
+        if (expense?.downPaymentAmount !== 0) {
+          expense.differenceAmount = expense?.downPaymentAmount - expense.totalAmount;
         }
 
         expense.state = state;
@@ -1143,5 +1103,198 @@ export class ExpenseService {
 
       await expenseItemRepo.update(v.id, item);
     }
+  }
+
+  /**
+   * Internal helper to retrieve down payment for expense.
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {string} id DownPayment ID.
+   * @return {*}  {Promise<DownPayment>}
+   * @memberof ExpenseService
+   */
+  private async retrieveDownPaymentForExpense(
+    manager: EntityManager,
+    id: string,
+  ): Promise<DownPayment> {
+    const downPayment = await manager.getRepository(DownPayment).findOne({
+      where: { id, isDeleted: false },
+    });
+
+    if (!downPayment) {
+      throw new BadRequestException(`Down Payment with ID ${id} not found!`);
+    }
+
+    if (downPayment?.expenseId) {
+      throw new BadRequestException(`Down Payment already realized!`);
+    }
+
+    if (
+      ![
+        DownPaymentState.APPROVED_BY_PIC_HO,
+        DownPaymentState.APPROVED_BY_SS_SPV,
+      ].includes(downPayment.state)
+    ) {
+      throw new BadRequestException(`Down Payment not approved!`);
+    }
+
+    return downPayment;
+  }
+
+  /**
+   * Internal helper to update or insert loan from expense
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} expense
+   * @param {CreateExpenseDTO} payload
+   * @return {*}  {Promise<DownPayment>}
+   * @memberof ExpenseService
+   */
+  private async upsertLoanFromExpense(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<void> {
+    // If no DownPayment return
+    if (!expense?.downPaymentId) return;
+
+    const downPayment = await manager.getRepository(DownPayment).findOne({
+      where: { id: expense?.downPaymentId, isDeleted: false },
+    });
+
+    // Create Loan if any `differenceAmount`
+    const differenceAmount = downPayment.amount - expense.totalAmount;
+    if (differenceAmount !== 0) {
+      const loan = await this.retrieveLoanForExpense(manager, expense);
+
+      if (!loan) {
+        await this.createLoanFromExpense(manager, expense, downPayment);
+      } else {
+        await this.updateLoanFromExpense(manager, loan, expense, downPayment);
+      }
+    }
+  }
+
+  private async retrieveLoanForExpense(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<Loan> {
+    const loan = await manager.getRepository(Loan).findOne({
+      where: {
+        sourceDocument: expense?.number,
+        branchId: expense?.branchId,
+        isDeleted: false,
+      },
+      relations: ['payments'],
+    });
+    return loan;
+  }
+
+  /**
+   * Internal helper to create Loan from Expense
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} expense
+   * @param {DownPayment} downPayment
+   * @return {*}  {Promise<Loan>}
+   * @memberof ExpenseService
+   */
+  private async createLoanFromExpense(
+    manager: EntityManager,
+    expense: Expense,
+    downPayment: DownPayment,
+  ): Promise<Loan> {
+    // If minus mean Piutang/Receivable otherwise Hutang/Payable.
+    // Piutang = Hutang perusahaan terhadap karyawan
+    // Hutang = Hutang karyawan terhadap perusahaan
+    const differenceAmount = downPayment.amount - expense.totalAmount;
+    let loanType: LoanType;
+    let loanAmount: number = differenceAmount;
+
+    if (differenceAmount < 0) {
+      loanType = LoanType.RECEIVABLE;
+      loanAmount = -1 * differenceAmount;
+    } else {
+      loanType = LoanType.PAYABLE;
+    }
+
+    const loan = new Loan();
+    loan.branchId = expense.branchId;
+    loan.periodId = expense.periodId;
+    loan.transactionDate = new Date();
+    loan.number = GenerateCode.loan(loan.transactionDate);
+    loan.sourceDocument = expense.number;
+    loan.type = loanType;
+    loan.amount = loanAmount;
+    loan.residualAmount = loanAmount;
+    loan.employeeId = downPayment?.employeeId;
+    loan.createUserId = expense.createUserId;
+    loan.updateUserId = expense.updateUserId;
+
+    return await manager.save(loan);
+  }
+
+  /**
+   * Internal helper to update Loan from Expense
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Loan} loan
+   * @param {Expense} expense
+   * @param {DownPayment} downPayment
+   * @return {*}  {Promise<Loan>}
+   * @memberof ExpenseService
+   */
+  private async updateLoanFromExpense(
+    manager: EntityManager,
+    loan: Loan,
+    expense: Expense,
+    downPayment: DownPayment,
+  ): Promise<Loan> {
+    // If minus mean Piutang/Receivable otherwise Hutang/Payable.
+    // Piutang = Hutang perusahaan terhadap karyawan
+    // Hutang = Hutang karyawan terhadap perusahaan
+    const isLoanHasPayments = loan?.payments?.length > 0;
+    const currentDifferenceAmount = expense?.differenceAmount;
+    const differenceAmount = downPayment.amount - expense.totalAmount;
+    const loanAmount = loan?.amount;
+    const paidAmouunt = loan?.paidAmount;
+    let loanType: LoanType = loan?.type;
+    let newLoanAmount: number;
+
+    if (differenceAmount < 0) {
+      newLoanAmount = -1 * differenceAmount;
+    } else {
+      newLoanAmount = differenceAmount;
+    }
+
+    // Amount is same, no need update.
+    if (loanAmount === newLoanAmount) return;
+
+    // Change Loan Type if amount sign is difference
+    if (Math.sign(currentDifferenceAmount) !== Math.sign(differenceAmount)) {
+      if (isLoanHasPayments) {
+        throw new UnprocessableEntityException(
+          `Loan has payments, can't change Loan Type!`,
+        );
+      }
+
+      if (loanType === LoanType.RECEIVABLE) {
+        loanType = LoanType.PAYABLE;
+      } else {
+        loanType = LoanType.RECEIVABLE;
+      }
+    }
+
+    // Update Loan
+    loan.type = loanType;
+    loan.state = LoanState.UNPAID;
+    loan.amount = newLoanAmount;
+    loan.residualAmount = newLoanAmount - paidAmouunt;
+    loan.updateUserId = expense.updateUserId;
+
+    return await manager.save(loan);
   }
 }
