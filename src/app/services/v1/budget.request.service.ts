@@ -67,8 +67,8 @@ export class BudgetRequestService {
     const params = { order: '-totalAmount', limit: 10, ...query };
     const qb = new QueryBuilder(BudgetRequest, 'bgtr', params);
 
-    qb.fieldResolverMap['startDate__gte'] = 'bgtr.startDate';
-    qb.fieldResolverMap['endDate__lte'] = 'bgtr.endDate';
+    qb.fieldResolverMap['startDate__gte'] = 'bgtr.needDate';
+    qb.fieldResolverMap['endDate__lte'] = 'bgtr.needDate';
     qb.fieldResolverMap['branchId'] = 'bgtr.branchId';
     qb.fieldResolverMap['minAmount__gte'] = 'bgtr.totalAmount';
     qb.fieldResolverMap['maxAmount__lte'] = 'bgtr.totalAmount';
