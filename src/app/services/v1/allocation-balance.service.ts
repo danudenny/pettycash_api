@@ -1,18 +1,18 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.entity';
 import { getManager, Repository } from 'typeorm';
-import { AllocationBalanceResponse, AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response.dto';
-import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/allocation-balance.query.dto';
+import { AllocationBalanceResponse, AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
+import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CashBalanceAllocationState, MASTER_ROLES } from '../../../model/utils/enum';
 import { AccountStatementHistory } from '../../../model/account-statement-history.entity';
-import { RejectAllocationDTO } from '../../domain/allocation-balance/allocation-balance.dto';
+import { RejectAllocationDTO } from '../../domain/allocation-balance/dto/allocation-balance.dto';
 import dayjs from 'dayjs';
 import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
-import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/allocation-balance-detail.dto';
+import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/dto/allocation-balance-detail.dto';
 
 @Injectable()
 export class AllocationBalanceService {

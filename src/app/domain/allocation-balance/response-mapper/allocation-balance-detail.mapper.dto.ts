@@ -1,9 +1,9 @@
-import { MASTER_ROLES } from '../../../model/utils/enum';
-import { Branch } from '../../../model/branch.entity';
-import { AllocationBalanceDetailDTO } from './allocation-balance.dto';
-import { AccountStatementHistory } from '../../../model/account-statement-history.entity';
-import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.entity';
-import { AlocationBalanceHistoryDTO } from './allocation-balance-history';
+import { MASTER_ROLES } from '../../../../model/utils/enum';
+import { Branch } from '../../../../model/branch.entity';
+import { AllocationBalanceDetailDTO } from '../dto/allocation-balance.dto';
+import { AccountStatementHistory } from '../../../../model/account-statement-history.entity';
+import { CashBalanceAllocation } from '../../../../model/cash.balance.allocation.entity';
+import { AlocationBalanceHistoryDTO } from '../dto/allocation-balance-history.dto';
 
 export class AllocationDetailResponseMapper {
   public static toDTO(dto: AllocationBalanceDetailDTO): AllocationBalanceDetailDTO {

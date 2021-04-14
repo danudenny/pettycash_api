@@ -1,7 +1,6 @@
 import { Column, Entity, JoinColumn, Index, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { Voucher } from './voucher.entity';
-import { IsUUID } from 'class-validator';
 import { Product } from './product.entity';
 
 @Entity('voucher_item')
