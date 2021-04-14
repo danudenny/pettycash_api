@@ -124,6 +124,8 @@ export class BudgetRequestService {
     if (!budgetRequest) {
       throw new NotFoundException(`Budget Request ID ${id} not found!`);
     }
+
+    budgetRequest.items = budgetRequest.items.filter(function(val) {return val.isDeleted === false;});
     return new BudgetRequestDetailResponse(budgetRequest);
   }
 
