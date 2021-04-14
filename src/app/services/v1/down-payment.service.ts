@@ -85,6 +85,8 @@ export class DownPaymentService {
         ['dp.amount', 'amount'],
         ['dp.branch_id', 'branchId'],
         ['dp.employee_id', 'employeeId'],
+        ['dp.period_id', 'periodId'],
+        ['dp.expenseId', 'expenseId'],
         ['dp.description', 'description'],
         ['dp.payment_type', 'paymentType'],
         ['dp.department_id', 'departmentId'],
@@ -94,10 +96,12 @@ export class DownPaymentService {
         ['dpr.name', 'departmentName'],
         ['epl.name', 'employeeName'],
         ['epl.nik', 'employeeNik'],
+        ['pd.name', 'periodName'],
       );
       qb.leftJoin((e) => e.branch, 'brc');
       qb.leftJoin((e) => e.department, 'dpr');
       qb.leftJoin((e) => e.employee, 'epl');
+      qb.leftJoin((e) => e.period, 'pd');
       qb.andWhere(
         (e) => e.isDeleted,
         (v) => v.isFalse(),
@@ -121,6 +125,7 @@ export class DownPaymentService {
           'branch',
           'employee',
           'department',
+          'period',
           'histories',
           'histories.createUser',
         ],
