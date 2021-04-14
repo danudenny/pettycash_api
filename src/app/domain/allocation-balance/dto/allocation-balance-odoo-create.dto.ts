@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class AllocationBalanceDTO {
+export class CreateAllocationBalanceOdooDTO {
 	@ApiProperty({
 		description: 'Auth Key',
 		example: '2ee2cec3302e26b8030b233d614c4f4e'

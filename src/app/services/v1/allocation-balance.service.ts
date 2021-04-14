@@ -13,6 +13,8 @@ import dayjs from 'dayjs';
 import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/dto/allocation-balance-detail.dto';
+import { CreateAllocationBalanceOdooDTO } from '../../domain/allocation-balance/dto/allocation-balance-odoo-create.dto';
+import { CashBalanceAllocationOdoo } from '../../../model/cash.balance.allocation-odoo.entity';
 
 @Injectable()
 export class AllocationBalanceService {
@@ -21,7 +23,9 @@ export class AllocationBalanceService {
     @InjectRepository(CashBalanceAllocation)
     private readonly cashbalRepo: Repository<CashBalanceAllocation>,
     @InjectRepository(AccountStatementHistory)
-    private readonly accHistoryRepo: Repository<AccountStatementHistory>
+    private readonly accHistoryRepo: Repository<AccountStatementHistory>,
+    @InjectRepository(CashBalanceAllocationOdoo)
+    private readonly odooRepo: Repository<CashBalanceAllocationOdoo>
   ) {}
 
   private async getUser(includeBranch: boolean = false) {
@@ -30,6 +34,12 @@ export class AllocationBalanceService {
     } else {
       return await AuthService.getUser();
     }
+  }
+
+  private async buildOdoo(
+    payload: CreateAllocationBalanceOdooDTO
+  ) {
+
   }
 
   private async buildHistory(
@@ -128,6 +138,7 @@ export class AllocationBalanceService {
 
     state = transferDto.state
 
+
     try {
       const transfer = await this.cashbalRepo.save(transferDto);
       if(transfer) {
@@ -140,11 +151,11 @@ export class AllocationBalanceService {
     }
   }
 
-  public async approve(id: string): Promise<any> {
+  public async approve(id: string, payload?: CreateAllocationBalanceOdooDTO): Promise<any> {
     const approveAllocation = await getManager().transaction(async (manager) => {
       const allocation = await manager.findOne(CashBalanceAllocation, {
         where: { id: id, isDeleted: false },
-        relations: ['allocationHistory'],
+        relations: ['allocationHistory', 'destinationBank', 'branch'],
       });
       if (!allocation) {
         throw new NotFoundException(`Alokasi ID ${id} tidak ditemukan!`);
@@ -190,21 +201,33 @@ export class AllocationBalanceService {
 
       if (userRole === MASTER_ROLES.SPV_HO) {
 
-        if (
-          currentState === CashBalanceAllocationState.APPROVED_BY_SPV
-        ) {
+        if (currentState === CashBalanceAllocationState.APPROVED_BY_SPV) {
           throw new BadRequestException(
             `Tidak bisa approve Alokasi Saldo Kas dengan status ${currentState}`,
           );
         }
-        if (
-          currentState === CashBalanceAllocationState.EXPIRED
-        ) {
+        if (currentState === CashBalanceAllocationState.EXPIRED) {
           throw new BadRequestException(
             `Tanggal transfer sudah expired`,
           );
         }
+
+        const createOdoo = this.odooRepo.create(payload);
+        const userResponsible = await this.getUser();
+        createOdoo.createUserId = userResponsible.id;
+        createOdoo.updateUserId = userResponsible.id;
+        createOdoo.accountNumber = allocation.destinationBank.accountNumber;
+        createOdoo.amount = allocation.amount;
+        createOdoo.number = allocation.number;
+        createOdoo.branchName = allocation.branch.branchName;
+        createOdoo.description = allocation.description;
+        createOdoo.authKey = "2ee2cec3302e26b8030b233d614c4f4e";
+        createOdoo.analyticAccount = allocation.branch.branchCode;
+
         state = CashBalanceAllocationState.APPROVED_BY_SPV;
+        if (state == CashBalanceAllocationState.APPROVED_BY_SPV) {
+          await this.odooRepo.save(createOdoo)
+        }
       }
 
       if (dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')) {
@@ -224,7 +247,6 @@ export class AllocationBalanceService {
       }
 
       allocation.state = state;
-      console.log(state)
       allocation.allocationHistory = await this.buildHistory(allocation, { state });
       await this.accHistoryRepo.save(allocation.allocationHistory);
       return await manager.save(allocation);
