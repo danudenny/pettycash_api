@@ -54,8 +54,8 @@ export class BudgetRequestService {
     newHistory.state = data.state;
     newHistory.rejectedNote = data.rejectedNote;
     newHistory.needDate = data.needDate;
-    newHistory.createUser = await this.getUser();
-    newHistory.updateUser = await this.getUser();
+    newHistory.createUser = await this.getUser(true);
+    newHistory.updateUser = await this.getUser(true);
 
     const history = [].concat(budgetRequest.histories, [
       newHistory,
