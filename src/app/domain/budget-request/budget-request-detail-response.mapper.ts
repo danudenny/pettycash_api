@@ -21,6 +21,7 @@ export class BudgetRequestDetailResponseMapper {
       item.productCode = v.product && v.product.code;
       item.description = v.description;
       item.amount = v.amount;
+      item.isDeleted = v.isDeleted;
       return item;
     });
 

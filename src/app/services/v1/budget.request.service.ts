@@ -29,10 +29,10 @@ export class BudgetRequestService {
   ) {
   }
 
-  async getUserId() {
-    // TODO: Use From Authentication User.
-    return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
-  }
+  // async getUserId() {
+  //   // TODO: Use From Authentication User.
+  //   return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
+  // }
 
   private async getUser(includeBranch: boolean = false) {
     if (includeBranch) {
@@ -149,7 +149,8 @@ export class BudgetRequestService {
   
       return new BudgetResponse(bgtExist);;
     } catch (error) {
-      throw error
+      const message = '' + error.detail;
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -265,7 +266,7 @@ export class BudgetRequestService {
             //   needDate: data.needDate,
             // });
             // budgetExist.items = items;
-            // budgetExist.createUser = budgetExist.createUser;
+            budgetExist.createUser = user;
             budgetExist.updateUser = user;
     
             const result = await this.budgetRequestRepo.save(budgetExist);
@@ -275,7 +276,8 @@ export class BudgetRequestService {
       });
       return updateBudget as any;
     } catch (error) {
-      throw error;
+      const message = '' + error.detail;
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -321,10 +323,12 @@ export class BudgetRequestService {
           }
 
           const state = BudgetRequestState.APPROVED_BY_OPS;
+          const needDate = budgetRequestExists.needDate;
 
           budgetRequestExists.state = state;
           budgetRequestExists.histories = await this.buildHistory(budgetRequestExists, {
             state,
+            needDate
           });
           budgetRequestExists.updateUser = user;
 
@@ -343,10 +347,12 @@ export class BudgetRequestService {
           }
 
           const state = BudgetRequestState.APPROVED_BY_PIC;
+          const needDate = budgetRequestExists.needDate;
 
           budgetRequestExists.state = state;
           budgetRequestExists.histories = await this.buildHistory(budgetRequestExists, {
             state,
+            needDate
           });
           budgetRequestExists.updateUser = user;
 
@@ -356,7 +362,8 @@ export class BudgetRequestService {
         }
       })
     } catch (error) {
-      throw error;
+      const message = '' + error.detail;
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -389,11 +396,13 @@ export class BudgetRequestService {
 
         const rejectedNote = data.rejectedNote;
         const state = BudgetRequestState.REJECTED;
+        const needDate = budgetRequestExist.needDate;
 
         budgetRequestExist.state = state;
         budgetRequestExist.histories = await this.buildHistory(budgetRequestExist, {
           state,
           rejectedNote,
+          needDate
         });
         budgetRequestExist.updateUser = user;
 
@@ -401,7 +410,8 @@ export class BudgetRequestService {
       });
       return rejectBudget;
     } catch (error) {
-      throw error;
+      const message = '' + error.detail;
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -433,10 +443,12 @@ export class BudgetRequestService {
         }
 
         const state = BudgetRequestState.REJECTED;
+        const needDate = budgetRequestExist.needDate;
 
         budgetRequestExist.state = state;
         budgetRequestExist.histories = await this.buildHistory(budgetRequestExist, {
           state,
+          needDate
         });
         budgetRequestExist.updateUser = user;
 
@@ -444,7 +456,8 @@ export class BudgetRequestService {
       });
       return cancelBudget;
     } catch (error) {
-      throw error;
+      const message = '' + error.detail;
+      throw new HttpException(message, HttpStatus.BAD_REQUEST);
     }
   }
 }
