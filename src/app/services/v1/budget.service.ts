@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { getManager, Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -366,8 +366,7 @@ export class BudgetService {
       });
       return updateBudget as any;
     } catch (error) {
-      const message = '' + error.detail;
-      throw new HttpException(message, HttpStatus.BAD_REQUEST);
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -453,8 +452,7 @@ export class BudgetService {
       })
       return approveBudget;
     } catch (error) {
-      const message = '' + error.detail;
-      throw new HttpException(message, HttpStatus.BAD_REQUEST);
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -512,8 +510,7 @@ export class BudgetService {
       });
       return rejectBudget;
     } catch (error) {
-      const message = '' + error.detail;
-      throw new HttpException(message, HttpStatus.BAD_REQUEST);
+      throw new InternalServerErrorException(error);
     }
   }
 }
