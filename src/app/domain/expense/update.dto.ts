@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsISO8601, IsOptional, IsUUID } from 'class-validator';
+import { IsArray, IsISO8601, IsOptional, IsUUID } from 'class-validator';
 import { ExpensePaymentType } from '../../../model/utils/enum';
+import { UpdateExpenseItemDTO } from './update-item.dto';
 
 export class UpdateExpenseDTO {
   @ApiPropertyOptional({
@@ -27,14 +28,6 @@ export class UpdateExpenseDTO {
   partnerId?: string;
 
   @ApiPropertyOptional({
-    description: 'Down Payment ID',
-    example: 'b60b522a-d2d9-429c-83da-6f9c0f32bbf9',
-  })
-  @IsUUID()
-  @IsOptional()
-  downPaymentId?: string;
-
-  @ApiPropertyOptional({
     description: 'Source Document',
     example: 'PARKIR-001',
   })
@@ -49,10 +42,11 @@ export class UpdateExpenseDTO {
   @IsOptional()
   paymentType?: ExpensePaymentType;
 
-  // @ApiProperty({
-  //   description: 'Expense Items',
-  //   type: [CreateExpenseItemDTO],
-  // })
-  // @IsArray()
-  // items: CreateExpenseItemDTO[];
+  @ApiPropertyOptional({
+    description: 'Expense Items',
+    type: [UpdateExpenseItemDTO],
+  })
+  @IsOptional()
+  @IsArray()
+  items?: UpdateExpenseItemDTO[];
 }
