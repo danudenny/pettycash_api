@@ -1,5 +1,5 @@
-import { AllocationBalanceDTO } from './allocation-balance.dto';
-import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.entity';
+import { AllocationBalanceDTO } from '../dto/allocation-balance.dto';
+import { CashBalanceAllocation } from '../../../../model/cash.balance.allocation.entity';
 
 export class AllocationBalanceResponseMapper {
   public static toDTO(data: any): AllocationBalanceDTO {

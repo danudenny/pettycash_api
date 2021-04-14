@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsOptional, IsUUID } from 'class-validator';
-import { CashBalanceAllocationState } from '../../../model/utils/enum';
-import { AlocationBalanceHistoryDTO } from './allocation-balance-history';
+import { CashBalanceAllocationState } from '../../../../model/utils/enum';
+import { AlocationBalanceHistoryDTO } from './allocation-balance-history.dto';
 
 export class AllocationBalanceDTO {
   @ApiPropertyOptional()
@@ -23,7 +23,7 @@ export class AllocationBalanceDTO {
 
   @ApiProperty({
     description: 'Reference Number',
-    example: 'ASK/2021/03/21/QWER123',
+    example: 'TRF202102ABC123',
   })
   number: string;
 
