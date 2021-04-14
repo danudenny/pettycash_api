@@ -54,7 +54,6 @@ export class BudgetRequestController {
   public async getBudget(
     @Param('needDate') needDate: Date,
   ) {
-    console.log(needDate);
     return await this.budgetRequestService.getBudget(needDate);
   }
 

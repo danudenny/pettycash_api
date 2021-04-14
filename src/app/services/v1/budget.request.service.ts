@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { getManager, Repository, createQueryBuilder } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -141,6 +141,7 @@ export class BudgetRequestService {
       
       const bgtExist = await this.budgetRepo.createQueryBuilder('bgt')
         .where(`'${needDate}' BETWEEN bgt.startDate AND bgt.endDate`)
+        .andWhere(`(bgt.state = 'approved_by_ss' OR bgt.state = 'approved_by_spv')`)
         .getOne();
   
       if (!bgtExist) {
@@ -149,8 +150,7 @@ export class BudgetRequestService {
   
       return new BudgetResponse(bgtExist);;
     } catch (error) {
-      const message = '' + error.detail;
-      throw new HttpException(message, HttpStatus.BAD_REQUEST);
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -276,8 +276,7 @@ export class BudgetRequestService {
       });
       return updateBudget as any;
     } catch (error) {
-      const message = '' + error.detail;
-      throw new HttpException(message, HttpStatus.BAD_REQUEST);
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -304,7 +303,7 @@ export class BudgetRequestService {
     try{
       const updateBudget = await getManager().transaction(async (manager) => {
         const budgetRequestExists = await manager.findOne(BudgetRequest, {
-          where: { id: id, isDeleted: false },
+          where: { id, isDeleted: false },
           relations: ['histories'],
         });
 
@@ -361,9 +360,9 @@ export class BudgetRequestService {
           throw new HttpException('Role is not OPS or PIC!', HttpStatus.BAD_REQUEST);
         }
       })
+      return updateBudget;
     } catch (error) {
-      const message = '' + error.detail;
-      throw new HttpException(message, HttpStatus.BAD_REQUEST);
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -410,8 +409,7 @@ export class BudgetRequestService {
       });
       return rejectBudget;
     } catch (error) {
-      const message = '' + error.detail;
-      throw new HttpException(message, HttpStatus.BAD_REQUEST);
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -456,8 +454,7 @@ export class BudgetRequestService {
       });
       return cancelBudget;
     } catch (error) {
-      const message = '' + error.detail;
-      throw new HttpException(message, HttpStatus.BAD_REQUEST);
+      throw new InternalServerErrorException(error);
     }
   }
 }
