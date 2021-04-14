@@ -209,7 +209,7 @@ export class DownPaymentService {
         }
 
         if (userRole === MASTER_ROLES.PIC_HO) {
-          if (currentState === DownPaymentState.APPROVED_BY_PIC_HO ||currentState === DownPaymentState.APPROVED_BY_SS_SPV) {
+          if (currentState === DownPaymentState.APPROVED_BY_PIC_HO) {
             throw new BadRequestException( `Can't approve down payment with current state ${currentState}`);
           }
 
