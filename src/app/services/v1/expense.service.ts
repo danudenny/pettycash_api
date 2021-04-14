@@ -507,6 +507,8 @@ export class ExpenseService {
 
         // Remove journal if state in draft, otherwise throw error
         await this.removeJournal(manager, expense);
+        // unlink DownPayment if any
+        await this.unlinkDownPayment(manager, expense);
 
         const { rejectedNote } = payload;
         const state = ExpenseState.REJECTED;
@@ -1232,6 +1234,33 @@ export class ExpenseService {
     }
 
     return downPayment;
+  }
+
+  /**
+   * Unlink DownPayment from Expense
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} expense
+   * @return {*}  {Promise<void>}
+   * @memberof ExpenseService
+   */
+  private async unlinkDownPayment(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<void> {
+    if (expense?.downPaymentId) {
+      const downPaymentRepo = manager.getRepository(DownPayment);
+
+      const downPayment = await downPaymentRepo.findOne({
+        id: expense?.downPaymentId,
+      });
+
+      downPayment.expenseId = null;
+      // TODO: add history?
+
+      await downPaymentRepo.save(downPayment);
+    }
   }
 
   /**
