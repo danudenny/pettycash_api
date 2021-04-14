@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { getManager, Repository, createQueryBuilder } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -29,10 +29,10 @@ export class BudgetRequestService {
   ) {
   }
 
-  async getUserId() {
-    // TODO: Use From Authentication User.
-    return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
-  }
+  // async getUserId() {
+  //   // TODO: Use From Authentication User.
+  //   return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
+  // }
 
   private async getUser(includeBranch: boolean = false) {
     if (includeBranch) {
@@ -67,8 +67,8 @@ export class BudgetRequestService {
     const params = { order: '-totalAmount', limit: 10, ...query };
     const qb = new QueryBuilder(BudgetRequest, 'bgtr', params);
 
-    qb.fieldResolverMap['startDate__gte'] = 'bgtr.startDate';
-    qb.fieldResolverMap['endDate__lte'] = 'bgtr.endDate';
+    qb.fieldResolverMap['startDate__gte'] = 'bgtr.needDate';
+    qb.fieldResolverMap['endDate__lte'] = 'bgtr.needDate';
     qb.fieldResolverMap['branchId'] = 'bgtr.branchId';
     qb.fieldResolverMap['minAmount__gte'] = 'bgtr.totalAmount';
     qb.fieldResolverMap['maxAmount__lte'] = 'bgtr.totalAmount';
@@ -141,6 +141,7 @@ export class BudgetRequestService {
       
       const bgtExist = await this.budgetRepo.createQueryBuilder('bgt')
         .where(`'${needDate}' BETWEEN bgt.startDate AND bgt.endDate`)
+        .andWhere(`(bgt.state = 'approved_by_ss' OR bgt.state = 'approved_by_spv')`)
         .getOne();
   
       if (!bgtExist) {
@@ -149,7 +150,7 @@ export class BudgetRequestService {
   
       return new BudgetResponse(bgtExist);;
     } catch (error) {
-      throw error
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -265,7 +266,7 @@ export class BudgetRequestService {
             //   needDate: data.needDate,
             // });
             // budgetExist.items = items;
-            // budgetExist.createUser = budgetExist.createUser;
+            budgetExist.createUser = user;
             budgetExist.updateUser = user;
     
             const result = await this.budgetRequestRepo.save(budgetExist);
@@ -275,7 +276,7 @@ export class BudgetRequestService {
       });
       return updateBudget as any;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -302,7 +303,7 @@ export class BudgetRequestService {
     try{
       const updateBudget = await getManager().transaction(async (manager) => {
         const budgetRequestExists = await manager.findOne(BudgetRequest, {
-          where: { id: id, isDeleted: false },
+          where: { id, isDeleted: false },
           relations: ['histories'],
         });
 
@@ -321,10 +322,12 @@ export class BudgetRequestService {
           }
 
           const state = BudgetRequestState.APPROVED_BY_OPS;
+          const needDate = budgetRequestExists.needDate;
 
           budgetRequestExists.state = state;
           budgetRequestExists.histories = await this.buildHistory(budgetRequestExists, {
             state,
+            needDate
           });
           budgetRequestExists.updateUser = user;
 
@@ -343,10 +346,12 @@ export class BudgetRequestService {
           }
 
           const state = BudgetRequestState.APPROVED_BY_PIC;
+          const needDate = budgetRequestExists.needDate;
 
           budgetRequestExists.state = state;
           budgetRequestExists.histories = await this.buildHistory(budgetRequestExists, {
             state,
+            needDate
           });
           budgetRequestExists.updateUser = user;
 
@@ -355,8 +360,9 @@ export class BudgetRequestService {
           throw new HttpException('Role is not OPS or PIC!', HttpStatus.BAD_REQUEST);
         }
       })
+      return updateBudget;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -389,11 +395,13 @@ export class BudgetRequestService {
 
         const rejectedNote = data.rejectedNote;
         const state = BudgetRequestState.REJECTED;
+        const needDate = budgetRequestExist.needDate;
 
         budgetRequestExist.state = state;
         budgetRequestExist.histories = await this.buildHistory(budgetRequestExist, {
           state,
           rejectedNote,
+          needDate
         });
         budgetRequestExist.updateUser = user;
 
@@ -401,7 +409,7 @@ export class BudgetRequestService {
       });
       return rejectBudget;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -433,10 +441,12 @@ export class BudgetRequestService {
         }
 
         const state = BudgetRequestState.REJECTED;
+        const needDate = budgetRequestExist.needDate;
 
         budgetRequestExist.state = state;
         budgetRequestExist.histories = await this.buildHistory(budgetRequestExist, {
           state,
+          needDate
         });
         budgetRequestExist.updateUser = user;
 
@@ -444,7 +454,7 @@ export class BudgetRequestService {
       });
       return cancelBudget;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 }
