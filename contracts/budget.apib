@@ -113,22 +113,9 @@ Create Budget data
             + minimumAmount: 250000 (number) - Minimum Amount.
             + totalAmount: 5000000 (number) - Total Amount.
             + items: (array)
-                // FOR EDIT BUDGET ITEM
-                + id: `c157c304-f9f7-43e6-8084-1d25bfc0d113` (string) - Budget Item ID.
                 + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
                 + description: `Kebutuhan Pickup` (string) - Description.
                 + amount: 1000000 (number) - Amount.
-                + isDeleted: false (boolean) - Is Deleted Flag.
-                // FOR ADD BUDGET ITEM
-                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
-                + description: `Kebutuhan Pickup` (string) - Description.
-                + amount: 1000000 (number) - Amount.
-                + isDeleted: false (boolean) - Is Deleted Flag
-                // FOR DELETE BUDGET ITEM
-                + id: `c157c304-f9f7-43e6-8084-1d25bfc0d113` (string) - Budget Item ID.
-                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
-                + amount: 1000000 (number) - Amount.
-                + isDeleted: true (boolean) - Is Deleted Flag.
 
 + Response 201 (application/json)
     + Body
@@ -214,7 +201,8 @@ Get Budget detail.
                         "productName": "Bensin",
                         "productCode": "PRD202003AAA111",
                         "description": "Kebutuhan Pickup",
-                        "amount": 1000000
+                        "amount": 1000000,
+                        "isDeleted": false
                     }
                     ],
                     "histories": [
@@ -334,7 +322,8 @@ Get Budget detail for Duplicate Budget.
                         "productName": "Bensin",
                         "productCode": "PRD202003AAA111",
                         "description": "Kebutuhan Pickup",
-                        "amount": 1000000
+                        "amount": 1000000,
+                        "isDeleted": false
                     }
                     ],
                     "histories": [
@@ -460,9 +449,22 @@ Duplicate data Budget
             + minimumAmount: 250000 (number) - Minimum Amount.
             + totalAmount: 5000000 (number) - Total Amount.
             + items: (array)
+               // FOR EDIT BUDGET ITEM
+                + id: `c157c304-f9f7-43e6-8084-1d25bfc0d113` (string) - Budget Item ID.
                 + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
                 + description: `Kebutuhan Pickup` (string) - Description.
                 + amount: 1000000 (number) - Amount.
+                + isDeleted: false (boolean) - Is Deleted Flag.
+                // FOR ADD BUDGET ITEM
+                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
+                + description: `Kebutuhan Pickup` (string) - Description.
+                + amount: 1000000 (number) - Amount.
+                + isDeleted: false (boolean) - Is Deleted Flag
+                // FOR DELETE BUDGET ITEM
+                + id: `c157c304-f9f7-43e6-8084-1d25bfc0d113` (string) - Budget Item ID.
+                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
+                + amount: 1000000 (number) - Amount.
+                + isDeleted: true (boolean) - Is Deleted Flag.
 
 + Response 201 (application/json)
     + Body

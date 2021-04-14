@@ -48,6 +48,13 @@ export class BudgetItemDTO {
   })
   @IsOptional()
   amount: number;
+
+  @ApiProperty({
+    description: 'Budget Item is Deleted',
+    example: false,
+  })
+  @IsOptional()
+  isDeleted: boolean;
 }
 
 export class FindBudgetItemIdParams {

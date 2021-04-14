@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { getManager, Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -366,7 +366,7 @@ export class BudgetService {
       });
       return updateBudget as any;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -412,10 +412,12 @@ export class BudgetService {
           }
       
           const state = BudgetState.APPROVED_BY_SS;
+          const endDate = budgetExists.endDate;
 
           budgetExists.state = state;
           budgetExists.histories = await this.buildHistory(budgetExists, {
             state,
+            endDate
           });
           budgetExists.updateUser = user;
 
@@ -434,10 +436,12 @@ export class BudgetService {
           }
 
           const state = BudgetState.APPROVED_BY_SPV;
+          const endDate = budgetExists.endDate;
 
           budgetExists.state = state;
           budgetExists.histories = await this.buildHistory(budgetExists, {
             state,
+            endDate
           });
           budgetExists.updateUser = user;
 
@@ -448,7 +452,7 @@ export class BudgetService {
       })
       return approveBudget;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -492,11 +496,13 @@ export class BudgetService {
 
         const rejectedNote = data.rejectedNote;
         const state = BudgetState.REJECTED;
+        const endDate = budgetExist.endDate;
 
         budgetExist.state = state;
         budgetExist.histories = await this.buildHistory(budgetExist, {
           state,
           rejectedNote,
+          endDate
         });
         budgetExist.updateUser = user;
 
@@ -504,7 +510,7 @@ export class BudgetService {
       });
       return rejectBudget;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 }
