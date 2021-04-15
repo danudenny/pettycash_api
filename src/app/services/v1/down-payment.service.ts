@@ -453,7 +453,6 @@ export class DownPaymentService {
       const user = await this.getUser(true);
       const jrnlItem = new JournalItem();
 
-      const branchId = user && user.branches && user.branches[0].id;
       let coaId;
 
       if (downPayment.type == DownPaymentType.PERDIN) {
@@ -465,8 +464,8 @@ export class DownPaymentService {
       jrnlItem.createUser = user;
       jrnlItem.updateUser = user;
       jrnlItem.coaId = coaId;
-      jrnlItem.branchId = branchId;
       jrnlItem.journalId = jurnalId;
+      jrnlItem.branchId = downPayment.branchId;
       jrnlItem.debit = downPayment.amount;
       jrnlItem.reference = downPayment.number;
       jrnlItem.periodId = downPayment.periodId;
@@ -491,16 +490,15 @@ export class DownPaymentService {
       const branchEntity = manager.getRepository<Branch>(Branch);
 
       const user = await this.getUser(true);
-      const branchId = user && user.branches && user.branches[0].id;
 
-      const branch = await branchEntity.findOne({ id: branchId });
+      const branch = await branchEntity.findOne({ id: downPayment.branchId });
       const jrnlItem = new JournalItem();
 
       jrnlItem.createUser = user;
       jrnlItem.updateUser = user;
-      jrnlItem.branchId = branchId;
       jrnlItem.journalId = jurnalId;
-      jrnlItem.coaId = branch.cashCoaId;
+      jrnlItem.coaId = branch?.cashCoaId;
+      jrnlItem.branchId = downPayment.branchId;
       jrnlItem.credit = downPayment.amount;
       jrnlItem.reference = downPayment.number;
       jrnlItem.periodId = downPayment.periodId;
