@@ -31,6 +31,7 @@ import { ReportDownPaymentModule } from './app/modules/report-down-payment.modul
 // import { BudgetRequestItemModule } from './app/modules/budget.request-item.module';
 import { AccountDailyClosingModule } from './app/modules/account-daily-closing.module';
 import { BankBranchModule } from './app/modules/bank-branch.module';
+import { ReportBudgetModule } from './app/modules/report-budget.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { BankBranchModule } from './app/modules/bank-branch.module';
     VoucherModule,
     AccountDailyClosingModule,
     ReportDownPaymentModule,
+    ReportBudgetModule,
   ],
   controllers: [],
   providers: [],

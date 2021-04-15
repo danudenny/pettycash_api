@@ -1,8 +1,8 @@
 import { Controller, Get, HttpException, HttpStatus, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { QueryReportDownPaymentDTO } from 'src/app/domain/report-down-payment/report-down-payment-query.dto';
-import { ReportDownPaymentsWithPaginationResponse } from 'src/app/domain/report-down-payment/report-down-payment-response.dto';
-import { ReportDownPaymentService } from 'src/app/services/v1/report-down-payment.service';
+import { QueryReportBudgetDTO } from '../../domain/report-budget/report-budget-query.dto';
+import { ReportBudgetsWithPaginationResponse } from '../../domain/report-budget/report-budget-response.dto';
+import { ReportBudgetService } from '../../services/v1/report-budget.service';
 
 @ApiTags('Reports Budgets')
 @ApiInternalServerErrorResponse({ description: 'General Error' })
@@ -10,17 +10,17 @@ import { ReportDownPaymentService } from 'src/app/services/v1/report-down-paymen
 export class ReportBudgetController {
 
     constructor(
-        private readonly reportDownPaymentService: ReportDownPaymentService
+        private readonly reportBudgetService: ReportBudgetService
     ) {}
 
 
     @Get()
     @ApiOperation({ summary: 'List all reports down payments' })
-    @ApiOkResponse({ type: ReportDownPaymentsWithPaginationResponse })
+    @ApiOkResponse({ type: ReportBudgetsWithPaginationResponse })
     @ApiBadRequestResponse({ description: 'Bad Request' })
-    async getAllReports(@Query() query: QueryReportDownPaymentDTO,): Promise<ReportDownPaymentsWithPaginationResponse> {
+    async getAllReports(@Query() query: QueryReportBudgetDTO,): Promise<ReportBudgetsWithPaginationResponse> {
         try {
-            return this.reportDownPaymentService.getAllReport(query);
+            return this.reportBudgetService.getAllReport(query);
         } catch (err) {
             throw new HttpException( err.message, err.status || HttpStatus.BAD_REQUEST,);
         }
