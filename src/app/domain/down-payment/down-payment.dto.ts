@@ -41,6 +41,13 @@ export class DownPaymentDTO {
   })
   @IsUUID()
   branchId: string;
+  
+  @ApiProperty({
+    description: 'Expense ID',
+    example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
+  })
+  @IsUUID()
+  expenseId: string;
 
   @ApiProperty({ description: 'Branch Name', example: 'Kebun Jeruk' })
   branchName: string;
@@ -75,12 +82,15 @@ export class DownPaymentDTO {
   @IsUUID()
   periodId: string;
 
+  @ApiProperty({ description: 'Period Name', example: '01-2020' })
+  periodName: string;
+
   @ApiProperty({ description: 'Description', example: 'Isi Description' })
   description?: string;
 
   @ApiProperty({ description: 'Destination Place', example: 'Jakarta' })
   destinationPlace?: string;
-
+  
   @ApiProperty({
     description: 'State',
     example: DownPaymentState.DRAFT,
@@ -89,7 +99,7 @@ export class DownPaymentDTO {
   state: DownPaymentState;
 
   @ApiProperty({ description: 'Realized', example: false })
-  isRealized?: boolean;
+  isRealized: boolean;
 
   @ApiProperty({ description: 'Date', example: '2021-01-29T09:00:29.803Z' })
   transactionDate: Date;
@@ -153,6 +163,9 @@ export class ShowDownPaymentDTO {
   @ApiProperty({ description: 'Employee Name', example: 'Jeny' })
   employeeName: string;
 
+  @ApiProperty({ description: 'Employee Nik', example: '998736762732172' })
+  employeeNik: string;
+
   @ApiProperty({
     description: 'Period ID',
     example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
@@ -160,6 +173,9 @@ export class ShowDownPaymentDTO {
   @IsUUID()
   periodId: string;
   
+  @ApiProperty({ description: 'Period Name', example: '01-2020' })
+  periodName: string;
+
   @ApiProperty({ description: 'Description', example: 'Isi Description' })
   description?: string;
 

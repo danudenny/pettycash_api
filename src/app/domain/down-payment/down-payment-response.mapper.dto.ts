@@ -19,15 +19,16 @@ export class DownPaymentResponseMapper {
     dp.employeeName = dto.employeeName;
     dp.employeeNik = dto.employeeNik;
     dp.periodId = dto.periodId;
+    dp.periodName = dto.periodName;
     dp.destinationPlace = dto.destinationPlace;
     dp.description = dto.description;
     dp.state = dto.state;
-    dp.isRealized = dto.isRealized;
+    dp.isRealized = dto.expenseId ? true : false,
     dp.transactionDate = dto.transactionDate;
     return dp;
   }
 
-  public static fromOneEntity(ety: Partial<DownPayment>) {
+  public static fromOneEntity(ety: Partial<DownPayment>) {   
     return this.toDTO({
       id: ety.id,
       type: ety.type,
@@ -42,6 +43,7 @@ export class DownPaymentResponseMapper {
       employeeName: ety.employee.name,
       employeeNik: ety.employee.nik,
       periodId: ety.periodId,
+      periodName: ety.period.name,
       destinationPlace: ety.destinationPlace,
       description: ety.description,
       state: ety.state,

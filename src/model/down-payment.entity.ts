@@ -17,6 +17,7 @@ import { PtcBaseEntity } from './base.entity';
 import { Department } from './department.entity';
 import { DownPaymentHistory } from './down-payment-history.entity';
 import { Expense } from './expense.entity';
+import { Period } from './period.entity';
 
 @Entity('down_payment')
 export class DownPayment extends PtcBaseEntity {
@@ -81,6 +82,10 @@ export class DownPayment extends PtcBaseEntity {
   @ManyToOne(() => Employee)
   @JoinColumn({ name: 'employee_id', referencedColumnName: 'id' })
   employee: Employee;
+
+  @ManyToOne(() => Period)
+  @JoinColumn({ name: 'period_id' })
+  period: Period;
 
   @OneToMany(() => DownPaymentHistory, (e) => e.downPayment, { cascade: true })
   histories: DownPaymentHistory[];
