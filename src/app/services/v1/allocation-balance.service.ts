@@ -1,10 +1,10 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.entity';
 import { getManager, Repository } from 'typeorm';
-import { AllocationBalanceResponse, AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
+import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
-import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CashBalanceAllocationState, MASTER_ROLES } from '../../../model/utils/enum';
 import { AccountStatementHistory } from '../../../model/account-statement-history.entity';
@@ -15,6 +15,7 @@ import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/dto/allocation-balance-detail.dto';
 import { CreateAllocationBalanceOdooDTO } from '../../domain/allocation-balance/dto/allocation-balance-odoo-create.dto';
 import { CashBalanceAllocationOdoo } from '../../../model/cash.balance.allocation-odoo.entity';
+import { RevisionAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-balance-revision.dto';
 
 @Injectable()
 export class AllocationBalanceService {
@@ -34,12 +35,6 @@ export class AllocationBalanceService {
     } else {
       return await AuthService.getUser();
     }
-  }
-
-  private async buildOdoo(
-    payload: CreateAllocationBalanceOdooDTO
-  ) {
-
   }
 
   private async buildHistory(
@@ -121,7 +116,9 @@ export class AllocationBalanceService {
     return new AllocationBalanceDetailResponse(allocation);
   }
 
-  public async transfer(data: TransferBalanceDTO): Promise<any> {
+  public async transfer(
+    data: TransferBalanceDTO
+  ): Promise<any> {
     const transferDto = await this.cashbalRepo.create(data);
     const userResponsible = await this.getUser();
     let state: CashBalanceAllocationState;
@@ -151,7 +148,45 @@ export class AllocationBalanceService {
     }
   }
 
-  public async approve(id: string, payload?: CreateAllocationBalanceOdooDTO): Promise<any> {
+  public async revision(
+    id: string,
+    data: RevisionAllocationBalanceDTO
+  ): Promise<any> {
+    const idCba = await this.cashbalRepo.findOne({
+      where: {
+        id: id,
+        isDeleted: false,
+        state: CashBalanceAllocationState.REJECTED
+      }
+    })
+
+    if (!idCba) {
+      throw new BadRequestException('Alokasi Saldo Kas dengan status Rejected tidak ditemukan ')
+    }
+
+    const userResponsible = await this.getUser();
+    const revised = this.cashbalRepo.create(data);
+    revised.updateUserId = userResponsible.id;
+    revised.state = CashBalanceAllocationState.DRAFT;
+    revised.id = id;
+
+    const state = revised.state;
+    try {
+      const revision =  await this.cashbalRepo.update(id, revised);
+      if (revision) {
+        revised.allocationHistory = await this.buildHistory(revised, { state });
+        await this.accHistoryRepo.save(revised.allocationHistory);
+        throw new HttpException('Sukses Revisi Alokasi Saldo Kas', HttpStatus.OK);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  public async approve(
+    id: string,
+    payload?: CreateAllocationBalanceOdooDTO
+  ): Promise<any> {
     const approveAllocation = await getManager().transaction(async (manager) => {
       const allocation = await manager.findOne(CashBalanceAllocation, {
         where: { id: id, isDeleted: false },

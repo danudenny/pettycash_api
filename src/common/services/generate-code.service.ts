@@ -85,6 +85,13 @@ export class GenerateCode {
     return prefix + randomCode.toString();
   }
 
+  public static revisionCashBalance(dateTime: Date = new Date(), digit: number = 6) {
+    // Format Code: RVS-CBA202102ABC123
+    const prefix = `RVS-CBA${dayjs(dateTime).format('YYYYMM')}`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
+
   public static voucher(dateTime: Date = new Date(), digit: number = 6) {
     // Format Code: VCR202102ABC123
     const prefix = `VCR${dayjs(dateTime).format('YYYYMM')}`;
