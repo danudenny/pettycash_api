@@ -8,6 +8,7 @@ export enum BudgetState {
   APPROVED_BY_SS = 'approved_by_ss',
   APPROVED_BY_SPV = 'approved_by_spv',
   REJECTED = 'rejected',
+  CANCELED = 'canceled',
 }
 
 export enum BudgetRequestState {

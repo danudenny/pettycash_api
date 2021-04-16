@@ -298,8 +298,8 @@ export class BudgetService {
         if (!budgetExist) {
           throw new NotFoundException();
         } else {
-          if (budgetExist.state !== BudgetState.DRAFT && budgetExist.state !== BudgetState.REJECTED) {
-            throw new HttpException('Cannot Edit, Status Budget is Not DRAFT OR REJECTED!', HttpStatus.BAD_REQUEST);
+          if (budgetExist.state !== BudgetState.DRAFT && budgetExist.state !== BudgetState.REJECTED && budgetExist.state !== BudgetState.CANCELED) {
+            throw new HttpException('Cannot Edit, Status Budget is Not DRAFT, REJECTED OR CANCELED!', HttpStatus.BAD_REQUEST);
           } else {
             const user = await this.getUser(true);
             const branchId = user && user.branches && user.branches[0].id;
@@ -512,6 +512,51 @@ export class BudgetService {
         return await manager.save(budgetExist);
       });
       return rejectBudget;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  public async cancel(id: string): Promise<Budget> {
+    try {
+      const cancelBudget = await getManager().transaction(async (manager) => {
+        const budgetExist = await manager.findOne(Budget, {
+          where: { id: id, isDeleted: false },
+          relations: ['histories'],
+        });
+
+        if (!budgetExist) {
+          throw new NotFoundException(`Budget Request ID ${id} not found!`);
+        }
+    
+        if (budgetExist.state === BudgetState.CANCELED) {
+          throw new BadRequestException(
+            `Budget ${budgetExist.number} already canceled!`,
+          );
+        }
+
+        const user = await AuthService.getUser({ relations: ['role'] });
+        const userRole = user?.role?.name as MASTER_ROLES;
+
+        if (!userRole) {
+          throw new BadRequestException(
+            `Failed to approve Budget Request due unknown user role!`,
+          );
+        }
+
+        const state = BudgetState.REJECTED;
+        const endDate = budgetExist.endDate;
+
+        budgetExist.state = state;
+        budgetExist.histories = await this.buildHistory(budgetExist, {
+          state,
+          endDate
+        });
+        budgetExist.updateUser = user;
+
+        return await manager.save(budgetExist);
+      });
+      return cancelBudget;
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
