@@ -146,6 +146,7 @@ export class ExpenseService {
         'items.attributes',
         'histories',
         'histories.createUser',
+        'histories.createUser.role',
       ],
     });
     if (!expense) {
