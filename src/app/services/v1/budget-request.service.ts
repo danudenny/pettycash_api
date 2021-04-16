@@ -118,6 +118,7 @@ export class BudgetRequestService {
         'items.product',
         'histories',
         'histories.createUser',
+        'histories.createUser.role',
       ],
     });
 
