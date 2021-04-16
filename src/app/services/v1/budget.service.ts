@@ -544,7 +544,7 @@ export class BudgetService {
           );
         }
 
-        const state = BudgetState.REJECTED;
+        const state = BudgetState.CANCELED;
         const endDate = budgetExist.endDate;
 
         budgetExist.state = state;
