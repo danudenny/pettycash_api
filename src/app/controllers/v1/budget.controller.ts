@@ -129,6 +129,19 @@ export class BudgetController {
     return await this.budgetService.reject(id, data);
   }
 
+  @Put('/:id/cancel')
+  @ApiOperation({ summary: 'Cancel Budget' })
+  // @ApiOkResponse({
+  //   description: 'Budget Request successfully Canceled',
+  //   type: BudgetRequestResponse,
+  // })
+  // @ApiBadRequestResponse({ description: 'Failed to cancel Budget Request' })
+  public async cancel(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    return await this.budgetService.cancel(id);
+  }
+
   @Delete(':id/delete')
   @ApiParam({ name: 'id' })
   @ApiOperation({ summary: 'Delete Budget' })
