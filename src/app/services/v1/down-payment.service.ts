@@ -63,7 +63,7 @@ export class DownPaymentService {
     query?: QueryDownPaymentDTO,
   ): Promise<DownPaymentsWithPaginationResponse> {
     try {
-      const params = { order: '^updated_at', limit: 10, ...query };
+      const params = { order: '-updated_at', limit: 10, ...query };
       const qb = new QueryBuilder(DownPayment, 'dp', params);
 
       qb.fieldResolverMap['type'] = 'dp.type';
