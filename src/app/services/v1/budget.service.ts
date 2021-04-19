@@ -201,7 +201,7 @@ export class BudgetService {
         item.amount = v.amount;
         item.createUser = user;
         item.updateUser = user;
-        totalAmountItem = totalAmountItem + v.amount;
+        totalAmountItem = totalAmountItem + Number(v.amount);
         items.push(item);
       }
 
@@ -257,7 +257,7 @@ export class BudgetService {
           item.amount = v.amount;
           item.createUser = user;
           item.updateUser = user;
-          totalAmountItem = totalAmountItem + v.amount;
+          totalAmountItem = totalAmountItem + Number(v.amount);
           items.push(item);
         }
   
