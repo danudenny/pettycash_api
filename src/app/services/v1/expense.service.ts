@@ -1285,16 +1285,16 @@ export class ExpenseService {
       where: { id: expense?.downPaymentId, isDeleted: false },
     });
 
-    // Create Loan if any `differenceAmount`
     const differenceAmount = downPayment.amount - expense.totalAmount;
-    if (differenceAmount !== 0) {
-      const loan = await this.retrieveLoanForExpense(manager, expense);
+    const loan = await this.retrieveLoanForExpense(manager, expense);
 
-      if (!loan) {
+    if (!loan) {
+      // Create Loan if any `differenceAmount`
+      if (differenceAmount !== 0) {
         await this.createLoanFromExpense(manager, expense, downPayment);
-      } else {
-        await this.updateLoanFromExpense(manager, loan, expense, downPayment);
       }
+    } else {
+      await this.updateLoanFromExpense(manager, loan, expense, downPayment);
     }
   }
 
@@ -1374,7 +1374,7 @@ export class ExpenseService {
     loan: Loan,
     expense: Expense,
     downPayment: DownPayment,
-  ): Promise<Loan> {
+  ): Promise<any> {
     // If minus mean Piutang/Receivable otherwise Hutang/Payable.
     // Piutang = Hutang perusahaan terhadap karyawan
     // Hutang = Hutang karyawan terhadap perusahaan
@@ -1388,6 +1388,14 @@ export class ExpenseService {
 
     if (differenceAmount < 0) {
       newLoanAmount = -1 * differenceAmount;
+    } else if (differenceAmount === 0) {
+      if (isLoanHasPayments) {
+        throw new UnprocessableEntityException(
+          `Loan has payments, can't change Expense Amount equal to Loan Amount`,
+        );
+      } else {
+        return await manager.getRepository(Loan).delete({ id: loan?.id });
+      }
     } else {
       newLoanAmount = differenceAmount;
     }
