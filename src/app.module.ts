@@ -25,10 +25,9 @@ import { BalanceModule } from './app/modules/balance.module';
 import { AllocationBalanceModule } from './app/modules/allocation-balance.module';
 import { AccountStatementModule } from './app/modules/account-statement.module';
 import { VoucherModule } from './app/modules/voucher.module';
-import { BudgetRequestModule } from './app/modules/budget.request.module';
+import { BudgetRequestModule } from './app/modules/budget-request.module';
 import { ReportDownPaymentModule } from './app/modules/report-down-payment.module';
-// import { BudgetRequestModule } from './app/modules/budget.request.module';
-// import { BudgetRequestItemModule } from './app/modules/budget.request-item.module';
+import { BudgetRequestItemModule } from './app/modules/budget-request-item.module';
 import { AccountDailyClosingModule } from './app/modules/account-daily-closing.module';
 import { BankBranchModule } from './app/modules/bank-branch.module';
 
@@ -57,7 +56,7 @@ import { BankBranchModule } from './app/modules/bank-branch.module';
     BudgetModule,
     BudgetItemModule,
     BudgetRequestModule,
-    // BudgetRequestItemModule,
+    BudgetRequestItemModule,
     DownPaymentModule,
     ExpenseModule,
     LoanModule,

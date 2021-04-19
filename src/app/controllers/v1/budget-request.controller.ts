@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiBody, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import FindIdParams from '../../domain/common/findId-param.dto';
-import { BudgetRequestService } from '../../services/v1/budget.request.service';
+import { BudgetRequestService } from '../../services/v1/budget-request.service';
 import { BudgetRequestResponse, BudgetRequestWithPaginationResponse } from '../../domain/budget-request/budget-request-response.dto';
 import { QueryBudgetRequestDTO } from '../../domain/budget-request/budget-request.payload.dto';
 import { BudgetRequestDetailResponse } from '../../domain/budget-request/budget-request-detail-response.dto';

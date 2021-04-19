@@ -118,6 +118,7 @@ export class BudgetRequestService {
         'items.product',
         'histories',
         'histories.createUser',
+        'histories.createUser.role',
       ],
     });
 
@@ -442,7 +443,7 @@ export class BudgetRequestService {
           );
         }
 
-        const state = BudgetRequestState.REJECTED;
+        const state = BudgetRequestState.CANCELED;
         const needDate = budgetRequestExist.needDate;
 
         budgetRequestExist.state = state;
