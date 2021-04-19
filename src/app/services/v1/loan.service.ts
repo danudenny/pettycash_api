@@ -400,7 +400,7 @@ export class LoanService {
     payment.createUser = loan.updateUser;
     payment.updateUser = loan.updateUser;
 
-    if (payload.amount > loan.residualAmount) {
+    if (payload.amount >= loan.residualAmount) {
       payment.type = AccountPaymentType.FULL;
       payment.amount = +loan.residualAmount;
     } else if (payload.amount < loan.residualAmount) {
