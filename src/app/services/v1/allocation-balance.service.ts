@@ -236,6 +236,11 @@ export class AllocationBalanceService {
 
       if (userRole === MASTER_ROLES.SPV_HO) {
 
+        if (currentState === CashBalanceAllocationState.DRAFT) {
+          throw new BadRequestException(
+            `Alokasi Saldo Kas belum diapprove oleh SS HO`,
+          );
+        }
         if (currentState === CashBalanceAllocationState.APPROVED_BY_SPV) {
           throw new BadRequestException(
             `Tidak bisa approve Alokasi Saldo Kas dengan status ${currentState}`,
