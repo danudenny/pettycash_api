@@ -175,7 +175,7 @@ export class BudgetRequestService {
       item.amount = v.amount;
       item.createUser = user;
       item.updateUser = user;
-      totalAmountItem = totalAmountItem + v.amount;
+      totalAmountItem = totalAmountItem + Number(v.amount);
       items.push(item);
     }
 
