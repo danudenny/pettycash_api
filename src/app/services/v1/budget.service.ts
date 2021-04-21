@@ -61,6 +61,8 @@ export class BudgetService {
   public async list(query?: QueryBudgetDTO): Promise<BudgetWithPaginationResponse> {
     const params = { order: '-minimumAmount', limit: 10, ...query };
     const qb = new QueryBuilder(Budget, 'bgt', params);
+    const user = await AuthService.getUser({ relations: ['branches'] });
+    const userBranches = user?.branches?.map((v) => v.id);
 
     qb.fieldResolverMap['startDate__gte'] = 'bgt.startDate';
     qb.fieldResolverMap['endDate__lte'] = 'bgt.endDate';
@@ -99,6 +101,12 @@ export class BudgetService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    if (userBranches?.length) {
+      qb.andWhere(
+        (e) => e.branchId,
+        (v) => v.in(userBranches),
+      );
+    }
 
     const budgets = await qb.exec();
     return new BudgetWithPaginationResponse(budgets, params);
