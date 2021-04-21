@@ -17,6 +17,7 @@ export class AccountDailyClosingMapper {
       const item = new AccountDailyClosingDTO();
       item.id = accountDailyClosingDTO.id;
       item.responsibleUserId = accountDailyClosingDTO.responsibleUserId;
+      item.responsibleUserNik = +accountDailyClosingDTO.responsibleUserNik;
       item.responsibleUserFirstName =
         accountDailyClosingDTO.responsibleUserFirstName;
       item.responsibleUserLastName =
@@ -38,6 +39,7 @@ export class AccountDailyClosingMapper {
     item.id = entity.id;
     item.closingDate = entity.closingDate;
     item.responsibleUserId = entity.responsibleUserId;
+    item.responsibleUserNik = +entity.createUser.employeeId;
     item.responsibleUserFirstName =
       entity.createUser && entity.createUser.firstName;
     item.responsibleUserLastName =

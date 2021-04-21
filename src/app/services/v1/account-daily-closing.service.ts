@@ -54,6 +54,7 @@ export class AccountDailyClosingService {
       ['adc.id', 'id'],
       ['adc.closing_date', 'closingDate'],
       ['adc.responsible_user_id', 'responsibleUserId'],
+      ['usr.employee_id', 'responsibleUserNik'],
       ['usr.first_name', 'responsibleUserFirstName'],
       ['usr.last_name', 'responsibleUserLastName'],
       ['adc.opening_bank_amount', 'openingBankAmount'],
