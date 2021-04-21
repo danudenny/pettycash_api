@@ -24,9 +24,9 @@ export class AccountDailyClosingDetailDTO {
 
   @ApiProperty({
     description: 'Responsible User NIK',
-    example: 2982,
+    example: 'general',
   })
-  responsibleUserNik: number;
+  responsibleUserNik: string;
 
   @ApiProperty({
     description: 'Responsible User First Name',
