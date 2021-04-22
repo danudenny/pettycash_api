@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { getManager, Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -61,6 +61,8 @@ export class BudgetService {
   public async list(query?: QueryBudgetDTO): Promise<BudgetWithPaginationResponse> {
     const params = { order: '-minimumAmount', limit: 10, ...query };
     const qb = new QueryBuilder(Budget, 'bgt', params);
+    const user = await AuthService.getUser({ relations: ['branches'] });
+    const userBranches = user?.branches?.map((v) => v.id);
 
     qb.fieldResolverMap['startDate__gte'] = 'bgt.startDate';
     qb.fieldResolverMap['endDate__lte'] = 'bgt.endDate';
@@ -99,6 +101,12 @@ export class BudgetService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    if (userBranches?.length) {
+      qb.andWhere(
+        (e) => e.branchId,
+        (v) => v.in(userBranches),
+      );
+    }
 
     const budgets = await qb.exec();
     return new BudgetWithPaginationResponse(budgets, params);
@@ -114,12 +122,15 @@ export class BudgetService {
         'items.product',
         'histories',
         'histories.createUser',
+        'histories.createUser.role',
       ],
     });
 
     if (!budget) {
       throw new NotFoundException(`Budget ID ${id} not found!`);
     }
+
+    budget.items = budget.items.filter(function(val) {return val.isDeleted === false;});
     return new BudgetDetailResponse(budget);
   }
 
@@ -198,7 +209,7 @@ export class BudgetService {
         item.amount = v.amount;
         item.createUser = user;
         item.updateUser = user;
-        totalAmountItem = totalAmountItem + v.amount;
+        totalAmountItem = totalAmountItem + Number(v.amount);
         items.push(item);
       }
 
@@ -254,7 +265,7 @@ export class BudgetService {
           item.amount = v.amount;
           item.createUser = user;
           item.updateUser = user;
-          totalAmountItem = totalAmountItem + v.amount;
+          totalAmountItem = totalAmountItem + Number(v.amount);
           items.push(item);
         }
   
@@ -295,8 +306,8 @@ export class BudgetService {
         if (!budgetExist) {
           throw new NotFoundException();
         } else {
-          if (budgetExist.state !== BudgetState.DRAFT && budgetExist.state !== BudgetState.REJECTED) {
-            throw new HttpException('Cannot Edit, Status Budget is Not DRAFT OR REJECTED!', HttpStatus.BAD_REQUEST);
+          if (budgetExist.state !== BudgetState.DRAFT && budgetExist.state !== BudgetState.REJECTED && budgetExist.state !== BudgetState.CANCELED) {
+            throw new HttpException('Cannot Edit, Status Budget is Not DRAFT, REJECTED OR CANCELED!', HttpStatus.BAD_REQUEST);
           } else {
             const user = await this.getUser(true);
             const branchId = user && user.branches && user.branches[0].id;
@@ -366,7 +377,7 @@ export class BudgetService {
       });
       return updateBudget as any;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -412,10 +423,12 @@ export class BudgetService {
           }
       
           const state = BudgetState.APPROVED_BY_SS;
+          const endDate = budgetExists.endDate;
 
           budgetExists.state = state;
           budgetExists.histories = await this.buildHistory(budgetExists, {
             state,
+            endDate
           });
           budgetExists.updateUser = user;
 
@@ -434,10 +447,12 @@ export class BudgetService {
           }
 
           const state = BudgetState.APPROVED_BY_SPV;
+          const endDate = budgetExists.endDate;
 
           budgetExists.state = state;
           budgetExists.histories = await this.buildHistory(budgetExists, {
             state,
+            endDate
           });
           budgetExists.updateUser = user;
 
@@ -448,7 +463,7 @@ export class BudgetService {
       })
       return approveBudget;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -492,11 +507,13 @@ export class BudgetService {
 
         const rejectedNote = data.rejectedNote;
         const state = BudgetState.REJECTED;
+        const endDate = budgetExist.endDate;
 
         budgetExist.state = state;
         budgetExist.histories = await this.buildHistory(budgetExist, {
           state,
           rejectedNote,
+          endDate
         });
         budgetExist.updateUser = user;
 
@@ -504,7 +521,52 @@ export class BudgetService {
       });
       return rejectBudget;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  public async cancel(id: string): Promise<Budget> {
+    try {
+      const cancelBudget = await getManager().transaction(async (manager) => {
+        const budgetExist = await manager.findOne(Budget, {
+          where: { id: id, isDeleted: false },
+          relations: ['histories'],
+        });
+
+        if (!budgetExist) {
+          throw new NotFoundException(`Budget Request ID ${id} not found!`);
+        }
+    
+        if (budgetExist.state === BudgetState.CANCELED) {
+          throw new BadRequestException(
+            `Budget ${budgetExist.number} already canceled!`,
+          );
+        }
+
+        const user = await AuthService.getUser({ relations: ['role'] });
+        const userRole = user?.role?.name as MASTER_ROLES;
+
+        if (!userRole) {
+          throw new BadRequestException(
+            `Failed to approve Budget Request due unknown user role!`,
+          );
+        }
+
+        const state = BudgetState.CANCELED;
+        const endDate = budgetExist.endDate;
+
+        budgetExist.state = state;
+        budgetExist.histories = await this.buildHistory(budgetExist, {
+          state,
+          endDate
+        });
+        budgetExist.updateUser = user;
+
+        return await manager.save(budgetExist);
+      });
+      return cancelBudget;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
     }
   }
 }

@@ -63,8 +63,10 @@ export class DownPaymentService {
     query?: QueryDownPaymentDTO,
   ): Promise<DownPaymentsWithPaginationResponse> {
     try {
-      const params = { order: '^updated_at', limit: 10, ...query };
+      const params = { order: '-updated_at', limit: 10, ...query };
       const qb = new QueryBuilder(DownPayment, 'dp', params);
+      const user = await AuthService.getUser({ relations: ['branches'] });
+      const userBranches = user?.branches?.map((v) => v.id);
 
       qb.fieldResolverMap['type'] = 'dp.type';
       qb.fieldResolverMap['state'] = 'dp.state';
@@ -85,6 +87,8 @@ export class DownPaymentService {
         ['dp.amount', 'amount'],
         ['dp.branch_id', 'branchId'],
         ['dp.employee_id', 'employeeId'],
+        ['dp.period_id', 'periodId'],
+        ['dp.expenseId', 'expenseId'],
         ['dp.description', 'description'],
         ['dp.payment_type', 'paymentType'],
         ['dp.department_id', 'departmentId'],
@@ -94,14 +98,22 @@ export class DownPaymentService {
         ['dpr.name', 'departmentName'],
         ['epl.name', 'employeeName'],
         ['epl.nik', 'employeeNik'],
+        ['pd.name', 'periodName'],
       );
       qb.leftJoin((e) => e.branch, 'brc');
       qb.leftJoin((e) => e.department, 'dpr');
       qb.leftJoin((e) => e.employee, 'epl');
+      qb.leftJoin((e) => e.period, 'pd');
       qb.andWhere(
         (e) => e.isDeleted,
         (v) => v.isFalse(),
       );
+      if (userBranches?.length) {
+        qb.andWhere(
+          (e) => e.branchId,
+          (v) => v.in(userBranches),
+        );
+      }
 
       const downPay = await qb.exec();
       return new DownPaymentsWithPaginationResponse(downPay, params);
@@ -121,6 +133,7 @@ export class DownPaymentService {
           'branch',
           'employee',
           'department',
+          'period',
           'histories',
           'histories.createUser',
         ],
@@ -204,7 +217,7 @@ export class DownPaymentService {
         }
 
         if (userRole === MASTER_ROLES.PIC_HO) {
-          if (currentState === DownPaymentState.APPROVED_BY_PIC_HO ||currentState === DownPaymentState.APPROVED_BY_SS_SPV) {
+          if (currentState === DownPaymentState.APPROVED_BY_PIC_HO) {
             throw new BadRequestException( `Can't approve down payment with current state ${currentState}`);
           }
 
@@ -448,7 +461,6 @@ export class DownPaymentService {
       const user = await this.getUser(true);
       const jrnlItem = new JournalItem();
 
-      const branchId = user && user.branches && user.branches[0].id;
       let coaId;
 
       if (downPayment.type == DownPaymentType.PERDIN) {
@@ -460,8 +472,8 @@ export class DownPaymentService {
       jrnlItem.createUser = user;
       jrnlItem.updateUser = user;
       jrnlItem.coaId = coaId;
-      jrnlItem.branchId = branchId;
       jrnlItem.journalId = jurnalId;
+      jrnlItem.branchId = downPayment.branchId;
       jrnlItem.debit = downPayment.amount;
       jrnlItem.reference = downPayment.number;
       jrnlItem.periodId = downPayment.periodId;
@@ -486,16 +498,15 @@ export class DownPaymentService {
       const branchEntity = manager.getRepository<Branch>(Branch);
 
       const user = await this.getUser(true);
-      const branchId = user && user.branches && user.branches[0].id;
 
-      const branch = await branchEntity.findOne({ id: branchId });
+      const branch = await branchEntity.findOne({ id: downPayment.branchId });
       const jrnlItem = new JournalItem();
 
       jrnlItem.createUser = user;
       jrnlItem.updateUser = user;
-      jrnlItem.branchId = branchId;
       jrnlItem.journalId = jurnalId;
-      jrnlItem.coaId = branch.cashCoaId;
+      jrnlItem.coaId = branch?.cashCoaId;
+      jrnlItem.branchId = downPayment.branchId;
       jrnlItem.credit = downPayment.amount;
       jrnlItem.reference = downPayment.number;
       jrnlItem.periodId = downPayment.periodId;

@@ -45,6 +45,8 @@ export class AccountDailyClosingService {
   ): Promise<AccountDailyClosingWithPaginationResponse> {
     const params = { order: '^created_at', limit: 10, ...query };
     const qb = new QueryBuilder(AccountDailyClosing, 'adc', params);
+    const user = await AuthService.getUser({ relations: ['branches'] });
+    const userBranches = user?.branches?.map((v) => v.id);
 
     qb.fieldResolverMap['startDate__gte'] = 'adc.closingDate';
     qb.fieldResolverMap['endDate__gte'] = 'adc.closingDate';
@@ -54,6 +56,7 @@ export class AccountDailyClosingService {
       ['adc.id', 'id'],
       ['adc.closing_date', 'closingDate'],
       ['adc.responsible_user_id', 'responsibleUserId'],
+      ['usr.username', 'responsibleUserNik'],
       ['usr.first_name', 'responsibleUserFirstName'],
       ['usr.last_name', 'responsibleUserLastName'],
       ['adc.opening_bank_amount', 'openingBankAmount'],
@@ -66,6 +69,12 @@ export class AccountDailyClosingService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    if (userBranches?.length) {
+      qb.andWhere(
+        (e) => e.branchId,
+        (v) => v.in(userBranches),
+      );
+    }
 
     const accountDailyClosing = await qb.exec();
     return new AccountDailyClosingWithPaginationResponse(

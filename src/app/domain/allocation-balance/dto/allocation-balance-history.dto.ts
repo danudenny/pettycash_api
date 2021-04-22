@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-import { CashBalanceAllocationState, MASTER_ROLES } from '../../../model/utils/enum';
+import { CashBalanceAllocationState, MASTER_ROLES } from '../../../../model/utils/enum';
 
 export class AlocationBalanceHistoryDTO {
   @ApiProperty({

@@ -113,22 +113,9 @@ Create Budget data
             + minimumAmount: 250000 (number) - Minimum Amount.
             + totalAmount: 5000000 (number) - Total Amount.
             + items: (array)
-                // FOR EDIT BUDGET ITEM
-                + id: `c157c304-f9f7-43e6-8084-1d25bfc0d113` (string) - Budget Item ID.
                 + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
                 + description: `Kebutuhan Pickup` (string) - Description.
                 + amount: 1000000 (number) - Amount.
-                + isDeleted: false (boolean) - Is Deleted Flag.
-                // FOR ADD BUDGET ITEM
-                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
-                + description: `Kebutuhan Pickup` (string) - Description.
-                + amount: 1000000 (number) - Amount.
-                + isDeleted: false (boolean) - Is Deleted Flag
-                // FOR DELETE BUDGET ITEM
-                + id: `c157c304-f9f7-43e6-8084-1d25bfc0d113` (string) - Budget Item ID.
-                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
-                + amount: 1000000 (number) - Amount.
-                + isDeleted: true (boolean) - Is Deleted Flag.
 
 + Response 201 (application/json)
     + Body
@@ -214,7 +201,8 @@ Get Budget detail.
                         "productName": "Bensin",
                         "productCode": "PRD202003AAA111",
                         "description": "Kebutuhan Pickup",
-                        "amount": 1000000
+                        "amount": 1000000,
+                        "isDeleted": false
                     }
                     ],
                     "histories": [
@@ -334,7 +322,8 @@ Get Budget detail for Duplicate Budget.
                         "productName": "Bensin",
                         "productCode": "PRD202003AAA111",
                         "description": "Kebutuhan Pickup",
-                        "amount": 1000000
+                        "amount": 1000000,
+                        "isDeleted": false
                     }
                     ],
                     "histories": [
@@ -460,9 +449,22 @@ Duplicate data Budget
             + minimumAmount: 250000 (number) - Minimum Amount.
             + totalAmount: 5000000 (number) - Total Amount.
             + items: (array)
+               // FOR EDIT BUDGET ITEM
+                + id: `c157c304-f9f7-43e6-8084-1d25bfc0d113` (string) - Budget Item ID.
                 + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
                 + description: `Kebutuhan Pickup` (string) - Description.
                 + amount: 1000000 (number) - Amount.
+                + isDeleted: false (boolean) - Is Deleted Flag.
+                // FOR ADD BUDGET ITEM
+                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
+                + description: `Kebutuhan Pickup` (string) - Description.
+                + amount: 1000000 (number) - Amount.
+                + isDeleted: false (boolean) - Is Deleted Flag
+                // FOR DELETE BUDGET ITEM
+                + id: `c157c304-f9f7-43e6-8084-1d25bfc0d113` (string) - Budget Item ID.
+                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
+                + amount: 1000000 (number) - Amount.
+                + isDeleted: true (boolean) - Is Deleted Flag.
 
 + Response 201 (application/json)
     + Body
@@ -606,6 +608,62 @@ Delete Budget
                 "status": "fail",
                 "code": "BUDGET_DELETE_FAILED",
                 "message": "failed to delete budget",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+
+## Cancel Budget [PATCH /v1/budgets/{id}/cancel]
+
+Cancel Budget
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Budget ID.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "data": {
+                    "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "branchId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "branchName": "Kebon Jeruk",
+                    "number": "BG001",
+                    "responsibleUserId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "responsibleUserFirstName": "Budi",
+                    "responsibleUserLastName": "Handoko",
+                    "responsibleUserUsername": 18122009,
+                    "startDate": "2021-01-29",
+                    "endDate": "2021-01-29",
+                    "totalAmount": 5000000,
+                    "state": "canceled",
+                    "rejectedNote": "Budget melebihi batas minimum"
+                }
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "BUDGET_REQUEST_CANCEL_FAILED",
+                "message": "failed to reject budget",
                 "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
             }
 

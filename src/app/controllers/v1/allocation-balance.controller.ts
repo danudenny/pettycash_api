@@ -1,12 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/allocation-balance.query.dto';
+import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
 import { AllocationBalanceService } from '../../services/v1/allocation-balance.service';
-import { AllocationBalanceResponse, AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response.dto';
+import { AllocationBalanceResponse, AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import FindIdParams from '../../domain/common/findId-param.dto';
-import { RejectAllocationDTO } from '../../domain/allocation-balance/allocation-balance.dto';
+import { RejectAllocationDTO } from '../../domain/allocation-balance/dto/allocation-balance.dto';
 import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
-import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/allocation-balance-detail.dto';
+import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/dto/allocation-balance-detail.dto';
+import { RevisionAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-balance-revision.dto';
 
 @Controller('v1/allocation-balance')
 @ApiTags('Cash Allocation Balance')
@@ -69,5 +70,17 @@ export class AllocationBalanceController {
     @Param() {id}: FindIdParams,
   ) {
     return await this.allocBallanceService.received(id);
+  }
+
+  @Put('/:id/revision')
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
+  @ApiParam({name: 'id'})
+  @ApiOperation({ summary: 'Revision Cash Allocation Balance' })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async revision(
+    @Param() {id}: FindIdParams,
+    @Body() data: RevisionAllocationBalanceDTO
+  ) {
+    return await this.allocBallanceService.revision(id, data);
   }
 }

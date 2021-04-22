@@ -60,6 +60,7 @@ import { GlobalSetting } from '../../../model/global-setting.entity';
 import { DownPayment } from '../../../model/down-payment.entity';
 import { Loan } from '../../../model/loan.entity';
 import { UpdateExpenseDTO } from '../../domain/expense/update.dto';
+import { UpdateExpenseItemDTO } from '../../domain/expense/update-item.dto';
 
 @Injectable()
 export class ExpenseService {
@@ -145,6 +146,7 @@ export class ExpenseService {
         'items.attributes',
         'histories',
         'histories.createUser',
+        'histories.createUser.role',
       ],
     });
     if (!expense) {
@@ -262,34 +264,63 @@ export class ExpenseService {
     id: string,
     payload?: UpdateExpenseDTO,
   ): Promise<ExpenseResponse> {
-    const exp = await this.expenseRepo.findOne({
-      where: { id, isDeleted: false },
-      relations: ['branch', 'period', 'downPayment', 'partner', 'items'],
-    });
+    try {
+      const updateExpense = await getManager().transaction(async (manager) => {
+        const exp = await manager.getRepository(Expense).findOne({
+          where: { id, isDeleted: false },
+        });
 
-    if (!exp) {
-      throw new NotFoundException(`Expense with ID ${id} not found!`);
+        if (!exp) {
+          throw new NotFoundException(`Expense with ID ${id} not found!`);
+        }
+
+        if (exp.state !== ExpenseState.DRAFT) {
+          throw new UnprocessableEntityException(
+            `Only Draft Expense can be updated!`,
+          );
+        }
+
+        const user = await AuthService.getUser();
+
+        exp.transactionDate = payload?.transactionDate ?? exp.transactionDate;
+        exp.periodId = payload?.periodId ?? exp.periodId;
+        exp.partnerId = payload?.partnerId ?? exp.partnerId;
+        // exp.downPaymentId = payload?.downPaymentId ?? exp.downPaymentId;
+        exp.sourceDocument = payload?.sourceDocument ?? exp.sourceDocument;
+        exp.paymentType = payload?.paymentType ?? exp.paymentType;
+        exp.updateUserId = user?.id;
+
+        if (payload?.items) {
+          const updatedExpenseItems = await this.recreateAndRetrieveExpenseItems(
+            manager,
+            exp,
+            payload?.items,
+          );
+
+          exp.totalAmount = updatedExpenseItems
+            .map((m) => Number(m.amount))
+            .filter((i) => i)
+            .reduce((a, b) => a + b, 0);
+
+          if (exp?.downPaymentId) {
+            const downPayment = await this.retrieveDownPaymentForExpense(
+              manager,
+              exp?.downPaymentId,
+              false,
+            );
+            exp.downPaymentAmount = downPayment.amount;
+            exp.differenceAmount = downPayment.amount - exp.totalAmount;
+          }
+        }
+
+        await manager.save(exp);
+
+        return exp;
+      });
+      return new ExpenseResponse(updateExpense);
+    } catch (error) {
+      throw error;
     }
-
-    if (exp.state !== ExpenseState.DRAFT) {
-      throw new UnprocessableEntityException(
-        `Only Draft Expense can be updated!`,
-      );
-    }
-
-    exp.transactionDate = payload?.transactionDate ?? exp.transactionDate;
-    exp.periodId = payload?.periodId ?? exp.periodId;
-    exp.partnerId = payload?.partnerId ?? exp.partnerId;
-    exp.downPaymentId = payload?.downPaymentId ?? exp.downPaymentId;
-    exp.sourceDocument = payload?.sourceDocument ?? exp.sourceDocument;
-    exp.paymentType = payload?.paymentType ?? exp.paymentType;
-
-    // TODO: Update Items
-    // exp.items = exp.items;
-
-    await this.expenseRepo.save(exp);
-
-    return new ExpenseResponse(exp);
   }
 
   /**
@@ -477,6 +508,8 @@ export class ExpenseService {
 
         // Remove journal if state in draft, otherwise throw error
         await this.removeJournal(manager, expense);
+        // unlink DownPayment if any
+        await this.unlinkDownPayment(manager, expense);
 
         const { rejectedNote } = payload;
         const state = ExpenseState.REJECTED;
@@ -668,6 +701,64 @@ export class ExpenseService {
     const val1 = amount / (1 - getPercentage(taxValue));
     const val2 = val1 * getPercentage(taxValue);
     return val2;
+  }
+
+  /**
+   * Internal helper to (re)create ExpenseItem
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} expense
+   * @param {UpdateExpenseItemDTO[]} items new expense items to create.
+   * @return {*}  {Promise<ExpenseItem[]>} updated expense items.
+   * @memberof ExpenseService
+   */
+  private async recreateAndRetrieveExpenseItems(
+    manager: EntityManager,
+    expense: Expense,
+    items: UpdateExpenseItemDTO[],
+  ): Promise<ExpenseItem[]> {
+    const expenseItemRepo = manager.getRepository(ExpenseItem);
+
+    // Remove Existing ExpenseItem
+    await expenseItemRepo.delete({ expenseId: expense.id });
+
+    // (re)create ExpenseItem
+    const expenseItems = await this.buildExpenseItems(expense, items);
+    await expenseItemRepo.save(expenseItems);
+
+    return expenseItems;
+  }
+
+  private async buildExpenseItems(
+    expense: Expense,
+    items: UpdateExpenseItemDTO[],
+  ): Promise<ExpenseItem[]> {
+    const uitems: ExpenseItem[] = [];
+    for (const v of items) {
+      const item = new ExpenseItem();
+      item.expenseId = expense?.id;
+      item.productId = v?.productId;
+      item.description = v?.description;
+      item.amount = v?.amount;
+      item.picHoAmount = v?.picHoAmount ?? v?.amount;
+      item.ssHoAmount = v?.ssHoAmount ?? v?.amount;
+      item.checkedNote = v?.checkedNote;
+      // FIXME: Optimize this query!
+      item.tax = await this.getTaxValue(expense?.partnerId, v?.productId);
+      item.createUserId = expense?.updateUserId;
+      item.updateUserId = expense?.updateUserId;
+      item.attributes = v?.atrributes?.map((a: any) => {
+        const attr = new ExpenseItemAttribute();
+        attr.key = a.key;
+        attr.value = a.value;
+        attr.updateUserId = expense?.updateUserId;
+        attr.createUserId = expense?.updateUserId;
+        return attr;
+      });
+      uitems.push(item);
+    }
+    return uitems;
   }
 
   /**
@@ -1111,12 +1202,14 @@ export class ExpenseService {
    * @private
    * @param {EntityManager} manager
    * @param {string} id DownPayment ID.
+   * @param {boolean} [checkRealization=true]
    * @return {*}  {Promise<DownPayment>}
    * @memberof ExpenseService
    */
   private async retrieveDownPaymentForExpense(
     manager: EntityManager,
     id: string,
+    checkRealization: boolean = true,
   ): Promise<DownPayment> {
     const downPayment = await manager.getRepository(DownPayment).findOne({
       where: { id, isDeleted: false },
@@ -1126,8 +1219,10 @@ export class ExpenseService {
       throw new BadRequestException(`Down Payment with ID ${id} not found!`);
     }
 
-    if (downPayment?.expenseId) {
-      throw new BadRequestException(`Down Payment already realized!`);
+    if (checkRealization) {
+      if (downPayment?.expenseId) {
+        throw new BadRequestException(`Down Payment already realized!`);
+      }
     }
 
     if (
@@ -1140,6 +1235,33 @@ export class ExpenseService {
     }
 
     return downPayment;
+  }
+
+  /**
+   * Unlink DownPayment from Expense
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} expense
+   * @return {*}  {Promise<void>}
+   * @memberof ExpenseService
+   */
+  private async unlinkDownPayment(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<void> {
+    if (expense?.downPaymentId) {
+      const downPaymentRepo = manager.getRepository(DownPayment);
+
+      const downPayment = await downPaymentRepo.findOne({
+        id: expense?.downPaymentId,
+      });
+
+      downPayment.expenseId = null;
+      // TODO: add history?
+
+      await downPaymentRepo.save(downPayment);
+    }
   }
 
   /**
@@ -1163,16 +1285,16 @@ export class ExpenseService {
       where: { id: expense?.downPaymentId, isDeleted: false },
     });
 
-    // Create Loan if any `differenceAmount`
     const differenceAmount = downPayment.amount - expense.totalAmount;
-    if (differenceAmount !== 0) {
-      const loan = await this.retrieveLoanForExpense(manager, expense);
+    const loan = await this.retrieveLoanForExpense(manager, expense);
 
-      if (!loan) {
+    if (!loan) {
+      // Create Loan if any `differenceAmount`
+      if (differenceAmount !== 0) {
         await this.createLoanFromExpense(manager, expense, downPayment);
-      } else {
-        await this.updateLoanFromExpense(manager, loan, expense, downPayment);
       }
+    } else {
+      await this.updateLoanFromExpense(manager, loan, expense, downPayment);
     }
   }
 
@@ -1252,7 +1374,7 @@ export class ExpenseService {
     loan: Loan,
     expense: Expense,
     downPayment: DownPayment,
-  ): Promise<Loan> {
+  ): Promise<any> {
     // If minus mean Piutang/Receivable otherwise Hutang/Payable.
     // Piutang = Hutang perusahaan terhadap karyawan
     // Hutang = Hutang karyawan terhadap perusahaan
@@ -1266,6 +1388,14 @@ export class ExpenseService {
 
     if (differenceAmount < 0) {
       newLoanAmount = -1 * differenceAmount;
+    } else if (differenceAmount === 0) {
+      if (isLoanHasPayments) {
+        throw new UnprocessableEntityException(
+          `Loan has payments, can't change Expense Amount equal to Loan Amount`,
+        );
+      } else {
+        return await manager.getRepository(Loan).delete({ id: loan?.id });
+      }
     } else {
       newLoanAmount = differenceAmount;
     }

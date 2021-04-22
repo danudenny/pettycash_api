@@ -2,14 +2,11 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateBudgetItemDTO, UpdateBudgetItemDTO } from '../../domain/budget-item/budget-item-create.dto';
-import { BudgetItem } from '../../../model/budget-item.entity';
-import { BudgetItemResponse, BudgetItemWithPaginationResponse } from '../../domain/budget-item/budgetItem-response.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
-import { QueryBudgetItemDTO } from '../../domain/budget-item/budget-item.payload.dto';
 import { BudgetRequestItem } from '../../../model/budget.request-item.entity';
 import { QueryBudgetRequestItemDTO } from '../../domain/budget-request-item/budget-request-item.payload.dto';
 import { BudgetRequestItemResponse, BudgetRequestItemWithPaginationResponse } from '../../domain/budget-request-item/budget-request-item-response.dto';
-import { UpdateBudgetRequestItemDTO } from '../../domain/budget-request-item/budget-request-item-create.dto';
+import { CreateBudgetRequestItemDTO, UpdateBudgetRequestItemDTO } from '../../domain/budget-request-item/budget-request-item-create.dto';
 
 @Injectable()
 export class BudgetRequestItemService {
@@ -53,7 +50,7 @@ export class BudgetRequestItemService {
     return new BudgetRequestItemWithPaginationResponse(budgets, params);
   }
 
-  public async create(data: CreateBudgetItemDTO): Promise<BudgetRequestItemResponse> {
+  public async create(data: CreateBudgetRequestItemDTO): Promise<BudgetRequestItemResponse> {
     const budgetDTO = await this.budgetRequestRepo.create(data);
     budgetDTO.createUserId = await this.getUserId();
     budgetDTO.updateUserId = await this.getUserId();

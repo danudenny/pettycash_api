@@ -1,25 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsUUID } from 'class-validator';
-import { CashBalanceAllocationState } from '../../../model/utils/enum';
+import { CashBalanceAllocationState } from '../../../../model/utils/enum';
 import { Transform } from 'class-transformer';
+import { BasePayload } from '../../common/base-payload.dto';
 
-export class AllocationBalanceQueryDTO {
-  @ApiPropertyOptional({
-    example: 1,
-    description: 'Page Number',
-  })
-  @Transform((value) => value || 1)
-  @IsOptional()
-  page: number;
-
-  @ApiPropertyOptional({
-    example: 10,
-    description: 'The maximum number of results data to return.',
-  })
-  @Transform((value) => value || 10)
-  @IsOptional()
-  limit: number;
-
+export class AllocationBalanceQueryDTO extends BasePayload {
   @ApiPropertyOptional({
     description: 'Allocation Balance Date to filter',
     example: '2020-03-15',
@@ -36,7 +21,7 @@ export class AllocationBalanceQueryDTO {
 
   @ApiPropertyOptional({
     description: 'Number to filter',
-    example: 'ASK/2021/03/21/QWER123',
+    example: 'ASK202103QWER123',
   })
   @IsOptional()
   @IsUUID()
