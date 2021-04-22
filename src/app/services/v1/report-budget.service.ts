@@ -39,16 +39,32 @@ export class ReportBudgetService {
         dataAll.startDate = element.startDate;
         dataAll.endtDate = element.endtDate;
 
-        const totalAmountAll = 0;
+        let totalAmountAll = Number(element.amount);
         for (let i=0; i < getBudgetRequest.length; i++) {
           if (getBudgetRequest[i].needDate >= element.startDate && getBudgetRequest[i].needDate <= element.endDate) {
-            
+            if (getBudgetRequest[i].productId === element.productId) {
+              totalAmountAll = totalAmountAll + Number(getBudgetRequest[i].amount);
+            }
           }
         }
+
+        let totalExpenseAll = 0;
+        for (let i=0; i < getExpense.length; i++) {
+          if (getExpense[i].transactionDate >= element.startDate && getExpense[i].transactionDate <= element.endDate) {
+            if (getExpense[i].productId === element.productId) {
+              totalExpenseAll = totalExpenseAll + Number(getExpense[i].amount);
+            }
+          }
+        }
+
+        dataAll.totalAmount = totalAmountAll;
+        dataAll.expendseAmount = totalExpenseAll;
+        
+        resultData.push(dataAll);
       });
 
       return new ReportBudgetsWithPaginationResponse(
-        getBudget,
+        resultData,
         params,
       );
     } catch (err) {
@@ -72,6 +88,7 @@ export class ReportBudgetService {
       ['bgt.branch_id', 'branchId'],
       ['br.branch_name', 'branchName'],
       ['bgt.number', 'number'],
+      ['bgitem.product_id', 'productId'],
       ['bgt.responsible_user_id', 'responsibleUserId'],
       ['us.first_name', 'firstName'],
       ['us.last_name', 'lastName'],
@@ -79,7 +96,7 @@ export class ReportBudgetService {
       ['bgt.start_date', 'startDate'],
       ['bgt.end_date', 'endDate'],
       ['prod.name', 'prodName'],
-      ['bgitem.amount', 'bgtAmount']
+      ['bgitem.amount', 'amount']
     );
     qb.leftJoin(
       (e) => e.budget,
@@ -119,13 +136,14 @@ export class ReportBudgetService {
       ['bgtr.branch_id', 'branchId'],
       ['br.branch_name', 'branchName'],
       ['bgtr.number', 'number'],
+      ['bgitemreq.product_id', 'productId'],
       ['bgtr.responsible_user_id', 'responsibleUserId'],
       ['us.first_name', 'firstName'],
       ['us.last_name', 'lastName'],
       ['us.employee_id', 'employeeId'],
       ['bgtr.need_date', 'needDate'],
       ['prod.name', 'prodName'],
-      ['bgitemreq.amount', 'bgtAmount']
+      ['bgitemreq.amount', 'amount']
     );
     qb.leftJoin(
       (e) => e.budgetRequest,
@@ -165,9 +183,10 @@ export class ReportBudgetService {
       ['exp.branch_id', 'branchId'],
       ['br.branch_name', 'branchName'],
       ['exp.number', 'number'],
+      ['expitem.product_id', 'productId'],
       ['exp.transaction_date', 'transactionDate'],
       ['prod.name', 'prodName'],
-      ['expitem.amount', 'bgtAmount']
+      ['expitem.amount', 'amount']
     );
     qb.leftJoin(
       (e) => e.expense,
