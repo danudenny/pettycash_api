@@ -15,20 +15,17 @@ export class ReportBudgetService {
   ): Promise<ReportBudgetsWithPaginationResponse> {
     try {
       const params = { order: '^created_at', limit: 10, ...query };
+      //Get data Budget Item all first
       const getBudget = await this.getDataBudget(params);
+
+      //Get data Budget Request Item all second
       const getBudgetRequest = await this.getDataBudgetReq(params);
+
+      //Get data Expense Item all third
       const getExpense = await this.getDataExpense(params);
-      console.log("GET BUDGET !");
-      console.log(getBudget);
-      console.log("-------------");
-      console.log("GET BUDGET REQUEST !");
-      console.log(getBudgetRequest);
-      console.log("-------------");
-      console.log("GET EXPENSE !");
-      console.log(getExpense);
-      console.log("-------------");
 
       const resultData = [];
+      //Mapping all Data
       getBudget.forEach(element => {
         const dataAll = new ReportBudgetDTO;
         dataAll.id = element.id;
@@ -39,6 +36,7 @@ export class ReportBudgetService {
         dataAll.startDate = element.startDate;
         dataAll.endtDate = element.endtDate;
 
+        //Find Total Amount Budget by get needDate and productId is equal with Budget Request too
         let totalAmountAll = Number(element.amount);
         for (let i=0; i < getBudgetRequest.length; i++) {
           if (getBudgetRequest[i].needDate >= element.startDate && getBudgetRequest[i].needDate <= element.endDate) {
@@ -48,6 +46,7 @@ export class ReportBudgetService {
           }
         }
 
+        //Find Total Amount Expense by get needDate and productId is equal
         let totalExpenseAll = 0;
         for (let i=0; i < getExpense.length; i++) {
           if (getExpense[i].transactionDate >= element.startDate && getExpense[i].transactionDate <= element.endDate) {
