@@ -416,13 +416,13 @@ export class BudgetService {
         const userRole = user?.role?.name;
 
         if (userRole === MASTER_ROLES.SS_HO) {
-          if (budgetExists.state === BudgetState.APPROVED_BY_SPV || budgetExists.state === BudgetState.APPROVED_BY_SS) {
+          if (budgetExists.state === BudgetState.APPROVED_BY_SPV || budgetExists.state === BudgetState.CONFIRMED_BY_SS) {
             throw new BadRequestException(
               `Budget ${budgetExists.number} already approved!`,
             );
           }
       
-          const state = BudgetState.APPROVED_BY_SS;
+          const state = BudgetState.CONFIRMED_BY_SS;
           const endDate = budgetExists.endDate;
 
           budgetExists.state = state;
