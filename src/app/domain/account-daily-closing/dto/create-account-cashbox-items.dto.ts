@@ -10,13 +10,13 @@ export class CreateAccountCashboxItemsDTO {
 
   @ApiProperty({
     description: 'Number of Pieces',
-    example: 5,
+    example: 20,
   })
   number: number;
 
   @ApiProperty({
     description: 'Total Amount',
-    example: 500000,
+    example: 2000000,
   })
   @IsOptional()
   total: number;
