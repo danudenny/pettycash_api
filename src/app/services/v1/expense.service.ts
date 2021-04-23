@@ -9,6 +9,7 @@ import {
   getManager,
   EntityManager,
   createQueryBuilder,
+  In,
 } from 'typeorm';
 import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { GenerateCode } from '../../../common/services/generate-code.service';
@@ -97,6 +98,8 @@ export class ExpenseService {
   ): Promise<ExpenseWithPaginationResponse> {
     const params = { order: '-updatedAt', limit: 10, ...query };
     const qb = new QueryBuilder(Expense, 'exp', params);
+    const user = await AuthService.getUser({ relations: ['branches'] });
+    const userBranches = user?.branches?.map((v) => v.id);
 
     qb.fieldResolverMap['startDate__gte'] = 'exp.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'exp.transaction_date';
@@ -129,14 +132,22 @@ export class ExpenseService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    if (userBranches?.length) {
+      qb.andWhere(
+        (e) => e.branchId,
+        (v) => v.in(userBranches),
+      );
+    }
 
     const expense = await qb.exec();
     return new ExpenseWithPaginationResponse(expense, params);
   }
 
   public async getById(id: string): Promise<ExpenseDetailResponse> {
+    const user = await AuthService.getUser({ relations: ['branches'] });
+    const userBranches = user?.branches?.map((v) => v.id);
     const expense = await this.expenseRepo.findOne({
-      where: { id, isDeleted: false },
+      where: { id, isDeleted: false, branchId: In(userBranches) },
       relations: [
         'period',
         'branch',
