@@ -39,7 +39,7 @@ export class ExpenseDetailResponseMapper {
       item.ssHoAmount = v.ssHoAmount;
       item.checkedNote = v.checkedNote;
       item.isValid = v.isValid;
-      item.atrributes = this.toExpenseItemAttributeDTO(v.attributes);
+      item.attributes = this.toExpenseItemAttributeDTO(v.attributes);
       return item;
     });
 

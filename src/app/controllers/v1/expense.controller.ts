@@ -2,13 +2,15 @@ import {
   Body,
   Controller,
   Delete,
-  Get, HttpStatus,
+  Get,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
   Post,
   Put,
-  Query, Res,
+  Query,
+  Res,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
@@ -22,7 +24,8 @@ import {
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
-  ApiOperation, ApiParam,
+  ApiOperation,
+  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateExpenseDTO } from '../../domain/expense/create.dto';
@@ -38,7 +41,10 @@ import { CreateExpenseAttachmentDTO } from '../../domain/expense/create-attachme
 import { ApproveExpenseDTO } from '../../domain/expense/approve.dto';
 import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
-import FindIdParams, { FindAttachmentIdParams, FindExpenseIdParams } from '../../domain/common/findId-param.dto';
+import {
+  FindAttachmentIdParams,
+  FindExpenseIdParams,
+} from '../../domain/common/findId-param.dto';
 import { Response } from 'express';
 import { UpdateExpenseDTO } from '../../domain/expense/update.dto';
 
@@ -50,6 +56,7 @@ export class ExpenseController {
 
   @Get()
   @ApiOperation({ summary: 'List all Expense' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiOkResponse({ type: ExpenseWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async list(
@@ -60,6 +67,7 @@ export class ExpenseController {
 
   @Get('/:id')
   @ApiOperation({ summary: 'Get Expense' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiOkResponse({ type: ExpenseDetailResponse })
   @ApiNotFoundResponse({ description: 'Expense not found' })
   public async get(@Param('id', new ParseUUIDPipe()) id: string) {
@@ -68,6 +76,7 @@ export class ExpenseController {
 
   @Put('/:id')
   @ApiOperation({ summary: 'Update Expense' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiOkResponse({ type: ExpenseDetailResponse })
   @ApiNotFoundResponse({ description: 'Expense not found' })
   public async update(
@@ -79,6 +88,7 @@ export class ExpenseController {
 
   @Post()
   @ApiOperation({ summary: 'Create Expense' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiCreatedResponse({
     type: ExpenseResponse,
     description: 'Expense Successfully Created',
@@ -102,6 +112,7 @@ export class ExpenseController {
 
   @Patch('/:id/reject')
   @ApiOperation({ summary: 'Reject Expense' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiBody({ type: RejectExpenseDTO })
   public async reject(
     @Param('id', new ParseUUIDPipe()) id: string,

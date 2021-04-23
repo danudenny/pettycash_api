@@ -70,10 +70,10 @@ export class ExpenseItem extends PtcBaseEntity {
   })
   isValid: boolean;
 
-  @OneToMany(
-    () => ExpenseItemAttribute,
-    (e) => e.expenseItem,
-    {eager: true})
+  @OneToMany(() => ExpenseItemAttribute, (e) => e.expenseItem, {
+    eager: true,
+    cascade: true,
+  })
   attributes: ExpenseItemAttribute[];
 
   @ManyToOne(() => Expense, { onDelete: 'CASCADE' })
