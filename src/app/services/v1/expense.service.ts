@@ -186,16 +186,14 @@ export class ExpenseService {
           item.tax = await this.getTaxValue(payload.partnerId, v.productId);
           item.createUser = user;
           item.updateUser = user;
-          item.attributes =
-            v.atrributes &&
-            v.atrributes.map((a) => {
-              const attr = new ExpenseItemAttribute();
-              attr.key = a.key;
-              attr.value = a.value;
-              attr.updateUser = user;
-              attr.createUser = user;
-              return attr;
-            });
+          item.attributes = v?.attributes?.map((a) => {
+            const attr = new ExpenseItemAttribute();
+            attr.key = a.key;
+            attr.value = a.value;
+            attr.updateUser = user;
+            attr.createUser = user;
+            return attr;
+          });
           items.push(item);
         }
 
@@ -748,7 +746,7 @@ export class ExpenseService {
       item.tax = await this.getTaxValue(expense?.partnerId, v?.productId);
       item.createUserId = expense?.updateUserId;
       item.updateUserId = expense?.updateUserId;
-      item.attributes = v?.atrributes?.map((a: any) => {
+      item.attributes = v?.attributes?.map((a: any) => {
         const attr = new ExpenseItemAttribute();
         attr.key = a.key;
         attr.value = a.value;
