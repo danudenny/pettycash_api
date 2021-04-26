@@ -76,6 +76,7 @@ export class BalanceService {
             CASE WHEN as2.amount_position = 'debit' THEN COALESCE(SUM(amount), 0) END AS debit,
             CASE WHEN as2.amount_position = 'credit' THEN COALESCE(SUM(amount), 0) END AS credit
             FROM account_statement as2
+            WHERE as2.is_deleted IS FALSE
             GROUP BY as2.branch_id, as2.amount_position
       )
       SELECT
@@ -97,7 +98,8 @@ export class BalanceService {
           ((b2.total_amount / (b2.end_date - b2.start_date) * 2)) AS minimum_amount,
           ((((b2.total_amount / (b2.end_date - b2.start_date) * 2)) / 2) * 7) AS total_budget
         FROM budget b2
-        WHERE b2.state = 'confirmed_by_ss' OR b2.state = 'approved_by_spv'
+        WHERE (b2.state = 'confirmed_by_ss' OR b2.state = 'approved_by_spv')
+              AND b2.is_deleted IS FALSE
         ORDER BY b2.end_date DESC
         LIMIT 1
       )
@@ -195,7 +197,7 @@ export class BalanceService {
             END AS credit
           FROM
             account_statement as2
-          WHERE as2."type" = 'bank'
+          WHERE as2."type" = 'bank' AND as2.is_deleted IS FALSE
           GROUP BY
             as2.branch_id,
             as2.amount_position
@@ -223,7 +225,7 @@ export class BalanceService {
             END AS credit
           FROM
             account_statement as2
-          WHERE as2."type" = 'cash'
+          WHERE as2."type" = 'cash' AND as2.is_deleted IS FALSE
           GROUP BY
             as2.branch_id,
             as2.amount_position
@@ -248,7 +250,8 @@ export class BalanceService {
           (b2.end_date - b2.start_date) AS total_day, b2.total_amount,
           ((b2.total_amount / (b2.end_date - b2.start_date) * 2)) AS minimum_amount
         FROM budget b2
-        WHERE b2.state = 'confirmed_by_ss' OR b2.state = 'approved_by_spv'
+        WHERE (b2.state = 'confirmed_by_ss' OR b2.state = 'approved_by_spv')
+              AND b2.is_deleted IS FALSE
         ORDER BY b2.end_date DESC
         LIMIT 1
       )
