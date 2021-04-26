@@ -73,7 +73,7 @@ export class ReportDownPaymentService {
   async export(res: Response, query?: QueryReportDownPaymentDTO): Promise<Buffer> {
     try {
       const { read, write, utils } = XLSX;
-      const params = { order: '^created_at', limit: 10, ...query };
+      const params = { order: '^created_at', ...query };
 
       const qb = new QueryBuilder(DownPayment, 'dp', params);
 
