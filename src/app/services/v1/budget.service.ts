@@ -230,7 +230,7 @@ export class BudgetService {
       budget.startDate = data.startDate;
       budget.endDate = data.endDate;
       budget.totalAmount = totalAmountItem;
-      budget.minimumAmount = Number((totalAmountItem/totalDays)*2);
+      budget.minimumAmount = Number(Math.ceil((totalAmountItem/totalDays)*2));
       budget.rejectedNote = null;
       budget.state = BudgetState.DRAFT;
       budget.histories = await this.buildHistory(budget, {
@@ -290,7 +290,7 @@ export class BudgetService {
         budget.startDate = data.startDate;
         budget.endDate = data.endDate;
         budget.totalAmount = totalAmountItem;
-        budget.minimumAmount = Number((totalAmountItem/totalDays)*2);
+        budget.minimumAmount = Number(Math.ceil((totalAmountItem/totalDays)*2));
         budget.rejectedNote = null;
         budget.state = BudgetState.DRAFT;
         budget.histories = await this.buildHistory(budget, {
@@ -374,7 +374,7 @@ export class BudgetService {
             budgetExist.startDate = data.startDate;
             budgetExist.endDate = data.endDate;
             budgetExist.totalAmount = totalAmountItem;
-            budgetExist.minimumAmount = Number((totalAmountItem/totalDays)*2);
+            budgetExist.minimumAmount = Number(Math.ceil((totalAmountItem/totalDays)*2));
             budgetExist.rejectedNote = null;
             budgetExist.state = BudgetState.DRAFT;
             // budgetExist.histories = await this.buildHistory(budgetExist, {
