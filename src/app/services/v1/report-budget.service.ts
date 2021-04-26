@@ -9,6 +9,7 @@ import { ExpenseItem } from '../../../model/expense-item.entity';
 import { QueryReportBudgetDTO } from '../../domain/report-budget/report-budget-query.dto';
 import { ReportBudgetsWithPaginationResponse } from '../../domain/report-budget/report-budget-response.dto';
 import { ReportBudgetDTO } from '../../domain/report-budget/report-budget.dto';
+import moment from 'moment';
 
 @Injectable()
 export class ReportBudgetService {
@@ -283,6 +284,9 @@ export class ReportBudgetService {
           expenseAmount: t.expenseAmount,
         }
       })
+      console.log(dtSheet);
+
+      const fileName = 'Report_Budgets_' + moment().format('YYMMDD_HHmmss') + '.xlsx';
 
       /* merge cells*/
       const mergeCop = { s: { c: 0, r: 0 }, e: { c: 5, r: 0 } };
@@ -299,11 +303,16 @@ export class ReportBudgetService {
       ws['!merges'].push(mergeCop);
       ws['!merges'].push(mergeRangeDate);
       /* Write data */
-      utils.sheet_add_json(ws, dtSheet);
+      // const newWs = utils.sheet_add_json(ws, dtSheet);
       utils.book_append_sheet(wb, ws, "Report Budget");
       /* generate buffer */
       var buf = write(wb, { type: 'buffer' });
       /* send to client */
+
+      const mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+      res.setHeader('Content-disposition', 'attachment; filename=' + fileName);
+      res.setHeader('Content-type', mimeType);
       res.status(200).send(buf);
 
       return
