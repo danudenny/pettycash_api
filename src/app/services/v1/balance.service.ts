@@ -94,9 +94,9 @@ export class BalanceService {
           b2.branch_id,
           b2.start_date, b2.end_date,
           b2.state,
-          (b2.end_date - b2.start_date) AS total_day, b2.total_amount,
-          ((b2.total_amount / (b2.end_date - b2.start_date) * 2)) AS minimum_amount,
-          ((((b2.total_amount / (b2.end_date - b2.start_date) * 2)) / 2) * 7) AS total_budget
+          ((b2.end_date - b2.start_date) + 1) AS total_day, b2.total_amount,
+          ((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) AS minimum_amount,
+          ((((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) / 2) * 7) AS total_budget
         FROM budget b2
         WHERE (b2.state = 'confirmed_by_ss' OR b2.state = 'approved_by_spv')
               AND b2.is_deleted IS FALSE
@@ -247,8 +247,8 @@ export class BalanceService {
           b2.branch_id,
           b2.start_date, b2.end_date,
           b2.state,
-          (b2.end_date - b2.start_date) AS total_day, b2.total_amount,
-          ((b2.total_amount / (b2.end_date - b2.start_date) * 2)) AS minimum_amount
+          ((b2.end_date - b2.start_date) + 1) AS total_day, b2.total_amount,
+          ((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) AS minimum_amount
         FROM budget b2
         WHERE (b2.state = 'confirmed_by_ss' OR b2.state = 'approved_by_spv')
               AND b2.is_deleted IS FALSE
