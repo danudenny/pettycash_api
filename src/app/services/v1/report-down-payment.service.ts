@@ -147,19 +147,21 @@ export class ReportDownPaymentService {
       // console.log(DmergeCop, DmergeRangeDate);
 
       /* generate workbook */
-      const ws = utils.aoa_to_sheet(heading);
       const wb = utils.book_new();
+      const ws = utils.aoa_to_sheet(heading);
       /* add merges */
       if (!ws['!merges']) ws['!merges'] = [];
       ws['!merges'].push(mergeCop);
       ws['!merges'].push(mergeRangeDate);
       /* Write data */
-      utils.sheet_add_json(ws, dtSheet);
+      utils.sheet_add_json(ws, dtSheet, { origin : 5, skipHeader: true})
       utils.book_append_sheet(wb, ws, "Report Uang Muka");
+
       /* generate buffer */
-      var buf = write(wb, { type: 'buffer' });
+      // var buf = writeFile(wb, `report-auang-muka-${startDate+ '-' +endDate}`,{ type: 'buffer' });
+      var buf = write(wb,{ type: 'buffer' });
       /* send to client */
-      res.status(200).send(buf);
+      res.status(200).header('Content-Disposition', `attachment; filename= report-uang-muka.xlsx`).type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet').send(buf);
 
       return
     } catch (err) {
@@ -180,7 +182,6 @@ export class ReportDownPaymentService {
     
     return gd+' '+month+' '+year;
   }
-
   /**
    * Get a month
    * @param {number} month - value month
