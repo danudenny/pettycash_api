@@ -71,18 +71,19 @@ export class BalanceService {
     );
     qb.qb.leftJoin(
       `(WITH acc_stt AS (
-           select
-           as2.branch_id,
-           CASE WHEN as2.amount_position = 'debit' THEN COALESCE(SUM(amount), 0) END AS debit,
-           CASE WHEN as2.amount_position = 'credit' THEN COALESCE(SUM(amount), 0) END AS credit
-           FROM account_statement as2
-           GROUP BY as2.branch_id, as2.amount_position
-       )
-       SELECT
-         branch_id,
-         (COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0)) AS balance
-       FROM acc_stt
-       GROUP BY branch_id)`,
+          SELECT
+            as2.branch_id,
+            CASE WHEN as2.amount_position = 'debit' THEN COALESCE(SUM(amount), 0) END AS debit,
+            CASE WHEN as2.amount_position = 'credit' THEN COALESCE(SUM(amount), 0) END AS credit
+            FROM account_statement as2
+            WHERE as2.is_deleted IS FALSE
+            GROUP BY as2.branch_id, as2.amount_position
+      )
+      SELECT
+        branch_id,
+        (COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0)) AS balance
+      FROM acc_stt
+      GROUP BY branch_id)`,
       'act',
       'act.branch_id = b.id',
     );
@@ -93,10 +94,12 @@ export class BalanceService {
           b2.branch_id,
           b2.start_date, b2.end_date,
           b2.state,
-          (b2.end_date - b2.start_date) AS total_day, b2.total_amount,
-          ((b2.total_amount / (b2.end_date - b2.start_date) * 2)) AS minimum_amount,
-          ((((b2.total_amount / (b2.end_date - b2.start_date) * 2)) / 2) * 7) AS total_budget
+          ((b2.end_date - b2.start_date) + 1) AS total_day, b2.total_amount,
+          ((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) AS minimum_amount,
+          ((((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) / 2) * 7) AS total_budget
         FROM budget b2
+        WHERE (b2.state = 'confirmed_by_ss' OR b2.state = 'approved_by_spv')
+              AND b2.is_deleted IS FALSE
         ORDER BY b2.end_date DESC
         LIMIT 1
       )
@@ -114,7 +117,7 @@ export class BalanceService {
       'bgt.branch_id = b.id',
     );
     qb.qb.andWhere(
-      `(bgt.state = 'approved_by_ss' OR bgt.state = 'approved_by_spv')`,
+      `(bgt.state = 'confirmed_by_ss' OR bgt.state = 'approved_by_spv')`,
     );
     if (userBranches?.length) {
       qb.andWhere(
@@ -194,7 +197,7 @@ export class BalanceService {
             END AS credit
           FROM
             account_statement as2
-          WHERE as2."type" = 'bank'
+          WHERE as2."type" = 'bank' AND as2.is_deleted IS FALSE
           GROUP BY
             as2.branch_id,
             as2.amount_position
@@ -222,7 +225,7 @@ export class BalanceService {
             END AS credit
           FROM
             account_statement as2
-          WHERE as2."type" = 'cash'
+          WHERE as2."type" = 'cash' AND as2.is_deleted IS FALSE
           GROUP BY
             as2.branch_id,
             as2.amount_position
@@ -244,9 +247,11 @@ export class BalanceService {
           b2.branch_id,
           b2.start_date, b2.end_date,
           b2.state,
-          (b2.end_date - b2.start_date) AS total_day, b2.total_amount,
-          ((b2.total_amount / (b2.end_date - b2.start_date) * 2)) AS minimum_amount
+          ((b2.end_date - b2.start_date) + 1) AS total_day, b2.total_amount,
+          ((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) AS minimum_amount
         FROM budget b2
+        WHERE (b2.state = 'confirmed_by_ss' OR b2.state = 'approved_by_spv')
+              AND b2.is_deleted IS FALSE
         ORDER BY b2.end_date DESC
         LIMIT 1
       )
@@ -262,7 +267,7 @@ export class BalanceService {
       'bgt.branch_id = b.id',
     );
     qb.qb.andWhere(
-      `(bgt.state = 'approved_by_ss' OR bgt.state = 'approved_by_spv')`,
+      `(bgt.state = 'confirmed_by_ss' OR bgt.state = 'approved_by_spv')`,
     );
     qb.andWhere(
       (e) => e.id,

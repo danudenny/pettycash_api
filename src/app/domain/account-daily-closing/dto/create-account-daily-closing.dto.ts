@@ -18,7 +18,7 @@ export class CreateAccountDailyClosingDTO {
 
   @ApiProperty({
     description: 'Closing Bank Amount (Saldo Bank)',
-    example: 2000000,
+    example: 2000500,
   })
   closingBankAmount: number;
 
@@ -30,7 +30,7 @@ export class CreateAccountDailyClosingDTO {
 
   @ApiProperty({
     description: 'Closing Cash Amount (Saldo Uang Fisik)',
-    example: 50000,
+    example: 2000000,
   })
   closingCashAmount: number;
 

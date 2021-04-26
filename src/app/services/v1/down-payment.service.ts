@@ -65,6 +65,8 @@ export class DownPaymentService {
     try {
       const params = { order: '-updated_at', limit: 10, ...query };
       const qb = new QueryBuilder(DownPayment, 'dp', params);
+      const user = await AuthService.getUser({ relations: ['branches'] });
+      const userBranches = user?.branches?.map((v) => v.id);
 
       qb.fieldResolverMap['type'] = 'dp.type';
       qb.fieldResolverMap['state'] = 'dp.state';
@@ -106,6 +108,12 @@ export class DownPaymentService {
         (e) => e.isDeleted,
         (v) => v.isFalse(),
       );
+      if (userBranches?.length) {
+        qb.andWhere(
+          (e) => e.branchId,
+          (v) => v.in(userBranches),
+        );
+      }
 
       const downPay = await qb.exec();
       return new DownPaymentsWithPaginationResponse(downPay, params);

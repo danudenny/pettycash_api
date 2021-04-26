@@ -620,3 +620,59 @@ Delete Budget
                 "message": "Internal Server Error",
                 "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
             }
+
+
+
+## Cancel Budget [PATCH /v1/budgets/{id}/cancel]
+
+Cancel Budget
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Budget ID.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "data": {
+                    "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "branchId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "branchName": "Kebon Jeruk",
+                    "number": "BG001",
+                    "responsibleUserId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "responsibleUserFirstName": "Budi",
+                    "responsibleUserLastName": "Handoko",
+                    "responsibleUserUsername": 18122009,
+                    "startDate": "2021-01-29",
+                    "endDate": "2021-01-29",
+                    "totalAmount": 5000000,
+                    "state": "canceled",
+                    "rejectedNote": "Budget melebihi batas minimum"
+                }
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "BUDGET_REQUEST_CANCEL_FAILED",
+                "message": "failed to reject budget",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }

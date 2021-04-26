@@ -29,5 +29,5 @@ export class CreateExpenseItemDTO {
   })
   @IsOptional()
   @IsArray()
-  atrributes: ExpenseItemAttributeDTO[];
+  attributes: ExpenseItemAttributeDTO[];
 }

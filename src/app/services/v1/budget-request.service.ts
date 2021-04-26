@@ -66,6 +66,8 @@ export class BudgetRequestService {
   public async list(query?: QueryBudgetRequestDTO): Promise<BudgetRequestWithPaginationResponse> {
     const params = { order: '-totalAmount', limit: 10, ...query };
     const qb = new QueryBuilder(BudgetRequest, 'bgtr', params);
+    const user = await AuthService.getUser({ relations: ['branches'] });
+    const userBranches = user?.branches?.map((v) => v.id);
 
     qb.fieldResolverMap['startDate__gte'] = 'bgtr.needDate';
     qb.fieldResolverMap['endDate__lte'] = 'bgtr.needDate';
@@ -102,6 +104,12 @@ export class BudgetRequestService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    if (userBranches?.length) {
+      qb.andWhere(
+        (e) => e.branchId,
+        (v) => v.in(userBranches),
+      );
+    }
 
     const budgetsReq = await qb.exec();
     return new BudgetRequestWithPaginationResponse(budgetsReq, params);
@@ -175,7 +183,7 @@ export class BudgetRequestService {
       item.amount = v.amount;
       item.createUser = user;
       item.updateUser = user;
-      totalAmountItem = totalAmountItem + v.amount;
+      totalAmountItem = totalAmountItem + Number(v.amount);
       items.push(item);
     }
 

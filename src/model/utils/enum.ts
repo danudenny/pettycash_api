@@ -5,7 +5,7 @@ export enum PeriodState {
 
 export enum BudgetState {
   DRAFT = 'draft',
-  APPROVED_BY_SS = 'approved_by_ss',
+  CONFIRMED_BY_SS = 'confirmed_by_ss',
   APPROVED_BY_SPV = 'approved_by_spv',
   REJECTED = 'rejected',
   CANCELED = 'canceled',
