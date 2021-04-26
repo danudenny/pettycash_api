@@ -1,4 +1,5 @@
-import { Controller, Get, HttpException, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { QueryReportBudgetDTO } from '../../domain/report-budget/report-budget-query.dto';
 import { ReportBudgetsWithPaginationResponse } from '../../domain/report-budget/report-budget-response.dto';
@@ -27,12 +28,12 @@ export class ReportBudgetController {
     }
 
     @Get('/export')
-    @ApiOperation({ summary: 'Exports down payment' })
-    @ApiOkResponse({ type: Object })
+    @ApiOperation({ summary: 'Exports Report Budget' })
+    @ApiOkResponse({ type: Buffer })
     @ApiBadRequestResponse({ description: 'Bad Request' })
-    async exportReports(@Query() query: Object,) {
+    async exportReports(@Res() res: Response , @Query() query: QueryReportBudgetDTO,): Promise<Buffer>{
         try {
-            return null
+            return this.reportBudgetService.export(res, query)
         } catch (err) {
             throw new HttpException( err.message, err.status || HttpStatus.BAD_REQUEST,);
         }

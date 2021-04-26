@@ -11,10 +11,10 @@ export class ReportBudgetResponseMapper {
     budget.branchName = dto.branchName;
     budget.responsibleUser = dto.responsibleUser;
     budget.startDate = dto.startDate;
-    budget.endtDate = dto.endtDate;
+    budget.endDate = dto.endDate;
     budget.productName = dto.productName;
     budget.totalAmount = +dto.totalAmount;
-    budget.expendseAmount = +dto.expendseAmount;
+    budget.expenseAmount = +dto.expenseAmount;
     return budget;
   }
 

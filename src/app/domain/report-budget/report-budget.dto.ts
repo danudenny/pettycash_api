@@ -19,10 +19,10 @@ export class ReportBudgetDTO {
   responsibleUser: string;
 
   @ApiProperty({ description: 'Start Date', example: '2021-01-01' })
-  startDate: string;
+  startDate: Date;
 
   @ApiProperty({ description: 'End Date', example: '2021-01-10' })
-  endtDate: string;
+  endDate: Date; 
 
   @ApiProperty({ description: 'Product Name', example: 'Listrik' })
   productName: string;
@@ -31,5 +31,5 @@ export class ReportBudgetDTO {
   totalAmount: number;
 
   @ApiProperty({ description: 'Expense Amount', example: 100000 })
-  expendseAmount: number;
+  expenseAmount: number;
 }
