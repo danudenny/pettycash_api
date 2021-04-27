@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ProductTaxType } from '../../../model/utils/enum';
 
 export class CreateProductDTO {
   // @ApiProperty({
@@ -43,4 +44,10 @@ export class CreateProductDTO {
     example: true,
   })
   isActive: boolean;
+
+  @ApiProperty({
+    description: 'Tax Type of Product',
+    example: ProductTaxType.SEWA_ALAT_DAN_KENDARAAN,
+  })
+  taxType: ProductTaxType;
 }

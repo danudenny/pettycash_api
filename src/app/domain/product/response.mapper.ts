@@ -15,6 +15,7 @@ export class ProductResponseMapper {
     it.coaCode = dto.coaCode;
     it.coaName = dto.coaName;
     it.isActive = dto.isActive;
+    it.taxType = dto.taxType;
     return it;
   }
 
@@ -30,6 +31,7 @@ export class ProductResponseMapper {
       coaCode: ety.coaProduct && ety.coaProduct.code,
       coaName: ety.coaProduct && ety.coaProduct.name,
       isActive: ety.isActive,
+      taxType: ety.taxType,
     });
   }
 

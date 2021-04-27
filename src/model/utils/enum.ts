@@ -156,3 +156,9 @@ export enum MASTER_ROLES {
   OPS = 'OPS',
   TAX = 'TAX',
 }
+
+export enum ProductTaxType {
+  JASA = 'Jasa',
+  SEWA_ALAT_DAN_KENDARAAN = 'Sewa Alat dan Kendaraan',
+  SEWA_BANGUNAN = 'Sewa Bangunan'
+}

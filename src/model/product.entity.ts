@@ -1,7 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
-import { User } from './user.entity';
 import { AccountCoa } from './account-coa.entity';
+import { ProductTaxType } from './utils/enum';
 
 @Entity('product')
 export class Product extends PtcBaseEntity {
@@ -58,6 +58,14 @@ export class Product extends PtcBaseEntity {
     name: 'is_active',
   })
   isActive: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: ProductTaxType,
+    name: 'tax_type',
+    nullable: true,
+  })
+  taxType: ProductTaxType
 
   @ManyToOne(() => AccountCoa)
   @JoinColumn({ name: 'coa_id', referencedColumnName: 'id' })

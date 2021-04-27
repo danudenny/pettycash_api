@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsString, IsOptional } from 'class-validator';
+import { ProductTaxType } from '../../../model/utils/enum';
 
 export class UpdateProductDTO {
   // @ApiProperty({
@@ -43,6 +43,12 @@ export class UpdateProductDTO {
     example: true,
   })
   isActive: boolean;
+
+  @ApiProperty({
+    description: 'Tax Type of Product',
+    example: ProductTaxType.SEWA_ALAT_DAN_KENDARAAN,
+  })
+  taxType: ProductTaxType;
 }
 
 export default UpdateProductDTO;

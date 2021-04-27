@@ -30,8 +30,8 @@ export class TaxDTO {
 
   @ApiProperty({
     description: 'Tax Partner Type',
-    example: 'personal',
-    enum: ['company', 'personal'],
+    example: AccountTaxPartnerType.PERSONAL,
+    enum: AccountTaxPartnerType,
   })
   partnerType: AccountTaxPartnerType;
 

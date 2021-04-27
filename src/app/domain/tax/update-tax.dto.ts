@@ -27,8 +27,8 @@ export class UpdateTaxDTO {
 
   @ApiProperty({
     description: 'Partner Type',
-    example: 'company',
-    enum: ['personal','company'],
+    example: AccountTaxPartnerType.COMPANY,
+    enum: AccountTaxPartnerType,
   })
   partnerType: AccountTaxPartnerType;
 
