@@ -149,9 +149,12 @@ export class BudgetRequestService {
 
   public async getBudget(needDate?: Date): Promise<BudgetResponse> {
     try {
+      const user = await AuthService.getUser({ relations: ['branches'] });
+      const userBranches = user?.branches?.map((v) => v.id);
       
       const bgtExist = await this.budgetRepo.createQueryBuilder('bgt')
         .where(`'${needDate}' BETWEEN bgt.startDate AND bgt.endDate`)
+        .andWhere('bgt.branch_id = :userBranches', { userBranches })
         .andWhere(`bgt.state = 'approved_by_spv'`)
         .getOne();
   
