@@ -21,6 +21,7 @@ export class BalanceController {
 
   @Get()
   @ApiOperation({ summary: 'Get all balances (saldo cabang)' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiOkResponse({ type: BalanceWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad request' })
   async get(@Query() query?: QueryBalanceDTO) {
