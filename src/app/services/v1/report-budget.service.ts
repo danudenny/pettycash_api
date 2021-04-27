@@ -33,7 +33,7 @@ export class ReportBudgetService {
         const dataAll = new ReportBudgetDTO;
         dataAll.id = element.id;
         dataAll.number = element.number;
-        dataAll.productName = element.productName;
+        dataAll.productName = element.prodName;
         dataAll.branchName = element.branchName;
         dataAll.responsibleUser = element.firstName + ' ' + element.lastName;
         dataAll.startDate = element.startDate;
@@ -231,7 +231,7 @@ export class ReportBudgetService {
         const dataAll = new ReportBudgetDTO;
         dataAll.id = element.id;
         dataAll.number = element.number;
-        dataAll.productName = element.productName;
+        dataAll.productName = element.prodName;
         dataAll.branchName = element.branchName;
         dataAll.responsibleUser = element.firstName + ' ' + element.lastName;
         dataAll.startDate = element.startDate;
@@ -266,49 +266,45 @@ export class ReportBudgetService {
       let startDate = this.formatDate(query && query?.startDate__gte || new Date(), "id")
       let endDate = this.formatDate(query && query?.endDate__lte || new Date(), "id")
       /* Define Header*/
-      const heading = [
+      const firstData = [
         ["PT. SiCepat Express Indonesia"], [],
         [`Data Budget Mulai: ${startDate+' Sampai Dengan '+endDate}`], [],
         ["No Budget", "Nama Cabang", "Request", "Tanggal Awal", "Tanggal Akhir", "Product", "Jumlah Budget", "Jumlah Pengeluaran"],
       ];
 
-      const dtSheet = resultData.map((t) => {
-        return {
-          number: t.number,
-          branchName: t.branchName,
-          responsibleUser: t.responsibleUser,
-          startDate: t.startDate,
-          endDate: t.endDate,
-          productName: t.productName,
-          totalAmount: t.totalAmount,
-          expenseAmount: t.expenseAmount,
-        }
-      })
-      console.log(dtSheet);
+      const dtSheet = resultData.map(function(item, index) {
+        const dataAdd = [
+          item.number,
+          item.branchName,
+          item.responsibleUser,
+          item.startDate,
+          item.endDate,
+          item.productName,
+          item.totalAmount,
+          item.expenseAmount
+        ]
+        firstData.push(dataAdd);
+      });
 
       const fileName = 'Report_Budgets_' + moment().format('YYMMDD_HHmmss') + '.xlsx';
 
       /* merge cells*/
       const mergeCop = { s: { c: 0, r: 0 }, e: { c: 5, r: 0 } };
       const mergeRangeDate = { s: { c: 0, r: 2 }, e: { c: 5, r: 2 } };
-      // const DmergeCop = utils.decode_range("A1:F1"); // this is equivalent
-      // const DmergeRangeDate = utils.decode_range("A3:F3"); // this is equivalent
-      // console.log(DmergeCop, DmergeRangeDate);
 
       /* generate workbook */
       const wb = utils.book_new();
-      const ws = utils.aoa_to_sheet(heading);
+      const ws = utils.aoa_to_sheet(firstData);
       /* add merges */
       if (!ws['!merges']) ws['!merges'] = [];
       ws['!merges'].push(mergeCop);
       ws['!merges'].push(mergeRangeDate);
       /* Write data */
-      // const newWs = utils.sheet_add_json(ws, dtSheet);
       utils.book_append_sheet(wb, ws, "Report Budget");
       /* generate buffer */
       var buf = write(wb, { type: 'buffer' });
-      /* send to client */
 
+      /* send to client */
       const mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
       res.setHeader('Content-disposition', 'attachment; filename=' + fileName);
