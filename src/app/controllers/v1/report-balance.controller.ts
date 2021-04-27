@@ -2,7 +2,7 @@ import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiOkResponse, A
 import { Controller, Get, HttpException, HttpStatus, Query } from '@nestjs/common';
 import { ReportBalanceService } from '../../services/v1/report-balance.service';
 import { QueryReportBalanceDTO } from '../../domain/balance/balance.query.dto';
-import { BalanceWithPaginationResponse } from '../../domain/balance/response.dto';
+import { ReportBalancePaginationResponse } from '../../domain/report-balance/response/report-balance-response.dto';
 
 @ApiTags('Reports Balance')
 @ApiInternalServerErrorResponse({ description: 'General Error' })
@@ -16,9 +16,9 @@ export class ReportBalanceController {
 
 	@Get()
 	@ApiOperation({ summary: 'List all Report Balance' })
-	@ApiOkResponse({ type: BalanceWithPaginationResponse })
+	@ApiOkResponse({ type: ReportBalancePaginationResponse })
 	@ApiBadRequestResponse({ description: 'Bad Request' })
-	async getAllReports(@Query() query: QueryReportBalanceDTO,): Promise<BalanceWithPaginationResponse> {
+	async getAllReports(@Query() query: QueryReportBalanceDTO,): Promise<ReportBalancePaginationResponse> {
 		try {
 			return await this.reportBalanceService.getBalanceReport(query);
 		} catch (err) {

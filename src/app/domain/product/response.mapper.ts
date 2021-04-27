@@ -1,6 +1,5 @@
 import { Product } from '../../../model/product.entity';
 import { ProductDTO } from './product.dto';
-import { PeriodDTO } from '../period/period.dto';
 
 export class ProductResponseMapper {
   public static toDTO(dto: Partial<ProductDTO>): ProductDTO {
