@@ -152,7 +152,7 @@ export class BudgetRequestService {
       
       const bgtExist = await this.budgetRepo.createQueryBuilder('bgt')
         .where(`'${needDate}' BETWEEN bgt.startDate AND bgt.endDate`)
-        .andWhere(`(bgt.state = 'approved_by_ss' OR bgt.state = 'approved_by_spv')`)
+        .andWhere(`bgt.state = 'approved_by_spv'`)
         .getOne();
   
       if (!bgtExist) {
