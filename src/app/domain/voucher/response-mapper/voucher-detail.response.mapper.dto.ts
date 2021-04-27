@@ -9,16 +9,13 @@ export class VoucherDetailResponseMapper {
 	}
 
 	private static toVoucherItemDTO(data: VoucherItem[]): VoucherItemDTO[] {
-		const items = data.map((v) => {
+		console.log(data)
+		return data.map((v) => {
 			const item = new VoucherItemDTO();
-			item.id = v.id;
-			item.voucherId = v.voucherId;
-			item.productId = v.productId;
+			item.productName = v.products && v.products.name;
 			item.amount = v.amount;
 			return item;
 		});
-
-		return items;
 	}
 
 	public static fromOneEntity(ety: Partial<Voucher>) {
