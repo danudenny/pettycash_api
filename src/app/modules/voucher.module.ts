@@ -6,19 +6,20 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { VoucherSunfish } from '../../model/voucher-sunfish.entity';
 import { Product } from '../../model/product.entity';
 import { VoucherItem } from '../../model/voucher-item.entity';
+import { PrintService } from '../services/v1/print.service';
 
 @Module({
-	imports: [
-		TypeOrmModule.forFeature([Voucher, VoucherSunfish, VoucherItem, Product]),
-		HttpModule.registerAsync({
-			useFactory: () => ({
-				timeout: 5000,
-				maxRedirects: 5,
-			}),
-		})
-	],
-	providers: [VoucherService],
-	controllers: [VoucherController],
-	exports: [],
+  imports: [
+    TypeOrmModule.forFeature([Voucher, VoucherSunfish, VoucherItem, Product]),
+    HttpModule.registerAsync({
+      useFactory: () => ({
+        timeout: 5000,
+        maxRedirects: 5,
+      }),
+    }),
+  ],
+  providers: [VoucherService, PrintService],
+  controllers: [VoucherController],
+  exports: [],
 })
 export class VoucherModule {}
