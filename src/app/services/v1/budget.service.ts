@@ -313,7 +313,8 @@ export class BudgetService {
     try{
       const updateBudget = await getManager().transaction(async (manager) => {
         const budgetExist = await manager.findOne(Budget, {
-          where: { id: id, isDeleted: false }
+          where: { id: id, isDeleted: false },
+          relations: ['histories'],
         });
 
         if (!budgetExist) {
@@ -377,10 +378,10 @@ export class BudgetService {
             budgetExist.minimumAmount = Number(Math.ceil((totalAmountItem/totalDays)*2));
             budgetExist.rejectedNote = null;
             budgetExist.state = BudgetState.DRAFT;
-            // budgetExist.histories = await this.buildHistory(budgetExist, {
-            //   state: BudgetState.DRAFT,
-            //   endDate: data.endDate,
-            // });
+            budgetExist.histories = await this.buildHistory(budgetExist, {
+              state: BudgetState.DRAFT,
+              endDate: data.endDate,
+            });
             // if (items.length > 0) {
             //   budgetExist.items = items;
             // }
