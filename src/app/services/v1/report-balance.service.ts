@@ -39,7 +39,7 @@ export class ReportBalanceService {
 			[
 				'(COALESCE(acc_bank.balance, 0) + COALESCE(acc_cash.balance, 0))',
 				'totalAmount',
-			],
+			]
 		);
 		qb.qb.leftJoin(
 			`(WITH acc_stt_bank AS (
@@ -103,7 +103,8 @@ export class ReportBalanceService {
           b2.branch_id,
           b2.start_date, b2.end_date,
           b2.state,
-          ((b2.end_date - b2.start_date) + 1) AS total_day, b2.total_amount,
+          ((b2.end_date - b2.start_date) + 1) AS total_day,
+          b2.total_amount
         FROM budget b2
         WHERE b2.state = 'approved_by_spv' AND b2.is_deleted IS FALSE
         ORDER BY b2.end_date DESC
