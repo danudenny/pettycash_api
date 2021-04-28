@@ -9,7 +9,7 @@ build:
   script:
     - make build-and-push
   only:
-    - develop
+    - cicd
 
 deploy:
   stage: deploy
@@ -17,4 +17,4 @@ deploy:
   script:
     - make deploy
   only:
-    - develop
+    - cicd
