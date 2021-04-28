@@ -151,18 +151,60 @@ export class BudgetRequestService {
     try {
       const user = await AuthService.getUser({ relations: ['branches'] });
       const userBranches = user?.branches?.map((v) => v.id);
-      
-      const bgtExist = await this.budgetRepo.createQueryBuilder('bgt')
-        .where(`'${needDate}' BETWEEN bgt.startDate AND bgt.endDate`)
-        .andWhere('bgt.branch_id = :userBranches', { userBranches })
-        .andWhere(`bgt.state = 'approved_by_spv'`)
-        .getOne();
-  
-      if (!bgtExist) {
+
+      const qb = new QueryBuilder(Budget, 'bgt');
+
+      qb.selectRaw(
+        ['bgt.id', 'id'],
+        ['bgt.branch_id', 'branchId'],
+        ['br.branch_name', 'branchName'],
+        ['bgt.number', 'number'],
+        ['bgt.responsible_user_id', 'responsibleUserId'],
+        ['us.first_name', 'firstName'],
+        ['us.last_name', 'lastName'],
+        ['us.username', 'username'],
+        ['bgt.start_date', 'startDate'],
+        ['bgt.end_date', 'endDate'],
+        ['bgt.minimum_amount', 'minimumAmount'],
+        ['bgt.total_amount', 'totalAmount'],
+        ['bgt.state', 'state'],
+        ['bgt.rejected_note', 'rejectedNote']
+      );
+      qb.leftJoin(
+        (e) => e.branch,
+        'br'
+      );
+      qb.leftJoin(
+        (e) => e.users,
+        'us'
+      );
+      qb.andWhere(
+        (e) => e.isDeleted,
+        (v) => v.isFalse(),
+      );
+      qb.qb.andWhere(
+        `(:needDate >= bgt.start_date AND :needDate <= bgt.end_date)`,
+        { needDate: needDate },
+      );
+      qb.andWhere(
+        (e) => e.state,
+        (v) => v.equals('approved_by_spv'),
+      );
+      if (userBranches?.length) {
+        qb.andWhere(
+          (e) => e.branchId,
+          (v) => v.in(userBranches),
+        );
+      }
+
+      const bgtExist = await qb.exec();
+      if (bgtExist.length < 1) {
         throw new NotFoundException('Tidak ditemukan Budget!');
       }
-  
-      return new BudgetResponse(bgtExist);;
+
+      console.log(bgtExist[0]);
+
+      return new BudgetResponse(bgtExist[0]);
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
