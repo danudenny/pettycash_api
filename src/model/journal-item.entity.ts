@@ -84,6 +84,14 @@ export class JournalItem extends PtcBaseEntity {
   })
   credit: number;
 
+  @Column({
+    type: 'boolean',
+    nullable: false,
+    default: () => 'false',
+    name: 'is_ledger',
+  })
+  isLedger: boolean;
+
   @ManyToOne(() => Journal, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'journal_id' })
   journal: Journal;
