@@ -167,3 +167,9 @@ export enum ProductType {
   EXPENSE = 'expense',
   DOWN_PAYMENT = 'down_payment',
 }
+
+export enum AccountTaxGroup {
+  PPH23 = 'PPH 23',
+  PPH21 = 'PPH 21',
+  PPH4A2 = 'PPH 4(2)',
+}
