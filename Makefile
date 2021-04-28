@@ -18,3 +18,41 @@ force-recreate:
 	@yarn typeorm migration:run
 	@echo "${GREEN}Seeding${RESET} ${YELLOW}pettycash${RESET} ${GREEN}Database 🤑${RESET}"
 	@yarn db:seed:dev
+
+# CICD Section
+name = petty-cash-api
+
+envFile = $(ENV_FILE)
+
+dockerHost = registry.gitlab.com
+dockerUser = $(DOCKER_USER)
+dockerPass = $(DOCKER_PASS)
+dockerTag = registry.gitlab.com/sicepat-workspace/$(name)/staging
+getHash = $(shell git log -1 --pretty=format:"%h")
+
+build-docker:
+	docker build -t $(dockerTag):$(getHash) -t $(dockerTag):latest .
+
+push-docker:
+	docker login $(dockerHost) -u $(dockerUser) -p $(dockerPass)
+	docker push -a $(dockerTag)
+
+clean-docker:
+	docker rmi $(dockerTag):$(getHash)
+
+build-and-push: build-docker push-docker clean-docker
+
+login-docker:
+	docker login $(dockerHost) -u $(dockerUser) -p $(dockerPass)
+
+pull-docker:
+	docker pull $(dockerTag):latest
+
+run-docker:
+	- docker stop $(name)
+	docker run -d --rm \
+	--name $(name) \
+	--env-file $(envFile) \
+	$(dockerTag):latest
+
+deploy: login-docker pull-docker run-docker
