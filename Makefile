@@ -51,6 +51,7 @@ pull-docker:
 run-docker:
 	- docker stop $(name)
 	docker run -d --rm \
+	-p 3011:3010 \
 	--name $(name) \
 	--env-file $(envFile) \
 	$(dockerTag):latest
