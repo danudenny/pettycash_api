@@ -158,12 +158,12 @@ export enum MASTER_ROLES {
 }
 
 export enum ProductTaxType {
-  JASA = 'Jasa',
-  SEWA_ALAT_DAN_KENDARAAN = 'Sewa Alat dan Kendaraan',
-  SEWA_BANGUNAN = 'Sewa Bangunan'
+  JASA = 'jasa',
+  SEWA_ALAT_DAN_KENDARAAN = 'sewa_alat_dan_kendaraan',
+  SEWA_BANGUNAN = 'sewa_bangunan',
 }
 
-export enum ProductExpenseType {
-  EXPENSE = 'Expense',
-  DOWN_PAYMENT = 'Down Payment'
+export enum ProductType {
+  EXPENSE = 'expense',
+  DOWN_PAYMENT = 'down_payment',
 }

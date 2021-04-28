@@ -1,7 +1,13 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { AccountCoa } from './account-coa.entity';
-import { ProductExpenseType, ProductTaxType } from './utils/enum';
+import { ProductType, ProductTaxType } from './utils/enum';
 
 @Entity('product')
 export class Product extends PtcBaseEntity {
@@ -10,7 +16,7 @@ export class Product extends PtcBaseEntity {
     length: 50,
     nullable: true,
     name: 'code',
-    unique: true
+    unique: true,
   })
   code: string;
 
@@ -73,16 +79,16 @@ export class Product extends PtcBaseEntity {
     name: 'tax_type',
     nullable: true,
   })
-  taxType: ProductTaxType
+  taxType: ProductTaxType;
 
   @Column({
     type: 'enum',
-    enum: ProductExpenseType,
-    name: 'tax_type',
+    enum: ProductType,
+    name: 'type',
     nullable: true,
-    default: ProductExpenseType.EXPENSE
+    default: ProductType.EXPENSE,
   })
-  type: ProductExpenseType
+  type: ProductType;
 
   @ManyToOne(() => AccountCoa)
   @JoinColumn({ name: 'coa_id', referencedColumnName: 'id' })
