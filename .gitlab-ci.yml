@@ -1,0 +1,20 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+build:
+  stage: build
+  environment: staging
+  script:
+    - make build-and-push
+  only:
+    - develop
+
+deploy:
+  stage: deploy
+  environment: staging
+  script:
+    - make deploy
+  only:
+    - develop
