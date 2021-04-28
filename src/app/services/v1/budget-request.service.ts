@@ -158,11 +158,12 @@ export class BudgetRequestService {
         ['bgt.id', 'id'],
         ['bgt.branch_id', 'branchId'],
         ['br.branch_name', 'branchName'],
+        ['br.branch_code', 'branchCode'],
         ['bgt.number', 'number'],
         ['bgt.responsible_user_id', 'responsibleUserId'],
-        ['us.first_name', 'firstName'],
-        ['us.last_name', 'lastName'],
-        ['us.username', 'username'],
+        ['us.first_name', 'responsibleUserFirstName'],
+        ['us.last_name', 'responsibleUserLastName'],
+        ['us.username', 'responsibleUserUsername'],
         ['bgt.start_date', 'startDate'],
         ['bgt.end_date', 'endDate'],
         ['bgt.minimum_amount', 'minimumAmount'],
@@ -201,8 +202,6 @@ export class BudgetRequestService {
       if (bgtExist.length < 1) {
         throw new NotFoundException('Tidak ditemukan Budget!');
       }
-
-      console.log(bgtExist[0]);
 
       return new BudgetResponse(bgtExist[0]);
     } catch (error) {
