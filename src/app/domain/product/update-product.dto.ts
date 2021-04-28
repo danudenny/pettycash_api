@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ProductTaxType } from '../../../model/utils/enum';
+import { ProductExpenseType, ProductTaxType } from '../../../model/utils/enum';
 
 export class UpdateProductDTO {
   // @ApiProperty({
@@ -45,10 +45,22 @@ export class UpdateProductDTO {
   isActive: boolean;
 
   @ApiProperty({
+    description: 'Is Has Kilometers',
+    example: false,
+  })
+  isHasKm: boolean;
+
+  @ApiProperty({
     description: 'Tax Type of Product',
     example: ProductTaxType.SEWA_ALAT_DAN_KENDARAAN,
   })
   taxType: ProductTaxType;
+
+  @ApiProperty({
+    description: 'Expense Type of Product',
+    example: ProductExpenseType.EXPENSE,
+  })
+  type: ProductExpenseType;
 }
 
 export default UpdateProductDTO;
