@@ -27,6 +27,14 @@ export class BudgetDTO {
   branchName: string;
 
   @ApiProperty({
+    description: 'Branch Code',
+    example: '3601001',
+  })
+  @IsOptional()
+  @IsString()
+  branchCode: string;
+
+  @ApiProperty({
     description: 'Budget Number',
     example: 'BG001',
   })
