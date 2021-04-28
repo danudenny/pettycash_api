@@ -86,8 +86,10 @@ export class LoanService {
   public async list(query?: QueryLoanDTO): Promise<LoanWithPaginationResponse> {
     const params = { ...query };
     const qb = new QueryBuilder(Loan, 'l', params);
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['startDate__gte'] = 'l.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'l.transaction_date';
@@ -125,10 +127,10 @@ export class LoanService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    if (userBranches?.length) {
+    if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.branchId,
-        (v) => v.in(userBranches),
+        (v) => v.in(userBranchIds),
       );
     }
 
