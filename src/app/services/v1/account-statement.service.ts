@@ -68,8 +68,10 @@ export class AccountStatementService {
   public async list(query?: QueryAccountStatementDTO): Promise<AccountStatementWithPaginationResponse> {
     const params = { order: '-transactionDate', ...query };
     const qb = new QueryBuilder(AccountStatement, 'stmt', params);
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['startDate__gte'] = 'stmt.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'stmt.transaction_date';
@@ -97,10 +99,10 @@ export class AccountStatementService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    if (userBranches?.length) {
+    if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.branchId,
-        (v) => v.in(userBranches),
+        (v) => v.in(userBranchIds),
       );
     }
 

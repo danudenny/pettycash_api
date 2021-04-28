@@ -98,8 +98,10 @@ export class ExpenseService {
   ): Promise<ExpenseWithPaginationResponse> {
     const params = { order: '-updatedAt', limit: 10, ...query };
     const qb = new QueryBuilder(Expense, 'exp', params);
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['startDate__gte'] = 'exp.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'exp.transaction_date';
@@ -132,10 +134,10 @@ export class ExpenseService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    if (userBranches?.length) {
+    if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.branchId,
-        (v) => v.in(userBranches),
+        (v) => v.in(userBranchIds),
       );
     }
 
@@ -144,10 +146,16 @@ export class ExpenseService {
   }
 
   public async getById(id: string): Promise<ExpenseDetailResponse> {
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
+    const where = { id, isDeleted: false };
+    if (!isSuperUser) {
+      Object.assign(where, { branchId: In(userBranchIds) });
+    }
     const expense = await this.expenseRepo.findOne({
-      where: { id, isDeleted: false, branchId: In(userBranches) },
+      where,
       relations: [
         'period',
         'branch',
