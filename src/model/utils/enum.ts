@@ -162,3 +162,8 @@ export enum ProductTaxType {
   SEWA_ALAT_DAN_KENDARAAN = 'Sewa Alat dan Kendaraan',
   SEWA_BANGUNAN = 'Sewa Bangunan'
 }
+
+export enum ProductExpenseType {
+  EXPENSE = 'Expense',
+  DOWN_PAYMENT = 'Down Payment'
+}

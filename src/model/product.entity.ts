@@ -1,7 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { AccountCoa } from './account-coa.entity';
-import { ProductTaxType } from './utils/enum';
+import { ProductExpenseType, ProductTaxType } from './utils/enum';
 
 @Entity('product')
 export class Product extends PtcBaseEntity {
@@ -60,12 +60,29 @@ export class Product extends PtcBaseEntity {
   isActive: boolean;
 
   @Column({
+    type: 'boolean',
+    nullable: false,
+    default: () => 'false',
+    name: 'is_has_km',
+  })
+  isHasKm: boolean;
+
+  @Column({
     type: 'enum',
     enum: ProductTaxType,
     name: 'tax_type',
     nullable: true,
   })
   taxType: ProductTaxType
+
+  @Column({
+    type: 'enum',
+    enum: ProductExpenseType,
+    name: 'tax_type',
+    nullable: true,
+    default: ProductExpenseType.EXPENSE
+  })
+  type: ProductExpenseType
 
   @ManyToOne(() => AccountCoa)
   @JoinColumn({ name: 'coa_id', referencedColumnName: 'id' })
