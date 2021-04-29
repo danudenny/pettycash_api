@@ -1,6 +1,6 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.entity';
-import { getManager, Repository } from 'typeorm';
+import { getManager, In, Repository } from 'typeorm';
 import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -63,8 +63,12 @@ export class AllocationBalanceService {
   ): Promise<AllocationBalanceWithPaginationResponse> {
     const params = { order: '^number', limit: 10, ...query };
     const qb = new QueryBuilder(CashBalanceAllocation, 'cba', params);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
-    qb.fieldResolverMap['createdDate'] = 'cba.createdDate';
+    qb.fieldResolverMap['createdDate'] = 'cba.transfer_date';
     qb.fieldResolverMap['branchId'] = 'cba.branchId';
     qb.fieldResolverMap['state'] = 'cba.state';
     qb.fieldResolverMap['number__contains'] = 'cba.number';
@@ -75,11 +79,11 @@ export class AllocationBalanceService {
       ['br.branch_name', 'branchName'],
       ['cba.number', 'number'],
       ['cba.amount', 'amount'],
-      ['us.first_name', 'picName'],
+      ['us.first_name || \' \' || us.last_name', 'picName'],
       ['us.username', 'nik'],
       ['cba.state', 'state'],
       ['cba.received_date', 'receivedDate'],
-      ['us.first_name', 'receivedUserName'],
+      ['ru.first_name || \' \' || ru.last_name', 'receivedUserName'],
     );
     qb.leftJoin(
       (e) => e.branch,
@@ -89,18 +93,38 @@ export class AllocationBalanceService {
       (e) => e.responsibleUser,
       'us'
     );
+    qb.leftJoin(
+      (e) => e.receivedUser,
+      'ru'
+    );
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+
+    if (userBranchIds?.length && !isSuperUser) {
+      qb.andWhere(
+        (e) => e.branchId,
+        (v) => v.in(userBranchIds),
+      );
+    }
 
     const allocationBalance = await qb.exec();
     return new AllocationBalanceWithPaginationResponse(allocationBalance)
   }
 
   public async getById(id: string): Promise<AllocationBalanceDetailResponse> {
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
+
+    const where = { id, isDeleted: false };
+    if (!isSuperUser) {
+      Object.assign(where, { branchId: In(userBranchIds) });
+    }
     const allocation = await this.cashbalRepo.findOne({
-      where: { id, isDeleted: false },
+      where,
       relations: [
         'branch',
         'responsibleUser',
@@ -110,6 +134,7 @@ export class AllocationBalanceService {
         'allocationHistory.createUser',
       ],
     });
+    
     if (!allocation) {
       throw new NotFoundException(`Allocation ID ${id} not found!`);
     }
@@ -135,7 +160,6 @@ export class AllocationBalanceService {
 
     state = transferDto.state
 
-
     try {
       const transfer = await this.cashbalRepo.save(transferDto);
       if(transfer) {
@@ -154,7 +178,7 @@ export class AllocationBalanceService {
   ): Promise<any> {
     const idCba = await this.cashbalRepo.findOne({
       where: {
-        id: id,
+        id,
         isDeleted: false,
         state: CashBalanceAllocationState.REJECTED
       }
@@ -189,7 +213,7 @@ export class AllocationBalanceService {
   ): Promise<any> {
     const approveAllocation = await getManager().transaction(async (manager) => {
       const allocation = await manager.findOne(CashBalanceAllocation, {
-        where: { id: id, isDeleted: false },
+        where: { id, isDeleted: false },
         relations: ['allocationHistory', 'destinationBank', 'branch'],
       });
       if (!allocation) {
@@ -209,36 +233,55 @@ export class AllocationBalanceService {
           `Tidak bisa approve Alokasi Saldo Kas dengan status ${currentState}, Alokasi saldo sudah diterima oleh Admin Branch`,
         );
       }
+
+      // ! HINT: Approve by SS HO
       if (userRole === MASTER_ROLES.SS_HO) {
         if (
-          currentState === CashBalanceAllocationState.EXPIRED
+          dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date()).format('YYYY-MM-DD')
         ) {
           throw new BadRequestException(
             `Tanggal transfer sudah expired`,
+          );
+        }
+        if (currentState === CashBalanceAllocationState.REJECTED) {
+          throw new BadRequestException(
+            `Alokasi Saldo Kas sudah di tolak`,
           );
         }
         if (
           currentState === CashBalanceAllocationState.APPROVED_BY_SS
         ) {
           throw new BadRequestException(
-            `Tidak bisa approve Alokasi Saldo Kas dengan status ${currentState}`,
+            `Tidak bisa konfirmasi Alokasi Saldo Kas dengan status ${currentState}`,
           );
         }
         if (
           currentState === CashBalanceAllocationState.APPROVED_BY_SPV
         ) {
           throw new BadRequestException(
-            `Alokasi Saldo Kas sudah diapprove oleh ${currentState}, dan ${CashBalanceAllocationState.APPROVED_BY_SS} tidak bisa melakukan approval.`,
+            `Alokasi Saldo Kas sudah diapprove oleh ${currentState}, dan ${CashBalanceAllocationState.APPROVED_BY_SS} tidak bisa melakukan konfirmasi.`,
           );
         }
         state = CashBalanceAllocationState.APPROVED_BY_SS;
+        throw new HttpException(`Berhasil melakukan konfirmasi alokasi saldo kas`, HttpStatus.OK)
       }
 
+      // ! HINT: Approve by SPV HO
       if (userRole === MASTER_ROLES.SPV_HO) {
 
+        if (dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date()).format('YYYY-MM-DD')) {
+          throw new BadRequestException(
+            `Tanggal transfer sudah expired`,
+          );
+        }
         if (currentState === CashBalanceAllocationState.DRAFT) {
           throw new BadRequestException(
-            `Alokasi Saldo Kas belum diapprove oleh SS HO`,
+            `Alokasi Saldo Kas belum dikonfirmasi oleh SS HO`,
+          );
+        }
+        if (currentState === CashBalanceAllocationState.REJECTED) {
+          throw new BadRequestException(
+            `Alokasi Saldo Kas sudah di tolak`,
           );
         }
         if (currentState === CashBalanceAllocationState.APPROVED_BY_SPV) {
@@ -246,11 +289,7 @@ export class AllocationBalanceService {
             `Tidak bisa approve Alokasi Saldo Kas dengan status ${currentState}`,
           );
         }
-        if (currentState === CashBalanceAllocationState.EXPIRED) {
-          throw new BadRequestException(
-            `Tanggal transfer sudah expired`,
-          );
-        }
+        
 
         const createOdoo = this.odooRepo.create(payload);
         const userResponsible = await this.getUser();
@@ -261,13 +300,14 @@ export class AllocationBalanceService {
         createOdoo.number = allocation.number;
         createOdoo.branchName = allocation.branch.branchName;
         createOdoo.description = allocation.description;
-        createOdoo.authKey = "2ee2cec3302e26b8030b233d614c4f4e";
+        createOdoo.authKey = '2ee2cec3302e26b8030b233d614c4f4e';
         createOdoo.analyticAccount = allocation.branch.branchCode;
 
         state = CashBalanceAllocationState.APPROVED_BY_SPV;
         if (state == CashBalanceAllocationState.APPROVED_BY_SPV) {
           await this.odooRepo.save(createOdoo)
         }
+        throw new HttpException(`Berhasil melakukan approval alokasi saldo kas`, HttpStatus.OK)
       }
 
       if (dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')) {
@@ -290,8 +330,9 @@ export class AllocationBalanceService {
       allocation.allocationHistory = await this.buildHistory(allocation, { state });
       await this.accHistoryRepo.save(allocation.allocationHistory);
       return await manager.save(allocation);
+      
     });
-    return approveAllocation;
+    throw new HttpException(`Sukses`, HttpStatus.OK)
   }
 
   public async reject(
@@ -301,7 +342,7 @@ export class AllocationBalanceService {
     try {
       const rejectAllocation = await getManager().transaction(async (manager) => {
         const allocation = await manager.findOne(CashBalanceAllocation, {
-          where: { id: id, isDeleted: false },
+          where: { id, isDeleted: false },
           relations: ['allocationHistory'],
         });
         if (!allocation) {
@@ -309,7 +350,7 @@ export class AllocationBalanceService {
         }
 
         if (
-          allocation.state === CashBalanceAllocationState.EXPIRED
+          dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')
         ) {
           throw new BadRequestException(
             `Tanggal transfer sudah expired`,
@@ -359,7 +400,7 @@ export class AllocationBalanceService {
         await this.accHistoryRepo.save(allocation.allocationHistory);
         return await manager.save(allocation);
       });
-      return rejectAllocation;
+      throw new HttpException(`Berhasil Menolak Alokasi Saldo Kas`, HttpStatus.OK)
     } catch (error) {
       throw error;
     }
@@ -369,7 +410,7 @@ export class AllocationBalanceService {
     const userResponsible = await this.getUser();
     const approveAllocation = await getManager().transaction(async (manager) => {
       const allocation = await manager.findOne(CashBalanceAllocation, {
-        where: { id: id, isDeleted: false },
+        where: { id, isDeleted: false },
         relations: ['allocationHistory'],
       });
       if (!allocation) {
@@ -382,14 +423,23 @@ export class AllocationBalanceService {
       // TODO: Implement State Machine for approval flow?
       let state: CashBalanceAllocationState;
       const currentState = allocation.state;
-      if (userRole === MASTER_ROLES.ADMIN_BRANCH) {
+      if (userRole === MASTER_ROLES.ADMIN_BRANCH || userRole === MASTER_ROLES.PIC_HO  ) {
+        if(
+          currentState === CashBalanceAllocationState.RECEIVED
+        ) {
+          throw new BadRequestException(
+            `Tidak bisa menerima alokasi saldo kas karena Sudah Diterima oleh ${userRole}`,
+          );
+        }
+
         if (
-          currentState === CashBalanceAllocationState.EXPIRED
+          dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')
         ) {
           throw new BadRequestException(
             `Tanggal transfer sudah expired`,
           );
         }
+        
         if (
           currentState === CashBalanceAllocationState.DRAFT
         ) {
@@ -427,8 +477,8 @@ export class AllocationBalanceService {
       allocation.receivedUserId = userResponsible.id;
       allocation.allocationHistory = await this.buildHistory(allocation, { state });
       await this.accHistoryRepo.save(allocation.allocationHistory);
-      return await manager.save(allocation);
+      await manager.save(allocation);
     });
-    return approveAllocation;
+    throw new HttpException('Alokasi Saldo Kas Sudah diterima', HttpStatus.OK)
   }
 }

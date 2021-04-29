@@ -24,7 +24,6 @@ export class AllocationBalanceQueryDTO extends BasePayload {
     example: 'ASK202103QWER123',
   })
   @IsOptional()
-  @IsUUID()
   number__contains: string;
 
   @ApiPropertyOptional({
