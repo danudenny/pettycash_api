@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Voucher } from '../../../model/voucher.entity';
 import { VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
@@ -11,18 +11,13 @@ import { VoucherDetailResponse } from '../../domain/voucher/response/voucher-det
 import { VoucherSunfish } from '../../../model/voucher-sunfish.entity';
 import { Product } from '../../../model/product.entity';
 import { VoucherItem } from '../../../model/voucher-item.entity';
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class VoucherService {
   constructor(
     @InjectRepository(Voucher)
     private readonly voucherRepo: Repository<Voucher>,
-    @InjectRepository(VoucherSunfish)
-    private readonly voucherSunfishRepo: Repository<VoucherSunfish>,
-    @InjectRepository(VoucherItem)
-    private readonly voucherItemRepo: Repository<VoucherItem>,
-    @InjectRepository(Product)
-    private readonly productRepo: Repository<Product>
   ) {}
 
   public async list(
@@ -30,6 +25,11 @@ export class VoucherService {
   ): Promise<VoucherWithPaginationResponse> {
     const params = { order: '^created_at', limit: 10, ...query };
     const qb = new QueryBuilder(Voucher, 'vcr', params);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
+
 
     qb.fieldResolverMap['startDate__gte'] = 'vcr.transactionDate';
     qb.fieldResolverMap['endDate__lte'] = 'vcr.transactionDate';
@@ -58,14 +58,29 @@ export class VoucherService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    if (userBranchIds?.length && !isSuperUser) {
+      qb.andWhere(
+        (e) => e.branchId,
+        (v) => v.in(userBranchIds),
+      );
+    }
 
     const vouchers = await qb.exec();
     return new VoucherWithPaginationResponse(vouchers, params);
   }
 
   public async getById(id: string): Promise<VoucherDetailResponse> {
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
+    const where = { id, isDeleted: false };
+    if (!isSuperUser) {
+      Object.assign(where, { branchId: In(userBranchIds) });
+    }
+
     const voucher = await this.voucherRepo.findOne({
-      where: { id, isDeleted: false },
+      where,
       relations: [
         'branch',
         'employee',
