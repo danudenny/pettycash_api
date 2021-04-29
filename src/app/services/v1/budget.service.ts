@@ -224,7 +224,7 @@ export class BudgetService {
 
       // Build Budget
       const budget = new Budget();
-      budget.branchId = branchId;
+      budget.branchId = data.branchId;
       budget.number = data.number;
       budget.responsibleUserId = data.responsibleUserId;
       budget.startDate = data.startDate;
@@ -284,7 +284,7 @@ export class BudgetService {
   
         // Build Budget
         const budget = new Budget();
-        budget.branchId = branchId;
+        budget.branchId = data.branchId;
         budget.number = data.number;
         budget.responsibleUserId = data.responsibleUserId;
         budget.startDate = data.startDate;
@@ -368,7 +368,7 @@ export class BudgetService {
             const totalDays = await this.getDifferenceInDays(date1, date2);
 
             // Build Budget
-            budgetExist.branchId = branchId;
+            budgetExist.branchId = data.branchId;
             budgetExist.number = budgetExist.number;
             budgetExist.responsibleUserId = data.responsibleUserId;
             budgetExist.startDate = data.startDate;
@@ -458,7 +458,7 @@ export class BudgetService {
             const totalDays = await this.getDifferenceInDays(date1, date2);
 
             // Build Budget
-            budgetExist.branchId = branchId;
+            budgetExist.branchId = data.branchId;
             budgetExist.number = budgetExist.number;
             budgetExist.responsibleUserId = data.responsibleUserId;
             budgetExist.startDate = data.startDate;
@@ -609,6 +609,7 @@ export class BudgetService {
           rejectedNote,
           endDate
         });
+        budgetExist.rejectedNote = rejectedNote;
         budgetExist.updateUser = user;
 
         return await manager.save(budgetExist);
