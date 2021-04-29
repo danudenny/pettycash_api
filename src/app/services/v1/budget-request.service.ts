@@ -233,7 +233,7 @@ export class BudgetRequestService {
 
     // Build BudgetRequest
     const budgetRequest = new BudgetRequest();
-    budgetRequest.branchId = branchId;
+    budgetRequest.branchId = data.branchId;
     budgetRequest.budgetId = data.budgetId;
     budgetRequest.number = data.number;
     budgetRequest.responsibleUserId = data.responsibleUserId;
@@ -308,7 +308,7 @@ export class BudgetRequestService {
             }
     
             // Build Budget Request
-            budgetExist.branchId = branchId;
+            budgetExist.branchId = data.branchId;
             budgetExist.budgetId = data.budgetId;
             budgetExist.number = data.number;
             budgetExist.responsibleUserId = data.responsibleUserId;
@@ -458,6 +458,7 @@ export class BudgetRequestService {
           rejectedNote,
           needDate
         });
+        budgetRequestExist.rejectedNote = rejectedNote;
         budgetRequestExist.updateUser = user;
 
         return await manager.save(budgetRequestExist);
