@@ -43,6 +43,12 @@ export class ExpenseItemDTO {
   amount: number;
 
   @ApiProperty({
+    description: 'Tax',
+    example: 2.5,
+  })
+  tax: number;
+
+  @ApiProperty({
     description: 'PIC HO Amount',
     example: 25000,
   })
