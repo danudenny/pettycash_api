@@ -31,6 +31,7 @@ import { BudgetRequestItemModule } from './app/modules/budget-request-item.modul
 import { AccountDailyClosingModule } from './app/modules/account-daily-closing.module';
 import { BankBranchModule } from './app/modules/bank-branch.module';
 import { ReportBalanceModule } from './app/modules/report-balance.module';
+import { VehicleModule } from './app/modules/vehicle.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ReportBalanceModule } from './app/modules/report-balance.module';
     AccountCoaModule,
     PeriodModule,
     ProductModule,
+    VehicleModule,
     GlobalSettingModule,
     TaxModule,
     DepartmentModule,
