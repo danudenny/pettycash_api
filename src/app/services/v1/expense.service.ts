@@ -10,6 +10,7 @@ import {
   EntityManager,
   createQueryBuilder,
   In,
+  FindConditions,
 } from 'typeorm';
 import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { GenerateCode } from '../../../common/services/generate-code.service';
@@ -17,6 +18,8 @@ import { ExpenseItemAttribute } from '../../../model/expense-item-attribute.enti
 import { ExpenseItem } from '../../../model/expense-item.entity';
 import { Expense } from '../../../model/expense.entity';
 import {
+  AccountTaxGroup,
+  AccountTaxPartnerType,
   DownPaymentState,
   DownPaymentType,
   ExpenseState,
@@ -27,7 +30,9 @@ import {
   LoanType,
   MASTER_ROLES,
   PartnerState,
+  PartnerType,
   PeriodState,
+  ProductTaxType,
 } from '../../../model/utils/enum';
 import { CreateExpenseDTO } from '../../domain/expense/create.dto';
 import { AuthService } from './auth.service';
@@ -679,25 +684,57 @@ export class ExpenseService {
     productId: string,
   ): Promise<AccountTax> {
     // FIXME: Refactor to use single query if posible.
+    const { JASA, SEWA_ALAT_DAN_KENDARAAN, SEWA_BANGUNAN } = ProductTaxType;
+    const { PERSONAL, COMPANY } = PartnerType;
     let tax: AccountTax;
+    let taxGroup: AccountTaxGroup;
+    let isHasNpwp: boolean = false;
 
     const product = await this.productRepo.findOne(
       { id: productId },
-      { select: ['id', 'isHasTax'] },
+      { select: ['id', 'isHasTax', 'taxType'] },
     );
     const partner = await this.partnerRepo.findOne(
       { id: partnerId },
       { select: ['id', 'type', 'npwpNumber'] },
     );
-    const hasNpwp = partner && partner.npwpNumber ? true : false;
 
-    if (product && product.isHasTax) {
+    const productHasTax = product?.isHasTax;
+    const productTaxType = product?.taxType;
+    const partnerNpwp = partner?.npwpNumber;
+    const partnerType = partner?.type;
+    const taxPartnerType = (partnerType as any) as AccountTaxPartnerType;
+
+    if (partnerNpwp) {
+      isHasNpwp = partnerNpwp.length === 20; // 20 mean for number + symbol.
+    }
+
+    if (productHasTax) {
+      const taxWhere: FindConditions<AccountTax> = {
+        partnerType: taxPartnerType,
+        isHasNpwp,
+        isDeleted: false,
+      };
+
+      if (productTaxType === JASA) {
+        if (partnerType === PERSONAL) {
+          taxGroup = AccountTaxGroup.PPH21;
+        } else if (partnerType === COMPANY) {
+          taxGroup = AccountTaxGroup.PPH23;
+        }
+      } else if (productTaxType === SEWA_ALAT_DAN_KENDARAAN) {
+        taxGroup = AccountTaxGroup.PPH23;
+      } else if (productTaxType === SEWA_BANGUNAN) {
+        taxGroup = AccountTaxGroup.PPH4A2;
+      }
+
+      if (taxGroup) {
+        Object.assign(taxWhere, { group: taxGroup });
+      }
+
       tax = await this.taxRepo.findOne({
-        where: {
-          partnerType: partner.type,
-          isHasNpwp: hasNpwp,
-        },
-        select: ['id', 'taxInPercent', 'coaId'],
+        where: taxWhere,
+        select: ['id', 'taxInPercent', 'coaId', 'group'],
       });
     }
 
