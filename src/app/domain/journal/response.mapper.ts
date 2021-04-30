@@ -1,4 +1,5 @@
 import { Journal } from '../../../model/journal.entity';
+import { roundToTwo } from '../../../shared/utils';
 import { JournalItemDTO } from './journal-item.dto';
 import { JournalDTO } from './journal.dto';
 
@@ -13,7 +14,7 @@ export class JournalResponseMapper {
     j.reference = ety.reference;
     j.partnerName = ety.partnerName;
     j.partnerCode = ety.partnerCode;
-    j.totalAmount = +ety.totalAmount;
+    j.totalAmount = roundToTwo(ety.totalAmount);
     j.state = ety.state;
     j.items = this.toItemDTO(ety);
     return j;
@@ -28,13 +29,15 @@ export class JournalResponseMapper {
       i.periodYear = journal?.period?.year;
       i.number = journal?.number;
       i.reference = v.reference;
+      i.description = v.description;
       i.partnerName = v.partnerName;
       i.partnerCode = v.partnerCode;
       i.coaId = v.coaId;
       i.coaName = v?.coa?.name;
       i.coaCode = v?.coa?.code;
-      i.debit = +v.debit;
-      i.credit = +v.credit;
+      i.debit = roundToTwo(v.debit);
+      i.credit = roundToTwo(v.credit);
+      i.isLedger = v.isLedger;
       return i;
     });
 

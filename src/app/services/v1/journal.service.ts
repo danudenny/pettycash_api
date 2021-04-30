@@ -90,6 +90,8 @@ export class JournalService {
             'partnerCode', ji.partner_code,
             'partnerName', ji.partner_name,
             'reference', ji.reference,
+            'description', ji.description,
+            'isLedger', ji.is_ledger,
             'transactionDate', ji.transaction_date
             )
         ) AS items

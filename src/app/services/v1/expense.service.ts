@@ -10,6 +10,7 @@ import {
   EntityManager,
   createQueryBuilder,
   In,
+  FindConditions,
 } from 'typeorm';
 import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { GenerateCode } from '../../../common/services/generate-code.service';
@@ -17,6 +18,8 @@ import { ExpenseItemAttribute } from '../../../model/expense-item-attribute.enti
 import { ExpenseItem } from '../../../model/expense-item.entity';
 import { Expense } from '../../../model/expense.entity';
 import {
+  AccountTaxGroup,
+  AccountTaxPartnerType,
   DownPaymentState,
   DownPaymentType,
   ExpenseState,
@@ -27,7 +30,9 @@ import {
   LoanType,
   MASTER_ROLES,
   PartnerState,
+  PartnerType,
   PeriodState,
+  ProductTaxType,
 } from '../../../model/utils/enum';
 import { CreateExpenseDTO } from '../../domain/expense/create.dto';
 import { AuthService } from './auth.service';
@@ -53,7 +58,7 @@ import { ExpenseHistory } from '../../../model/expense-history.entity';
 import { Journal } from '../../../model/journal.entity';
 import { JournalItem } from '../../../model/journal-item.entity';
 import { User } from '../../../model/user.entity';
-import { getPercentage, roundToTwo } from '../../../shared/utils';
+import { getPercentage } from '../../../shared/utils';
 import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 import { Period } from '../../../model/period.entity';
 import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
@@ -679,25 +684,57 @@ export class ExpenseService {
     productId: string,
   ): Promise<AccountTax> {
     // FIXME: Refactor to use single query if posible.
+    const { JASA, SEWA_ALAT_DAN_KENDARAAN, SEWA_BANGUNAN } = ProductTaxType;
+    const { PERSONAL, COMPANY } = PartnerType;
     let tax: AccountTax;
+    let taxGroup: AccountTaxGroup;
+    let isHasNpwp: boolean = false;
 
     const product = await this.productRepo.findOne(
       { id: productId },
-      { select: ['id', 'isHasTax'] },
+      { select: ['id', 'isHasTax', 'taxType'] },
     );
     const partner = await this.partnerRepo.findOne(
       { id: partnerId },
       { select: ['id', 'type', 'npwpNumber'] },
     );
-    const hasNpwp = partner && partner.npwpNumber ? true : false;
 
-    if (product && product.isHasTax) {
+    const productHasTax = product?.isHasTax;
+    const productTaxType = product?.taxType;
+    const partnerNpwp = partner?.npwpNumber;
+    const partnerType = partner?.type;
+    const taxPartnerType = (partnerType as any) as AccountTaxPartnerType;
+
+    if (partnerNpwp) {
+      isHasNpwp = partnerNpwp.length === 20; // 20 mean for number + symbol.
+    }
+
+    if (productHasTax) {
+      const taxWhere: FindConditions<AccountTax> = {
+        partnerType: taxPartnerType,
+        isHasNpwp,
+        isDeleted: false,
+      };
+
+      if (productTaxType === JASA) {
+        if (partnerType === PERSONAL) {
+          taxGroup = AccountTaxGroup.PPH21;
+        } else if (partnerType === COMPANY) {
+          taxGroup = AccountTaxGroup.PPH23;
+        }
+      } else if (productTaxType === SEWA_ALAT_DAN_KENDARAAN) {
+        taxGroup = AccountTaxGroup.PPH23;
+      } else if (productTaxType === SEWA_BANGUNAN) {
+        taxGroup = AccountTaxGroup.PPH4A2;
+      }
+
+      if (taxGroup) {
+        Object.assign(taxWhere, { group: taxGroup });
+      }
+
       tax = await this.taxRepo.findOne({
-        where: {
-          partnerType: partner.type,
-          isHasNpwp: hasNpwp,
-        },
-        select: ['id', 'taxInPercent', 'coaId'],
+        where: taxWhere,
+        select: ['id', 'taxInPercent', 'coaId', 'group'],
       });
     }
 
@@ -940,71 +977,55 @@ export class ExpenseService {
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
     let items: JournalItem[] = [];
-    const taxedItems = data?.items.filter((v) => v.tax);
-    const cashCoaId = data.branch && data.branch.cashCoaId;
-    let taxedAmount: number;
+    const cashCoaId = data?.branch?.cashCoaId;
 
-    const i = new JournalItem();
-    i.createUser = user;
-    i.updateUser = user;
-    i.coaId = cashCoaId;
-    i.branchId = data.branchId;
-    i.transactionDate = data.transactionDate;
-    i.periodId = data.periodId;
-    i.reference = data.number;
-    i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-    i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+    for (const v of data?.items) {
+      const i = new JournalItem();
+      i.createUser = user;
+      i.updateUser = user;
+      i.coaId = cashCoaId;
+      i.branchId = data.branchId;
+      i.transactionDate = data.transactionDate;
+      i.periodId = data.periodId;
+      i.reference = data.number;
+      i.description = v?.description;
+      i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+      i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
 
-    // Get credit amount based on userRole
-    if (userRole === MASTER_ROLES.PIC_HO) {
-      i.credit = data?.items
-        .map((m) => Number(m.picHoAmount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
+      // Get amount based on userRole
+      if (userRole === MASTER_ROLES.PIC_HO) {
+        i.credit = v.picHoAmount;
+      } else if (
+        userRole === MASTER_ROLES.SS_HO ||
+        userRole === MASTER_ROLES.SPV_HO
+      ) {
+        i.credit = v.ssHoAmount;
+      } else {
+        // Otherwise use admin branch amount
+        i.credit = v.amount;
+      }
 
-      taxedAmount = taxedItems
-        .map((m) => Number(m.picHoAmount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-    } else if (
-      userRole === MASTER_ROLES.SS_HO ||
-      userRole === MASTER_ROLES.SPV_HO
-    ) {
-      i.credit = data?.items
-        .map((m) => Number(m.ssHoAmount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
+      items.push(i);
 
-      taxedAmount = taxedItems
-        .map((m) => Number(m.ssHoAmount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-    }
-
-    // Otherwise use admin branch amount
-    if (!i.credit) {
-      i.credit = data?.items
-        .map((m) => Number(m.amount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-
-      taxedAmount = taxedItems
-        .map((m) => Number(m.amount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-    }
-
-    // Add JournalItem for Tax
-    if (taxedItems.length > 0) {
-      // FIXME: Build JournalItem for each tax?
-      const taxedItem = taxedItems[0];
-      const taxValue = this.calculateTax(taxedAmount, taxedItem.tax);
-      if (taxValue && taxValue > 0) {
-        i.credit = i.credit + roundToTwo(taxValue);
+      // Add JournalItem for Tax
+      if (v?.tax > 0) {
+        const taxedAmount = this.calculateTax(i.credit, v.tax);
+        const tax = await this.getTax(data.partnerId, v.productId);
+        const jTax = new JournalItem();
+        jTax.createUser = user;
+        jTax.updateUser = user;
+        jTax.coaId = tax?.coaId;
+        jTax.branchId = data.branchId;
+        jTax.transactionDate = data.transactionDate;
+        jTax.periodId = data.periodId;
+        jTax.reference = data.number;
+        jTax.description = `[${tax?.group} YMH] ${v.description}`;
+        jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+        jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+        jTax.credit = taxedAmount;
+        items.push(jTax);
       }
     }
-
-    items.push(i);
 
     // If Expense from DownPayment
     if (data?.downPayment) {
@@ -1058,20 +1079,21 @@ export class ExpenseService {
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
     let items: JournalItem[] = [];
-    const taxes: number[] = [];
     for (const v of data?.items) {
       const i = new JournalItem();
       i.createUser = user;
       i.updateUser = user;
-      i.coaId = v.product && v.product.coaId;
+      i.coaId = v?.product?.coaId;
       i.branchId = data.branchId;
       i.transactionDate = data.transactionDate;
       i.periodId = data.periodId;
       i.reference = data.number;
+      i.description = v?.description;
       i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
       i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+      i.isLedger = true;
 
-      // Get credit amount based on userRole
+      // Get amount based on userRole
       if (userRole === MASTER_ROLES.PIC_HO) {
         i.debit = v.picHoAmount;
       } else if (
@@ -1079,37 +1101,32 @@ export class ExpenseService {
         userRole === MASTER_ROLES.SPV_HO
       ) {
         i.debit = v.ssHoAmount;
-      }
-
-      // Otherwise use admin branch amount
-      if (!i.debit) {
+      } else {
+        // Otherwise use admin branch amount
         i.debit = v.amount;
       }
 
-      if (v.tax) {
-        taxes.push(this.calculateTax(i.debit, v.tax));
-      }
-
       items.push(i);
-    }
 
-    // Add JournalItem for Tax
-    if (taxes.length) {
-      const taxedItems = data?.items.filter((v) => v.tax);
-      const taxedItem = taxedItems[0];
-      const tax = await this.getTax(data.partnerId, taxedItem.productId);
-      const jTax = new JournalItem();
-      jTax.createUser = user;
-      jTax.updateUser = user;
-      jTax.coaId = tax && tax.coaId;
-      jTax.branchId = data.branchId;
-      jTax.transactionDate = data.transactionDate;
-      jTax.periodId = data.periodId;
-      jTax.reference = data.number;
-      jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-      jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-      jTax.debit = roundToTwo(taxes.reduce((a, b) => a + b, 0));
-      items.push(jTax);
+      // Add JournalItem for Tax
+      if (v?.tax > 0) {
+        const taxedAmount = this.calculateTax(i.debit, v.tax);
+        const tax = await this.getTax(data.partnerId, v.productId);
+        const jTax = new JournalItem();
+        jTax.createUser = user;
+        jTax.updateUser = user;
+        jTax.coaId = v?.product?.coaId;
+        jTax.branchId = data.branchId;
+        jTax.transactionDate = data.transactionDate;
+        jTax.periodId = data.periodId;
+        jTax.reference = data.number;
+        jTax.description = `[${tax?.group} Gross UP] ${v.description}`;
+        jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+        jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+        jTax.debit = taxedAmount;
+        jTax.isLedger = true;
+        items.push(jTax);
+      }
     }
 
     // If Expense from DownPayment

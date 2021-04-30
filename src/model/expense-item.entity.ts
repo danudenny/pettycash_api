@@ -51,7 +51,7 @@ export class ExpenseItem extends PtcBaseEntity {
   ssHoAmount: number;
 
   @Column({
-    type: 'smallint',
+    type: 'decimal',
     name: 'tax',
     nullable: true,
     transformer: new ColumnNumericTransformer(),
