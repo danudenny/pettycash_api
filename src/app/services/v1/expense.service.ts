@@ -706,7 +706,7 @@ export class ExpenseService {
     const taxPartnerType = (partnerType as any) as AccountTaxPartnerType;
 
     if (partnerNpwp) {
-      isHasNpwp = partnerNpwp.length === 20; // 20 mean for number + symbol.
+      isHasNpwp = partnerNpwp.length === 15;
     }
 
     if (productHasTax) {
