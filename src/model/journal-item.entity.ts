@@ -46,6 +46,13 @@ export class JournalItem extends PtcBaseEntity {
   reference?: string;
 
   @Column({
+    type: 'text',
+    name: 'description',
+    nullable: true,
+  })
+  description?: string;
+
+  @Column({
     type: 'uuid',
     name: 'coa_id',
     nullable: false,
