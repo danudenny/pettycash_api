@@ -97,7 +97,6 @@ export class JournalService {
         ) AS items
       FROM journal_item ji
       LEFT JOIN account_coa ac2 ON ac2.id = ji.coa_id
-      WHERE ji.is_ledger = TRUE
       GROUP BY ji.journal_id)`,
       'jitem',
       'jitem.journal_id = j.id',
