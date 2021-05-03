@@ -976,14 +976,47 @@ export class ExpenseService {
     user: User,
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
-    let items: JournalItem[] = [];
-    const cashCoaId = data?.branch?.cashCoaId;
+    const items: JournalItem[] = [];
+    let itemCoaId: string;
+    let isLedger: boolean = false;
+    let isReimbursement: boolean = false;
+
+    // If Expense from DownPayment
+    if (data?.downPayment) {
+      const downPayment = data?.downPayment;
+      const downPaymentType = downPayment?.type;
+      const setting = await getManager().getRepository(GlobalSetting).findOne();
+
+      if (downPaymentType === DownPaymentType.PERDIN) {
+        const dpJournalItem = new JournalItem();
+        dpJournalItem.createUser = user;
+        dpJournalItem.updateUser = user;
+        dpJournalItem.branchId = data.branchId;
+        dpJournalItem.transactionDate = data.transactionDate;
+        dpJournalItem.periodId = data.periodId;
+        dpJournalItem.reference = data.number;
+        dpJournalItem.description = downPayment?.description;
+        dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+        dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+        dpJournalItem.credit = downPayment?.amount;
+        dpJournalItem.coaId = setting?.downPaymentPerdinCoaId;
+        items.push(dpJournalItem);
+      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
+        itemCoaId = setting?.downPaymentReimbursementCoaId;
+        isLedger = true;
+        isReimbursement = true;
+      }
+    }
 
     for (const v of data?.items) {
+      if (!isReimbursement) {
+        itemCoaId = data?.branch?.cashCoaId;
+      }
+
       const i = new JournalItem();
       i.createUser = user;
       i.updateUser = user;
-      i.coaId = cashCoaId;
+      i.coaId = itemCoaId;
       i.branchId = data.branchId;
       i.transactionDate = data.transactionDate;
       i.periodId = data.periodId;
@@ -991,6 +1024,7 @@ export class ExpenseService {
       i.description = v?.description;
       i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
       i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+      i.isLedger = isLedger;
 
       // Get amount based on userRole
       if (userRole === MASTER_ROLES.PIC_HO) {
@@ -1014,7 +1048,7 @@ export class ExpenseService {
         const jTax = new JournalItem();
         jTax.createUser = user;
         jTax.updateUser = user;
-        jTax.coaId = tax?.coaId;
+        jTax.coaId = isReimbursement ? itemCoaId : tax?.coaId;
         jTax.branchId = data.branchId;
         jTax.transactionDate = data.transactionDate;
         jTax.periodId = data.periodId;
@@ -1023,43 +1057,10 @@ export class ExpenseService {
         jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
         jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
         jTax.credit = taxedAmount;
+        jTax.isLedger = isLedger;
         items.push(jTax);
       }
     }
-
-    // If Expense from DownPayment
-    if (data?.downPayment) {
-      const downPayment = data?.downPayment;
-      const downPaymentType = downPayment?.type;
-      const setting = await getManager().getRepository(GlobalSetting).findOne();
-
-      const dpJournalItem = new JournalItem();
-      dpJournalItem.createUser = user;
-      dpJournalItem.updateUser = user;
-      dpJournalItem.branchId = data.branchId;
-      dpJournalItem.transactionDate = data.transactionDate;
-      dpJournalItem.periodId = data.periodId;
-      dpJournalItem.reference = data.number;
-      dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-      dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-
-      if (downPaymentType === DownPaymentType.PERDIN) {
-        dpJournalItem.coaId = setting?.downPaymentPerdinCoaId;
-        dpJournalItem.credit = downPayment?.amount;
-        items.push(dpJournalItem);
-      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
-        const totalItemCredit = items
-          .map((m) => Number(m.credit))
-          .reduce((a, b) => a + b, 0);
-
-        dpJournalItem.coaId = setting?.downPaymentReimbursementCoaId;
-        dpJournalItem.credit = totalItemCredit + downPayment?.amount;
-
-        // merge all items to use single CoA
-        items = [dpJournalItem];
-      }
-    }
-
     return items;
   }
 
@@ -1078,12 +1079,47 @@ export class ExpenseService {
     user: User,
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
-    let items: JournalItem[] = [];
+    const items: JournalItem[] = [];
+    let itemCoaId: string;
+    let isLedger: boolean = true;
+    let isReimbursement: boolean = false;
+
+    // If Expense from DownPayment
+    if (data?.downPayment) {
+      const downPayment = data?.downPayment;
+      const downPaymentType = downPayment?.type;
+
+      if (downPaymentType === DownPaymentType.PERDIN) {
+        const dpJournalItem = new JournalItem();
+        dpJournalItem.createUser = user;
+        dpJournalItem.updateUser = user;
+        dpJournalItem.branchId = data.branchId;
+        dpJournalItem.transactionDate = data.transactionDate;
+        dpJournalItem.periodId = data.periodId;
+        dpJournalItem.reference = data.number;
+        dpJournalItem.description = downPayment?.description;
+        dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+        dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+        dpJournalItem.coaId = data?.branch?.cashCoaId;
+        dpJournalItem.debit = downPayment?.amount;
+        dpJournalItem.coaId = data?.branch?.cashCoaId;
+        items.push(dpJournalItem);
+      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
+        itemCoaId = data?.branch?.cashCoaId;
+        isLedger = false;
+        isReimbursement = true;
+      }
+    }
+
     for (const v of data?.items) {
+      if (!isReimbursement) {
+        itemCoaId = v?.product?.coaId;
+      }
+
       const i = new JournalItem();
       i.createUser = user;
       i.updateUser = user;
-      i.coaId = v?.product?.coaId;
+      i.coaId = itemCoaId;
       i.branchId = data.branchId;
       i.transactionDate = data.transactionDate;
       i.periodId = data.periodId;
@@ -1091,7 +1127,7 @@ export class ExpenseService {
       i.description = v?.description;
       i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
       i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-      i.isLedger = true;
+      i.isLedger = isLedger;
 
       // Get amount based on userRole
       if (userRole === MASTER_ROLES.PIC_HO) {
@@ -1115,7 +1151,7 @@ export class ExpenseService {
         const jTax = new JournalItem();
         jTax.createUser = user;
         jTax.updateUser = user;
-        jTax.coaId = v?.product?.coaId;
+        jTax.coaId = itemCoaId;
         jTax.branchId = data.branchId;
         jTax.transactionDate = data.transactionDate;
         jTax.periodId = data.periodId;
@@ -1124,38 +1160,8 @@ export class ExpenseService {
         jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
         jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
         jTax.debit = taxedAmount;
-        jTax.isLedger = true;
+        jTax.isLedger = isLedger;
         items.push(jTax);
-      }
-    }
-
-    // If Expense from DownPayment
-    if (data?.downPayment) {
-      const downPayment = data?.downPayment;
-      const downPaymentType = downPayment?.type;
-
-      const dpJournalItem = new JournalItem();
-      dpJournalItem.createUser = user;
-      dpJournalItem.updateUser = user;
-      dpJournalItem.branchId = data.branchId;
-      dpJournalItem.transactionDate = data.transactionDate;
-      dpJournalItem.periodId = data.periodId;
-      dpJournalItem.reference = data.number;
-      dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-      dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-      dpJournalItem.coaId = data?.branch?.cashCoaId;
-
-      if (downPaymentType === DownPaymentType.PERDIN) {
-        dpJournalItem.debit = downPayment?.amount;
-        items.push(dpJournalItem);
-      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
-        const totalItemDebit = items
-          .map((m) => Number(m.debit))
-          .reduce((a, b) => a + b, 0);
-        dpJournalItem.debit = totalItemDebit + downPayment?.amount;
-
-        // merge all items to use single CoA
-        items = [dpJournalItem];
       }
     }
 
