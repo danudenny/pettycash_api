@@ -339,6 +339,89 @@ export class BudgetRequestService {
     }
   }
 
+  public async reSubmission(id: string, data: UpdateBudgetRequestDTO): Promise<BudgetRequestResponse> {
+    try{
+      const updateBudget = await getManager().transaction(async (manager) => {
+        const budgetExist = await manager.findOne(BudgetRequest, {
+          where: { id: id, isDeleted: false },
+          relations: ['histories'],
+        });
+
+        if (!budgetExist) {
+          throw new NotFoundException();
+        } else {
+          if (budgetExist.state !== BudgetRequestState.DRAFT && budgetExist.state !== BudgetRequestState.REJECTED && budgetExist.state !== BudgetRequestState.CANCELED) {
+            throw new HttpException('Cannot Edit, Status Budget Request is Not DRAFT Or REJECTED!', HttpStatus.BAD_REQUEST);
+          } else {
+            const user = await this.getUser(true);
+            const branchId = user && user.branches && user.branches[0].id;
+      
+            // Build BudgetRequestItem
+            let items: BudgetRequestItem[] = [];
+            const budgetItemExist = await manager.find(BudgetRequestItem, {
+              where: { budgetRequestId: id, isDeleted: false }
+            });
+
+            let totalAmountItem = 0;
+            for (const v of data.items) {
+              if (v.id) {
+                for (const x of budgetItemExist) {
+                  if (v.id === x.id) {
+                    x.productId = v.productId;
+                    x.description = v.description;
+                    x.isDeleted = v.isDeleted;
+                    x.amount = v.amount;
+                    await this.budgetRequestItemRepo.update(v.id, x)
+                  }
+                }
+              } else {
+                const item = new BudgetRequestItem();;
+                item.productId = v.productId;
+                item.budgetRequestId = id;
+                item.description = v.description;
+                item.amount = v.amount;
+                item.createUser = user;
+                item.updateUser = user;
+                await this.budgetRequestItemRepo.insert(item)
+              }
+            }
+
+            // Get Total Amount
+            const budgetItemExistNew = await manager.find(BudgetRequestItem, {
+              where: { budgetRequestId: id, isDeleted: false }
+            });
+            for (const y of budgetItemExistNew) {
+              totalAmountItem = totalAmountItem + Number(y.amount);
+            }
+    
+            // Build Budget Request
+            budgetExist.branchId = data.branchId;
+            budgetExist.budgetId = data.budgetId;
+            budgetExist.number = data.number;
+            budgetExist.responsibleUserId = data.responsibleUserId;
+            budgetExist.needDate = data.needDate;
+            budgetExist.totalAmount = totalAmountItem;
+            budgetExist.rejectedNote = null;
+            budgetExist.state = BudgetRequestState.DRAFT;
+            budgetExist.histories = await this.buildHistory(budgetExist, {
+              state: BudgetRequestState.DRAFT,
+              needDate: data.needDate,
+            });
+            // budgetExist.items = items;
+            budgetExist.createUser = user;
+            budgetExist.updateUser = user;
+    
+            const result = await this.budgetRequestRepo.save(budgetExist);
+            return new BudgetRequestResponse(result as any);
+          }
+        }
+      });
+      return updateBudget as any;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
   public async delete(id: string): Promise<any> {
     const budgetExists = await this.budgetRequestRepo.findOne({ id, isDeleted: false });
     if (!budgetExists) {

@@ -79,6 +79,16 @@ export class BudgetRequestController {
     return await this.budgetRequestService.update(id, payload);
   }
 
+  @Patch(':id/re-submission')
+  @ApiParam({ name: 'id' })
+  @ApiOperation({ summary: 'Re-Submission Budget Request' })
+  public async reSubmission(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() payload: UpdateBudgetRequestDTO,
+  ) {
+    return await this.budgetRequestService.reSubmission(id, payload);
+  }
+
   @Put('/:id/approve')
   @ApiOperation({ summary: 'Approve Budget Request' })
   // @ApiOkResponse({
