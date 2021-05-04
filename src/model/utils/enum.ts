@@ -12,7 +12,7 @@ export enum BudgetState {
 
 export enum BudgetRequestState {
   DRAFT = 'draft',
-  APPROVED_BY_OPS = 'approved_by_ops_ho',
+  CONFIRMED_BY_OPS = 'confirmed_by_ops_ho',
   APPROVED_BY_PIC = 'approved_by_pic_ho',
   REJECTED = 'rejected',
   CANCELED = 'canceled',

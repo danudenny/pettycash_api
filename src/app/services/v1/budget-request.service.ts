@@ -210,47 +210,51 @@ export class BudgetRequestService {
   }
 
   public async create(data: CreateBudgetRequestDTO): Promise<BudgetRequestResponse> {
-    if (data && !data.number) {
-      data.number = GenerateCode.budgetRequest();
+    try{
+      if (data && !data.number) {
+        data.number = GenerateCode.budgetRequest();
+      }
+
+      const user = await this.getUser(true);
+      const branchId = user && user.branches && user.branches[0].id;
+
+      // Build BudgetRequestItem
+      const items: BudgetRequestItem[] = [];
+      let totalAmountItem = 0;
+      for (const v of data.items) {
+        const item = new BudgetRequestItem();
+        item.productId = v.productId;
+        item.description = v.description;
+        item.amount = v.amount;
+        item.createUser = user;
+        item.updateUser = user;
+        totalAmountItem = totalAmountItem + Number(v.amount);
+        items.push(item);
+      }
+
+      // Build BudgetRequest
+      const budgetRequest = new BudgetRequest();
+      budgetRequest.branchId = data.branchId;
+      budgetRequest.budgetId = data.budgetId;
+      budgetRequest.number = data.number;
+      budgetRequest.responsibleUserId = data.responsibleUserId;
+      budgetRequest.needDate = data.needDate;
+      budgetRequest.totalAmount = totalAmountItem;
+      budgetRequest.rejectedNote = null;
+      budgetRequest.state = BudgetRequestState.DRAFT;
+      budgetRequest.histories = await this.buildHistory(budgetRequest, {
+        state: BudgetRequestState.DRAFT,
+        needDate: data.needDate,
+      });
+      budgetRequest.items = items;
+      budgetRequest.createUser = user;
+      budgetRequest.updateUser = user;
+
+      const result = await this.budgetRequestRepo.save(budgetRequest);
+      return new BudgetRequestResponse(result);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
     }
-
-    const user = await this.getUser(true);
-    const branchId = user && user.branches && user.branches[0].id;
-
-    // Build BudgetRequestItem
-    const items: BudgetRequestItem[] = [];
-    let totalAmountItem = 0;
-    for (const v of data.items) {
-      const item = new BudgetRequestItem();
-      item.productId = v.productId;
-      item.description = v.description;
-      item.amount = v.amount;
-      item.createUser = user;
-      item.updateUser = user;
-      totalAmountItem = totalAmountItem + Number(v.amount);
-      items.push(item);
-    }
-
-    // Build BudgetRequest
-    const budgetRequest = new BudgetRequest();
-    budgetRequest.branchId = data.branchId;
-    budgetRequest.budgetId = data.budgetId;
-    budgetRequest.number = data.number;
-    budgetRequest.responsibleUserId = data.responsibleUserId;
-    budgetRequest.needDate = data.needDate;
-    budgetRequest.totalAmount = totalAmountItem;
-    budgetRequest.rejectedNote = null;
-    budgetRequest.state = BudgetRequestState.DRAFT;
-    budgetRequest.histories = await this.buildHistory(budgetRequest, {
-      state: BudgetRequestState.DRAFT,
-      needDate: data.needDate,
-    });
-    budgetRequest.items = items;
-    budgetRequest.createUser = user;
-    budgetRequest.updateUser = user;
-
-    const result = await this.budgetRequestRepo.save(budgetRequest);
-    return new BudgetRequestResponse(result);
   }
 
   public async update(id: string, data: UpdateBudgetRequestDTO): Promise<BudgetRequestResponse> {
@@ -370,13 +374,13 @@ export class BudgetRequestService {
         const userRole = user?.role?.name;
 
         if (userRole === MASTER_ROLES.OPS) {
-          if (budgetRequestExists.state === BudgetRequestState.APPROVED_BY_OPS || budgetRequestExists.state === BudgetRequestState.APPROVED_BY_PIC) {
+          if (budgetRequestExists.state === BudgetRequestState.CONFIRMED_BY_OPS || budgetRequestExists.state === BudgetRequestState.APPROVED_BY_PIC) {
             throw new BadRequestException(
               `Budget Request ${budgetRequestExists.number} already approved!`,
             );
           }
 
-          const state = BudgetRequestState.APPROVED_BY_OPS;
+          const state = BudgetRequestState.CONFIRMED_BY_OPS;
           const needDate = budgetRequestExists.needDate;
 
           budgetRequestExists.state = state;
