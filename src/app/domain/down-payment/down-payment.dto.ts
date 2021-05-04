@@ -142,6 +142,9 @@ export class ShowDownPaymentDTO {
 
   @ApiProperty({ description: 'Branch Name', example: 'Kebun Jeruk' })
   branchName: string;
+  
+  @ApiProperty({ description: 'Branch Code', example: '1101006' })
+  branchCode: string;
 
   @ApiProperty({
     description: 'Department ID',

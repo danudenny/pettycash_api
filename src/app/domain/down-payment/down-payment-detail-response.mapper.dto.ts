@@ -44,6 +44,7 @@ export class ShowDownPaymentResponseMapper {
       paymentType: ety.paymentType,
       branchId: ety.branchId,
       branchName: ety.branch.branchName,
+      branchCode : ety.branch.branchCode,
       departmentId: ety.departmentId,
       departmentName: ety.department.name,
       employeeId: ety.employeeId,
