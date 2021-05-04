@@ -64,7 +64,7 @@ export class BudgetService {
   }
 
   public async list(query?: QueryBudgetDTO): Promise<BudgetWithPaginationResponse> {
-    const params = { order: '-minimumAmount', limit: 10, ...query };
+    const params = { order: '-createdAt', limit: 10, ...query };
     const qb = new QueryBuilder(Budget, 'bgt', params);
     const user = await AuthService.getUser({ relations: ['branches'] });
     const userBranches = user?.branches?.map((v) => v.id);
@@ -87,6 +87,7 @@ export class BudgetService {
       ['us.first_name', 'responsibleUserFirstName'],
       ['us.last_name', 'responsibleUserLastName'],
       ['us.username', 'responsibleUserUsername'],
+      ['bgt.created_at', 'createdAt'],
       ['bgt.start_date', 'startDate'],
       ['bgt.end_date', 'endDate'],
       ['bgt.minimum_amount', 'minimumAmount'],
