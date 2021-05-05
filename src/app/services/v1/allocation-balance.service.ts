@@ -240,7 +240,7 @@ export class AllocationBalanceService {
           dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date()).format('YYYY-MM-DD')
         ) {
           throw new BadRequestException(
-            `Tanggal transfer sudah expired`,
+            `Form yang telah lewat batas tanggal transfer`,
           );
         }
         if (currentState === CashBalanceAllocationState.REJECTED) {
@@ -270,7 +270,7 @@ export class AllocationBalanceService {
 
         if (dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date()).format('YYYY-MM-DD')) {
           throw new BadRequestException(
-            `Tanggal transfer sudah expired`,
+            `Form yang telah lewat batas tanggal transfer`,
           );
         }
         if (currentState === CashBalanceAllocationState.DRAFT) {
@@ -313,7 +313,7 @@ export class AllocationBalanceService {
           state = CashBalanceAllocationState.EXPIRED;
         } catch {
           throw new BadRequestException(
-            `Tanggal transfer sudah expired`,
+            `Form yang telah lewat batas tanggal transfer`,
           );
         }
       }
@@ -332,10 +332,10 @@ export class AllocationBalanceService {
       
     });
     if (approveAllocation['state'] === 'approved_by_ss_ho') {
-      throw new HttpException(`Berhasil melakukan konfirmasi alokasi saldo kas`, HttpStatus.OK)
+      throw new HttpException(`Konfirmasi setuju dari SS HO`, HttpStatus.OK)
     }
     if (approveAllocation['state'] === 'approved_by_spv_ho') {
-      throw new HttpException(`Berhasil melakukan approval alokasi saldo kas`, HttpStatus.OK)
+      throw new HttpException(`Approval setuju dari SPV HO`, HttpStatus.OK)
     }
   }
 
@@ -357,7 +357,7 @@ export class AllocationBalanceService {
           dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')
         ) {
           throw new BadRequestException(
-            `Tanggal transfer sudah expired`,
+            `Form yang telah lewat batas tanggal transfer`,
           );
         }
 
@@ -404,7 +404,7 @@ export class AllocationBalanceService {
         await this.accHistoryRepo.save(allocation.allocationHistory);
         return await manager.save(allocation);
       });
-      throw new HttpException(`Berhasil Menolak Alokasi Saldo Kas`, HttpStatus.OK)
+      throw new HttpException(`Konfirmasi Tidak Setuju`, HttpStatus.OK)
     } catch (error) {
       throw error;
     }
@@ -440,7 +440,7 @@ export class AllocationBalanceService {
           dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')
         ) {
           throw new BadRequestException(
-            `Tanggal transfer sudah expired`,
+            `Form yang telah lewat batas tanggal transfer`,
           );
         }
         
@@ -483,6 +483,6 @@ export class AllocationBalanceService {
       await this.accHistoryRepo.save(allocation.allocationHistory);
       await manager.save(allocation);
     });
-    throw new HttpException('Alokasi Saldo Kas Sudah diterima', HttpStatus.OK)
+    throw new HttpException('Dana diterima oleh Admin Branch', HttpStatus.OK)
   }
 }
