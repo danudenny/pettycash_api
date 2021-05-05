@@ -31,7 +31,7 @@ dockerTag = registry.gitlab.com/sicepat-workspace/$(name)/staging
 getHash = $(shell git log -1 --pretty=format:"%h")
 
 build-docker:
-	docker build -t $(dockerTag):$(getHash) -t $(dockerTag):latest .
+	docker build -t $(dockerTag):$(getHash) -t $(dockerTag):latest . --target=prod
 
 push-docker:
 	docker login $(dockerHost) -u $(dockerUser) -p $(dockerPass)
