@@ -5,7 +5,7 @@ COPY package*.json ./
 COPY . .
 RUN npm install
 RUN npm run prebuild && npm run build
-CMD ["npm", "run", "start:prod"]
+CMD ["npm", "run", "start:dev"]
 
 
 FROM node:12.16-alpine As development
