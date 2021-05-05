@@ -263,7 +263,6 @@ export class AllocationBalanceService {
           );
         }
         state = CashBalanceAllocationState.APPROVED_BY_SS;
-        throw new HttpException(`Berhasil melakukan konfirmasi alokasi saldo kas`, HttpStatus.OK)
       }
 
       // ! HINT: Approve by SPV HO
@@ -304,10 +303,9 @@ export class AllocationBalanceService {
         createOdoo.analyticAccount = allocation.branch.branchCode;
 
         state = CashBalanceAllocationState.APPROVED_BY_SPV;
-        if (state == CashBalanceAllocationState.APPROVED_BY_SPV) {
+        if (state === CashBalanceAllocationState.APPROVED_BY_SPV) {
           await this.odooRepo.save(createOdoo)
         }
-        throw new HttpException(`Berhasil melakukan approval alokasi saldo kas`, HttpStatus.OK)
       }
 
       if (dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')) {
@@ -331,8 +329,14 @@ export class AllocationBalanceService {
       await this.accHistoryRepo.save(allocation.allocationHistory);
       return await manager.save(allocation);
       
+      
     });
-    throw new HttpException(`Sukses`, HttpStatus.OK)
+    if (approveAllocation['state'] === 'approved_by_ss_ho') {
+      throw new HttpException(`Berhasil melakukan konfirmasi alokasi saldo kas`, HttpStatus.OK)
+    }
+    if (approveAllocation['state'] === 'approved_by_spv_ho') {
+      throw new HttpException(`Berhasil melakukan approval alokasi saldo kas`, HttpStatus.OK)
+    }
   }
 
   public async reject(
