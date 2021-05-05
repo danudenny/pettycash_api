@@ -27,8 +27,8 @@ export class ProductService {
     const params = { order: '^code', limit: 10, ...query };
     const qb = new QueryBuilder(Product, 'prod', params);
 
-    qb.fieldResolverMap['code__contains'] = 'prod.code';
-    qb.fieldResolverMap['name__contains'] = 'prod.name';
+    qb.fieldResolverMap['code__icontains'] = 'prod.code';
+    qb.fieldResolverMap['name__icontains'] = 'prod.name';
     qb.fieldResolverMap['isHasTax'] = 'prod.isHasTax';
     qb.fieldResolverMap['taxType'] = 'prod.taxType';
 
