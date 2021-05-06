@@ -3,10 +3,18 @@ image: docker:latest
 services:
   - docker:dind
 
+stages:
+  - build
+  - deploy
+
+variables:
+  URL_PIPELINE: $CI_PIPELINE_URL
+
 build:
   stage: build
   environment: staging
   script:
+    - make slack-notify-start
     - make build-and-push
   only:
     - develop
@@ -16,5 +24,15 @@ deploy:
   environment: staging
   script:
     - make deploy
+    - make slack-notify-finish
   only:
     - develop
+
+notify-failure:
+  stage: deploy
+  environment: staging
+  script:
+    - make slack-notify-failed
+  only:
+    - develop
+  when: on_failure
