@@ -40,6 +40,8 @@ export class ProductService {
       ['prod.description', 'description'],
       ['prod.is_has_tax', 'isHasTax'],
       ['prod.amount', 'amount'],
+      ['prod.is_has_km', 'isHasKm'],
+      ['prod.type', 'type'],
       ['prod.coa_id', 'coaId'],
       ['coa.code', 'coaCode'],
       ['coa.name', 'coaName'],

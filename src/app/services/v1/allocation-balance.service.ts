@@ -230,19 +230,12 @@ export class AllocationBalanceService {
         currentState === CashBalanceAllocationState.RECEIVED
       ) {
         throw new BadRequestException(
-          `Tidak bisa approve Alokasi Saldo Kas dengan status ${currentState}, Alokasi saldo sudah diterima oleh Admin Branch`,
+          `Tidak bisa approve Alokasi Saldo Kas dengan status ${currentState}, Dana sudah diterima oleh Admin Branch`,
         );
       }
 
       // ! HINT: Approve by SS HO
       if (userRole === MASTER_ROLES.SS_HO) {
-        if (
-          dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date()).format('YYYY-MM-DD')
-        ) {
-          throw new BadRequestException(
-            `Form yang telah lewat batas tanggal transfer`,
-          );
-        }
         if (currentState === CashBalanceAllocationState.REJECTED) {
           throw new BadRequestException(
             `Alokasi Saldo Kas sudah di tolak`,
@@ -267,12 +260,6 @@ export class AllocationBalanceService {
 
       // ! HINT: Approve by SPV HO
       if (userRole === MASTER_ROLES.SPV_HO) {
-
-        if (dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date()).format('YYYY-MM-DD')) {
-          throw new BadRequestException(
-            `Form yang telah lewat batas tanggal transfer`,
-          );
-        }
         if (currentState === CashBalanceAllocationState.DRAFT) {
           throw new BadRequestException(
             `Alokasi Saldo Kas belum dikonfirmasi oleh SS HO`,
@@ -309,13 +296,7 @@ export class AllocationBalanceService {
       }
 
       if (dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')) {
-        try {
-          state = CashBalanceAllocationState.EXPIRED;
-        } catch {
-          throw new BadRequestException(
-            `Form yang telah lewat batas tanggal transfer`,
-          );
-        }
+        state = CashBalanceAllocationState.EXPIRED
       }
 
       if (!state) {
@@ -333,6 +314,9 @@ export class AllocationBalanceService {
     });
     if (approveAllocation['state'] === 'approved_by_ss_ho') {
       throw new HttpException(`Konfirmasi setuju dari SS HO`, HttpStatus.OK)
+    }
+    if (approveAllocation['state'] === CashBalanceAllocationState.EXPIRED) {
+      throw new HttpException(`Form yang telah lewat batas tanggal transfer`, HttpStatus.NOT_IMPLEMENTED);
     }
     if (approveAllocation['state'] === 'approved_by_spv_ho') {
       throw new HttpException(`Approval setuju dari SPV HO`, HttpStatus.OK)
@@ -352,10 +336,11 @@ export class AllocationBalanceService {
         if (!allocation) {
           throw new NotFoundException(`Alokasi Saldo Kas ID ${id} tidak ditemukan!`);
         }
-
+        
         if (
           dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')
         ) {
+          allocation.state = CashBalanceAllocationState.EXPIRED
           throw new BadRequestException(
             `Form yang telah lewat batas tanggal transfer`,
           );
@@ -439,6 +424,7 @@ export class AllocationBalanceService {
         if (
           dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')
         ) {
+          state = CashBalanceAllocationState.EXPIRED
           throw new BadRequestException(
             `Form yang telah lewat batas tanggal transfer`,
           );
