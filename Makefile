@@ -21,6 +21,11 @@ force-recreate:
 
 # CICD Section
 name = petty-cash-api
+network = sicepatnet
+
+urlRepo = https://gitlab.com/sicepat-workspace/petty-cash-api
+urlPipeline = $(URL_PIPELINE)
+urlSlackWebhook = $(URL_SLACK_WEBHOOK)
 
 envFile = $(ENV_FILE)
 
@@ -29,6 +34,57 @@ dockerUser = $(DOCKER_USER)
 dockerPass = $(DOCKER_PASS)
 dockerTag = registry.gitlab.com/sicepat-workspace/$(name)/staging
 getHash = $(shell git log -1 --pretty=format:"%h")
+
+slackNotify = curl -X POST -H "Content-Type: application/json" -d \
+	'{ \
+		"attachments": [ \
+			{ \
+				"color": "$(1)", \
+				"blocks": [ \
+					{ \
+						"type": "header", \
+						"text": { \
+							"type": "plain_text", \
+							"text": "$(2)", \
+							"emoji": true \
+						} \
+					}, \
+					{ \
+						"type": "section", \
+						"text": { \
+							"type": "mrkdwn", \
+							"text": "$(3)\n$(4)" \
+						} \
+					}, \
+					{ \
+						"type": "actions", \
+						"elements": [ \
+							{ \
+								"type": "button", \
+								"text": { \
+									"type": "plain_text", \
+									"text": ":mag: View Pipelines", \
+									"emoji": true \
+								}, \
+								"value": "$(urlPipeline)" \
+							} \
+						] \
+					} \
+				] \
+			} \
+		] \
+	}' \
+	$(urlSlackWebhook)
+
+slack-notify-start:
+	$(call slackNotify,#42e2f4,Petty Cash API :dollar:,:runner: PettyCashAPI building and deploy sequence start, *Project Repo:* $(urlRepo)\n*Hash Commit:* $(getHash))	
+
+slack-notify-finish:
+	$(call slackNotify,#37c8ae,Petty Cash API :dollar:,:checkered_flag: PettyCashAPI building and deploy sequence finish, *Project Repo:* $(urlRepo)\n*Hash Commit:* $(getHash))	
+
+slack-notify-failed:
+	$(call slackNotify,#ff4646,Petty Cash API :dollar:,:x: PettyCashAPI building and deploy sequence failed, *Project Repo:* $(urlRepo)\n*Hash Commit:* $(getHash))	
+
 
 build-docker:
 	docker build -t $(dockerTag):$(getHash) -t $(dockerTag):latest . --target=prod
@@ -52,6 +108,7 @@ run-docker:
 	- docker stop $(name)
 	docker run -d --rm \
 	-p 3011:3010 \
+	--network $(network) \
 	--name $(name) \
 	--env-file $(envFile) \
 	$(dockerTag):latest
