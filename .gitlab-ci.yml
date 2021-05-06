@@ -4,7 +4,7 @@ services:
   - docker:dind
 
 before_script:
-  - apt install curl
+  - sudo apt install curl
 
 stages:
   - build
