@@ -66,7 +66,7 @@ slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 									"text": ":mag: View Pipelines", \
 									"emoji": true \
 								}, \
-								"value": "$(urlPipeline)" \
+								"url": "$(urlPipeline)" \
 							} \
 						] \
 					} \
