@@ -39,6 +39,7 @@ dockerTag = registry.gitlab.com/sicepat-workspace/$(name)/staging
 getHashCommit = $(shell git log -1 --pretty=format:"%h")
 getDetailCommit = $(shell git log -1 --pretty=format:"[%an] %s")
 
+apiCheck = $(shell curl --write-out "%{http_code}\n" "$(urlApiHealthCheck)" --output output.txt --silent)
 
 # Notify section
 notifyHeader = Petty Cash API :dollar:
@@ -145,5 +146,8 @@ run-docker:
 deploy: login-docker pull-docker run-docker
 
 health-check:
-	sleep 15
-	curl $(urlApiHealthCheck)
+	for ((i = 0 ; i < 10 ; i++)); do \
+		if [ $(apiCheck) = 200 ]; then break; fi; \
+		sleep 3; \
+		if [ $$i = 9 ]; then exit 1; fi; \
+	done
