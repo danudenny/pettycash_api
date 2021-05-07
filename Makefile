@@ -41,7 +41,7 @@ getDetailCommit = $(shell git log -1 --pretty=format:"[%an] %s")
 
 
 # Notify section
-notifyHeader = Petty Cash API
+notifyHeader = Petty Cash API :dollar:
 notifyMeta = *Project Repo:* $(urlRepo)\n*Hash Commit:* $(getHashCommit)
 
 notifyStartColor = 42e2f4
