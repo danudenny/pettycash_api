@@ -20,6 +20,8 @@ force-recreate:
 	@yarn db:seed:dev
 
 # CICD Section
+
+# Initialize
 name = petty-cash-api
 network = sicepatnet
 
@@ -33,7 +35,22 @@ dockerHost = registry.gitlab.com
 dockerUser = $(DOCKER_USER)
 dockerPass = $(DOCKER_PASS)
 dockerTag = registry.gitlab.com/sicepat-workspace/$(name)/staging
-getHash = $(shell git log -1 --pretty=format:"%h")
+getHashCommit = $(shell git log -1 --pretty=format:"%h")
+getDetailCommit = $(shell git log -1 --pretty=format:"[%an] %s")
+
+
+# Notify section
+notifyHeader = Petty Cash API
+notifyMeta = *Project Repo:* $(urlRepo)\n*Hash Commit:* $(getHashCommit)
+
+notifyStartColor = 42e2f4
+notifyStartDescription = :runner: PettyCashAPI building and deploy sequence start\n$(notifyMeta)
+
+notifySuccessColor = 37c8ae
+notifySuccessDescription = :checkered_flag: PettyCashAPI building and deploy sequence finish\n$(notifyMeta)
+
+notifyFailedColor = ff4646
+notifyFailedDescription = :x: PettyCashAPI building and deploy sequence failed\n$(notifyMeta)
 
 slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 	'{ \
@@ -53,8 +70,17 @@ slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 						"type": "section", \
 						"text": { \
 							"type": "mrkdwn", \
-							"text": "$(3)\n$(4)" \
+							"text": "$(3)" \
 						} \
+					}, \
+					{ \
+						"type": "context", \
+						"elements": [ \
+							{ \
+								"type": "mrkdwn", \
+								"text": "$(4)" \
+							} \
+						] \
 					}, \
 					{ \
 						"type": "actions", \
@@ -66,7 +92,7 @@ slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 									"text": ":mag: View Pipelines", \
 									"emoji": true \
 								}, \
-								"url": "$(urlPipeline)" \
+								"url": "$(5)" \
 							} \
 						] \
 					} \
@@ -77,24 +103,26 @@ slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 	$(urlSlackWebhook)
 
 slack-notify-start:
-	$(call slackNotify,#42e2f4,Petty Cash API :dollar:,:runner: PettyCashAPI building and deploy sequence start, *Project Repo:* $(urlRepo)\n*Hash Commit:* $(getHash))	
+	$(call slackNotify,#$(notifyStartColor),$(notifyHeader),$(notifyStartDescription),$(getDetailCommit),$(urlPipeline))	
 
 slack-notify-finish:
-	$(call slackNotify,#37c8ae,Petty Cash API :dollar:,:checkered_flag: PettyCashAPI building and deploy sequence finish, *Project Repo:* $(urlRepo)\n*Hash Commit:* $(getHash))	
+	$(call slackNotify,#$(notifySuccessColor),$(notifyHeader),$(notifySuccessDescription),$(getDetailCommit),$(urlPipeline))	
 
 slack-notify-failed:
-	$(call slackNotify,#ff4646,Petty Cash API :dollar:,:x: PettyCashAPI building and deploy sequence failed, *Project Repo:* $(urlRepo)\n*Hash Commit:* $(getHash))	
+	$(call slackNotify,#$(notifyfailedColor),$(notifyHeader),$(notifyfailedDescription),$(getDetailCommit),$(urlPipeline))	
 
+
+# Pipeline Recipe
 
 build-docker:
-	docker build -t $(dockerTag):$(getHash) -t $(dockerTag):latest . --target=prod
+	docker build -t $(dockerTag):$(getHashCommit) -t $(dockerTag):latest . --target=prod
 
 push-docker:
 	docker login $(dockerHost) -u $(dockerUser) -p $(dockerPass)
 	docker push -a $(dockerTag)
 
 clean-docker:
-	docker rmi $(dockerTag):$(getHash)
+	docker rmi $(dockerTag):$(getHashCommit)
 
 build-and-push: build-docker push-docker clean-docker
 
