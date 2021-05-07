@@ -46,7 +46,7 @@ notifyMeta = *Project Repo:* $(urlRepo)\n*Hash Commit:* $(getHashCommit)
 notifyStartColor = 42e2f4
 notifyStartDescription = :runner: PettyCashAPI building and deploy sequence start\n$(notifyMeta)
 
-notifySuccessColor = 37c8ae
+notifySuccessColor = 81b214
 notifySuccessDescription = :checkered_flag: PettyCashAPI building and deploy sequence finish\n$(notifyMeta)
 
 notifyFailedColor = ff4646
