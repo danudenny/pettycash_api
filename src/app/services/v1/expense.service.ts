@@ -165,6 +165,7 @@ export class ExpenseService {
         'period',
         'branch',
         'partner',
+        'downPayment',
         'items',
         'items.product',
         'items.attributes',
