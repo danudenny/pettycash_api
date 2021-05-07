@@ -99,6 +99,7 @@ export class ProductService {
     }
 
     const updatedProduct = this.productRepo.create(data as Product);
+    updatedProduct.updatedAt = new Date();
     updatedProduct.updateUserId = await ProductService.getUserId();
 
     try {
