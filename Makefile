@@ -110,7 +110,7 @@ slack-notify-finish:
 	$(call slackNotify,#$(notifySuccessColor),$(notifyHeader),$(notifySuccessDescription),$(getDetailCommit),$(urlPipeline))	
 
 slack-notify-failed:
-	$(call slackNotify,#$(notifyfailedColor),$(notifyHeader),$(notifyfailedDescription),$(getDetailCommit),$(urlPipeline))	
+	$(call slackNotify,#$(notifyFailedColor),$(notifyHeader),$(notifyFailedDescription),$(getDetailCommit),$(urlPipeline))	
 
 
 # Pipeline Recipe
@@ -145,5 +145,5 @@ run-docker:
 deploy: login-docker pull-docker run-docker
 
 health-check:
-	sleep 10
+	sleep 15
 	curl $(urlApiHealthCheck)
