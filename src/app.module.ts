@@ -32,6 +32,7 @@ import { AccountDailyClosingModule } from './app/modules/account-daily-closing.m
 import { BankBranchModule } from './app/modules/bank-branch.module';
 import { ReportBalanceModule } from './app/modules/report-balance.module';
 import { VehicleModule } from './app/modules/vehicle.module';
+import { OtherModule } from './app/modules/other.module';
 
 @Module({
   imports: [
@@ -70,7 +71,8 @@ import { VehicleModule } from './app/modules/vehicle.module';
     VoucherModule,
     AccountDailyClosingModule,
     ReportDownPaymentModule,
-    ReportBalanceModule
+    ReportBalanceModule,
+    OtherModule,
   ],
   controllers: [],
   providers: [],
