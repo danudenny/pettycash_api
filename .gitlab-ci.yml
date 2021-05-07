@@ -31,7 +31,6 @@ deploy:
   environment: staging
   script:
     - make deploy
-    - make slack-notify-finish
   only:
     - develop
 
@@ -42,6 +41,7 @@ checking:
   environment: staging
   script:
     - make health-check
+    - make slack-notify-finish
   only:
     - develop
 

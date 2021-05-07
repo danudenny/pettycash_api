@@ -39,7 +39,7 @@ dockerTag = registry.gitlab.com/sicepat-workspace/$(name)/staging
 getHashCommit = $(shell git log -1 --pretty=format:"%h")
 getDetailCommit = $(shell git log -1 --pretty=format:"[%an] %s")
 
-apiCheck = $(shell curl --write-out "%{http_code}\n" "$(urlApiHealthCheck)" --output output.txt --silent)
+apiCheck = $$(curl --write-out "%{http_code}\n" "$(urlApiHealthCheck)" --output output.txt --silent)
 
 # Notify section
 notifyHeader = Petty Cash API :dollar:
