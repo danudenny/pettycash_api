@@ -9,6 +9,8 @@ before_script:
 stages:
   - build
   - deploy
+  - checking
+  - notify-failure
 
 variables:
   URL_PIPELINE: $CI_PIPELINE_URL
@@ -24,6 +26,8 @@ build:
 
 deploy:
   stage: deploy
+  needs:
+    - job: build
   environment: staging
   script:
     - make deploy
@@ -31,8 +35,18 @@ deploy:
   only:
     - develop
 
+checking:
+  stage: checking
+  needs:
+    - job: deploy
+  environment: staging
+  script:
+    - make health-check
+  only:
+    - develop
+
 notify-failure:
-  stage: deploy
+  stage: notify-failure
   environment: staging
   script:
     - make slack-notify-failed
