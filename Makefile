@@ -28,6 +28,7 @@ network = sicepatnet
 urlRepo = https://gitlab.com/sicepat-workspace/petty-cash-api
 urlPipeline = $(URL_PIPELINE)
 urlSlackWebhook = $(URL_SLACK_WEBHOOK)
+urlApiHealthCheck = $(URL_API_HEALTH_CHECK)
 
 envFile = $(ENV_FILE)
 
@@ -142,3 +143,7 @@ run-docker:
 	$(dockerTag):latest
 
 deploy: login-docker pull-docker run-docker
+
+health-check:
+	sleep 10
+	curl $(urlApiHealthCheck)
