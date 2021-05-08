@@ -51,7 +51,7 @@ export class AccountDailyClosingService {
     } = await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['startDate__gte'] = 'adc.closingDate';
-    qb.fieldResolverMap['endDate__gte'] = 'adc.closingDate';
+    qb.fieldResolverMap['endDate__lte'] = 'adc.closingDate';
 
     qb.applyFilterPagination();
     qb.selectRaw(
