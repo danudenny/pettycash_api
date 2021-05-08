@@ -1497,9 +1497,9 @@ export class ExpenseService {
     data: Expense,
   ): Promise<any> {
     const loan = await this.retrieveLoanForExpense(manager, data);
-    const loanHasPayments = loan?.payments?.length > 0;
+    if (!loan) return;
 
-    if (loanHasPayments) {
+    if (loan?.payments?.length > 0) {
       throw new UnprocessableEntityException(
         `Loan has payments, can't remove it!`,
       );
