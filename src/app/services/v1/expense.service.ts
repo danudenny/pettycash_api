@@ -308,10 +308,22 @@ export class ExpenseService {
         exp.transactionDate = payload?.transactionDate ?? exp.transactionDate;
         exp.periodId = payload?.periodId ?? exp.periodId;
         exp.partnerId = payload?.partnerId ?? exp.partnerId;
-        // exp.downPaymentId = payload?.downPaymentId ?? exp.downPaymentId;
         exp.sourceDocument = payload?.sourceDocument ?? exp.sourceDocument;
         exp.paymentType = payload?.paymentType ?? exp.paymentType;
         exp.updateUserId = user?.id;
+
+        if (payload?.downPaymentId) {
+          const downPayment = await this.retrieveDownPaymentForExpense(
+            manager,
+            payload?.downPaymentId,
+            true,
+          );
+          downPayment.expenseId = exp.id;
+          downPayment.updateUserId = user.id;
+          await manager.save(downPayment);
+
+          exp.downPaymentId = payload?.downPaymentId;
+        }
 
         if (payload?.items) {
           const updatedExpenseItems = await this.recreateAndRetrieveExpenseItems(
