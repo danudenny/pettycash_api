@@ -308,10 +308,22 @@ export class ExpenseService {
         exp.transactionDate = payload?.transactionDate ?? exp.transactionDate;
         exp.periodId = payload?.periodId ?? exp.periodId;
         exp.partnerId = payload?.partnerId ?? exp.partnerId;
-        // exp.downPaymentId = payload?.downPaymentId ?? exp.downPaymentId;
         exp.sourceDocument = payload?.sourceDocument ?? exp.sourceDocument;
         exp.paymentType = payload?.paymentType ?? exp.paymentType;
         exp.updateUserId = user?.id;
+
+        if (payload?.downPaymentId) {
+          const downPayment = await this.retrieveDownPaymentForExpense(
+            manager,
+            payload?.downPaymentId,
+            true,
+          );
+          downPayment.expenseId = exp.id;
+          downPayment.updateUserId = user.id;
+          await manager.save(downPayment);
+
+          exp.downPaymentId = payload?.downPaymentId;
+        }
 
         if (payload?.items) {
           const updatedExpenseItems = await this.recreateAndRetrieveExpenseItems(
@@ -533,6 +545,8 @@ export class ExpenseService {
         await this.removeJournal(manager, expense);
         // unlink DownPayment if any
         await this.unlinkDownPayment(manager, expense);
+        // remove Loan if any
+        await this.removeLoan(manager, expense);
 
         const { rejectedNote } = payload;
         const state = ExpenseState.REJECTED;
@@ -1467,5 +1481,30 @@ export class ExpenseService {
     loan.updateUserId = expense.updateUserId;
 
     return await manager.save(loan);
+  }
+
+  /**
+   * Internal Helper for remove existing loan if no payments.
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} data
+   * @return {*}  {Promise<any>}
+   * @memberof ExpenseService
+   */
+  private async removeLoan(
+    manager: EntityManager,
+    data: Expense,
+  ): Promise<any> {
+    const loan = await this.retrieveLoanForExpense(manager, data);
+    const loanHasPayments = loan?.payments?.length > 0;
+
+    if (loanHasPayments) {
+      throw new UnprocessableEntityException(
+        `Loan has payments, can't remove it!`,
+      );
+    }
+
+    return await manager.getRepository(Loan).delete({ id: loan?.id });
   }
 }

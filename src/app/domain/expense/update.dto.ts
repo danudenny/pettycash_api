@@ -9,6 +9,7 @@ export class UpdateExpenseDTO {
     example: '2021-03-15',
   })
   @IsISO8601({ strict: false })
+  @IsOptional()
   transactionDate?: Date;
 
   @ApiPropertyOptional({
@@ -26,6 +27,14 @@ export class UpdateExpenseDTO {
   @IsUUID()
   @IsOptional()
   partnerId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Down Payment ID',
+    example: 'b7726b7b-6882-42ea-b623-d8f8a347ba0b',
+  })
+  @IsUUID()
+  @IsOptional()
+  downPaymentId?: string;
 
   @ApiPropertyOptional({
     description: 'Source Document',
