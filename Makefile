@@ -38,10 +38,10 @@ dockerPass = $(DOCKER_PASS)
 dockerTag = registry.gitlab.com/sicepat-workspace/$(name)/staging
 
 gitLog = git log -1 --pretty=format:"$(1)"
-getHashCommit = $$($(call gitLog,%h))
-getHashCommitLong = $$($(call gitLog,%H))
-getDetailCommit = $$($(call gitLog,%s))
-getUserCommit = $$($(call gitLog,%an))
+getHashCommit = $(shell $(call gitLog,%h))
+getHashCommitLong = $(shell $(call gitLog,%H))
+getDetailCommit = $(shell $(call gitLog,%s))
+getUserCommit = $(shell $(call gitLog,%an))
 urlHashCommit = https://gitlab.com/sicepat-workspace/petty-cash-api/-/commit/$(getHashCommitLong)
 
 apiCheck = $$(curl --write-out "%{http_code}\n" "$(urlApiHealthCheck)" --output output.txt --silent)
