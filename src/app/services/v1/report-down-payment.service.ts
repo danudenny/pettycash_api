@@ -134,7 +134,7 @@ export class ReportDownPaymentService {
           sourceDocumentExpense: t.sourceDocumentExpense,
           branchName: t.branchName,
           amountDownPayment: t.amountDownPayment,
-          numberExpense: t.numberExpense,
+          amountRealized: t.amountRealized,
           amountRepayment: t.amountRepayment,
         }
       })
@@ -170,27 +170,29 @@ export class ReportDownPaymentService {
         second = d.getSeconds().toString()
         //if month is 1-9 pad right with a 0 for two digits
         if (month.length === 1){
-          month = "0" + month;
+          month = "0"+month;
         }
         //if day is between 1-9 pad right with a 0 for two digits
         if (day.length === 1){
-          day = "0" + day;
+          day = "0"+day;
         }
-        //if day is between 1-9 pad right with a 0 for two digits
+        //if hours is between 1-9 pad right with a 0 for two digits
         if (hours.length === 1) {
           hours = "0"+hours;
         }
+        //if minute is between 1-9 pad right with a 0 for two digits
         if (minute.length === 1) {
           minute = "0"+minute
         }
+        //if minute is between 1-9 pad right with a 0 for two digits
         if (second.length === 1) {
           second = "0"+second;
         }
     
       const fileName = `down_payment_report_${year+month+day+'-'+hours+minute+second}.xlsx`;
       /* send to client */
-      res.setHeader('Content-Disposition', `attachment; filename= ${fileName}`)
-      res.setHeader('Content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      res.setHeader('Content-Disposition',`attachment;filename=${fileName}`)
+      res.setHeader('Content-type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
       res.status(200).send(buf);
 
       return
