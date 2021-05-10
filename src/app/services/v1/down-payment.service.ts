@@ -472,6 +472,7 @@ export class DownPaymentService {
       jrnlItem.createUser = user;
       jrnlItem.updateUser = user;
       jrnlItem.coaId = coaId;
+      jrnlItem.isLedger = true;
       jrnlItem.journalId = jurnalId;
       jrnlItem.branchId = downPayment.branchId;
       jrnlItem.debit = downPayment.amount;
@@ -505,6 +506,7 @@ export class DownPaymentService {
       jrnlItem.createUser = user;
       jrnlItem.updateUser = user;
       jrnlItem.journalId = jurnalId;
+      jrnlItem.isLedger = false;
       jrnlItem.coaId = branch?.cashCoaId;
       jrnlItem.branchId = downPayment.branchId;
       jrnlItem.credit = downPayment.amount;
