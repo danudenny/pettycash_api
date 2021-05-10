@@ -10,6 +10,7 @@ stages:
   - build
   - deploy
   - checking
+  - trigger-test
   - notify-failure
 
 variables:
@@ -41,6 +42,16 @@ checking:
   environment: staging
   script:
     - make health-check
+  only:
+    - develop
+
+trigger-test:
+  stage: trigger-test
+  needs:
+    - job: checking
+  environment: staging
+  script:
+    - 'curl -X PUT -H "Authorization: Basic ${KATALON_AUTH}" -H "Content-Type: application/json" https://testops.katalon.io/api/v1/run-configurations/33296/execute'
     - make slack-notify-finish
   only:
     - develop

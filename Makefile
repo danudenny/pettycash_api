@@ -36,23 +36,28 @@ dockerHost = registry.gitlab.com
 dockerUser = $(DOCKER_USER)
 dockerPass = $(DOCKER_PASS)
 dockerTag = registry.gitlab.com/sicepat-workspace/$(name)/staging
-getHashCommit = $(shell git log -1 --pretty=format:"%h")
-getDetailCommit = $(shell git log -1 --pretty=format:"[%an] %s")
+
+gitLog = git log -1 --pretty=format:"$(1)"
+getHashCommit = $$($(call gitLog,%h))
+getHashCommitLong = $$($(call gitLog,%H))
+getDetailCommit = $$($(call gitLog,%s))
+getUserCommit = $$($(call gitLog,%an))
+urlHashCommit = https://gitlab.com/sicepat-workspace/petty-cash-api/-/commit/$(getHashCommitLong)
 
 apiCheck = $$(curl --write-out "%{http_code}\n" "$(urlApiHealthCheck)" --output output.txt --silent)
 
 # Notify section
 notifyHeader = Petty Cash API :dollar:
-notifyMeta = *Project Repo:* $(urlRepo)\n*Hash Commit:* $(getHashCommit)
+notifyContext = [$(getUserCommit) | <$(urlHashCommit)|$(getHashCommit)>] $(getDetailCommit)
 
 notifyStartColor = 42e2f4
-notifyStartDescription = :runner: PettyCashAPI building and deploy sequence start\n$(notifyMeta)
+notifyStartDescription = :runner: Building and deploy sequence start
 
 notifySuccessColor = 81b214
-notifySuccessDescription = :checkered_flag: PettyCashAPI building and deploy sequence finish\n$(notifyMeta)
+notifySuccessDescription = :checkered_flag: Building and deploy sequence finish
 
 notifyFailedColor = ff4646
-notifyFailedDescription = :x: PettyCashAPI building and deploy sequence failed\n$(notifyMeta)
+notifyFailedDescription = :x: Building and deploy sequence failed
 
 slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 	'{ \
@@ -91,10 +96,19 @@ slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 								"type": "button", \
 								"text": { \
 									"type": "plain_text", \
+									"text": ":package: Repository", \
+									"emoji": true \
+								}, \
+								"value": "$(5)"
+							},
+							{ \
+								"type": "button", \
+								"text": { \
+									"type": "plain_text", \
 									"text": ":mag: View Pipelines", \
 									"emoji": true \
 								}, \
-								"url": "$(5)" \
+								"url": "$(6)" \
 							} \
 						] \
 					} \
@@ -105,13 +119,13 @@ slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 	$(urlSlackWebhook)
 
 slack-notify-start:
-	$(call slackNotify,#$(notifyStartColor),$(notifyHeader),$(notifyStartDescription),$(getDetailCommit),$(urlPipeline))	
+	$(call slackNotify,#$(notifyStartColor),$(notifyHeader),$(notifyStartDescription),$(notifyContext),$(urlRepo),$(urlPipeline))	
 
 slack-notify-finish:
-	$(call slackNotify,#$(notifySuccessColor),$(notifyHeader),$(notifySuccessDescription),$(getDetailCommit),$(urlPipeline))	
+	$(call slackNotify,#$(notifySuccessColor),$(notifyHeader),$(notifySuccessDescription),$(notifyContext),$(urlRepo),$(urlPipeline))	
 
 slack-notify-failed:
-	$(call slackNotify,#$(notifyFailedColor),$(notifyHeader),$(notifyFailedDescription),$(getDetailCommit),$(urlPipeline))	
+	$(call slackNotify,#$(notifyFailedColor),$(notifyHeader),$(notifyFailedDescription),$(notifyContext),$(urlRepo),$(urlPipeline))	
 
 
 # Pipeline Recipe
