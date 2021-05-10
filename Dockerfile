@@ -1,15 +1,24 @@
 # stage development
+FROM node:12.16-alpine As prod
+WORKDIR /usr/src/app
+COPY package*.json ./
+COPY . .
+RUN npm install
+RUN npm run prebuild && npm run build
+CMD ["npm", "run", "start:dev"]
+
+
 FROM node:12.16-alpine As development
 
 WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN yarn install
+RUN npm install
 
 COPY . .
 
-RUN yarn prebuild && yarn build
+RUN npm run prebuild && npm run build
 
 # stage production
 FROM node:12.16-alpine as production
@@ -21,7 +30,7 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN yarn install --prod
+RUN npm install --prod
 
 COPY . .
 

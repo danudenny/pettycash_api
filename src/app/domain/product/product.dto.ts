@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
+import { ProductType, ProductTaxType } from '../../../model/utils/enum';
 
 export class ProductDTO {
   @ApiProperty({
@@ -17,7 +18,7 @@ export class ProductDTO {
 
   @ApiProperty({
     description: 'Product Name',
-    example: 'Tiket Pesawat'
+    example: 'Tiket Pesawat',
   })
   name: string;
 
@@ -62,4 +63,22 @@ export class ProductDTO {
     example: true,
   })
   isActive: boolean;
+
+  @ApiProperty({
+    description: 'Is Has Kilometers',
+    example: false,
+  })
+  isHasKm: boolean;
+
+  @ApiProperty({
+    description: 'Tax Type of Product',
+    example: ProductTaxType.SEWA_ALAT_DAN_KENDARAAN,
+  })
+  taxType: ProductTaxType;
+
+  @ApiProperty({
+    description: 'Type of Product',
+    example: ProductType.EXPENSE,
+  })
+  type: ProductType;
 }

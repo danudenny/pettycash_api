@@ -42,9 +42,11 @@ export class JournalService {
   public async list(
     query: QueryJournalDTO,
   ): Promise<JournalWithPaginationResponse> {
-    const user = await AuthService.getUser({ relations: ['role', 'branches'] });
-    const userRole = user?.role?.name as MASTER_ROLES;
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      userRoleName,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
     const SS_SPV_ROLES = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO];
 
     const params = { order: '-transactionDate', ...query };
@@ -88,6 +90,8 @@ export class JournalService {
             'partnerCode', ji.partner_code,
             'partnerName', ji.partner_name,
             'reference', ji.reference,
+            'description', ji.description,
+            'isLedger', ji.is_ledger,
             'transactionDate', ji.transaction_date
             )
         ) AS items
@@ -116,25 +120,27 @@ export class JournalService {
       (v) => v.isFalse(),
     );
 
-    // filter by assigned branch if userRole SS/SPV HO.
-    if (SS_SPV_ROLES.includes(userRole)) {
-      if (userBranches?.length) {
-        qb.andWhere(
-          (e) => e.branchId,
-          (v) => v.in(userBranches),
-        );
+    if (!isSuperUser) {
+      // filter by assigned branch if userRoleName SS/SPV HO.
+      if (SS_SPV_ROLES.includes(userRoleName)) {
+        if (userBranchIds?.length) {
+          qb.andWhere(
+            (e) => e.branchId,
+            (v) => v.in(userBranchIds),
+          );
+        }
       }
-    }
 
-    // if userRole is Tax, only show journal that contains tax
-    if (userRole === MASTER_ROLES.TAX) {
-      const journalTaxSql = `SELECT tji.journal_id
+      // if userRoleName is Tax, only show journal that contains tax
+      if (userRoleName === MASTER_ROLES.TAX) {
+        const journalTaxSql = `SELECT tji.journal_id
         FROM journal_item tji
         INNER JOIN account_coa tac ON tac.id = tji.coa_id
         WHERE tac.id IN (SELECT coa_id FROM account_tax WHERE is_deleted = FALSE AND coa_id IS NOT NULL GROUP BY coa_id)
         GROUP BY tji.journal_id`;
 
-      qb.qb.andWhere(`(j.id IN (${journalTaxSql}))`);
+        qb.qb.andWhere(`(j.id IN (${journalTaxSql}))`);
+      }
     }
 
     const journals = await qb.exec();

@@ -34,6 +34,7 @@ export class ExpenseDetailResponseMapper {
       item.productName = v.product && v.product.name;
       item.productCode = v.product && v.product.code;
       item.description = v.description;
+      item.tax = v.tax;
       item.amount = v.amount;
       item.picHoAmount = v.picHoAmount;
       item.ssHoAmount = v.ssHoAmount;

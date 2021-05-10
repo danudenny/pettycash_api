@@ -13,7 +13,7 @@ export enum BudgetState {
 
 export enum BudgetRequestState {
   DRAFT = 'draft',
-  APPROVED_BY_OPS = 'approved_by_ops_ho',
+  CONFIRMED_BY_OPS = 'confirmed_by_ops_ho',
   APPROVED_BY_PIC = 'approved_by_pic_ho',
   REJECTED = 'rejected',
   CANCELED = 'canceled',
@@ -155,4 +155,21 @@ export enum MASTER_ROLES {
   ADMIN_BRANCH = 'ADMIN BRANCH',
   OPS = 'OPS',
   TAX = 'TAX',
+}
+
+export enum ProductTaxType {
+  JASA = 'jasa',
+  SEWA_ALAT_DAN_KENDARAAN = 'sewa_alat_dan_kendaraan',
+  SEWA_BANGUNAN = 'sewa_bangunan',
+}
+
+export enum ProductType {
+  EXPENSE = 'expense',
+  DOWN_PAYMENT = 'down_payment',
+}
+
+export enum AccountTaxGroup {
+  PPH23 = 'PPH 23',
+  PPH21 = 'PPH 21',
+  PPH4A2 = 'PPH 4(2)',
 }

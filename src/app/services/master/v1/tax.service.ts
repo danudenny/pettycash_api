@@ -8,7 +8,7 @@ import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { CreateTaxDTO } from '../../../domain/tax/create-tax.dto';
 import { UpdateTaxDTO } from '../../../domain/tax/update-tax.dto';
 import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../../shared/errors';
-import { GenerateCode } from '../../../../common/services/generate-code.service';
+import { AuthService } from '../../v1/auth.service';
 
 @Injectable()
 export class TaxService {
@@ -17,9 +17,9 @@ export class TaxService {
     private readonly taxRepo: Repository<AccountTax>,
   ) {}
 
-  async getUserId() {
-    // TODO: Use From Authentication User.
-    return '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
+  private static async getUserId() {
+    const user = await AuthService.getUser();
+    return user.id;
   }
 
   public async list(query?: QueryTaxDTO): Promise<TaxWithPaginationResponse> {
@@ -57,8 +57,8 @@ export class TaxService {
   public async create(data: CreateTaxDTO): Promise<TaxResponse> {
     const taxDto = await this.taxRepo.create(data);
     const taxExist = await this.taxRepo.findOne({name: taxDto.name, isDeleted: false})
-    taxDto.createUserId = await this.getUserId();
-    taxDto.updateUserId = await this.getUserId();
+    taxDto.createUserId = await TaxService.getUserId();
+    taxDto.updateUserId = await TaxService.getUserId();
 
     if(!taxDto.name) {
       throw new BadRequestException(
@@ -92,7 +92,7 @@ export class TaxService {
     }
 
     const updatedTax = this.taxRepo.create(data as AccountTax);
-    updatedTax.updateUserId = await this.getUserId();
+    updatedTax.updateUserId = await TaxService.getUserId();
 
     try {
       const taxSave = this.taxRepo.update(id, updatedTax);

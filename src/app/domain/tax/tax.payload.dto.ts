@@ -11,8 +11,8 @@ export class QueryTaxDTO extends BasePayload {
 
   @ApiProperty({
     description: 'Tax Partner Type',
-    example: 'personal',
-    enum: ['company', 'personal'],
+    example: AccountTaxPartnerType.PERSONAL,
+    enum: AccountTaxPartnerType,
   })
   partnerType: AccountTaxPartnerType;
 

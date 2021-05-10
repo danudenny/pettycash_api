@@ -1,4 +1,5 @@
-import { Entity, Unique, Column } from 'typeorm';
+import { Entity, Unique, Column, JoinTable, ManyToMany } from 'typeorm';
+import { Attachment } from './attachment.entity';
 import { PtcBaseEntity } from './base.entity';
 import { PartnerState, PartnerType } from './utils/enum';
 
@@ -78,4 +79,18 @@ export class Partner extends PtcBaseEntity {
     default: PartnerType.COMPANY,
   })
   type: PartnerType;
+
+  @ManyToMany(() => Attachment)
+  @JoinTable({
+    name: 'partner_attachment',
+    joinColumn: {
+      name: 'partner_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'attachment_id',
+      referencedColumnName: 'id',
+    },
+  })
+  attachments: Attachment[];
 }

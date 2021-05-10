@@ -17,8 +17,10 @@ export class BranchService {
   public async list(query: QueryBranchDTO): Promise<any> {
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(Branch, 'b', params);
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['name__icontains'] = 'b.branch_name';
     qb.fieldResolverMap['code__icontains'] = 'b.branch_code';
@@ -37,10 +39,10 @@ export class BranchService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    if (userBranches?.length) {
+    if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.id,
-        (v) => v.in(userBranches),
+        (v) => v.in(userBranchIds),
       );
     }
 

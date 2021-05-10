@@ -30,6 +30,10 @@ import { ReportDownPaymentModule } from './app/modules/report-down-payment.modul
 import { BudgetRequestItemModule } from './app/modules/budget-request-item.module';
 import { AccountDailyClosingModule } from './app/modules/account-daily-closing.module';
 import { BankBranchModule } from './app/modules/bank-branch.module';
+import { ReportBalanceModule } from './app/modules/report-balance.module';
+import { VehicleModule } from './app/modules/vehicle.module';
+import { OtherModule } from './app/modules/other.module';
+import { AttachmentTypeModule } from './app/modules/attachment-type.module';
 
 @Module({
   imports: [
@@ -45,6 +49,7 @@ import { BankBranchModule } from './app/modules/bank-branch.module';
     AccountCoaModule,
     PeriodModule,
     ProductModule,
+    VehicleModule,
     GlobalSettingModule,
     TaxModule,
     DepartmentModule,
@@ -66,7 +71,10 @@ import { BankBranchModule } from './app/modules/bank-branch.module';
     AccountStatementModule,
     VoucherModule,
     AccountDailyClosingModule,
+    AttachmentTypeModule,
     ReportDownPaymentModule,
+    ReportBalanceModule,
+    OtherModule,
   ],
   controllers: [],
   providers: [],

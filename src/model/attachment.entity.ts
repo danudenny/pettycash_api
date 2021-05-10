@@ -1,4 +1,5 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { AttachmentType } from './attachment-type.entity';
 import { PtcBaseEntity } from './base.entity';
 
 @Entity('attachment')
@@ -60,4 +61,14 @@ export class Attachment extends PtcBaseEntity {
     nullable: true,
   })
   description?: string;
+
+  @Column({
+    nullable: true,
+    name: 'type_id'
+  })
+  typeId: string;
+
+  @ManyToOne(() => AttachmentType​​)
+  @JoinColumn({ name: 'type_id', referencedColumnName: 'id' })
+  attType: AttachmentType
 }

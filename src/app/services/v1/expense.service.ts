@@ -10,6 +10,7 @@ import {
   EntityManager,
   createQueryBuilder,
   In,
+  FindConditions,
 } from 'typeorm';
 import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { GenerateCode } from '../../../common/services/generate-code.service';
@@ -17,6 +18,8 @@ import { ExpenseItemAttribute } from '../../../model/expense-item-attribute.enti
 import { ExpenseItem } from '../../../model/expense-item.entity';
 import { Expense } from '../../../model/expense.entity';
 import {
+  AccountTaxGroup,
+  AccountTaxPartnerType,
   DownPaymentState,
   DownPaymentType,
   ExpenseState,
@@ -27,7 +30,9 @@ import {
   LoanType,
   MASTER_ROLES,
   PartnerState,
+  PartnerType,
   PeriodState,
+  ProductTaxType,
 } from '../../../model/utils/enum';
 import { CreateExpenseDTO } from '../../domain/expense/create.dto';
 import { AuthService } from './auth.service';
@@ -53,7 +58,7 @@ import { ExpenseHistory } from '../../../model/expense-history.entity';
 import { Journal } from '../../../model/journal.entity';
 import { JournalItem } from '../../../model/journal-item.entity';
 import { User } from '../../../model/user.entity';
-import { getPercentage, roundToTwo } from '../../../shared/utils';
+import { getPercentage } from '../../../shared/utils';
 import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 import { Period } from '../../../model/period.entity';
 import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
@@ -98,8 +103,10 @@ export class ExpenseService {
   ): Promise<ExpenseWithPaginationResponse> {
     const params = { order: '-updatedAt', limit: 10, ...query };
     const qb = new QueryBuilder(Expense, 'exp', params);
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['startDate__gte'] = 'exp.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'exp.transaction_date';
@@ -132,10 +139,10 @@ export class ExpenseService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    if (userBranches?.length) {
+    if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.branchId,
-        (v) => v.in(userBranches),
+        (v) => v.in(userBranchIds),
       );
     }
 
@@ -144,14 +151,21 @@ export class ExpenseService {
   }
 
   public async getById(id: string): Promise<ExpenseDetailResponse> {
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
+    const where = { id, isDeleted: false };
+    if (!isSuperUser) {
+      Object.assign(where, { branchId: In(userBranchIds) });
+    }
     const expense = await this.expenseRepo.findOne({
-      where: { id, isDeleted: false, branchId: In(userBranches) },
+      where,
       relations: [
         'period',
         'branch',
         'partner',
+        'downPayment',
         'items',
         'items.product',
         'items.attributes',
@@ -294,10 +308,22 @@ export class ExpenseService {
         exp.transactionDate = payload?.transactionDate ?? exp.transactionDate;
         exp.periodId = payload?.periodId ?? exp.periodId;
         exp.partnerId = payload?.partnerId ?? exp.partnerId;
-        // exp.downPaymentId = payload?.downPaymentId ?? exp.downPaymentId;
         exp.sourceDocument = payload?.sourceDocument ?? exp.sourceDocument;
         exp.paymentType = payload?.paymentType ?? exp.paymentType;
         exp.updateUserId = user?.id;
+
+        if (payload?.downPaymentId) {
+          const downPayment = await this.retrieveDownPaymentForExpense(
+            manager,
+            payload?.downPaymentId,
+            true,
+          );
+          downPayment.expenseId = exp.id;
+          downPayment.updateUserId = user.id;
+          await manager.save(downPayment);
+
+          exp.downPaymentId = payload?.downPaymentId;
+        }
 
         if (payload?.items) {
           const updatedExpenseItems = await this.recreateAndRetrieveExpenseItems(
@@ -519,6 +545,8 @@ export class ExpenseService {
         await this.removeJournal(manager, expense);
         // unlink DownPayment if any
         await this.unlinkDownPayment(manager, expense);
+        // remove Loan if any
+        await this.removeLoan(manager, expense);
 
         const { rejectedNote } = payload;
         const state = ExpenseState.REJECTED;
@@ -671,25 +699,57 @@ export class ExpenseService {
     productId: string,
   ): Promise<AccountTax> {
     // FIXME: Refactor to use single query if posible.
+    const { JASA, SEWA_ALAT_DAN_KENDARAAN, SEWA_BANGUNAN } = ProductTaxType;
+    const { PERSONAL, COMPANY } = PartnerType;
     let tax: AccountTax;
+    let taxGroup: AccountTaxGroup;
+    let isHasNpwp: boolean = false;
 
     const product = await this.productRepo.findOne(
       { id: productId },
-      { select: ['id', 'isHasTax'] },
+      { select: ['id', 'isHasTax', 'taxType'] },
     );
     const partner = await this.partnerRepo.findOne(
       { id: partnerId },
       { select: ['id', 'type', 'npwpNumber'] },
     );
-    const hasNpwp = partner && partner.npwpNumber ? true : false;
 
-    if (product && product.isHasTax) {
+    const productHasTax = product?.isHasTax;
+    const productTaxType = product?.taxType;
+    const partnerNpwp = partner?.npwpNumber;
+    const partnerType = partner?.type;
+    const taxPartnerType = (partnerType as any) as AccountTaxPartnerType;
+
+    if (partnerNpwp) {
+      isHasNpwp = partnerNpwp.length === 15;
+    }
+
+    if (productHasTax) {
+      const taxWhere: FindConditions<AccountTax> = {
+        partnerType: taxPartnerType,
+        isHasNpwp,
+        isDeleted: false,
+      };
+
+      if (productTaxType === JASA) {
+        if (partnerType === PERSONAL) {
+          taxGroup = AccountTaxGroup.PPH21;
+        } else if (partnerType === COMPANY) {
+          taxGroup = AccountTaxGroup.PPH23;
+        }
+      } else if (productTaxType === SEWA_ALAT_DAN_KENDARAAN) {
+        taxGroup = AccountTaxGroup.PPH23;
+      } else if (productTaxType === SEWA_BANGUNAN) {
+        taxGroup = AccountTaxGroup.PPH4A2;
+      }
+
+      if (taxGroup) {
+        Object.assign(taxWhere, { group: taxGroup });
+      }
+
       tax = await this.taxRepo.findOne({
-        where: {
-          partnerType: partner.type,
-          isHasNpwp: hasNpwp,
-        },
-        select: ['id', 'taxInPercent', 'coaId'],
+        where: taxWhere,
+        select: ['id', 'taxInPercent', 'coaId', 'group'],
       });
     }
 
@@ -931,72 +991,10 @@ export class ExpenseService {
     user: User,
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
-    let items: JournalItem[] = [];
-    const taxedItems = data?.items.filter((v) => v.tax);
-    const cashCoaId = data.branch && data.branch.cashCoaId;
-    let taxedAmount: number;
-
-    const i = new JournalItem();
-    i.createUser = user;
-    i.updateUser = user;
-    i.coaId = cashCoaId;
-    i.branchId = data.branchId;
-    i.transactionDate = data.transactionDate;
-    i.periodId = data.periodId;
-    i.reference = data.number;
-    i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-    i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-
-    // Get credit amount based on userRole
-    if (userRole === MASTER_ROLES.PIC_HO) {
-      i.credit = data?.items
-        .map((m) => Number(m.picHoAmount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-
-      taxedAmount = taxedItems
-        .map((m) => Number(m.picHoAmount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-    } else if (
-      userRole === MASTER_ROLES.SS_HO ||
-      userRole === MASTER_ROLES.SPV_HO
-    ) {
-      i.credit = data?.items
-        .map((m) => Number(m.ssHoAmount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-
-      taxedAmount = taxedItems
-        .map((m) => Number(m.ssHoAmount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-    }
-
-    // Otherwise use admin branch amount
-    if (!i.credit) {
-      i.credit = data?.items
-        .map((m) => Number(m.amount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-
-      taxedAmount = taxedItems
-        .map((m) => Number(m.amount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-    }
-
-    // Add JournalItem for Tax
-    if (taxedItems.length > 0) {
-      // FIXME: Build JournalItem for each tax?
-      const taxedItem = taxedItems[0];
-      const taxValue = this.calculateTax(taxedAmount, taxedItem.tax);
-      if (taxValue && taxValue > 0) {
-        i.credit = i.credit + roundToTwo(taxValue);
-      }
-    }
-
-    items.push(i);
+    const items: JournalItem[] = [];
+    let itemCoaId: string;
+    let isLedger: boolean = false;
+    let isReimbursement: boolean = false;
 
     // If Expense from DownPayment
     if (data?.downPayment) {
@@ -1004,33 +1002,80 @@ export class ExpenseService {
       const downPaymentType = downPayment?.type;
       const setting = await getManager().getRepository(GlobalSetting).findOne();
 
-      const dpJournalItem = new JournalItem();
-      dpJournalItem.createUser = user;
-      dpJournalItem.updateUser = user;
-      dpJournalItem.branchId = data.branchId;
-      dpJournalItem.transactionDate = data.transactionDate;
-      dpJournalItem.periodId = data.periodId;
-      dpJournalItem.reference = data.number;
-      dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-      dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-
       if (downPaymentType === DownPaymentType.PERDIN) {
-        dpJournalItem.coaId = setting?.downPaymentPerdinCoaId;
+        const dpJournalItem = new JournalItem();
+        dpJournalItem.createUser = user;
+        dpJournalItem.updateUser = user;
+        dpJournalItem.branchId = data.branchId;
+        dpJournalItem.transactionDate = data.transactionDate;
+        dpJournalItem.periodId = data.periodId;
+        dpJournalItem.reference = data.number;
+        dpJournalItem.description = downPayment?.description;
+        dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+        dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
         dpJournalItem.credit = downPayment?.amount;
+        dpJournalItem.coaId = setting?.downPaymentPerdinCoaId;
         items.push(dpJournalItem);
       } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
-        const totalItemCredit = items
-          .map((m) => Number(m.credit))
-          .reduce((a, b) => a + b, 0);
-
-        dpJournalItem.coaId = setting?.downPaymentReimbursementCoaId;
-        dpJournalItem.credit = totalItemCredit + downPayment?.amount;
-
-        // merge all items to use single CoA
-        items = [dpJournalItem];
+        itemCoaId = setting?.downPaymentReimbursementCoaId;
+        isLedger = true;
+        isReimbursement = true;
       }
     }
 
+    for (const v of data?.items) {
+      if (!isReimbursement) {
+        itemCoaId = data?.branch?.cashCoaId;
+      }
+
+      const i = new JournalItem();
+      i.createUser = user;
+      i.updateUser = user;
+      i.coaId = itemCoaId;
+      i.branchId = data.branchId;
+      i.transactionDate = data.transactionDate;
+      i.periodId = data.periodId;
+      i.reference = data.number;
+      i.description = v?.description;
+      i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+      i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+      i.isLedger = isLedger;
+
+      // Get amount based on userRole
+      if (userRole === MASTER_ROLES.PIC_HO) {
+        i.credit = v.picHoAmount;
+      } else if (
+        userRole === MASTER_ROLES.SS_HO ||
+        userRole === MASTER_ROLES.SPV_HO
+      ) {
+        i.credit = v.ssHoAmount;
+      } else {
+        // Otherwise use admin branch amount
+        i.credit = v.amount;
+      }
+
+      items.push(i);
+
+      // Add JournalItem for Tax
+      if (v?.tax > 0) {
+        const taxedAmount = this.calculateTax(i.credit, v.tax);
+        const tax = await this.getTax(data.partnerId, v.productId);
+        const jTax = new JournalItem();
+        jTax.createUser = user;
+        jTax.updateUser = user;
+        jTax.coaId = isReimbursement ? itemCoaId : tax?.coaId;
+        jTax.branchId = data.branchId;
+        jTax.transactionDate = data.transactionDate;
+        jTax.periodId = data.periodId;
+        jTax.reference = data.number;
+        jTax.description = `[${tax?.group} YMH] ${v.description}`;
+        jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+        jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+        jTax.credit = taxedAmount;
+        jTax.isLedger = isLedger;
+        items.push(jTax);
+      }
+    }
     return items;
   }
 
@@ -1049,21 +1094,57 @@ export class ExpenseService {
     user: User,
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
-    let items: JournalItem[] = [];
-    const taxes: number[] = [];
+    const items: JournalItem[] = [];
+    let itemCoaId: string;
+    let isLedger: boolean = true;
+    let isReimbursement: boolean = false;
+
+    // If Expense from DownPayment
+    if (data?.downPayment) {
+      const downPayment = data?.downPayment;
+      const downPaymentType = downPayment?.type;
+
+      if (downPaymentType === DownPaymentType.PERDIN) {
+        const dpJournalItem = new JournalItem();
+        dpJournalItem.createUser = user;
+        dpJournalItem.updateUser = user;
+        dpJournalItem.branchId = data.branchId;
+        dpJournalItem.transactionDate = data.transactionDate;
+        dpJournalItem.periodId = data.periodId;
+        dpJournalItem.reference = data.number;
+        dpJournalItem.description = downPayment?.description;
+        dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+        dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+        dpJournalItem.coaId = data?.branch?.cashCoaId;
+        dpJournalItem.debit = downPayment?.amount;
+        dpJournalItem.coaId = data?.branch?.cashCoaId;
+        items.push(dpJournalItem);
+      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
+        itemCoaId = data?.branch?.cashCoaId;
+        isLedger = false;
+        isReimbursement = true;
+      }
+    }
+
     for (const v of data?.items) {
+      if (!isReimbursement) {
+        itemCoaId = v?.product?.coaId;
+      }
+
       const i = new JournalItem();
       i.createUser = user;
       i.updateUser = user;
-      i.coaId = v.product && v.product.coaId;
+      i.coaId = itemCoaId;
       i.branchId = data.branchId;
       i.transactionDate = data.transactionDate;
       i.periodId = data.periodId;
       i.reference = data.number;
+      i.description = v?.description;
       i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
       i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+      i.isLedger = isLedger;
 
-      // Get credit amount based on userRole
+      // Get amount based on userRole
       if (userRole === MASTER_ROLES.PIC_HO) {
         i.debit = v.picHoAmount;
       } else if (
@@ -1071,66 +1152,31 @@ export class ExpenseService {
         userRole === MASTER_ROLES.SPV_HO
       ) {
         i.debit = v.ssHoAmount;
-      }
-
-      // Otherwise use admin branch amount
-      if (!i.debit) {
+      } else {
+        // Otherwise use admin branch amount
         i.debit = v.amount;
       }
 
-      if (v.tax) {
-        taxes.push(this.calculateTax(i.debit, v.tax));
-      }
-
       items.push(i);
-    }
 
-    // Add JournalItem for Tax
-    if (taxes.length) {
-      const taxedItems = data?.items.filter((v) => v.tax);
-      const taxedItem = taxedItems[0];
-      const tax = await this.getTax(data.partnerId, taxedItem.productId);
-      const jTax = new JournalItem();
-      jTax.createUser = user;
-      jTax.updateUser = user;
-      jTax.coaId = tax && tax.coaId;
-      jTax.branchId = data.branchId;
-      jTax.transactionDate = data.transactionDate;
-      jTax.periodId = data.periodId;
-      jTax.reference = data.number;
-      jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-      jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-      jTax.debit = roundToTwo(taxes.reduce((a, b) => a + b, 0));
-      items.push(jTax);
-    }
-
-    // If Expense from DownPayment
-    if (data?.downPayment) {
-      const downPayment = data?.downPayment;
-      const downPaymentType = downPayment?.type;
-
-      const dpJournalItem = new JournalItem();
-      dpJournalItem.createUser = user;
-      dpJournalItem.updateUser = user;
-      dpJournalItem.branchId = data.branchId;
-      dpJournalItem.transactionDate = data.transactionDate;
-      dpJournalItem.periodId = data.periodId;
-      dpJournalItem.reference = data.number;
-      dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-      dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-      dpJournalItem.coaId = data?.branch?.cashCoaId;
-
-      if (downPaymentType === DownPaymentType.PERDIN) {
-        dpJournalItem.debit = downPayment?.amount;
-        items.push(dpJournalItem);
-      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
-        const totalItemDebit = items
-          .map((m) => Number(m.debit))
-          .reduce((a, b) => a + b, 0);
-        dpJournalItem.debit = totalItemDebit + downPayment?.amount;
-
-        // merge all items to use single CoA
-        items = [dpJournalItem];
+      // Add JournalItem for Tax
+      if (v?.tax > 0) {
+        const taxedAmount = this.calculateTax(i.debit, v.tax);
+        const tax = await this.getTax(data.partnerId, v.productId);
+        const jTax = new JournalItem();
+        jTax.createUser = user;
+        jTax.updateUser = user;
+        jTax.coaId = itemCoaId;
+        jTax.branchId = data.branchId;
+        jTax.transactionDate = data.transactionDate;
+        jTax.periodId = data.periodId;
+        jTax.reference = data.number;
+        jTax.description = `[${tax?.group} Gross UP] ${v.description}`;
+        jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
+        jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+        jTax.debit = taxedAmount;
+        jTax.isLedger = isLedger;
+        items.push(jTax);
       }
     }
 
@@ -1435,5 +1481,30 @@ export class ExpenseService {
     loan.updateUserId = expense.updateUserId;
 
     return await manager.save(loan);
+  }
+
+  /**
+   * Internal Helper for remove existing loan if no payments.
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} data
+   * @return {*}  {Promise<any>}
+   * @memberof ExpenseService
+   */
+  private async removeLoan(
+    manager: EntityManager,
+    data: Expense,
+  ): Promise<any> {
+    const loan = await this.retrieveLoanForExpense(manager, data);
+    if (!loan) return;
+
+    if (loan?.payments?.length > 0) {
+      throw new UnprocessableEntityException(
+        `Loan has payments, can't remove it!`,
+      );
+    }
+
+    return await manager.getRepository(Loan).delete({ id: loan?.id });
   }
 }

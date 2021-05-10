@@ -430,7 +430,7 @@ Duplicate data Budget
 
 ## Edit Budget  [PATCH /v1/budgets/{id}/update]
 
-Duplicate data Budget
+Edit data Budget
 
 + Parameters
     + id: `46dc5599-43f0-4569-b5f0-33e25f4cd29c` (string) - Budget ID to Retrieve.
@@ -508,6 +508,87 @@ Duplicate data Budget
                 "message": "Internal Server Error",
                 "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
             }
+
+
+
+## Re-Submission Budget  [PATCH /v1/budgets/{id}/re-submission]
+
+Re-Submission data Budget
+
++ Parameters
+    + id: `46dc5599-43f0-4569-b5f0-33e25f4cd29c` (string) - Budget ID to Retrieve.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+            + branchId: `b7726b7b-6882-42ea-b623-d8f8a347ba0b` (string) - Branch ID.
+            + responsibleUserId: "3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - User ID.
+            + startDate: `2021-01-10` (string) - Transaction Date.
+            + endDate: `2021-01-16` (string) - Transaction Date.
+            + items: (array)
+               // FOR EDIT BUDGET ITEM
+                + id: `c157c304-f9f7-43e6-8084-1d25bfc0d113` (string) - Budget Item ID.
+                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
+                + description: `Kebutuhan Pickup` (string) - Description.
+                + amount: 1000000 (number) - Amount.
+                + isDeleted: false (boolean) - Is Deleted Flag.
+                // FOR ADD BUDGET ITEM
+                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
+                + description: `Kebutuhan Pickup` (string) - Description.
+                + amount: 1000000 (number) - Amount.
+                + isDeleted: false (boolean) - Is Deleted Flag
+                // FOR DELETE BUDGET ITEM
+                + id: `c157c304-f9f7-43e6-8084-1d25bfc0d113` (string) - Budget Item ID.
+                + productId: `d786c337-39b5-40ab-952b-48cd186027bd` (string) - Product ID.
+                + amount: 1000000 (number) - Amount.
+                + isDeleted: true (boolean) - Is Deleted Flag.
+
++ Response 201 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "data": {
+                    "id": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "branchId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "branchName": "Kebon Jeruk",
+                    "number": "BG001",
+                    "responsibleUserId": "b7726b7b-6882-42ea-b623-d8f8a347ba0b",
+                    "responsibleUserFirstName": "Budi",
+                    "responsibleUserLastName": "Handoko",
+                    "responsibleUserUsername": 18122009,
+                    "startDate": "2021-01-29",
+                    "endDate": "2021-01-29",
+                    "minimumAmount": 2000000,
+                    "totalAmount": 5000000,
+                    "state": "draft",
+                    "rejectedNote": "Budget melebihi batas minimum"
+                }
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "BUDGET_RESUBMISSION_FAILED",
+                "message": "failed to resubmission budget",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
 
 
 ## Approve Budget [PUT /v1/budgets/{id}/approve]

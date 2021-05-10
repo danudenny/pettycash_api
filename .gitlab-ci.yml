@@ -1,0 +1,69 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - deploy
+  - checking
+  - trigger-test
+  - notify-failure
+
+variables:
+  URL_PIPELINE: $CI_PIPELINE_URL
+
+build:
+  stage: build
+  environment: staging
+  before_script:
+    - sudo apt install curl
+  script:
+    - make slack-notify-start
+    - make build-and-push
+  only:
+    - develop
+
+deploy:
+  stage: deploy
+  needs:
+    - job: build
+  environment: staging
+  script:
+    - make deploy
+  only:
+    - develop
+
+checking:
+  stage: checking
+  needs:
+    - job: deploy
+  environment: staging
+  script:
+    - make health-check
+  only:
+    - develop
+
+trigger-test:
+  stage: trigger-test
+  needs:
+    - job: checking
+  environment: staging
+  before_script:
+    - sudo apt install curl
+  script:
+    - 'curl -X PUT -H "Authorization: Basic ${KATALON_AUTH}" -H "Content-Type: application/json" https://testops.katalon.io/api/v1/run-configurations/33296/execute'
+    - make slack-notify-finish
+  only:
+    - develop
+
+notify-failure:
+  stage: notify-failure
+  environment: staging
+  before_script:
+    - sudo apt install curl
+  script:
+    - make slack-notify-failed
+  only:
+    - develop
+  when: on_failure

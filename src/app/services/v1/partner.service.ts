@@ -1,13 +1,18 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { createQueryBuilder, getManager, Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
+import { AttachmentService } from '../../../common/services/attachment.service';
 import { GenerateCode } from '../../../common/services/generate-code.service';
+import { Attachment } from '../../../model/attachment.entity';
 import { Partner } from '../../../model/partner.entity';
 import { PartnerState } from '../../../model/utils/enum';
 import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../shared/errors';
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
+import { PartnerAttachmentDTO } from '../../domain/partner/partner-attahcment.dto';
 import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
+import { PartnerAttachmentResponse } from '../../domain/partner/response-attachment.dto';
+import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import {
   PartnerResponse,
   PartnerWithPaginationResponse,
@@ -19,11 +24,16 @@ export class PartnerService {
   constructor(
     @InjectRepository(Partner)
     private readonly partnerRepo: Repository<Partner>,
+    @InjectRepository(Attachment)
+    private readonly attachmentRepo: Repository<Attachment>,
   ) {}
 
-  private async getUserId() {
-    const user = await AuthService.getUser();
-    return user.id;
+  private async getUser(includeBranch: boolean = false) {
+    if (includeBranch) {
+      return await AuthService.getUser({ relations: ['branches'] });
+    } else {
+      return await AuthService.getUser();
+    }
   }
 
   async list(query: QueryPartnerDTO): Promise<PartnerResponse> {
@@ -42,6 +52,9 @@ export class PartnerService {
       ['p.code', 'code'],
       ['p.name', 'name'],
       ['p.address', 'address'],
+      ['p.email', 'email'],
+      ['p.mobile', 'mobile'],
+      ['p.website', 'website'],
       ['p."type"', 'type'],
       ['p.npwp_number', 'npwpNumber'],
       ['p.id_card_number', 'idCardNumber'],
@@ -60,6 +73,7 @@ export class PartnerService {
   public async get(id: string): Promise<PartnerResponse> {
     const partner = await this.partnerRepo.findOne({
       where: { id, isDeleted: false },
+      relations: ['attachments']
     });
     if (!partner) {
       throw new NotFoundException(`Partner ID ${id} not found!`);
@@ -89,8 +103,9 @@ export class PartnerService {
     }
 
     const partner = this.partnerRepo.create(payload as Partner);
-    partner.createUserId = await this.getUserId();
-    partner.updateUserId = await this.getUserId();
+    const responsiblePartner = await this.getUser();
+    partner.createUserId = responsiblePartner.id;
+    partner.updateUserId = responsiblePartner.id;
 
     const newPartner = await this.partnerRepo.save(partner);
     return new PartnerResponse(newPartner);
@@ -105,7 +120,8 @@ export class PartnerService {
     }
 
     const updatedPartner = this.partnerRepo.create(payload as Partner);
-    updatedPartner.updateUserId = await this.getUserId();
+    const responsiblePartner = await this.getUser();
+    partner.updateUserId = responsiblePartner.id;
 
     try {
       await this.partnerRepo.update(id, updatedPartner);
@@ -151,8 +167,9 @@ export class PartnerService {
     }
 
     const partner = this.partnerRepo.create(partnerExist);
+    const responsiblePartner = await this.getUser();
     partner.state = PartnerState.APPROVED;
-    partner.updateUserId = await this.getUserId();
+    partner.updateUserId = responsiblePartner.id;
 
     const updatePartner = await this.partnerRepo.save(partner);
     if (!updatePartner) {
@@ -160,5 +177,84 @@ export class PartnerService {
     }
 
     return new PartnerResponse(updatePartner as any);
+  }
+
+  //  ! Attachment Section
+  public async createAttachment(
+    partnerId: string,
+    files?: any,
+  ): Promise<PartnerAttachmentResponse> {
+    try {
+      const createAttachment = await getManager().transaction(
+        async (manager) => {
+          const partner = await manager.findOne(Partner, {
+            where: { id: partnerId, isDeleted: false },
+            relations: ['attachments'],
+          });
+          
+          if (!partner) {
+            throw new NotFoundException(
+              `Expense with ID ${partnerId} not found!`,
+            );
+          }
+
+          // Upload file attachments
+          let newAttachments: Attachment[];
+          if (files && files.length) {
+            const partnerPath = `partner/${partner.name}-${partnerId}`;
+            const attachments = await AttachmentService.uploadFiles(
+              files,
+              (file) => {
+                const rid = uuid().split('-')[0];
+                const pathId = `${partnerPath}_${rid}_${file.originalname}`;
+                return pathId;
+              },
+              manager,
+            );
+            newAttachments = attachments;
+          }
+          console.log(newAttachments);
+          const existingAttachments = partner.attachments;
+
+          partner.attachments = [].concat(existingAttachments, newAttachments);
+          partner.updateUser = await this.getUser();
+
+          await manager.save(partner);
+          return newAttachments;
+        },
+      );
+
+      return new PartnerAttachmentResponse(
+        createAttachment as PartnerAttachmentDTO[],
+      );
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  public async deleteAttachment(
+    partnerId: string,
+    attachmentId: string,
+  ): Promise<void> {
+    // TODO: Implement API Delete Expense Attachments
+    const attExist = await createQueryBuilder('attachment', 'att')
+      .leftJoin('partner_attachment', 'pa', 'att.id = pa.attachment_id')
+      .where('pa.partner_id = :partnerId', { partnerId })
+      .andWhere('pa.attachment_id = :attachmentId', { attachmentId })
+      .andWhere('att.isDeleted = false')
+      .getOne();
+
+    if (!attExist) {
+      throw new NotFoundException('Tidak ditemukan attachment!');
+    }
+    // SoftDelete
+    const deleteAttachment = await this.attachmentRepo.update(attachmentId, {
+      isDeleted: true,
+    });
+    if (!deleteAttachment) {
+      throw new BadRequestException('Failed to delete attachment!');
+    }
+
+    throw new HttpException('Berhasil menghapus attachment', HttpStatus.OK)
   }
 }

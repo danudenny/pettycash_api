@@ -40,6 +40,12 @@ export class JournalItemDTO {
   reference: string;
 
   @ApiProperty({
+    description: 'Description',
+    example: '[PPH 23 Gross UP] Description Item',
+  })
+  description: string;
+
+  @ApiProperty({
     description: 'Partner Name',
     example: 'HR Sicepat',
   })
@@ -81,4 +87,10 @@ export class JournalItemDTO {
     example: 900000,
   })
   credit: number;
+
+  @ApiProperty({
+    description: 'Is this item Ledger?',
+    example: true,
+  })
+  isLedger: boolean;
 }

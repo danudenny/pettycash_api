@@ -18,7 +18,7 @@ export class ProductService {
     private readonly productRepo: Repository<Product>,
   ) {}
 
-  private async getUserId() {
+  private static async getUserId() {
     const user = await AuthService.getUser();
     return user.id;
   }
@@ -30,6 +30,7 @@ export class ProductService {
     qb.fieldResolverMap['code__icontains'] = 'prod.code';
     qb.fieldResolverMap['name__icontains'] = 'prod.name';
     qb.fieldResolverMap['isHasTax'] = 'prod.isHasTax';
+    qb.fieldResolverMap['taxType'] = 'prod.taxType';
 
     qb.applyFilterPagination();
     qb.selectRaw(
@@ -39,11 +40,13 @@ export class ProductService {
       ['prod.description', 'description'],
       ['prod.is_has_tax', 'isHasTax'],
       ['prod.amount', 'amount'],
+      ['prod.is_has_km', 'isHasKm'],
+      ['prod.type', 'type'],
       ['prod.coa_id', 'coaId'],
       ['coa.code', 'coaCode'],
       ['coa.name', 'coaName'],
       ['prod.is_active', 'isActive'],
-      ['prod.is_deleted', 'isDeleted']
+      ['prod.tax_type', 'taxType']
     );
     qb.leftJoin(
       (e) => e.coaProduct,
@@ -61,8 +64,8 @@ export class ProductService {
   public async create(data: CreateProductDTO): Promise<ProductResponse> {
     const prodDto = await this.productRepo.create(data);
     const prodExist = await this.productRepo.findOne({name: prodDto.name, isDeleted: false})
-    prodDto.createUserId = await this.getUserId();
-    prodDto.updateUserId = await this.getUserId();
+    prodDto.createUserId = await ProductService.getUserId();
+    prodDto.updateUserId = await ProductService.getUserId();
     prodDto.code = GenerateCode.product();
 
     if(!prodDto.name) {
@@ -96,7 +99,8 @@ export class ProductService {
     }
 
     const updatedProduct = this.productRepo.create(data as Product);
-    updatedProduct.updateUserId = await this.getUserId();
+    updatedProduct.updatedAt = new Date();
+    updatedProduct.updateUserId = await ProductService.getUserId();
 
     try {
       await this.productRepo.update(id, updatedProduct);

@@ -149,64 +149,112 @@ export class BudgetRequestService {
 
   public async getBudget(needDate?: Date): Promise<BudgetResponse> {
     try {
-      
-      const bgtExist = await this.budgetRepo.createQueryBuilder('bgt')
-        .where(`'${needDate}' BETWEEN bgt.startDate AND bgt.endDate`)
-        .andWhere(`(bgt.state = 'approved_by_ss' OR bgt.state = 'approved_by_spv')`)
-        .getOne();
-  
-      if (!bgtExist) {
+      const user = await AuthService.getUser({ relations: ['branches'] });
+      const userBranches = user?.branches?.map((v) => v.id);
+
+      const qb = new QueryBuilder(Budget, 'bgt');
+
+      qb.selectRaw(
+        ['bgt.id', 'id'],
+        ['bgt.branch_id', 'branchId'],
+        ['br.branch_name', 'branchName'],
+        ['br.branch_code', 'branchCode'],
+        ['bgt.number', 'number'],
+        ['bgt.responsible_user_id', 'responsibleUserId'],
+        ['us.first_name', 'responsibleUserFirstName'],
+        ['us.last_name', 'responsibleUserLastName'],
+        ['us.username', 'responsibleUserUsername'],
+        ['bgt.start_date', 'startDate'],
+        ['bgt.end_date', 'endDate'],
+        ['bgt.minimum_amount', 'minimumAmount'],
+        ['bgt.total_amount', 'totalAmount'],
+        ['bgt.state', 'state'],
+        ['bgt.rejected_note', 'rejectedNote']
+      );
+      qb.leftJoin(
+        (e) => e.branch,
+        'br'
+      );
+      qb.leftJoin(
+        (e) => e.users,
+        'us'
+      );
+      qb.andWhere(
+        (e) => e.isDeleted,
+        (v) => v.isFalse(),
+      );
+      qb.qb.andWhere(
+        `(:needDate >= bgt.start_date AND :needDate <= bgt.end_date)`,
+        { needDate: needDate },
+      );
+      qb.andWhere(
+        (e) => e.state,
+        (v) => v.equals('approved_by_spv'),
+      );
+      if (userBranches?.length) {
+        qb.andWhere(
+          (e) => e.branchId,
+          (v) => v.in(userBranches),
+        );
+      }
+
+      const bgtExist = await qb.exec();
+      if (bgtExist.length < 1) {
         throw new NotFoundException('Tidak ditemukan Budget!');
       }
-  
-      return new BudgetResponse(bgtExist);;
+
+      return new BudgetResponse(bgtExist[0]);
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
   }
 
   public async create(data: CreateBudgetRequestDTO): Promise<BudgetRequestResponse> {
-    if (data && !data.number) {
-      data.number = GenerateCode.budgetRequest();
+    try{
+      if (data && !data.number) {
+        data.number = GenerateCode.budgetRequest();
+      }
+
+      const user = await this.getUser(true);
+      const branchId = user && user.branches && user.branches[0].id;
+
+      // Build BudgetRequestItem
+      const items: BudgetRequestItem[] = [];
+      let totalAmountItem = 0;
+      for (const v of data.items) {
+        const item = new BudgetRequestItem();
+        item.productId = v.productId;
+        item.description = v.description;
+        item.amount = v.amount;
+        item.createUser = user;
+        item.updateUser = user;
+        totalAmountItem = totalAmountItem + Number(v.amount);
+        items.push(item);
+      }
+
+      // Build BudgetRequest
+      const budgetRequest = new BudgetRequest();
+      budgetRequest.branchId = data.branchId;
+      budgetRequest.budgetId = data.budgetId;
+      budgetRequest.number = data.number;
+      budgetRequest.responsibleUserId = data.responsibleUserId;
+      budgetRequest.needDate = data.needDate;
+      budgetRequest.totalAmount = totalAmountItem;
+      budgetRequest.rejectedNote = null;
+      budgetRequest.state = BudgetRequestState.DRAFT;
+      budgetRequest.histories = await this.buildHistory(budgetRequest, {
+        state: BudgetRequestState.DRAFT,
+        needDate: data.needDate,
+      });
+      budgetRequest.items = items;
+      budgetRequest.createUser = user;
+      budgetRequest.updateUser = user;
+
+      const result = await this.budgetRequestRepo.save(budgetRequest);
+      return new BudgetRequestResponse(result);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
     }
-
-    const user = await this.getUser(true);
-    const branchId = user && user.branches && user.branches[0].id;
-
-    // Build BudgetRequestItem
-    const items: BudgetRequestItem[] = [];
-    let totalAmountItem = 0;
-    for (const v of data.items) {
-      const item = new BudgetRequestItem();
-      item.productId = v.productId;
-      item.description = v.description;
-      item.amount = v.amount;
-      item.createUser = user;
-      item.updateUser = user;
-      totalAmountItem = totalAmountItem + Number(v.amount);
-      items.push(item);
-    }
-
-    // Build BudgetRequest
-    const budgetRequest = new BudgetRequest();
-    budgetRequest.branchId = branchId;
-    budgetRequest.budgetId = data.budgetId;
-    budgetRequest.number = data.number;
-    budgetRequest.responsibleUserId = data.responsibleUserId;
-    budgetRequest.needDate = data.needDate;
-    budgetRequest.totalAmount = totalAmountItem;
-    budgetRequest.rejectedNote = null;
-    budgetRequest.state = BudgetRequestState.DRAFT;
-    budgetRequest.histories = await this.buildHistory(budgetRequest, {
-      state: BudgetRequestState.DRAFT,
-      needDate: data.needDate,
-    });
-    budgetRequest.items = items;
-    budgetRequest.createUser = user;
-    budgetRequest.updateUser = user;
-
-    const result = await this.budgetRequestRepo.save(budgetRequest);
-    return new BudgetRequestResponse(result);
   }
 
   public async update(id: string, data: UpdateBudgetRequestDTO): Promise<BudgetRequestResponse> {
@@ -264,7 +312,7 @@ export class BudgetRequestService {
             }
     
             // Build Budget Request
-            budgetExist.branchId = branchId;
+            budgetExist.branchId = data.branchId;
             budgetExist.budgetId = data.budgetId;
             budgetExist.number = data.number;
             budgetExist.responsibleUserId = data.responsibleUserId;
@@ -276,6 +324,89 @@ export class BudgetRequestService {
             //   state: BudgetRequestState.DRAFT,
             //   needDate: data.needDate,
             // });
+            // budgetExist.items = items;
+            budgetExist.createUser = user;
+            budgetExist.updateUser = user;
+    
+            const result = await this.budgetRequestRepo.save(budgetExist);
+            return new BudgetRequestResponse(result as any);
+          }
+        }
+      });
+      return updateBudget as any;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  public async reSubmission(id: string, data: UpdateBudgetRequestDTO): Promise<BudgetRequestResponse> {
+    try{
+      const updateBudget = await getManager().transaction(async (manager) => {
+        const budgetExist = await manager.findOne(BudgetRequest, {
+          where: { id: id, isDeleted: false },
+          relations: ['histories'],
+        });
+
+        if (!budgetExist) {
+          throw new NotFoundException();
+        } else {
+          if (budgetExist.state !== BudgetRequestState.DRAFT && budgetExist.state !== BudgetRequestState.REJECTED && budgetExist.state !== BudgetRequestState.CANCELED) {
+            throw new HttpException('Cannot Edit, Status Budget Request is Not DRAFT Or REJECTED!', HttpStatus.BAD_REQUEST);
+          } else {
+            const user = await this.getUser(true);
+            const branchId = user && user.branches && user.branches[0].id;
+      
+            // Build BudgetRequestItem
+            let items: BudgetRequestItem[] = [];
+            const budgetItemExist = await manager.find(BudgetRequestItem, {
+              where: { budgetRequestId: id, isDeleted: false }
+            });
+
+            let totalAmountItem = 0;
+            for (const v of data.items) {
+              if (v.id) {
+                for (const x of budgetItemExist) {
+                  if (v.id === x.id) {
+                    x.productId = v.productId;
+                    x.description = v.description;
+                    x.isDeleted = v.isDeleted;
+                    x.amount = v.amount;
+                    await this.budgetRequestItemRepo.update(v.id, x)
+                  }
+                }
+              } else {
+                const item = new BudgetRequestItem();;
+                item.productId = v.productId;
+                item.budgetRequestId = id;
+                item.description = v.description;
+                item.amount = v.amount;
+                item.createUser = user;
+                item.updateUser = user;
+                await this.budgetRequestItemRepo.insert(item)
+              }
+            }
+
+            // Get Total Amount
+            const budgetItemExistNew = await manager.find(BudgetRequestItem, {
+              where: { budgetRequestId: id, isDeleted: false }
+            });
+            for (const y of budgetItemExistNew) {
+              totalAmountItem = totalAmountItem + Number(y.amount);
+            }
+    
+            // Build Budget Request
+            budgetExist.branchId = data.branchId;
+            budgetExist.budgetId = data.budgetId;
+            budgetExist.number = data.number;
+            budgetExist.responsibleUserId = data.responsibleUserId;
+            budgetExist.needDate = data.needDate;
+            budgetExist.totalAmount = totalAmountItem;
+            budgetExist.rejectedNote = null;
+            budgetExist.state = BudgetRequestState.DRAFT;
+            budgetExist.histories = await this.buildHistory(budgetExist, {
+              state: BudgetRequestState.DRAFT,
+              needDate: data.needDate,
+            });
             // budgetExist.items = items;
             budgetExist.createUser = user;
             budgetExist.updateUser = user;
@@ -326,13 +457,13 @@ export class BudgetRequestService {
         const userRole = user?.role?.name;
 
         if (userRole === MASTER_ROLES.OPS) {
-          if (budgetRequestExists.state === BudgetRequestState.APPROVED_BY_OPS || budgetRequestExists.state === BudgetRequestState.APPROVED_BY_PIC) {
+          if (budgetRequestExists.state === BudgetRequestState.CONFIRMED_BY_OPS || budgetRequestExists.state === BudgetRequestState.APPROVED_BY_PIC) {
             throw new BadRequestException(
               `Budget Request ${budgetRequestExists.number} already approved!`,
             );
           }
 
-          const state = BudgetRequestState.APPROVED_BY_OPS;
+          const state = BudgetRequestState.CONFIRMED_BY_OPS;
           const needDate = budgetRequestExists.needDate;
 
           budgetRequestExists.state = state;
@@ -414,6 +545,7 @@ export class BudgetRequestService {
           rejectedNote,
           needDate
         });
+        budgetRequestExist.rejectedNote = rejectedNote;
         budgetRequestExist.updateUser = user;
 
         return await manager.save(budgetRequestExist);

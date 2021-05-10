@@ -1,31 +1,19 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { getConnection, Repository } from 'typeorm';
+import { getConnection } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
-import { AccountStatement } from '../../../model/account-statement.entity';
 import { Branch } from '../../../model/branch.entity';
 import { QueryBalanceDTO } from '../../domain/balance/balance.query.dto';
 import { BalanceWithPaginationResponse } from '../../domain/balance/response.dto';
-import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.entity';
 import { AuthService } from './auth.service';
 import { parseBool } from '../../../shared/utils/parser';
 import { QuerySummaryBalanceDTO } from '../../domain/balance/summary-balance.query.dto';
 import { LoaderEnv } from '../../../config/loader';
 import { BalanceSummaryResponse } from '../../domain/balance/summary-response.dto';
+import { MASTER_ROLES } from '../../../model/utils/enum';
 
 @Injectable()
 export class BalanceService {
-  constructor(
-    @InjectRepository(AccountStatement)
-    private readonly repoStatement: Repository<AccountStatement>,
-    @InjectRepository(CashBalanceAllocation)
-    private readonly allocationRepo: Repository<CashBalanceAllocation>,
-  ) {}
-
-  private async getUserId() {
-    const user = await AuthService.getUser();
-    return user.id;
-  }
+  constructor() {}
 
   public async list(
     query: QueryBalanceDTO,
@@ -53,8 +41,10 @@ export class BalanceService {
   private async getBalances(query?: QueryBalanceDTO): Promise<any> {
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(Branch, 'b', params);
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['branchId'] = 'b.id';
 
@@ -98,8 +88,7 @@ export class BalanceService {
           ((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) AS minimum_amount,
           ((((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) / 2) * 7) AS total_budget
         FROM budget b2
-        WHERE (b2.state = 'confirmed_by_ss' OR b2.state = 'approved_by_spv')
-              AND b2.is_deleted IS FALSE
+        WHERE b2.state = 'approved_by_spv' AND b2.is_deleted IS FALSE
         ORDER BY b2.end_date DESC
         LIMIT 1
       )
@@ -116,15 +105,15 @@ export class BalanceService {
       'bgt',
       'bgt.branch_id = b.id',
     );
-    qb.qb.andWhere(
-      `(bgt.state = 'confirmed_by_ss' OR bgt.state = 'approved_by_spv')`,
-    );
-    if (userBranches?.length) {
+    qb.qb.andWhere(`(bgt.state = 'approved_by_spv')`);
+
+    if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.id,
-        (v) => v.in(userBranches),
+        (v) => v.in(userBranchIds),
       );
     }
+
     if (params.balanceDate__lte) {
       qb.qb.andWhere(
         `(:balanceDate >= bgt.start_date AND :balanceDate <= bgt.end_date)`,
@@ -159,16 +148,26 @@ export class BalanceService {
     query?: QuerySummaryBalanceDTO,
   ): Promise<any> {
     const qb = new QueryBuilder(Branch, 'b', {});
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      userRoleName,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
-    if (!userBranches?.length) {
+    if (!userBranchIds?.length) {
       throw new UnprocessableEntityException(
         `Current User request not assigned to a branch!`,
       );
     }
 
-    const cacheKey = `branch_balance_${userBranches[0]}`;
+    // TODO: Should be validate when release in production!
+    // if (userRoleName !== MASTER_ROLES.ADMIN_BRANCH) {
+    //   throw new UnprocessableEntityException(
+    //     `Only ADMIN BRANCH can access Summary Balances`,
+    //   );
+    // }
+
+    const cacheKey = `branch_balance_${userBranchIds[0]}`;
     if (parseBool(query?.noCache)) {
       await getConnection().queryResultCache?.remove([cacheKey]);
     }
@@ -250,8 +249,7 @@ export class BalanceService {
           ((b2.end_date - b2.start_date) + 1) AS total_day, b2.total_amount,
           ((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) AS minimum_amount
         FROM budget b2
-        WHERE (b2.state = 'confirmed_by_ss' OR b2.state = 'approved_by_spv')
-              AND b2.is_deleted IS FALSE
+        WHERE b2.state = 'approved_by_spv' AND b2.is_deleted IS FALSE
         ORDER BY b2.end_date DESC
         LIMIT 1
       )
@@ -266,13 +264,15 @@ export class BalanceService {
       'bgt',
       'bgt.branch_id = b.id',
     );
-    qb.qb.andWhere(
-      `(bgt.state = 'confirmed_by_ss' OR bgt.state = 'approved_by_spv')`,
-    );
-    qb.andWhere(
-      (e) => e.id,
-      (v) => v.in(userBranches),
-    );
+    qb.qb.andWhere(`(bgt.state = 'approved_by_spv')`);
+
+    if (userBranchIds?.length && !isSuperUser) {
+      qb.andWhere(
+        (e) => e.id,
+        (v) => v.in(userBranchIds),
+      );
+    }
+
     qb.qb.cache(
       cacheKey,
       LoaderEnv.envs.CACHE_BRANCH_BALANCE_DURATION_IN_MINUTES * 60000,

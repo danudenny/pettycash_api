@@ -1,6 +1,5 @@
 import { Product } from '../../../model/product.entity';
 import { ProductDTO } from './product.dto';
-import { PeriodDTO } from '../period/period.dto';
 
 export class ProductResponseMapper {
   public static toDTO(dto: Partial<ProductDTO>): ProductDTO {
@@ -15,6 +14,9 @@ export class ProductResponseMapper {
     it.coaCode = dto.coaCode;
     it.coaName = dto.coaName;
     it.isActive = dto.isActive;
+    it.isHasKm = dto.isHasKm;
+    it.taxType = dto.taxType;
+    it.type = dto.type;
     return it;
   }
 
@@ -30,6 +32,9 @@ export class ProductResponseMapper {
       coaCode: ety.coaProduct && ety.coaProduct.code,
       coaName: ety.coaProduct && ety.coaProduct.name,
       isActive: ety.isActive,
+      isHasKm: ety.isHasKm,
+      taxType: ety.taxType,
+      type: ety.type,
     });
   }
 
