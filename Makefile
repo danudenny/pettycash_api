@@ -99,7 +99,7 @@ slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 									"text": ":package: Repository", \
 									"emoji": true \
 								}, \
-								"value": "$(5)"
+								"value": "$(5)" \
 							},
 							{ \
 								"type": "button", \
