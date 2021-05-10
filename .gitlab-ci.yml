@@ -3,9 +3,6 @@ image: docker:latest
 services:
   - docker:dind
 
-before_script:
-  - sudo apt install curl
-
 stages:
   - build
   - deploy
@@ -19,6 +16,8 @@ variables:
 build:
   stage: build
   environment: staging
+  before_script:
+    - sudo apt install curl
   script:
     - make slack-notify-start
     - make build-and-push
@@ -50,6 +49,8 @@ trigger-test:
   needs:
     - job: checking
   environment: staging
+  before_script:
+    - sudo apt install curl
   script:
     - 'curl -X PUT -H "Authorization: Basic ${KATALON_AUTH}" -H "Content-Type: application/json" https://testops.katalon.io/api/v1/run-configurations/33296/execute'
     - make slack-notify-finish
@@ -59,6 +60,8 @@ trigger-test:
 notify-failure:
   stage: notify-failure
   environment: staging
+  before_script:
+    - sudo apt install curl
   script:
     - make slack-notify-failed
   only:
