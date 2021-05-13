@@ -31,6 +31,7 @@ urlSlackWebhook = $(URL_SLACK_WEBHOOK)
 urlApiHealthCheck = $(URL_API_HEALTH_CHECK)
 
 envFile = $(ENV_FILE)
+servicePort = $(SERVICE_PORT)
 
 dockerHost = registry.gitlab.com
 dockerUser = $(DOCKER_USER)
@@ -69,7 +70,7 @@ slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 						"type": "header", \
 						"text": { \
 							"type": "plain_text", \
-							"text": "$(2)", \
+							"text": "$(notifyHeader)", \
 							"emoji": true \
 						} \
 					}, \
@@ -77,7 +78,7 @@ slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 						"type": "section", \
 						"text": { \
 							"type": "mrkdwn", \
-							"text": "$(3)" \
+							"text": "$(2)" \
 						} \
 					}, \
 					{ \
@@ -85,7 +86,7 @@ slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 						"elements": [ \
 							{ \
 								"type": "mrkdwn", \
-								"text": "$(4)" \
+								"text": "$(notifyContext)" \
 							} \
 						] \
 					}, \
@@ -99,16 +100,16 @@ slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 									"text": ":package: Repository", \
 									"emoji": true \
 								}, \
-								"value": "$(5)" \
+								"value": "$(urlRepo)" \
 							}, \
 							{ \
 								"type": "button", \
 								"text": { \
 									"type": "plain_text", \
-									"text": ":mag: View Pipelines", \
+									"text": ":mag: Pipelines", \
 									"emoji": true \
 								}, \
-								"url": "$(6)" \
+								"url": "$(urlPipeline)" \
 							} \
 						] \
 					} \
@@ -119,13 +120,13 @@ slackNotify = curl -X POST -H "Content-Type: application/json" -d \
 	$(urlSlackWebhook)
 
 slack-notify-start:
-	$(call slackNotify,#$(notifyStartColor),$(notifyHeader),$(notifyStartDescription),$(notifyContext),$(urlRepo),$(urlPipeline))	
+	$(call slackNotify,#$(notifyStartColor),$(notifyStartDescription))	
 
 slack-notify-finish:
-	$(call slackNotify,#$(notifySuccessColor),$(notifyHeader),$(notifySuccessDescription),$(notifyContext),$(urlRepo),$(urlPipeline))	
+	$(call slackNotify,#$(notifySuccessColor),$(notifySuccessDescription))	
 
 slack-notify-failed:
-	$(call slackNotify,#$(notifyFailedColor),$(notifyHeader),$(notifyFailedDescription),$(notifyContext),$(urlRepo),$(urlPipeline))	
+	$(call slackNotify,#$(notifyFailedColor),$(notifyFailedDescription))	
 
 
 # Pipeline Recipe
@@ -151,7 +152,7 @@ pull-docker:
 run-docker:
 	- docker stop $(name)
 	docker run -d --rm \
-	-p 3011:3010 \
+	-p $(servicePort):3010 \
 	--network $(network) \
 	--name $(name) \
 	--env-file $(envFile) \
