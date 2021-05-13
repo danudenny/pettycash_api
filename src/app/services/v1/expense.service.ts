@@ -18,6 +18,8 @@ import { ExpenseItemAttribute } from '../../../model/expense-item-attribute.enti
 import { ExpenseItem } from '../../../model/expense-item.entity';
 import { Expense } from '../../../model/expense.entity';
 import {
+  AccountStatementAmountPosition,
+  AccountStatementType,
   AccountTaxGroup,
   AccountTaxPartnerType,
   DownPaymentState,
@@ -67,6 +69,7 @@ import { DownPayment } from '../../../model/down-payment.entity';
 import { Loan } from '../../../model/loan.entity';
 import { UpdateExpenseDTO } from '../../domain/expense/update.dto';
 import { UpdateExpenseItemDTO } from '../../domain/expense/update-item.dto';
+import { AccountStatement } from '../../../model/account-statement.entity';
 
 @Injectable()
 export class ExpenseService {
@@ -398,6 +401,7 @@ export class ExpenseService {
 
         const user = await AuthService.getUser({ relations: ['role'] });
         const userRole = user?.role?.name;
+        expense.updateUser = user;
 
         // if any payload.items, we should update it first.
         // because the Journal Entries depends on items value.
@@ -438,6 +442,9 @@ export class ExpenseService {
           // Update or Insert Loan from Expense.
           await this.upsertLoanFromExpense(manager, expense);
 
+          // Update or Insert AccountStatement (Balance) from Expense.
+          await this.upsertAccountStatementFromExpense(manager, expense);
+
           // Create Journal for PIC HO
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
@@ -465,6 +472,9 @@ export class ExpenseService {
           // Update or Insert Loan from Expense.
           await this.upsertLoanFromExpense(manager, expense);
 
+          // Update or Insert AccountStatement (Balance) from Expense.
+          await this.upsertAccountStatementFromExpense(manager, expense);
+
           // (Re)Create Journal for SS/SPV HO
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
@@ -483,7 +493,6 @@ export class ExpenseService {
 
         expense.state = state;
         expense.histories = await this.buildHistory(expense, { state });
-        expense.updateUser = user;
         return await manager.save(expense);
       });
 
@@ -547,6 +556,8 @@ export class ExpenseService {
         await this.unlinkDownPayment(manager, expense);
         // remove Loan if any
         await this.removeLoan(manager, expense);
+        // remove AccountStatement if any
+        await this.removeAccountStatement(manager, expense);
 
         const { rejectedNote } = payload;
         const state = ExpenseState.REJECTED;
@@ -1506,5 +1517,74 @@ export class ExpenseService {
     }
 
     return await manager.getRepository(Loan).delete({ id: loan?.id });
+  }
+
+  /**
+   * Internal Helper for (re)create account statement (balances).
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} expense
+   * @return {*}  {Promise<AccountStatement>}
+   * @memberof ExpenseService
+   */
+  private async upsertAccountStatementFromExpense(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<AccountStatement> {
+    const accStmtRepo = manager.getRepository(AccountStatement);
+    const statement = await accStmtRepo.findOne({
+      where: {
+        reference: expense?.number,
+        branchId: expense?.branchId,
+        isDeleted: false,
+      },
+    });
+
+    if (statement) {
+      // delete existing statement
+      await accStmtRepo.delete({ id: statement?.id });
+    }
+
+    // insert statement
+    const stmt = await this.buildAccountStatement(expense);
+    return await accStmtRepo.save(stmt);
+  }
+
+  private async buildAccountStatement(
+    expense: Expense,
+  ): Promise<AccountStatement> {
+    const stmt = new AccountStatement();
+    stmt.branchId = expense.branchId;
+    stmt.createUser = expense.updateUser;
+    stmt.updateUser = expense.updateUser;
+    stmt.reference = expense.number;
+    stmt.amount = expense.totalAmount;
+    stmt.transactionDate = expense.transactionDate;
+    stmt.type = (expense.paymentType as unknown) as AccountStatementType;
+    stmt.amountPosition = AccountStatementAmountPosition.DEBIT;
+    return stmt;
+  }
+
+  /**
+   * Internal helper to remove existing account statement from expense
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} expense
+   * @return {*}  {Promise<void>}
+   * @memberof ExpenseService
+   */
+  private async removeAccountStatement(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<void> {
+    await manager
+      .getRepository(AccountStatement)
+      .delete({
+        reference: expense?.number,
+        branchId: expense?.branchId,
+        isDeleted: false,
+      });
   }
 }
