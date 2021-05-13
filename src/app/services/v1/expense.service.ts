@@ -556,6 +556,8 @@ export class ExpenseService {
         await this.unlinkDownPayment(manager, expense);
         // remove Loan if any
         await this.removeLoan(manager, expense);
+        // remove AccountStatement if any
+        await this.removeAccountStatement(manager, expense);
 
         const { rejectedNote } = payload;
         const state = ExpenseState.REJECTED;
@@ -1562,5 +1564,27 @@ export class ExpenseService {
     stmt.type = (expense.paymentType as unknown) as AccountStatementType;
     stmt.amountPosition = AccountStatementAmountPosition.DEBIT;
     return stmt;
+  }
+
+  /**
+   * Internal helper to remove existing account statement from expense
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} expense
+   * @return {*}  {Promise<void>}
+   * @memberof ExpenseService
+   */
+  private async removeAccountStatement(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<void> {
+    await manager
+      .getRepository(AccountStatement)
+      .delete({
+        reference: expense?.number,
+        branchId: expense?.branchId,
+        isDeleted: false,
+      });
   }
 }
