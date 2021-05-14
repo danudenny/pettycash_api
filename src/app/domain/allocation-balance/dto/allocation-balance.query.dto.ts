@@ -9,7 +9,7 @@ export class AllocationBalanceQueryDTO extends BasePayload {
     description: 'Allocation Balance Date to filter',
     example: '2020-03-15',
   })
-  createdDate: Date;
+  receivedDate: Date;
 
   @ApiPropertyOptional({
     description: 'Branch ID to filter',

@@ -27,6 +27,7 @@ export enum CashBalanceAllocationState {
   RECEIVED = 'received',
   TRANSFERRED = 'transferred',
   EXPIRED = 'close',
+  CANCELED = 'canceled'
 }
 
 export enum AccountStatementType {
