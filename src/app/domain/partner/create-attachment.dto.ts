@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AttachmentType } from '../../../model/utils/enum';
 
 export class CreatePartnerAttachmentDTO {
   @ApiProperty({
@@ -16,7 +16,9 @@ export class CreatePartnerAttachmentDTO {
   })
   attachments: any[];
 
-  @ApiProperty()
-  @IsUUID()
-  typeId: string;
+  @ApiPropertyOptional({
+    description: 'Attachment type',
+    example: AttachmentType.KTP
+  })
+  attachmentType?: AttachmentType;
 }

@@ -173,3 +173,11 @@ export enum AccountTaxGroup {
   PPH21 = 'PPH 21',
   PPH4A2 = 'PPH 4(2)',
 }
+
+export enum AttachmentType {
+  KTP = 'ktp',
+  NPWP = 'npwp',
+  SIUP = 'siup',
+  AKTA_PENDIRIAN = 'akta_pendirian',
+  LAIN_LAIN = 'lain_lain'
+}

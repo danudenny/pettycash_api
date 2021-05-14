@@ -1,4 +1,5 @@
-import { BadRequestException, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import { AttachmentType } from './../../../model/utils/enum';
+import { BadRequestException, HttpException, HttpStatus, NotFoundException, Req } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createQueryBuilder, getManager, Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -19,6 +20,7 @@ import {
 } from '../../domain/partner/response.dto';
 import { UpdatePartnerDTO } from '../../domain/partner/update.dto';
 import { AuthService } from './auth.service';
+import { CreatePartnerAttachmentDTO } from '../../domain/partner/create-attachment.dto';
 
 export class PartnerService {
   constructor(
@@ -183,6 +185,7 @@ export class PartnerService {
   public async createAttachment(
     partnerId: string,
     files?: any,
+    attachmentType?: any
   ): Promise<PartnerAttachmentResponse> {
     try {
       const createAttachment = await getManager().transaction(
@@ -197,25 +200,26 @@ export class PartnerService {
               `Expense with ID ${partnerId} not found!`,
             );
           }
-
+                    
           // Upload file attachments
           let newAttachments: Attachment[];
           if (files && files.length) {
-            const partnerPath = `partner/${partner.name}-${partnerId}`;
+            const partnerPath = `partner/${partner.name}`;
+            
             const attachments = await AttachmentService.uploadFiles(
               files,
               (file) => {
-                const rid = uuid().split('-')[0];
-                const pathId = `${partnerPath}_${rid}_${file.originalname}`;
+                const ext = file.originalname.split('.');
+                const pathId = `${partnerPath}-${(attachmentType).toUpperCase()}.${ext[1]}`;
                 return pathId;
               },
               manager,
             );
             newAttachments = attachments;
           }
-          console.log(newAttachments);
+          
           const existingAttachments = partner.attachments;
-
+          
           partner.attachments = [].concat(existingAttachments, newAttachments);
           partner.updateUser = await this.getUser();
 
@@ -223,7 +227,6 @@ export class PartnerService {
           return newAttachments;
         },
       );
-
       return new PartnerAttachmentResponse(
         createAttachment as PartnerAttachmentDTO[],
       );

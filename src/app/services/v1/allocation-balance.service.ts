@@ -179,8 +179,7 @@ export class AllocationBalanceService {
     const idCba = await this.cashbalRepo.findOne({
       where: {
         id,
-        isDeleted: false,
-        state: CashBalanceAllocationState.REJECTED
+        isDeleted: false
       }
     })
 
