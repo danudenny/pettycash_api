@@ -240,6 +240,11 @@ export class AllocationBalanceService {
             `Alokasi Saldo Kas sudah di tolak`,
           );
         }
+        if (currentState === CashBalanceAllocationState.CANCELED) {
+          throw new BadRequestException(
+            `Alokasi Saldo Kas sudah di batalkan`,
+          );
+        }
         if (
           currentState === CashBalanceAllocationState.APPROVED_BY_SS
         ) {
@@ -267,6 +272,11 @@ export class AllocationBalanceService {
         if (currentState === CashBalanceAllocationState.REJECTED) {
           throw new BadRequestException(
             `Alokasi Saldo Kas sudah di tolak`,
+          );
+        }
+        if (currentState === CashBalanceAllocationState.CANCELED) {
+          throw new BadRequestException(
+            `Alokasi Saldo Kas sudah di batalkan`,
           );
         }
         if (currentState === CashBalanceAllocationState.APPROVED_BY_SPV) {
