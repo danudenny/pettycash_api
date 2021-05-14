@@ -68,7 +68,7 @@ export class AllocationBalanceService {
       isSuperUser,
     } = await AuthService.getUserBranchAndRole();
 
-    qb.fieldResolverMap['createdDate'] = 'cba.transfer_date';
+    qb.fieldResolverMap['receivedDate'] = 'cba.recevied_date';
     qb.fieldResolverMap['branchId'] = 'cba.branchId';
     qb.fieldResolverMap['state'] = 'cba.state';
     qb.fieldResolverMap['number__contains'] = 'cba.number';
@@ -389,6 +389,73 @@ export class AllocationBalanceService {
         return await manager.save(allocation);
       });
       throw new HttpException(`Konfirmasi Tidak Setuju`, HttpStatus.OK)
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async cancel(
+    id: string,
+  ): Promise<CashBalanceAllocation> {
+    try {
+      const cancelAllocation = await getManager().transaction(async (manager) => {
+        const allocation = await manager.findOne(CashBalanceAllocation, {
+          where: { id, isDeleted: false },
+          relations: ['allocationHistory'],
+        });
+        if (!allocation) {
+          throw new NotFoundException(`Alokasi Saldo Kas ID ${id} tidak ditemukan!`);
+        }
+        
+        if (
+          dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')
+        ) {
+          allocation.state = CashBalanceAllocationState.EXPIRED
+          throw new BadRequestException(
+            `Form yang telah lewat batas tanggal transfer`,
+          );
+        }
+
+        if (allocation.state === CashBalanceAllocationState.RECEIVED) {
+          throw new BadRequestException(
+            `Tidak bisa membatalkan Alokasi Saldo Kas , Alokasi saldo sudah diterima oleh Admin Cabang`
+          );
+        }
+
+        if (allocation.state === CashBalanceAllocationState.CANCELED) {
+          throw new UnprocessableEntityException(`Alokasi Saldo Kas sudah di batalkan!`);
+        }
+
+        const user = await AuthService.getUser({ relations: ['role'] });
+        const userRole = user?.role?.name as MASTER_ROLES;
+
+        if (!userRole) {
+          throw new BadRequestException(
+            `Gagal membatalkan Alokasi Saldo Kas karena user role tidak diketahui!`,
+          );
+        }
+
+        if (
+          ![
+            MASTER_ROLES.PIC_HO,
+            MASTER_ROLES.SUPERUSER,
+          ].includes(userRole)
+        ) {
+          throw new BadRequestException(
+            `Hanya PIC HO yang dapat membatalkan Alokasi Saldo Kas!`,
+          );
+        }
+
+        const state = CashBalanceAllocationState.CANCELED;
+
+        allocation.state = state;
+        allocation.allocationHistory = await this.buildHistory(allocation, {
+          state
+        });
+        await this.accHistoryRepo.save(allocation.allocationHistory);
+        return await manager.save(allocation);
+      });
+      throw new HttpException(`Form Dibatalkan`, HttpStatus.OK)
     } catch (error) {
       throw error;
     }

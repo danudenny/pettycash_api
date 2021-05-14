@@ -48,6 +48,15 @@ export class AllocationBalanceController {
     return await this.allocBallanceService.approve(id);
   }
 
+  @Patch('/:id/cancel')
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
+  @ApiParam({name: 'id'})
+  @ApiOperation({ summary: 'Cancel Cash Allocation Balance' })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async cancel(@Param() {id}: FindIdParams) {
+    return await this.allocBallanceService.cancel(id);
+  }
+
   @Patch('/:id/reject')
   @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiParam({name: 'id'})
