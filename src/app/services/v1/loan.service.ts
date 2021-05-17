@@ -418,7 +418,7 @@ export class LoanService {
     stmt: AccountStatement,
   ): Promise<AccountStatement> {
     const repo = manager.getRepository(AccountStatement);
-    const statement = repo.save(stmt);
+    const statement = await repo.save(stmt);
     return statement;
   }
 
