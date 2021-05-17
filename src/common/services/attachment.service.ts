@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import express = require('express');
 import { EntityManager, getConnection, getManager } from 'typeorm';
-import { HttpException } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { AwsS3Service } from './aws-s3.service';
 import { AWS_BUCKET_NAME, FILE_PROVIDER } from '../constants/aws-s3.constant';
 import { Attachment } from '../../model/attachment.entity';
@@ -35,10 +35,10 @@ export class AttachmentService {
     );
 
     const url = `https://${bucketName}.s3.amazonaws.com/${uploadResponse.awsKey}`;
-
+    
     // Get UserId from Auth
     const { id: userId } = await AuthService.getUser();
-
+    
     const repo = tx ? tx : getManager();
     const attachment = repo.create(Attachment, {
       bucketName,
@@ -137,7 +137,7 @@ export class AttachmentService {
             txManager,
           );
         }
-
+        
         attachments.push(attachment);
       }
 

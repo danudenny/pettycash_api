@@ -10,7 +10,7 @@ export class PartnerAttachmentResponseMapper {
     it.fileName = dto.fileName;
     it.fileMime = dto.fileMime;
     it.url = dto.url;
-    it.typeId = dto.typeId;
+    it.attachmentType = dto.attachmentType;
     return it;
   }
 

@@ -27,6 +27,7 @@ export enum CashBalanceAllocationState {
   RECEIVED = 'received',
   TRANSFERRED = 'transferred',
   EXPIRED = 'close',
+  CANCELED = 'canceled'
 }
 
 export enum AccountStatementType {
@@ -172,4 +173,12 @@ export enum AccountTaxGroup {
   PPH23 = 'PPH 23',
   PPH21 = 'PPH 21',
   PPH4A2 = 'PPH 4(2)',
+}
+
+export enum AttachmentType {
+  KTP = 'ktp',
+  NPWP = 'npwp',
+  SIUP = 'siup',
+  AKTA_PENDIRIAN = 'akta_pendirian',
+  LAIN_LAIN = 'lain_lain'
 }
