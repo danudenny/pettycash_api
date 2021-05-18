@@ -205,6 +205,7 @@ export class LoanService {
   public async createAttachment(
     loanId: string,
     files?: any,
+    attachmentType?: any
   ): Promise<LoanAttachmentResponse> {
     try {
       const createAttachment = await getManager().transaction(
@@ -228,6 +229,7 @@ export class LoanService {
                 const pathId = `${loanPath}_${rid}_${file.originalname}`;
                 return pathId;
               },
+              attachmentType,
               manager,
             );
             newAttachments = attachments;

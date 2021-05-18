@@ -281,6 +281,7 @@ export class AccountDailyClosingService {
     accountDailyClosingId: string,
     manager: EntityManager,
     files?: any,
+    attachmentType?: any
   ): Promise<Attachment[]> {
     let newAttachments: Attachment[] = [];
 
@@ -294,6 +295,7 @@ export class AccountDailyClosingService {
 
           return pathId;
         },
+        attachmentType,
         manager,
       );
     }

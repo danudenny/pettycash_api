@@ -20,7 +20,7 @@ export class AttachmentService {
     fileMime: string,
     pathId?: string,
     bucketName?: string,
-    attachmentType?,
+    attachmentType?: any,
     tx?: EntityManager,
   ) {
     if (!bucketName) {
