@@ -213,6 +213,7 @@ export class PartnerService {
                 const pathId = `${partnerPath}-${(attachmentType).toUpperCase()}.${ext[1]}`;
                 return pathId;
               },
+              attachmentType,
               manager,
             );
             newAttachments = attachments;
@@ -231,7 +232,7 @@ export class PartnerService {
         createAttachment as PartnerAttachmentDTO[],
       );
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new BadRequestException(error.message);
     }
   }
 

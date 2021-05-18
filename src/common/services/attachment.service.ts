@@ -20,6 +20,7 @@ export class AttachmentService {
     fileMime: string,
     pathId?: string,
     bucketName?: string,
+    attachmentType?,
     tx?: EntityManager,
   ) {
     if (!bucketName) {
@@ -48,6 +49,7 @@ export class AttachmentService {
       name: fileOriginalName,
       fileName: fileOriginalName,
       url,
+      attachmentType: attachmentType,
       createUserId: userId,
       updateUserId: userId,
     });
@@ -110,6 +112,7 @@ export class AttachmentService {
   public static async uploadFiles(
     files: any,
     pathHandler?: (arg: any) => string,
+    attachmentType?: any,
     tx?: EntityManager,
   ): Promise<Attachment[]> {
     try {
@@ -134,10 +137,10 @@ export class AttachmentService {
             file.mimetype,
             pathId,
             null,
+            attachmentType,
             txManager,
           );
         }
-        
         attachments.push(attachment);
       }
 
