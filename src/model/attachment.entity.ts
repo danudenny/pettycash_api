@@ -68,5 +68,5 @@ export class Attachment extends PtcBaseEntity {
     name: 'attachment_type',
     nullable: true 
   })
-  attachmentType: AttachmentType;
+  attachmentType?: AttachmentType;
 }

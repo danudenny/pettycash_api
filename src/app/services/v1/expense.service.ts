@@ -633,6 +633,7 @@ export class ExpenseService {
   public async createAttachment(
     expenseId: string,
     files?: any,
+    attachmentType?: any
   ): Promise<ExpenseAttachmentResponse> {
     try {
       const createAttachment = await getManager().transaction(
@@ -658,6 +659,7 @@ export class ExpenseService {
                 const pathId = `${expensePath}_${rid}_${file.originalname}`;
                 return pathId;
               },
+              attachmentType,
               manager,
             );
             newAttachments = attachments;
@@ -677,7 +679,7 @@ export class ExpenseService {
         createAttachment as ExpenseAttachmentDTO[],
       );
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new BadRequestException(error.message);
     }
   }
 
