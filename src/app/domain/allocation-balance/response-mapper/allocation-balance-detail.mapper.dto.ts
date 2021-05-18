@@ -38,6 +38,7 @@ export class AllocationDetailResponseMapper {
       id: ety.id,
       number: ety.number,
       amount: ety.amount,
+      createdAt: ety.createdAt,
       branchId: ety.branchId,
       branchName: ety.branch && ety.branch.branchName,
       transferDate: ety.transferDate,
