@@ -197,6 +197,12 @@ export class AllocationBalanceDetailDTO {
   description: string;
 
   @ApiProperty({
+    description: 'Created Date',
+    example: '2021-03-11',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
     description: 'Expense Histories',
     type: [AlocationBalanceHistoryDTO],
   })
