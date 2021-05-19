@@ -88,9 +88,10 @@ export class BalanceService {
           ((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) AS minimum_amount,
           ((((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) / 2) * 7) AS total_budget
         FROM budget b2
-        WHERE b2.state = 'approved_by_spv' AND b2.is_deleted IS FALSE
+        WHERE b2.state = 'approved_by_spv'
+          AND b2.is_deleted IS FALSE
+          AND (now() BETWEEN b2.start_date AND b2.end_date)
         ORDER BY b2.end_date DESC
-        LIMIT 1
       )
       SELECT
         branch_id,
@@ -249,9 +250,10 @@ export class BalanceService {
           ((b2.end_date - b2.start_date) + 1) AS total_day, b2.total_amount,
           ((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) AS minimum_amount
         FROM budget b2
-        WHERE b2.state = 'approved_by_spv' AND b2.is_deleted IS FALSE
+        WHERE b2.state = 'approved_by_spv'
+          AND b2.is_deleted IS FALSE
+          AND (now() BETWEEN b2.start_date AND b2.end_date)
         ORDER BY b2.end_date DESC
-        LIMIT 1
       )
       SELECT
         branch_id,
