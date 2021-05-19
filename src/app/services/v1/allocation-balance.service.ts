@@ -68,7 +68,7 @@ export class AllocationBalanceService {
       isSuperUser,
     } = await AuthService.getUserBranchAndRole();
 
-    qb.fieldResolverMap['receivedDate'] = 'cba.recevied_date';
+    qb.fieldResolverMap['receivedDate'] = 'cba.received_date';
     qb.fieldResolverMap['branchId'] = 'cba.branchId';
     qb.fieldResolverMap['state'] = 'cba.state';
     qb.fieldResolverMap['number__contains'] = 'cba.number';
