@@ -78,7 +78,6 @@ export enum DownPaymentState {
 export enum ExpenseState {
   DRAFT = 'draft',
   APPROVED_BY_SS_SPV = 'approved_by_ss_spv_ho',
-  APPROVED_BY_PIC = 'approved_by_pic_ho',
   REVERSED = 'reversed',
   REJECTED = 'rejected',
 }

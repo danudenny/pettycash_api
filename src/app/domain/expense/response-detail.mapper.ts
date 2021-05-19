@@ -36,7 +36,6 @@ export class ExpenseDetailResponseMapper {
       item.description = v.description;
       item.tax = v.tax;
       item.amount = v.amount;
-      item.picHoAmount = v.picHoAmount;
       item.ssHoAmount = v.ssHoAmount;
       item.checkedNote = v.checkedNote;
       item.isValid = v.isValid;

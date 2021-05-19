@@ -10,13 +10,6 @@ export class ApproveExpenseItemDTO {
   id: string;
 
   @ApiPropertyOptional({
-    description: 'Item PIC HO Amount',
-    example: 25000,
-  })
-  @IsOptional()
-  picHoAmount?: number;
-
-  @ApiPropertyOptional({
     description: 'Item SS HO Amount',
     example: 35000,
   })

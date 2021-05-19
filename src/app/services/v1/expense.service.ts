@@ -208,7 +208,6 @@ export class ExpenseService {
           item.productId = v.productId;
           item.description = v.description;
           item.amount = v.amount;
-          item.picHoAmount = v.amount;
           item.ssHoAmount = v.amount;
           // FIXME: Optimize this query!
           item.tax = await this.getTaxValue(payload.partnerId, v.productId);
@@ -400,7 +399,7 @@ export class ExpenseService {
         }
 
         const user = await AuthService.getUser({ relations: ['role'] });
-        const userRole = user?.role?.name;
+        const userRole = user?.role?.name as MASTER_ROLES;
         expense.updateUser = user;
 
         // if any payload.items, we should update it first.
@@ -416,43 +415,9 @@ export class ExpenseService {
           expense.items = updatedExpenseItem.items;
         }
 
-        // TODO: Implement State Machine for approval flow?
         let state: ExpenseState;
         const currentState = expense.state;
-        if (userRole === MASTER_ROLES.PIC_HO) {
-          // Approving with same state is not allowed
-          if (
-            currentState === ExpenseState.APPROVED_BY_PIC ||
-            currentState === ExpenseState.APPROVED_BY_SS_SPV
-          ) {
-            throw new BadRequestException(
-              `Can't approve expense with current state ${currentState}`,
-            );
-          }
-
-          state = ExpenseState.APPROVED_BY_PIC;
-
-          if (updatedExpenseItem) {
-            expense.totalAmount = updatedExpenseItem?.items
-              .map((m) => Number(m.picHoAmount))
-              .filter((i) => i)
-              .reduce((a, b) => a + b, 0);
-          }
-
-          // Update or Insert Loan from Expense.
-          await this.upsertLoanFromExpense(manager, expense);
-
-          // Update or Insert AccountStatement (Balance) from Expense.
-          await this.upsertAccountStatementFromExpense(manager, expense);
-
-          // Create Journal for PIC HO
-          await this.removeJournal(manager, expense);
-          const journal = await this.buildJournal(manager, expenseId, userRole);
-          await this.createJournal(manager, journal);
-        } else if (
-          userRole === MASTER_ROLES.SS_HO ||
-          userRole === MASTER_ROLES.SPV_HO
-        ) {
+        if ([MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)) {
           // Approving with same state is not allowed
           if (currentState === ExpenseState.APPROVED_BY_SS_SPV) {
             throw new BadRequestException(
@@ -488,7 +453,8 @@ export class ExpenseService {
         }
 
         if (expense?.downPaymentAmount !== 0) {
-          expense.differenceAmount = expense?.downPaymentAmount - expense.totalAmount;
+          expense.differenceAmount =
+            expense?.downPaymentAmount - expense.totalAmount;
         }
 
         expense.state = state;
@@ -633,7 +599,7 @@ export class ExpenseService {
   public async createAttachment(
     expenseId: string,
     files?: any,
-    attachmentType?: any
+    attachmentType?: any,
   ): Promise<ExpenseAttachmentResponse> {
     try {
       const createAttachment = await getManager().transaction(
@@ -823,7 +789,6 @@ export class ExpenseService {
       item.productId = v?.productId;
       item.description = v?.description;
       item.amount = v?.amount;
-      item.picHoAmount = v?.picHoAmount ?? v?.amount;
       item.ssHoAmount = v?.ssHoAmount ?? v?.amount;
       item.checkedNote = v?.checkedNote;
       // FIXME: Optimize this query!
@@ -1053,20 +1018,9 @@ export class ExpenseService {
       i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
       i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
       i.isLedger = isLedger;
-
-      // Get amount based on userRole
-      if (userRole === MASTER_ROLES.PIC_HO) {
-        i.credit = v.picHoAmount;
-      } else if (
-        userRole === MASTER_ROLES.SS_HO ||
-        userRole === MASTER_ROLES.SPV_HO
-      ) {
-        i.credit = v.ssHoAmount;
-      } else {
-        // Otherwise use admin branch amount
-        i.credit = v.amount;
-      }
-
+      i.credit = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)
+        ? v.ssHoAmount
+        : v.amount;
       items.push(i);
 
       // Add JournalItem for Tax
@@ -1156,20 +1110,9 @@ export class ExpenseService {
       i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
       i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
       i.isLedger = isLedger;
-
-      // Get amount based on userRole
-      if (userRole === MASTER_ROLES.PIC_HO) {
-        i.debit = v.picHoAmount;
-      } else if (
-        userRole === MASTER_ROLES.SS_HO ||
-        userRole === MASTER_ROLES.SPV_HO
-      ) {
-        i.debit = v.ssHoAmount;
-      } else {
-        // Otherwise use admin branch amount
-        i.debit = v.amount;
-      }
-
+      i.credit = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)
+        ? v.ssHoAmount
+        : v.amount;
       items.push(i);
 
       // Add JournalItem for Tax
@@ -1249,9 +1192,6 @@ export class ExpenseService {
 
       if (v.checkedNote) {
         item.checkedNote = v.checkedNote;
-      }
-      if (v.picHoAmount) {
-        item.picHoAmount = v.picHoAmount;
       }
       if (v.ssHoAmount) {
         item.ssHoAmount = v.ssHoAmount;
@@ -1581,12 +1521,10 @@ export class ExpenseService {
     manager: EntityManager,
     expense: Expense,
   ): Promise<void> {
-    await manager
-      .getRepository(AccountStatement)
-      .delete({
-        reference: expense?.number,
-        branchId: expense?.branchId,
-        isDeleted: false,
-      });
+    await manager.getRepository(AccountStatement).delete({
+      reference: expense?.number,
+      branchId: expense?.branchId,
+      isDeleted: false,
+    });
   }
 }

@@ -24,13 +24,6 @@ export class UpdateExpenseItemDTO {
   amount: number;
 
   @ApiPropertyOptional({
-    description: 'PIC Amount',
-    example: 25000,
-  })
-  @IsOptional()
-  picHoAmount?: number;
-
-  @ApiPropertyOptional({
     description: 'SS/SPV HO Amount',
     example: 25000,
   })

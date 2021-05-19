@@ -34,15 +34,6 @@ export class ExpenseItem extends PtcBaseEntity {
 
   @Column({
     type: 'decimal',
-    name: 'pic_ho_amount',
-    default: 0,
-    comment: 'Checked Amount by PIC HO',
-    transformer: new ColumnNumericTransformer(),
-  })
-  picHoAmount: number;
-
-  @Column({
-    type: 'decimal',
     name: 'ss_ho_amount',
     default: 0,
     comment: 'Checked Amount by SS/SPV HO',
