@@ -56,6 +56,14 @@ export class PartnerController {
     return await this.svc.list(query);
   }
 
+  @Get('check-partner')
+  @ApiOperation({ summary: 'List all Partners' })
+  @ApiOkResponse({ type: PartnerWithPaginationResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async activePartner() {
+    return await this.svc.updatePartnerActive();
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create Partner' })
   @ApiCreatedResponse({
