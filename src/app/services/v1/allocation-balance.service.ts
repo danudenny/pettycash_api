@@ -61,7 +61,7 @@ export class AllocationBalanceService {
   public async list(
     query: AllocationBalanceQueryDTO,
   ): Promise<AllocationBalanceWithPaginationResponse> {
-    const params = { order: '^number', limit: 10, ...query };
+    const params = { order: '^createdAt', limit: 10, ...query };
     const qb = new QueryBuilder(CashBalanceAllocation, 'cba', params);
     const {
       userBranchIds,
@@ -76,6 +76,7 @@ export class AllocationBalanceService {
     qb.applyFilterPagination();
     qb.selectRaw(
       ['cba.id', 'id'],
+      ['cba.created_at', 'createdAt'],
       ['br.branch_name', 'branchName'],
       ['cba.number', 'number'],
       ['cba.amount', 'amount'],
@@ -110,7 +111,7 @@ export class AllocationBalanceService {
     }
 
     const allocationBalance = await qb.exec();
-    return new AllocationBalanceWithPaginationResponse(allocationBalance)
+    return new AllocationBalanceWithPaginationResponse(allocationBalance, params)
   }
 
   public async getById(id: string): Promise<AllocationBalanceDetailResponse> {
@@ -197,8 +198,8 @@ export class AllocationBalanceService {
     try {
       const revision =  await this.cashbalRepo.update(id, revised);
       if (revision) {
-        revised.allocationHistory = await this.buildHistory(revised, { state });
-        await this.accHistoryRepo.save(revised.allocationHistory);
+        // revised.allocationHistory = await this.buildHistory(revised, { state });
+        // await this.accHistoryRepo.save(revised.allocationHistory);
         throw new HttpException('Sukses Revisi Alokasi Saldo Kas', HttpStatus.OK);
       }
     } catch (err) {
@@ -246,7 +247,7 @@ export class AllocationBalanceService {
           );
         }
         if (
-          currentState === CashBalanceAllocationState.APPROVED_BY_SS
+          currentState === CashBalanceAllocationState.CONFIRMED_BY_SS
         ) {
           throw new BadRequestException(
             `Tidak bisa konfirmasi Alokasi Saldo Kas dengan status ${currentState}`,
@@ -256,10 +257,10 @@ export class AllocationBalanceService {
           currentState === CashBalanceAllocationState.APPROVED_BY_SPV
         ) {
           throw new BadRequestException(
-            `Alokasi Saldo Kas sudah diapprove oleh ${currentState}, dan ${CashBalanceAllocationState.APPROVED_BY_SS} tidak bisa melakukan konfirmasi.`,
+            `Alokasi Saldo Kas sudah diapprove oleh ${currentState}, dan ${CashBalanceAllocationState.CONFIRMED_BY_SS} tidak bisa melakukan konfirmasi.`,
           );
         }
-        state = CashBalanceAllocationState.APPROVED_BY_SS;
+        state = CashBalanceAllocationState.CONFIRMED_BY_SS;
       }
 
       // ! HINT: Approve by SPV HO
@@ -321,7 +322,7 @@ export class AllocationBalanceService {
       
       
     });
-    if (approveAllocation['state'] === 'approved_by_ss_ho') {
+    if (approveAllocation['state'] === 'confirmed_by_ss_ho') {
       throw new HttpException(`Konfirmasi setuju dari SS HO`, HttpStatus.OK)
     }
     if (approveAllocation['state'] === CashBalanceAllocationState.EXPIRED) {
@@ -523,7 +524,7 @@ export class AllocationBalanceService {
         }
 
         if (
-          currentState === CashBalanceAllocationState.APPROVED_BY_SS
+          currentState === CashBalanceAllocationState.CONFIRMED_BY_SS
         ) {
           throw new BadRequestException(
             `Tidak bisa terima Alokasi Saldo Kas dengan status ${currentState}, Alokasi saldo harus diapprove oleh spv HO`,

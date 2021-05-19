@@ -1,3 +1,4 @@
+import { Expense } from './../../../model/expense.entity';
 import { AttachmentType } from './../../../model/utils/enum';
 import { BadRequestException, HttpException, HttpStatus, NotFoundException, Req } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -21,6 +22,7 @@ import {
 import { UpdatePartnerDTO } from '../../domain/partner/update.dto';
 import { AuthService } from './auth.service';
 import { CreatePartnerAttachmentDTO } from '../../domain/partner/create-attachment.dto';
+import dayjs from 'dayjs';
 
 export class PartnerService {
   constructor(
@@ -108,6 +110,7 @@ export class PartnerService {
     const responsiblePartner = await this.getUser();
     partner.createUserId = responsiblePartner.id;
     partner.updateUserId = responsiblePartner.id;
+    partner.isActive = true;
 
     const newPartner = await this.partnerRepo.save(partner);
     return new PartnerResponse(newPartner);
@@ -261,4 +264,43 @@ export class PartnerService {
 
     throw new HttpException('Berhasil menghapus attachment', HttpStatus.OK)
   }
+
+  public async updatePartnerActive() {
+    const qb = new QueryBuilder(Expense, 'exp');
+    qb.selectRaw(
+      ['prt.id', 'id'],
+      ['prt.name', 'name'],
+      ['exp.transaction_date', 'transactionDate'],
+      ['prt.is_active', 'isActive'],
+    );
+    qb.leftJoin((e) => e.partner, 'prt');
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+    qb.andWhere(
+      (e) => e.partner.isActive,
+      (v) => v.isTrue(),
+    );
+
+    const getPartner = await qb.exec();
+
+    const update = await this.partnerRepo.create({
+      isActive: false,
+      updatedAt: new Date()
+    });
+
+    getPartner.forEach(element => {
+      const dateNow = dayjs(new Date());
+      const trxDate = dayjs(element.transactionDate);
+      const diffDate = dateNow.diff(trxDate, 'days')
+      if (diffDate > 182.6) {
+        let nonActPartner =  this.partnerRepo.update(element.id, update);
+        return new HttpException(nonActPartner, HttpStatus.OK);
+      }
+        
+    });
+  }
 }
+
+// TODO: if date > 6bulan

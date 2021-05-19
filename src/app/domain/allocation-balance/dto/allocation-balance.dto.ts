@@ -77,6 +77,12 @@ export class AllocationBalanceDTO {
     example: null,
   })
   receivedUserName: string;
+
+  @ApiProperty({
+    description: 'Created At',
+    example: '2021-03-11',
+  })
+  createdAt: Date;
 }
 
 export class RejectAllocationDTO {

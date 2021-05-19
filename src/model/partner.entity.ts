@@ -80,6 +80,12 @@ export class Partner extends PtcBaseEntity {
   })
   type: PartnerType;
 
+  @Column({
+    default: true,
+    name: 'is_active'
+  })
+  isActive: boolean;
+
   @ManyToMany(() => Attachment)
   @JoinTable({
     name: 'partner_attachment',

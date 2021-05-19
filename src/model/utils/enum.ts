@@ -21,7 +21,7 @@ export enum BudgetRequestState {
 
 export enum CashBalanceAllocationState {
   DRAFT = 'draft',
-  APPROVED_BY_SS = 'approved_by_ss_ho',
+  CONFIRMED_BY_SS = 'confirmed_by_ss_ho',
   APPROVED_BY_SPV = 'approved_by_spv_ho',
   REJECTED = 'rejected',
   RECEIVED = 'received',
