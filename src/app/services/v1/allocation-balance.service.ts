@@ -1,12 +1,12 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.entity';
-import { getManager, In, Repository } from 'typeorm';
+import { EntityManager, getManager, In, Repository } from 'typeorm';
 import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CashBalanceAllocationState, MASTER_ROLES } from '../../../model/utils/enum';
+import { AccountStatementAmountPosition, AccountStatementType, CashBalanceAllocationState, MASTER_ROLES } from '../../../model/utils/enum';
 import { AccountStatementHistory } from '../../../model/account-statement-history.entity';
 import { RejectAllocationDTO } from '../../domain/allocation-balance/dto/allocation-balance.dto';
 import dayjs from 'dayjs';
@@ -16,6 +16,7 @@ import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance
 import { CreateAllocationBalanceOdooDTO } from '../../domain/allocation-balance/dto/allocation-balance-odoo-create.dto';
 import { CashBalanceAllocationOdoo } from '../../../model/cash.balance.allocation-odoo.entity';
 import { RevisionAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-balance-revision.dto';
+import { AccountStatement } from '../../../model/account-statement.entity';
 
 @Injectable()
 export class AllocationBalanceService {
@@ -26,7 +27,7 @@ export class AllocationBalanceService {
     @InjectRepository(AccountStatementHistory)
     private readonly accHistoryRepo: Repository<AccountStatementHistory>,
     @InjectRepository(CashBalanceAllocationOdoo)
-    private readonly odooRepo: Repository<CashBalanceAllocationOdoo>
+    private readonly odooRepo: Repository<CashBalanceAllocationOdoo>,
   ) {}
 
   private async getUser(includeBranch: boolean = false) {
@@ -56,6 +57,47 @@ export class AllocationBalanceService {
       newHistory,
     ]) as AccountStatementHistory[];
     return history.filter((v) => v);
+  }
+
+  private async buildAccountStatement(
+    cashBal: CashBalanceAllocation,
+  ): Promise<AccountStatement> {
+    const userResponsible = await this.getUser();
+    const stmt = new AccountStatement();
+    stmt.branchId = cashBal.branchId;
+    stmt.createUserId = userResponsible.id;
+    stmt.updateUserId = userResponsible.id;
+    stmt.reference = cashBal.number;
+    stmt.amount = cashBal.amount;
+    stmt.transactionDate = cashBal.transferDate;
+    stmt.type = AccountStatementType.BANK;
+    stmt.amountPosition = AccountStatementAmountPosition.DEBIT;
+
+    return stmt;
+  }
+
+  private async upsertAccountStatementFromExpense(
+    manager: EntityManager,
+    cashBal: CashBalanceAllocation,
+  ): Promise<AccountStatement> {
+    const accStmtRepo = manager.getRepository(AccountStatement);
+    const statement = await accStmtRepo.findOne({
+      where: {
+        reference: cashBal?.number,
+        branchId: cashBal?.branchId,
+        isDeleted: false,
+      },
+    });
+
+    if (statement) {
+      // delete existing statement
+      await accStmtRepo.delete({ id: statement?.id });
+    }
+
+    // insert statement
+    const stmt = await this.buildAccountStatement(cashBal);
+    console.log(stmt);
+    return await accStmtRepo.save(stmt);
   }
 
   public async list(
@@ -531,6 +573,7 @@ export class AllocationBalanceService {
           );
         }
         state = CashBalanceAllocationState.RECEIVED;
+        await this.upsertAccountStatementFromExpense(manager, allocation);
       }
 
       if (!state) {
