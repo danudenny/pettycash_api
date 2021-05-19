@@ -6,12 +6,11 @@ export class AuthorizationResponseMapper {
     const it = new AuthorizationDTO();
     it.id = ety.id;
     it.username = ety.username;
+    it.firstName = ety.firstName;
+    it.lastName = ety.lastName;
     it.roleId = ety.roleId;
-    it.roleName = ety.role && ety.role.name;
-    it.permissions =
-      ety.role &&
-      ety.role.permissions &&
-      ety.role.permissions.map((v) => v.name);
+    it.roleName = ety?.role?.name;
+    it.permissions = ety?.role?.permissions?.map((v) => v.name);
     return it;
   }
 
