@@ -86,8 +86,17 @@ export class BalanceService {
           b2.state,
           ((b2.end_date - b2.start_date) + 1) AS total_day, b2.total_amount,
           ((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) AS minimum_amount,
-          ((((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) / 2) * 7) AS total_budget
+          (((((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) / 2) * 7) + COALESCE(br.total, 0)) AS total_budget
         FROM budget b2
+        LEFT JOIN (
+          SELECT
+            br2.budget_id,
+            sum(br2.total_amount) AS total
+          FROM budget_request br2
+          WHERE br2.is_deleted IS FALSE
+            AND br2.state = 'approved_by_pic_ho'
+          GROUP BY br2.budget_id
+        ) br ON br.budget_id = b2.id
         WHERE b2.state = 'approved_by_spv'
           AND b2.is_deleted IS FALSE
           AND (now() BETWEEN b2.start_date AND b2.end_date)
