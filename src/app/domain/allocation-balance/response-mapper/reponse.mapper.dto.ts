@@ -17,6 +17,7 @@ export class AllocationBalanceResponseMapper {
     it.receivedDate = data.receivedDate;
     it.receivedUserId = data.receivedUserId;
     it.receivedUserName = data.receivedUserName;
+    it.isPaid = data.isPaid;
     return it;
   }
 
@@ -33,6 +34,7 @@ export class AllocationBalanceResponseMapper {
       state: ety.state,
       receivedDate: ety.receivedDate,
       receivedUserName: ety.receivedUser && `${ety.receivedUser?.firstName} ${ety.receivedUser?.lastName}`,
+      isPaid: ety.isPaid
     });
   }
 

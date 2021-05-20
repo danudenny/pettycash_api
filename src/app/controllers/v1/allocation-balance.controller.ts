@@ -4,7 +4,7 @@ import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/a
 import { AllocationBalanceService } from '../../services/v1/allocation-balance.service';
 import { AllocationBalanceResponse, AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import FindIdParams from '../../domain/common/findId-param.dto';
-import { RejectAllocationDTO } from '../../domain/allocation-balance/dto/allocation-balance.dto';
+import { PaidAllocationDTO, RejectAllocationDTO } from '../../domain/allocation-balance/dto/allocation-balance.dto';
 import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
 import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/dto/allocation-balance-detail.dto';
 import { RevisionAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-balance-revision.dto';
@@ -91,5 +91,17 @@ export class AllocationBalanceController {
     @Body() data: RevisionAllocationBalanceDTO
   ) {
     return await this.allocBallanceService.revision(id, data);
+  }
+
+  @Patch('/:id/paid')
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
+  @ApiParam({name: 'number'})
+  @ApiOperation({ summary: 'Change status paid from odoo' })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async paid(
+    @Param() number: string, 
+    payload: PaidAllocationDTO,
+  ) {
+    return await this.allocBallanceService.isPaid(number, payload);
   }
 }

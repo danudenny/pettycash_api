@@ -45,6 +45,13 @@ export class CashBalanceAllocation extends PtcBaseEntity {
   @Index()
   receivedUserId?: string;
 
+  @Column({
+    type: 'boolean',
+    default: false,
+    name: 'is_paid'
+  })
+  isPaid: boolean;
+
   @ManyToOne(() => Branch)
   @JoinColumn({ name: 'branch_id' })
   branch: Branch;
