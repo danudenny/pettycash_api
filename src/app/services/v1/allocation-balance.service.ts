@@ -1,6 +1,6 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.entity';
-import { EntityManager, getManager, In, Repository } from 'typeorm';
+import { EntityManager, getConnection, getManager, In, Repository } from 'typeorm';
 import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -8,7 +8,7 @@ import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundExc
 import { AuthService } from './auth.service';
 import { AccountStatementAmountPosition, AccountStatementType, CashBalanceAllocationState, MASTER_ROLES } from '../../../model/utils/enum';
 import { AccountStatementHistory } from '../../../model/account-statement-history.entity';
-import { RejectAllocationDTO } from '../../domain/allocation-balance/dto/allocation-balance.dto';
+import { PaidAllocationDTO, RejectAllocationDTO } from '../../domain/allocation-balance/dto/allocation-balance.dto';
 import dayjs from 'dayjs';
 import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
@@ -237,15 +237,18 @@ export class AllocationBalanceService {
     revised.id = id;
 
     const state = revised.state;
+    const currentState = idCba.state;
     try {
       const revision =  await this.cashbalRepo.update(id, revised);
       if (revision) {
-        // revised.allocationHistory = await this.buildHistory(revised, { state });
-        // await this.accHistoryRepo.save(revised.allocationHistory);
+        if (currentState !== CashBalanceAllocationState.DRAFT) {
+          revised.allocationHistory = await this.buildHistory(revised, { state });
+          await this.accHistoryRepo.save(revised.allocationHistory);
+        }
         throw new HttpException('Sukses Revisi Alokasi Saldo Kas', HttpStatus.OK);
       }
     } catch (err) {
-      throw err;
+      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -590,5 +593,32 @@ export class AllocationBalanceService {
       await manager.save(allocation);
     });
     throw new HttpException('Dana diterima oleh Admin Branch', HttpStatus.OK)
+  }
+
+  public async isPaid(number: string, payload: PaidAllocationDTO): Promise<any> {
+    const paidDto = await this.cashbalRepo.create(payload)
+    const checkId = await await getConnection()
+                    .createQueryBuilder()
+                    .select("cba")
+                    .from(CashBalanceAllocation, "cba")
+                    .where("number = :number", { number })
+                    .andWhere("is_deleted = false")
+                    .andWhere("is_paid = false")
+                    .getOne();
+
+    console.log(checkId);
+
+    if (!checkId) {
+      throw new HttpException("Nomor Referensi tidak ditemukan", HttpStatus.NOT_FOUND);
+    }
+
+    paidDto.isPaid = true;
+    paidDto.updatedAt = new Date();
+
+    try {
+      await this.cashbalRepo.update(number, paidDto);
+    } catch (err) {
+      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

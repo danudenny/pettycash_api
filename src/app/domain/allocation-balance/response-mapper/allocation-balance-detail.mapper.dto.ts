@@ -53,6 +53,7 @@ export class AllocationDetailResponseMapper {
       destinationBankId: ety.destinationBankId,
       bankName: ety.destinationBank && ety.destinationBank.bankName,
       accountNumber: ety.destinationBank && ety.destinationBank.accountNumber,
+      isPaid: ety.isPaid,
       histories: this.toAccountStatementHistoryDTO(ety.allocationHistory, ety.branch),
     });
   }
