@@ -248,7 +248,7 @@ export class AllocationBalanceService {
         throw new HttpException('Sukses Revisi Alokasi Saldo Kas', HttpStatus.OK);
       }
     } catch (err) {
-      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw err
     }
   }
 
