@@ -33,6 +33,13 @@ export class CreateDownPaymentDTO {
   })
   @IsUUID()
   periodId: string;
+  
+  @ApiProperty({
+    description: 'Product ID',
+    example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
+  })
+  @IsUUID()
+  productId?: string;
 
   @ApiProperty({ description: 'Destination Place', example: 'Jakarta' })
   destinationPlace?: string;

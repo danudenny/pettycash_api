@@ -168,6 +168,7 @@ export class DownPaymentService {
         downPayment.state = DownPaymentState.DRAFT;
         downPayment.type = payload.type;
         downPayment.periodId = payload.periodId;
+        downPayment.productId = payload.productId;
         downPayment.amount = payload.amount;
         downPayment.number = payload.number;
         downPayment.employeeId = payload.employeeId;
