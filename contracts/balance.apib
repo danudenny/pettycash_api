@@ -62,3 +62,40 @@ API to get all balance branches (saldo cabang).
                 "status": "error",
                 "message": "Internal Server Error"
             }
+
+## Summary Balance [GET /v1/balances/summary?noCache]
+
+API to get summary balance branches (saldo cabang).
+
++ Parameters
+    + noCache: false (boolean) - Force to not use cache.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": {
+                    "branchId": "eaaf465b-65bc-4784-909e-8d0180c6eb4c",
+                    "branchName": "Tangerang Pinang",
+                    "bankAmount": 2000000,
+                    "cashAmount": 2000000,
+                    "totalAmount": 2000000,
+                    "minimumAmount": 2300000,
+                    "retreiveAt": "2021-04-07T10:25:19.917Z",
+                    "deviationAmount": 1000
+                }
+        }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "message": "Internal Server Error"
+            }
