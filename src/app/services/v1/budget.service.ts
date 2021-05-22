@@ -242,7 +242,6 @@ export class BudgetService {
       budget.items = items;
       budget.createUser = user;
       budget.updateUser = user;
-      console.log(budget);
 
       const result = await this.budgetRepo.save(budget);
       return new BudgetResponse(result);
@@ -382,13 +381,6 @@ export class BudgetService {
             budgetExist.minimumAmount = getMinimumAmount;
             budgetExist.rejectedNote = null;
             budgetExist.state = BudgetState.DRAFT;
-            // budgetExist.histories = await this.buildHistory(budgetExist, {
-            //   state: BudgetState.DRAFT,
-            //   endDate: data.endDate,
-            // });
-            // if (items.length > 0) {
-            //   budgetExist.items = items;
-            // }
             budgetExist.createUser = user;
             budgetExist.updateUser = user;
     
@@ -477,9 +469,6 @@ export class BudgetService {
               state: BudgetState.DRAFT,
               endDate: data.endDate,
             });
-            // if (items.length > 0) {
-            //   budgetExist.items = items;
-            // }
             budgetExist.createUser = user;
             budgetExist.updateUser = user;
     
