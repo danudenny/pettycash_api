@@ -1,5 +1,6 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { getConnection } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { getConnection, Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Branch } from '../../../model/branch.entity';
 import { QueryBalanceDTO } from '../../domain/balance/balance.query.dto';
@@ -9,11 +10,14 @@ import { parseBool } from '../../../shared/utils/parser';
 import { QuerySummaryBalanceDTO } from '../../domain/balance/summary-balance.query.dto';
 import { LoaderEnv } from '../../../config/loader';
 import { BalanceSummaryResponse } from '../../domain/balance/summary-response.dto';
-import { MASTER_ROLES } from '../../../model/utils/enum';
+import { GlobalSetting } from '../../../model/global-setting.entity';
 
 @Injectable()
 export class BalanceService {
-  constructor() {}
+  constructor(
+    @InjectRepository(GlobalSetting)
+    private readonly settingRepo: Repository<GlobalSetting>
+  ) {}
 
   public async list(
     query: QueryBalanceDTO,
@@ -34,8 +38,10 @@ export class BalanceService {
     query?: QuerySummaryBalanceDTO,
   ): Promise<BalanceSummaryResponse> {
     const params = { ...query };
+    const deviationAmount = await this.getDeviationAmount();
     const balances = await this.getSummaryBalances(params);
-    return new BalanceSummaryResponse(balances);
+    
+    return new BalanceSummaryResponse(balances, deviationAmount);
   }
 
   private async getBalances(query?: QueryBalanceDTO): Promise<any> {
@@ -291,5 +297,18 @@ export class BalanceService {
 
     const result = await qb.exec();
     return result;
+  }
+
+  private async getDeviationAmount(): Promise<number> {
+    const setting = await this.settingRepo.findOne({
+      relations: [
+        'voucherPartner',
+        'cashTransitCoa',
+        'downPaymentPerdinCoa',
+        'downPaymentReimbursementCoa',
+      ],
+    });
+
+    return setting.deviationAmount;
   }
 }
