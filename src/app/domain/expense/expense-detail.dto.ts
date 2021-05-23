@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsUUID } from 'class-validator';
 import {
+  ExpenseAssociationType,
   ExpensePaymentType,
   ExpenseState,
   ExpenseType,
@@ -59,6 +60,18 @@ export class ExpenseDetailDTO {
   partnerName: string;
 
   @ApiProperty({
+    description: 'Employee Id',
+    example: '9f4fd156-7b54-4107-b2f6-52b165ab77e0',
+  })
+  employeeId: string;
+
+  @ApiProperty({
+    description: 'Employee Name',
+    example: 'Silvia Agustin',
+  })
+  employeeName: string;
+
+  @ApiProperty({
     description: 'Source Document',
     example: 'SRC-DOC - 001',
   })
@@ -107,6 +120,13 @@ export class ExpenseDetailDTO {
     enum: ExpensePaymentType,
   })
   paymentType: ExpensePaymentType;
+
+  @ApiProperty({
+    description: 'Expense Association Type',
+    example: ExpenseAssociationType.PARTNER,
+    enum: ExpenseAssociationType,
+  })
+  associationType: ExpenseAssociationType;
 
   @ApiProperty({
     description: 'Expense State',

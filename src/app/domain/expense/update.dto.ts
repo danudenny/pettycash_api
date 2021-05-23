@@ -29,6 +29,14 @@ export class UpdateExpenseDTO {
   partnerId?: string;
 
   @ApiPropertyOptional({
+    description: 'Employee ID',
+    example: '4719ee67-6197-4771-8feb-f3db2cdc9d2f',
+  })
+  @IsUUID()
+  @IsOptional()
+  employeeId?: string;
+
+  @ApiPropertyOptional({
     description: 'Down Payment ID',
     example: 'b7726b7b-6882-42ea-b623-d8f8a347ba0b',
   })
