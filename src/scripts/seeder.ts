@@ -25,6 +25,8 @@ import { Department } from '../model/department.entity';
 import { DepartmentSeed } from '../seeders/department.seed';
 import { BankBranch } from '../model/bank-branch.entity';
 import BankBranchSeed from '../seeders/bank-branch.seed';
+import { Product } from '../model/product.entity';
+import { ProductSeed } from '../seeders/product.seed';
 
 async function run() {
   // init connection
@@ -55,6 +57,9 @@ async function run() {
   await connection.getRepository(AccountCoa).save(AccountCoaSeed);
 
   await AssignCoaToBranch(connection);
+
+  // seed data product with coa
+  await connection.getRepository(Product).save(ProductSeed);
 
   // seed data account tax
   await connection.getRepository(AccountTax).save(AccountTaxSeed);
