@@ -18,6 +18,7 @@ import { Partner } from './partner.entity';
 import { Period } from './period.entity';
 import { ExpensePaymentType, ExpenseState, ExpenseType } from './utils/enum';
 import { ColumnNumericTransformer } from './utils/transformer';
+import { Employee } from './employee.entity';
 
 @Entity('expense')
 export class Expense extends PtcBaseEntity {
@@ -45,8 +46,11 @@ export class Expense extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'down_payment_id', nullable: true })
   downPaymentId?: string;
 
-  @Column({ type: 'uuid', name: 'partner_id' })
-  partnerId: string;
+  @Column({ type: 'uuid', name: 'partner_id', nullable: true })
+  partnerId?: string;
+
+  @Column({ type: 'uuid', name: 'employee_id', nullable: true })
+  employeeId?: string;
 
   @Column({
     type: 'enum',
@@ -130,6 +134,10 @@ export class Expense extends PtcBaseEntity {
   @ManyToOne(() => Partner)
   @JoinColumn({ name: 'partner_id' })
   partner: Partner;
+
+  @ManyToOne(() => Employee)
+  @JoinColumn({ name: 'employee_id' })
+  employee: Employee;
 
   // Use Relations to Journals?
   // @Column({ type: 'uuid', name: 'journal_id', nullable: true })

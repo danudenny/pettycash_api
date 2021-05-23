@@ -92,6 +92,11 @@ export enum ExpenseType {
   EXPENSE = 'expense',
 }
 
+export enum ExpenseAssociationType {
+  PARTNER = 'partner',
+  EMPLOYEE = 'employee'
+}
+
 export enum AccountPaymentPayMethod {
   CASH = 'cash',
   BANK = 'bank',
