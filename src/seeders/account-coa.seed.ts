@@ -4,7 +4,14 @@ import { Branch } from '../model/branch.entity';
 
 const COA_ID_KAS_KANTOR_PUSAT = '36d2b72d-b1bb-4eed-8763-cd3378143353';
 const COA_ID_KAS_MEDAN = '10520f57-45a1-4480-8ac5-662a8f468b7a';
-const COA_ID_TAX2PERSEN = '01e5c4a4-e681-4608-b58b-a54a513f6a6b';
+export const COA_ID_TAX2PERSEN = '01e5c4a4-e681-4608-b58b-a54a513f6a6b';
+export const COA_ID_TAXPPH23 = '5470f0a1-7d58-4267-b4f0-ef1937833903';
+export const COA_ID_TAXPPH21 = 'eaa5a57c-a044-4f59-91ae-010bbe6bd28d';
+export const COA_ID_TAXPPH4A2 = 'd14ca044-5d1e-4ee2-9fba-6c84b295a27f';
+export const COA_ID_JASA = '429fcd37-cc5c-41ea-a5f0-26e4c00dc03a';
+export const COA_ID_SEWA_BANGUNAN = '785c3ed1-5a15-4c68-9fb0-f862594e3fa0';
+export const COA_ID_SEWA_ALAT = 'a1f71689-17a6-4505-b202-c4131b401243';
+export const COA_ID_BENSIN = '546ca89a-4f07-4821-8870-d276540187a8';
 
 const getAccounts = () => {
   let coas: AccountCoa[] = [];
@@ -45,6 +52,30 @@ const getAccounts = () => {
   coa5.name = 'Down Payment Reimbursement Coa Pengganti';
   coas.push(coa5);
 
+  const coa6 = new AccountCoa();
+  coa6.id = COA_ID_JASA;
+  coa6.code = '600.001.001X';
+  coa6.name = 'Biaya Iklan Marketing';
+  coas.push(coa6);
+
+  const coa7 = new AccountCoa();
+  coa7.id = COA_ID_SEWA_BANGUNAN;
+  coa7.code = '116.002.001X';
+  coa7.name = 'Biaya Sewa Ruko/Rumah Dibayar Dimuka';
+  coas.push(coa7);
+
+  const coa8 = new AccountCoa();
+  coa8.id = COA_ID_SEWA_ALAT;
+  coa8.code = '116.002.003X';
+  coa8.name = 'Biaya Sewa Alat dan Kendaraan';
+  coas.push(coa8);
+
+  const coa9 = new AccountCoa();
+  coa9.id = COA_ID_BENSIN;
+  coa9.code = '500.001.002X';
+  coa9.name = 'Biaya Bensin';
+  coas.push(coa9);
+
   const coaCashKantorPusat = new AccountCoa();
   coaCashKantorPusat.id = COA_ID_KAS_KANTOR_PUSAT;
   coaCashKantorPusat.code = '111.001.0010';
@@ -57,11 +88,23 @@ const getAccounts = () => {
   coaCashMedan.name = 'Kas Medan';
   coas.push(coaCashMedan);
 
-  const coaTax2Persen = new AccountCoa();
-  coaTax2Persen.id = COA_ID_TAX2PERSEN;
-  coaTax2Persen.code = '200.004.0010';
-  coaTax2Persen.name = 'Tax 2%';
-  coas.push(coaTax2Persen);
+  const coaPPH23 = new AccountCoa();
+  coaPPH23.id = COA_ID_TAXPPH23;
+  coaPPH23.code = '200.004.003X';
+  coaPPH23.name = 'PPh Pasal 23 YMH Dibayar';
+  coas.push(coaPPH23);
+
+  const coaPPH21 = new AccountCoa();
+  coaPPH21.id = COA_ID_TAXPPH21;
+  coaPPH21.code = '200.004.002X';
+  coaPPH21.name = 'PPh Pasal 21 YMH Dibayar';
+  coas.push(coaPPH21);
+
+  const coaPPH4A2 = new AccountCoa();
+  coaPPH4A2.id = COA_ID_TAXPPH4A2;
+  coaPPH4A2.code = '200.004.001X';
+  coaPPH4A2.name = 'PPh Pasal 4(2) YMH Dibayar';
+  coas.push(coaPPH4A2);
 
   coas = coas.map((mcoa) => {
     const temp = Object.assign({}, mcoa);
@@ -89,4 +132,4 @@ const AssignCoaToBranch = async (conn: Connection) => {
   });
 };
 
-export { AssignCoaToBranch, AccountCoaSeed, COA_ID_TAX2PERSEN };
+export { AssignCoaToBranch, AccountCoaSeed };
