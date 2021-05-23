@@ -28,8 +28,6 @@ const RolePICHO = [
 
   'expense:read',
   'expense:update',
-  'expense:approve',
-  'expense:reject',
   'expense.attachment:read',
 
   'menu.report:read',

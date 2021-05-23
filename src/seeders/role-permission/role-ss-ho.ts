@@ -23,7 +23,6 @@ const RoleSSHO = [
   'down.payment:reject',
 
   'expense:read',
-  'expense:update',
   'expense:approve',
   'expense:reject',
   'expense.attachment:read',

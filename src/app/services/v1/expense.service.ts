@@ -24,6 +24,7 @@ import {
   AccountTaxPartnerType,
   DownPaymentState,
   DownPaymentType,
+  ExpenseAssociationType,
   ExpenseState,
   ExpenseType,
   JournalSourceType,
@@ -70,6 +71,7 @@ import { Loan } from '../../../model/loan.entity';
 import { UpdateExpenseDTO } from '../../domain/expense/update.dto';
 import { UpdateExpenseItemDTO } from '../../domain/expense/update-item.dto';
 import { AccountStatement } from '../../../model/account-statement.entity';
+import { Employee } from '../../../model/employee.entity';
 
 @Injectable()
 export class ExpenseService {
@@ -80,6 +82,8 @@ export class ExpenseService {
     private readonly taxRepo: Repository<AccountTax>,
     @InjectRepository(Partner)
     private readonly partnerRepo: Repository<Partner>,
+    @InjectRepository(Employee)
+    private readonly employeeRepo: Repository<Employee>,
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
     @InjectRepository(Attachment)
@@ -168,6 +172,7 @@ export class ExpenseService {
         'period',
         'branch',
         'partner',
+        'employee',
         'downPayment',
         'items',
         'items.product',
@@ -197,9 +202,26 @@ export class ExpenseService {
           payload.number = GenerateCode.expense();
         }
 
+        if (!(payload?.partnerId || payload?.employeeId)) {
+          throw new BadRequestException(
+            `Expense data must have 'partnerId' or 'employeeId'!`,
+          );
+        }
+
+        if (payload?.partnerId && payload?.employeeId) {
+          throw new BadRequestException(
+            `Please choose either 'partnerId' or 'employeeId' only!`,
+          );
+        }
+
         const user = await this.getUser(true);
         const branchId = user && user.branches && user.branches[0].id;
         let downPayment: DownPayment;
+
+        const associationType = payload?.partnerId
+          ? ExpenseAssociationType.PARTNER
+          : ExpenseAssociationType.EMPLOYEE;
+        const associationId = payload?.partnerId || payload?.employeeId;
 
         // Build ExpenseItem
         const items: ExpenseItem[] = [];
@@ -210,7 +232,11 @@ export class ExpenseService {
           item.amount = v.amount;
           item.ssHoAmount = v.amount;
           // FIXME: Optimize this query!
-          item.tax = await this.getTaxValue(payload.partnerId, v.productId);
+          item.tax = await this.getTaxValue(
+            v?.productId,
+            associationType,
+            associationId,
+          );
           item.createUser = user;
           item.updateUser = user;
           item.attributes = v?.attributes?.map((a) => {
@@ -231,7 +257,8 @@ export class ExpenseService {
         expense.sourceDocument = payload.sourceDocument;
         expense.transactionDate = payload.transactionDate;
         expense.periodId = payload.periodId;
-        expense.partnerId = payload.partnerId;
+        expense.partnerId = payload?.partnerId;
+        expense.employeeId = payload?.employeeId;
         expense.type = ExpenseType.EXPENSE;
         expense.paymentType = payload.paymentType;
         expense.state = ExpenseState.DRAFT;
@@ -291,9 +318,19 @@ export class ExpenseService {
   ): Promise<ExpenseResponse> {
     try {
       const updateExpense = await getManager().transaction(async (manager) => {
-        const exp = await manager.getRepository(Expense).findOne({
-          where: { id, isDeleted: false },
-        });
+        const {
+          userBranchIds,
+          isSuperUser,
+          user,
+        } = await AuthService.getUserBranchAndRole();
+
+        const where = { id, isDeleted: false };
+        if (!isSuperUser) {
+          Object.assign(where, { branchId: In(userBranchIds) });
+        }
+
+        const expenseRepo = manager.getRepository(Expense);
+        const exp = await expenseRepo.findOne({ where });
 
         if (!exp) {
           throw new NotFoundException(`Expense with ID ${id} not found!`);
@@ -305,11 +342,10 @@ export class ExpenseService {
           );
         }
 
-        const user = await AuthService.getUser();
-
         exp.transactionDate = payload?.transactionDate ?? exp.transactionDate;
         exp.periodId = payload?.periodId ?? exp.periodId;
         exp.partnerId = payload?.partnerId ?? exp.partnerId;
+        exp.employeeId = payload?.employeeId ?? exp.employeeId;
         exp.sourceDocument = payload?.sourceDocument ?? exp.sourceDocument;
         exp.paymentType = payload?.paymentType ?? exp.paymentType;
         exp.updateUserId = user?.id;
@@ -348,6 +384,26 @@ export class ExpenseService {
             exp.downPaymentAmount = downPayment.amount;
             exp.differenceAmount = downPayment.amount - exp.totalAmount;
           }
+        }
+
+        // Update ExpenseItem tax if partner or employee changed and items not updated.
+        if ((payload?.partnerId || payload?.employeeId) && !payload?.items) {
+          // re-fetch expense with items
+          const expense = await expenseRepo.findOne({
+            where: { id, isDeleted: false },
+            relations: ['items'],
+          });
+          const associationType: ExpenseAssociationType = payload?.partnerId
+            ? ExpenseAssociationType.PARTNER
+            : ExpenseAssociationType.EMPLOYEE;
+          const associationId = payload?.partnerId || payload?.employeeId;
+
+          await this.updateExpenseItemTax(
+            manager,
+            expense?.items,
+            associationType,
+            associationId,
+          );
         }
 
         await manager.save(exp);
@@ -674,34 +730,49 @@ export class ExpenseService {
   }
 
   private async getTax(
-    partnerId: string,
     productId: string,
+    associationType: ExpenseAssociationType,
+    associationId: string,
   ): Promise<AccountTax> {
     // FIXME: Refactor to use single query if posible.
     const { JASA, SEWA_ALAT_DAN_KENDARAAN, SEWA_BANGUNAN } = ProductTaxType;
     const { PERSONAL, COMPANY } = PartnerType;
+    const isEmployee = associationType === ExpenseAssociationType.EMPLOYEE;
     let tax: AccountTax;
     let taxGroup: AccountTaxGroup;
     let isHasNpwp: boolean = false;
+    let partnerType: PartnerType;
 
     const product = await this.productRepo.findOne(
       { id: productId },
       { select: ['id', 'isHasTax', 'taxType'] },
     );
-    const partner = await this.partnerRepo.findOne(
-      { id: partnerId },
-      { select: ['id', 'type', 'npwpNumber'] },
-    );
+
+    if (isEmployee) {
+      // FIXME: check if employee has valid npwp or not.
+      // const employee = await this.employeeRepo.findOne(
+      //   { id: associationId },
+      //   { select: ['id', 'npwpNumber'] },
+      // );
+      // NOTE: based on CR PRD, employee treated like Tax Personal with NPWP.
+      partnerType = PERSONAL;
+      isHasNpwp = true;
+    } else {
+      const partner = await this.partnerRepo.findOne(
+        { id: associationId },
+        { select: ['id', 'type', 'npwpNumber'] },
+      );
+
+      partnerType = partner?.type;
+
+      if (partner?.npwpNumber) {
+        isHasNpwp = partner?.npwpNumber.length === 15;
+      }
+    }
 
     const productHasTax = product?.isHasTax;
     const productTaxType = product?.taxType;
-    const partnerNpwp = partner?.npwpNumber;
-    const partnerType = partner?.type;
     const taxPartnerType = (partnerType as any) as AccountTaxPartnerType;
-
-    if (partnerNpwp) {
-      isHasNpwp = partnerNpwp.length === 15;
-    }
 
     if (productHasTax) {
       const taxWhere: FindConditions<AccountTax> = {
@@ -736,12 +807,13 @@ export class ExpenseService {
   }
 
   private async getTaxValue(
-    partnerId: string,
     productId: string,
+    associationType: ExpenseAssociationType,
+    associationId?: string,
   ): Promise<number> {
-    const tax = await this.getTax(partnerId, productId);
-
-    const taxValue = tax && tax.taxInPercent;
+    if (!associationId) return 0;
+    const tax = await this.getTax(productId, associationType, associationId);
+    const taxValue = tax?.taxInPercent || 0;
     return taxValue;
   }
 
@@ -749,6 +821,16 @@ export class ExpenseService {
     const val1 = amount / (1 - getPercentage(taxValue));
     const val2 = val1 * getPercentage(taxValue);
     return val2;
+  }
+
+  private getAssociationTypeAndId(
+    expense: Expense,
+  ): { associationType: ExpenseAssociationType; associationId: string } {
+    const type = expense?.partnerId
+      ? ExpenseAssociationType.PARTNER
+      : ExpenseAssociationType.EMPLOYEE;
+    const id = expense?.partnerId || expense?.employeeId;
+    return { associationType: type, associationId: id };
   }
 
   /**
@@ -782,6 +864,9 @@ export class ExpenseService {
     expense: Expense,
     items: UpdateExpenseItemDTO[],
   ): Promise<ExpenseItem[]> {
+    const { associationType, associationId } = this.getAssociationTypeAndId(
+      expense,
+    );
     const uitems: ExpenseItem[] = [];
     for (const v of items) {
       const item = new ExpenseItem();
@@ -792,7 +877,11 @@ export class ExpenseService {
       item.ssHoAmount = v?.ssHoAmount ?? v?.amount;
       item.checkedNote = v?.checkedNote;
       // FIXME: Optimize this query!
-      item.tax = await this.getTaxValue(expense?.partnerId, v?.productId);
+      item.tax = await this.getTaxValue(
+        v?.productId,
+        associationType,
+        associationId,
+      );
       item.createUserId = expense?.updateUserId;
       item.updateUserId = expense?.updateUserId;
       item.attributes = v?.attributes?.map((a: any) => {
@@ -806,6 +895,37 @@ export class ExpenseService {
       uitems.push(item);
     }
     return uitems;
+  }
+
+  /**
+   * Internal Helper for update ExpenseItem tax value.
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {ExpenseItem[]} items
+   * @param {ExpenseAssociationType} associationType
+   * @param {string} associationId
+   * @return {*}  {Promise<void>}
+   * @memberof ExpenseService
+   */
+  private async updateExpenseItemTax(
+    manager: EntityManager,
+    items: ExpenseItem[],
+    associationType: ExpenseAssociationType,
+    associationId: string,
+  ): Promise<void> {
+    const expenseItemRepo = manager.getRepository(ExpenseItem);
+    const user = await AuthService.getUser();
+
+    for (const item of items) {
+      item.tax = await this.getTaxValue(
+        item?.productId,
+        associationType,
+        associationId,
+      );
+      item.updateUserId = user?.id ?? item?.updateUserId;
+      await expenseItemRepo.save(item);
+    }
   }
 
   /**
@@ -885,24 +1005,31 @@ export class ExpenseService {
     userRole: MASTER_ROLES,
   ): Promise<Journal> {
     const user = await this.getUser();
-    // re-fetch data to get latest updated ExpenseItems
-    const data = await manager.findOne(Expense, {
+    // re-fetch expense to get latest updated ExpenseItems
+    const expense = await manager.findOne(Expense, {
       where: { id: expenseId, isDeleted: false },
-      relations: ['items', 'items.product', 'partner', 'branch', 'downPayment'],
+      relations: [
+        'items',
+        'items.product',
+        'partner',
+        'employee',
+        'branch',
+        'downPayment',
+      ],
     });
     const j = new Journal();
     j.createUser = user;
     j.updateUser = user;
-    j.branchId = data.branchId;
-    j.branchCode = data?.branch?.branchCode ?? 'NO_BRANCH_CODE';
-    j.transactionDate = data.transactionDate;
-    j.periodId = data.periodId;
-    j.number = GenerateCode.journal(data.transactionDate);
-    j.reference = data.number;
+    j.branchId = expense.branchId;
+    j.branchCode = expense?.branch?.branchCode ?? 'NO_BRANCH_CODE';
+    j.transactionDate = expense.transactionDate;
+    j.periodId = expense.periodId;
+    j.number = GenerateCode.journal(expense.transactionDate);
+    j.reference = expense.number;
     j.sourceType = JournalSourceType.EXPENSE;
-    j.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-    j.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-    j.items = await this.buildJournalItem(data, userRole);
+    j.partnerName = expense?.partner?.name ?? expense?.employee?.name;
+    j.partnerCode = expense?.partner?.code ?? expense?.employee?.nik;
+    j.items = await this.buildJournalItem(expense, userRole);
     j.totalAmount = j.items
       .map((m) => Number(m.debit))
       .filter((i) => i)
@@ -965,7 +1092,7 @@ export class ExpenseService {
    * @memberof ExpenseService
    */
   private async buildJournalItemCredit(
-    data: Expense,
+    expense: Expense,
     user: User,
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
@@ -973,10 +1100,12 @@ export class ExpenseService {
     let itemCoaId: string;
     let isLedger: boolean = false;
     let isReimbursement: boolean = false;
+    const partnerName = expense?.partner?.name || expense?.employee?.name;
+    const partnerCode = expense?.partner?.code || expense?.employee?.nik;
 
     // If Expense from DownPayment
-    if (data?.downPayment) {
-      const downPayment = data?.downPayment;
+    if (expense?.downPayment) {
+      const downPayment = expense?.downPayment;
       const downPaymentType = downPayment?.type;
       const setting = await getManager().getRepository(GlobalSetting).findOne();
 
@@ -984,13 +1113,13 @@ export class ExpenseService {
         const dpJournalItem = new JournalItem();
         dpJournalItem.createUser = user;
         dpJournalItem.updateUser = user;
-        dpJournalItem.branchId = data.branchId;
-        dpJournalItem.transactionDate = data.transactionDate;
-        dpJournalItem.periodId = data.periodId;
-        dpJournalItem.reference = data.number;
+        dpJournalItem.branchId = expense.branchId;
+        dpJournalItem.transactionDate = expense.transactionDate;
+        dpJournalItem.periodId = expense.periodId;
+        dpJournalItem.reference = expense.number;
         dpJournalItem.description = downPayment?.description;
-        dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-        dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+        dpJournalItem.partnerName = partnerName;
+        dpJournalItem.partnerCode = partnerCode;
         dpJournalItem.credit = downPayment?.amount;
         dpJournalItem.coaId = setting?.downPaymentPerdinCoaId;
         items.push(dpJournalItem);
@@ -1001,22 +1130,22 @@ export class ExpenseService {
       }
     }
 
-    for (const v of data?.items) {
+    for (const v of expense?.items) {
       if (!isReimbursement) {
-        itemCoaId = data?.branch?.cashCoaId;
+        itemCoaId = expense?.branch?.cashCoaId;
       }
 
       const i = new JournalItem();
       i.createUser = user;
       i.updateUser = user;
       i.coaId = itemCoaId;
-      i.branchId = data.branchId;
-      i.transactionDate = data.transactionDate;
-      i.periodId = data.periodId;
-      i.reference = data.number;
+      i.branchId = expense.branchId;
+      i.transactionDate = expense.transactionDate;
+      i.periodId = expense.periodId;
+      i.reference = expense.number;
       i.description = v?.description;
-      i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-      i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+      i.partnerName = partnerName;
+      i.partnerCode = partnerCode;
       i.isLedger = isLedger;
       i.credit = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)
         ? v.ssHoAmount
@@ -1025,19 +1154,26 @@ export class ExpenseService {
 
       // Add JournalItem for Tax
       if (v?.tax > 0) {
+        const { associationType, associationId } = this.getAssociationTypeAndId(
+          expense,
+        );
         const taxedAmount = this.calculateTax(i.credit, v.tax);
-        const tax = await this.getTax(data.partnerId, v.productId);
+        const tax = await this.getTax(
+          v.productId,
+          associationType,
+          associationId,
+        );
         const jTax = new JournalItem();
         jTax.createUser = user;
         jTax.updateUser = user;
         jTax.coaId = isReimbursement ? itemCoaId : tax?.coaId;
-        jTax.branchId = data.branchId;
-        jTax.transactionDate = data.transactionDate;
-        jTax.periodId = data.periodId;
-        jTax.reference = data.number;
+        jTax.branchId = expense.branchId;
+        jTax.transactionDate = expense.transactionDate;
+        jTax.periodId = expense.periodId;
+        jTax.reference = expense.number;
         jTax.description = `[${tax?.group} YMH] ${v.description}`;
-        jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-        jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+        jTax.partnerName = partnerName;
+        jTax.partnerCode = partnerCode;
         jTax.credit = taxedAmount;
         jTax.isLedger = isLedger;
         items.push(jTax);
@@ -1057,7 +1193,7 @@ export class ExpenseService {
    * @memberof ExpenseService
    */
   private async buildJournalItemDebit(
-    data: Expense,
+    expense: Expense,
     user: User,
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
@@ -1065,35 +1201,37 @@ export class ExpenseService {
     let itemCoaId: string;
     let isLedger: boolean = true;
     let isReimbursement: boolean = false;
+    const partnerName = expense?.partner?.name || expense?.employee?.name;
+    const partnerCode = expense?.partner?.code || expense?.employee?.nik;
 
     // If Expense from DownPayment
-    if (data?.downPayment) {
-      const downPayment = data?.downPayment;
+    if (expense?.downPayment) {
+      const downPayment = expense?.downPayment;
       const downPaymentType = downPayment?.type;
 
       if (downPaymentType === DownPaymentType.PERDIN) {
         const dpJournalItem = new JournalItem();
         dpJournalItem.createUser = user;
         dpJournalItem.updateUser = user;
-        dpJournalItem.branchId = data.branchId;
-        dpJournalItem.transactionDate = data.transactionDate;
-        dpJournalItem.periodId = data.periodId;
-        dpJournalItem.reference = data.number;
+        dpJournalItem.branchId = expense.branchId;
+        dpJournalItem.transactionDate = expense.transactionDate;
+        dpJournalItem.periodId = expense.periodId;
+        dpJournalItem.reference = expense.number;
         dpJournalItem.description = downPayment?.description;
-        dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-        dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-        dpJournalItem.coaId = data?.branch?.cashCoaId;
+        dpJournalItem.partnerName = partnerName;
+        dpJournalItem.partnerCode = partnerCode;
+        dpJournalItem.coaId = expense?.branch?.cashCoaId;
         dpJournalItem.debit = downPayment?.amount;
-        dpJournalItem.coaId = data?.branch?.cashCoaId;
+        dpJournalItem.coaId = expense?.branch?.cashCoaId;
         items.push(dpJournalItem);
       } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
-        itemCoaId = data?.branch?.cashCoaId;
+        itemCoaId = expense?.branch?.cashCoaId;
         isLedger = false;
         isReimbursement = true;
       }
     }
 
-    for (const v of data?.items) {
+    for (const v of expense?.items) {
       if (!isReimbursement) {
         itemCoaId = v?.product?.coaId;
       }
@@ -1102,34 +1240,41 @@ export class ExpenseService {
       i.createUser = user;
       i.updateUser = user;
       i.coaId = itemCoaId;
-      i.branchId = data.branchId;
-      i.transactionDate = data.transactionDate;
-      i.periodId = data.periodId;
-      i.reference = data.number;
+      i.branchId = expense.branchId;
+      i.transactionDate = expense.transactionDate;
+      i.periodId = expense.periodId;
+      i.reference = expense.number;
       i.description = v?.description;
-      i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-      i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+      i.partnerName = partnerName;
+      i.partnerCode = partnerCode;
       i.isLedger = isLedger;
-      i.credit = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)
+      i.debit = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)
         ? v.ssHoAmount
         : v.amount;
       items.push(i);
 
       // Add JournalItem for Tax
       if (v?.tax > 0) {
+        const { associationType, associationId } = this.getAssociationTypeAndId(
+          expense,
+        );
         const taxedAmount = this.calculateTax(i.debit, v.tax);
-        const tax = await this.getTax(data.partnerId, v.productId);
+        const tax = await this.getTax(
+          v.productId,
+          associationType,
+          associationId,
+        );
         const jTax = new JournalItem();
         jTax.createUser = user;
         jTax.updateUser = user;
         jTax.coaId = itemCoaId;
-        jTax.branchId = data.branchId;
-        jTax.transactionDate = data.transactionDate;
-        jTax.periodId = data.periodId;
-        jTax.reference = data.number;
+        jTax.branchId = expense.branchId;
+        jTax.transactionDate = expense.transactionDate;
+        jTax.periodId = expense.periodId;
+        jTax.reference = expense.number;
         jTax.description = `[${tax?.group} Gross UP] ${v.description}`;
-        jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-        jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
+        jTax.partnerName = partnerName;
+        jTax.partnerCode = partnerCode;
         jTax.debit = taxedAmount;
         jTax.isLedger = isLedger;
         items.push(jTax);

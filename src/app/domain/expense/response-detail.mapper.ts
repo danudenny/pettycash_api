@@ -4,7 +4,10 @@ import { ExpenseItem } from '../../../model/expense-item.entity';
 import { ExpenseHistory } from '../../../model/expense-history.entity';
 import { ExpenseHistoryDTO } from './expense-history.dto';
 import { ExpenseItemAttribute } from '../../../model/expense-item-attribute.entity';
-import { MASTER_ROLES } from '../../../model/utils/enum';
+import {
+  ExpenseAssociationType,
+  MASTER_ROLES,
+} from '../../../model/utils/enum';
 import { Branch } from '../../../model/branch.entity';
 import { ExpenseDetailDTO } from './expense-detail.dto';
 import { ExpenseItemAttributeDTO } from './expense-item-attribute.dto';
@@ -71,19 +74,24 @@ export class ExpenseDetailResponseMapper {
       id: ety.id,
       transactionDate: ety.transactionDate,
       periodId: ety.periodId,
-      periodMonth: ety?.period && ety.period.month,
-      periodYear: ety.period && ety.period.year,
+      periodMonth: ety?.period?.month,
+      periodYear: ety?.period?.year,
       number: ety.number,
       partnerId: ety.partnerId,
-      partnerName: ety.partner && ety.partner.name,
+      partnerName: ety?.partner?.name || null,
+      employeeId: ety?.employeeId,
+      employeeName: ety?.employee?.name || null,
       sourceDocument: ety.sourceDocument,
       totalAmount: ety.totalAmount,
       downPaymentAmount: ety.downPaymentAmount,
       differenceAmount: ety.differenceAmount,
       downPaymentId: ety.downPaymentId,
-      downPaymentNumber: ety?.downPayment?.number,
+      downPaymentNumber: ety?.downPayment?.number || null,
       type: ety.type,
       paymentType: ety.paymentType,
+      associationType: ety?.partnerId
+        ? ExpenseAssociationType.PARTNER
+        : ExpenseAssociationType.EMPLOYEE,
       state: ety.state,
       items: this.toExpenseItemDTO(ety.items),
       histories: this.toExpenseHistoryDTO(ety.histories, ety.branch),

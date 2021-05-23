@@ -25,12 +25,21 @@ export class CreateExpenseDTO {
   @IsUUID()
   periodId: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Partner ID',
     example: '84ada2dd-5750-479b-ae54-7edd81dfe35c',
   })
   @IsUUID()
-  partnerId: string;
+  @IsOptional()
+  partnerId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Employee ID',
+    example: '4719ee67-6197-4771-8feb-f3db2cdc9d2f',
+  })
+  @IsUUID()
+  @IsOptional()
+  employeeId?: string;
 
   @ApiPropertyOptional({
     description: 'Down Payment ID',
