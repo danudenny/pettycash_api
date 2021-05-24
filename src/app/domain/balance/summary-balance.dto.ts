@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { IsNumber, IsUUID } from 'class-validator';
 
 export class BalanceSummaryDTO {
   @ApiProperty({
@@ -44,4 +44,11 @@ export class BalanceSummaryDTO {
     example: '2021-04-07T10:25:19.917Z',
   })
   retreiveAt: Date;
+
+  @ApiProperty({
+    description: 'Deviation Amount',
+    example: 1000,
+  })
+  @IsNumber()
+  deviationAmount: Number;
 }
