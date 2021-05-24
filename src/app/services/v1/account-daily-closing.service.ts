@@ -101,16 +101,6 @@ export class AccountDailyClosingService {
   public async create(
     payload: CreateAccountDailyClosingDTO,
   ): Promise<CreateAccountDailyClosingResponse> {
-    const isDailyClosingMeetsDeviationSetting = await this.isDailyClosingMeetsDeviationSetting(
-      payload,
-    );
-
-    if (!isDailyClosingMeetsDeviationSetting) {
-      throw new UnprocessableEntityException(
-        'Unable to create Daily Closing: Deviation Amount not meets',
-      );
-    }
-
     const accountDailyClosing = await this.getAccountDailyClosingFromDTO(
       payload,
     );
@@ -301,28 +291,5 @@ export class AccountDailyClosingService {
     }
 
     return newAttachments;
-  }
-
-  private async isDailyClosingMeetsDeviationSetting(
-    payload: CreateAccountDailyClosingDTO,
-  ): Promise<Boolean> {
-    const setting = await this.settingRepo.findOne({
-      relations: [
-        'voucherPartner',
-        'cashTransitCoa',
-        'downPaymentPerdinCoa',
-        'downPaymentReimbursementCoa',
-      ],
-    });
-    const deviationAmount = setting.deviationAmount;
-
-    const openingAmount = payload.openingBankAmount + payload.openingCashAmount;
-    const closingAmount = payload.closingBankAmount + payload.closingCashAmount;
-
-    if (openingAmount >= closingAmount) {
-      return openingAmount - closingAmount <= deviationAmount;
-    } else {
-      return closingAmount - openingAmount <= deviationAmount;
-    }
   }
 }
