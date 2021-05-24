@@ -4,11 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOneOptions } from 'typeorm';
+import { Repository, FindOneOptions, getConnection } from 'typeorm';
 import { ContextService } from '../../../common/services/context.service';
 import { LoaderEnv } from '../../../config/loader';
-import { Branch } from '../../../model/branch.entity';
-import { Role } from '../../../model/role.entity';
 import { User } from '../../../model/user.entity';
 import { MASTER_ROLES } from '../../../model/utils/enum';
 import { AuthorizationResponse } from '../../domain/auth/response.dto';
@@ -36,7 +34,10 @@ export class AuthService {
     try {
       // Find User
       const user = await User.findOne({
-        cache: LoaderEnv.envs.AUTH_CACHE_DURATION_IN_MINUTES * 60000,
+        cache: {
+          id: `user_${username}`,
+          milliseconds: LoaderEnv.envs.AUTH_CACHE_DURATION_IN_MINUTES * 60000,
+        },
         ...options,
         where: { username, isDeleted: false },
       });
@@ -62,7 +63,7 @@ export class AuthService {
   public static async getUserBranchAndRole(
     options?: FindOneOptions<User>,
   ): Promise<{
-    user: User,
+    user: User;
     userBranchIds: string[];
     userRoleName: MASTER_ROLES;
     isSuperUser: boolean;
@@ -100,5 +101,17 @@ export class AuthService {
     }
 
     return new AuthorizationResponse(user);
+  }
+
+  /**
+   * Clear cache for User.
+   *
+   * @static
+   * @param {string} [username]
+   * @memberof AuthService
+   */
+  public static async clearCache(username?: string): Promise<void> {
+    const keys = username ? [`user_${username}`] : [];
+    await getConnection().queryResultCache?.remove(keys);
   }
 }
