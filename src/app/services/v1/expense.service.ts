@@ -72,6 +72,7 @@ import { UpdateExpenseDTO } from '../../domain/expense/update.dto';
 import { UpdateExpenseItemDTO } from '../../domain/expense/update-item.dto';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import { Employee } from '../../../model/employee.entity';
+import { LoaderEnv } from '../../../config/loader';
 
 @Injectable()
 export class ExpenseService {
@@ -432,13 +433,15 @@ export class ExpenseService {
       const approveExpense = await getManager().transaction(async (manager) => {
         const expense = await manager.findOne(Expense, {
           where: { id: expenseId, isDeleted: false },
-          relations: ['attachments', 'partner', 'histories'],
+          relations: ['attachments', 'partner', 'histories', 'createUser'],
         });
         if (!expense) {
           throw new NotFoundException(`Expense ID ${expenseId} not found!`);
         }
 
-        if (expense.attachments && expense.attachments.length < 1) {
+        const isSystemUser =
+          LoaderEnv.envs?.APP_SYSTEM_USERNAME === expense?.createUser?.username;
+        if (expense?.attachments?.length < 1 && !isSystemUser) {
           throw new UnprocessableEntityException(
             `Expense doesn't have attachment, please add attachment first!`,
           );

@@ -15,6 +15,7 @@ import { Branch } from '../../../model/branch.entity';
 import { MASTER_ROLES } from '../../../model/utils/enum';
 import { UpdateUserRoleDTO } from '../../domain/user-role/update-user-role.dto';
 import { UserRoleDetailResponse } from '../../domain/user-role/response-detail.dto';
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class UserRoleService {
@@ -146,7 +147,9 @@ export class UserRoleService {
     user.roleId = roleId;
     user.branches = assignedBranches;
 
-    return await user.save();
+    const updatedUser = await user.save();
+    await AuthService.clearCache(user.username);
+    return updatedUser;
   }
 
   public async create(payload: CreateUserRoleDTO): Promise<any> {

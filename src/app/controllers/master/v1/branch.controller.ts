@@ -27,4 +27,17 @@ export class BranchController {
   public async list(@Query() query: QueryBranchDTO) {
     return await this.svc.list(query);
   }
+
+  @Get('/budgets')
+  @ApiOperation({ summary: 'List all Branch for Budget' })
+  @ApiOkResponse({ type: BranchWithPaginationResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiHeader({
+    name: 'x-username',
+    description: 'User Request',
+    required: false,
+  })
+  public async listForBudget(@Query() query: QueryBranchDTO) {
+    return await this.svc.listForBudget(query);
+  }
 }
