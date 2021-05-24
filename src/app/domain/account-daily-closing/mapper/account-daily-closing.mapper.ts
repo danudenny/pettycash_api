@@ -27,6 +27,7 @@ export class AccountDailyClosingMapper {
       item.closingBankAmount = +accountDailyClosingDTO.closingBankAmount;
       item.openingCashAmount = +accountDailyClosingDTO.openingCashAmount;
       item.closingCashAmount = +accountDailyClosingDTO.closingCashAmount;
+      item.reason = accountDailyClosingDTO.reason;
 
       return item;
     });

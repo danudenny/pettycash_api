@@ -38,7 +38,7 @@ export class AccountDailyClosingService {
     private readonly attachmentRepo: Repository<Attachment>,
     @InjectRepository(GlobalSetting)
     private readonly settingRepo: Repository<GlobalSetting>,
-  ) {}
+  ) { }
 
   public async list(
     query?: QueryAccountDailyClosingDTO,
@@ -65,6 +65,7 @@ export class AccountDailyClosingService {
       ['adc.closing_bank_amount', 'closingBankAmount'],
       ['adc.opening_cash_amount', 'openingCashAmount'],
       ['adc.closing_cash_amount', 'closingCashAmount'],
+      ['adc.reason', 'reason'],
     );
     qb.leftJoin((e) => e.createUser, 'usr');
     qb.andWhere(
