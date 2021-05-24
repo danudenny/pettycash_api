@@ -300,14 +300,7 @@ export class BalanceService {
   }
 
   private async getDeviationAmount(): Promise<number> {
-    const setting = await this.settingRepo.findOne({
-      relations: [
-        'voucherPartner',
-        'cashTransitCoa',
-        'downPaymentPerdinCoa',
-        'downPaymentReimbursementCoa',
-      ],
-    });
+    const setting = await this.settingRepo.findOne();
 
     return setting.deviationAmount;
   }
