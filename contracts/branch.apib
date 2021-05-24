@@ -1,11 +1,11 @@
 FORMAT: 1A
 HOST: http://pettycash.api.url
 
-# API Master Branch
+# API Branch
 
-# Group Master Branch
+# Group Branch
 
-## List Master Branch [GET /v1/branches]
+## List Branch [GET /v1/branches]
 
 Untuk mendapatkan daftar master branch (gerai).
 
@@ -25,6 +25,48 @@ Untuk mendapatkan daftar master branch (gerai).
                     "name": "Depok",
                     "code": "001"
                 },
+                {
+                    "id": "ff0ecebd-4556-4a02-979c-4c9d5488c2ac",
+                    "name": "Bogor",
+                    "code": "002"
+                },
+                {
+                    "id": "ff0ecebd-4556-4a02-979c-4c9d5488c2ac",
+                    "name": "Medan",
+                    "code": "003"
+                }
+            ],
+            "meta": {
+                "page": 2,
+                "prevPage": 1,
+                "nextPage": null,
+                "perPage": 10,
+            }
+        }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "message": "Internal Server Error"
+            }
+
+## List Branch for Budget [GET /v1/branches/budgets]
+
+Untuk mendapatkan list branch untuk budgets.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": [
                 {
                     "id": "ff0ecebd-4556-4a02-979c-4c9d5488c2ac",
                     "name": "Bogor",
