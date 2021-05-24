@@ -58,8 +58,8 @@ export class GenerateCode {
   }
 
   public static expense(dateTime: Date = new Date(), digit: number = 6) {
-    // Format Code: REL202102ABC123
-    const prefix = `REL${dayjs(dateTime).format('YYYYMM')}`;
+    // Format Code: PNG/2021/02/ABC123
+    const prefix = `PNG/${dayjs(dateTime).format('YYYY/MM')}/`;
     const randomCode = this.randomCode(digit);
     return prefix + randomCode.toString();
   }
