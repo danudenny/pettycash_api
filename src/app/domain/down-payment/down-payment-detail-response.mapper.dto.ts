@@ -52,6 +52,8 @@ export class ShowDownPaymentResponseMapper {
       employeeNik: ety.employee.nik,
       periodId: ety.periodId,
       periodName: ety.period.name,
+      productId: ety.productId,
+      productName: ety.product?.name,
       destinationPlace: ety.destinationPlace,
       description: ety.description,
       state: ety.state,
