@@ -31,6 +31,7 @@ export class ProductService {
     qb.fieldResolverMap['name__icontains'] = 'prod.name';
     qb.fieldResolverMap['isHasTax'] = 'prod.isHasTax';
     qb.fieldResolverMap['taxType'] = 'prod.taxType';
+    qb.fieldResolverMap['type'] = 'prod.type';
 
     qb.applyFilterPagination();
     qb.selectRaw(
