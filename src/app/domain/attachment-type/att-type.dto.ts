@@ -1,5 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsUUID } from "class-validator";
+import { AttachmentTypes } from "../../../model/utils/enum";
 
 export class AttachmentTypeDTO {
   @ApiProperty({
@@ -20,6 +21,12 @@ export class AttachmentTypeDTO {
     example: 'KTP'
   })
   name: string;
+
+  @ApiProperty({
+    description: 'Att Type',
+    example: 'expense'
+  })
+  type: AttachmentTypes;
 }
 
 export class CreateAttachmentTypeDTO {
@@ -34,4 +41,19 @@ export class CreateAttachmentTypeDTO {
     example: 'KTP'
   })
   name: string;
+
+  @ApiProperty({
+    description: 'Att Type',
+    example: 'expense'
+  })
+  type: AttachmentTypes;
+}
+
+
+export class QueryAttachmentTypeDTO {
+  @ApiPropertyOptional({
+    description: 'Att Type',
+    example: 'expense'
+  })
+  type?: AttachmentTypes;
 }

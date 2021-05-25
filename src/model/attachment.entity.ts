@@ -1,6 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { AttachmentType } from './attachment-type.entity';
 import { PtcBaseEntity } from './base.entity';
-import { AttachmentType } from './utils/enum';
 
 @Entity('attachment')
 export class Attachment extends PtcBaseEntity {
@@ -62,11 +62,13 @@ export class Attachment extends PtcBaseEntity {
   })
   description?: string;
 
-  @Column({ 
-    type: 'enum', 
-    enum: AttachmentType, 
-    name: 'attachment_type',
-    nullable: true 
+  @Column({
+    nullable: true,
+    name: 'type_id'
   })
-  attachmentType?: AttachmentType;
+  typeId: string;
+
+  @ManyToOne(() => AttachmentType​​)
+  @JoinColumn({ name: 'type_id', referencedColumnName: 'id' })
+  attType: AttachmentType
 }

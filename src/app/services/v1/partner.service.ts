@@ -1,5 +1,4 @@
 import { Expense } from './../../../model/expense.entity';
-import { AttachmentType } from './../../../model/utils/enum';
 import { BadRequestException, HttpException, HttpStatus, NotFoundException, Req } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createQueryBuilder, getManager, Repository } from 'typeorm';
@@ -23,6 +22,7 @@ import { UpdatePartnerDTO } from '../../domain/partner/update.dto';
 import { AuthService } from './auth.service';
 import { CreatePartnerAttachmentDTO } from '../../domain/partner/create-attachment.dto';
 import dayjs from 'dayjs';
+import { AttachmentType } from '../../../model/attachment-type.entity';
 
 export class PartnerService {
   constructor(
@@ -30,6 +30,8 @@ export class PartnerService {
     private readonly partnerRepo: Repository<Partner>,
     @InjectRepository(Attachment)
     private readonly attachmentRepo: Repository<Attachment>,
+    @InjectRepository(AttachmentType)
+    private readonly attachmentTypeRepo: Repository<AttachmentType>,
   ) {}
 
   private async getUser(includeBranch: boolean = false) {
@@ -188,7 +190,7 @@ export class PartnerService {
   public async createAttachment(
     partnerId: string,
     files?: any,
-    attachmentType?: any
+    typeId?: any
   ): Promise<PartnerAttachmentResponse> {
     try {
       const createAttachment = await getManager().transaction(
@@ -203,6 +205,12 @@ export class PartnerService {
               `Expense with ID ${partnerId} not found!`,
             );
           }
+
+          const getAttType = await this.attachmentTypeRepo.findOne({
+            where: {
+              id: typeId
+            }
+          })
                     
           // Upload file attachments
           let newAttachments: Attachment[];
@@ -213,10 +221,10 @@ export class PartnerService {
               files,
               (file) => {
                 const ext = file.originalname.split('.');
-                const pathId = `${partnerPath}-${(attachmentType).toUpperCase()}.${ext[1]}`;
+                const pathId = `${partnerPath}-${(getAttType['name']).toUpperCase()}.${ext[1]}`;
                 return pathId;
               },
-              attachmentType,
+              typeId,
               manager,
             );
             newAttachments = attachments;

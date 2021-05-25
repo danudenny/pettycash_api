@@ -6,6 +6,7 @@ export class AttachmentTypeResponseMapper {
     it.id = dto.id;
     it.code = dto.code;
     it.name = dto.name;
+    it.type = dto.type;
     return it;
   }
 

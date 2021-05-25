@@ -1,6 +1,7 @@
+import { AttachmentTypes } from './../../../model/utils/enum';
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { AttachmentTypeDTO, CreateAttachmentTypeDTO } from '../../domain/attachment-type/att-type.dto';
+import { AttachmentTypeDTO, CreateAttachmentTypeDTO, QueryAttachmentTypeDTO } from '../../domain/attachment-type/att-type.dto';
 import { AttachmentTypeResponse } from '../../domain/attachment-type/att-type.response';
 import FindIdParams from '../../domain/common/findId-param.dto';
 import { AttachmentTypeService } from './../../services/v1/attachment-type.service';
@@ -14,8 +15,8 @@ export class AttachmentTypeController {
   @ApiOperation({ summary: 'List all Attachment Type' })
   @ApiOkResponse({ type: AttachmentTypeResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async list(){
-    return await this.attTypeService.get();
+  public async list(@Query() query: QueryAttachmentTypeDTO){
+    return await this.attTypeService.get(query);
   }
 
   @Get('/:id')
