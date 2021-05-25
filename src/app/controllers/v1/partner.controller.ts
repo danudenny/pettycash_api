@@ -64,6 +64,14 @@ export class PartnerController {
     return await this.svc.updatePartnerActive();
   }
 
+  @Get('/:id/attachments')
+  @ApiOperation({ summary: 'List Expense Attachment' })
+  @ApiOkResponse({ type: PartnerAttachmentResponse })
+  @ApiNotFoundResponse({ description: 'Attachments not found.' })
+  public async listAttachment(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.svc.listAttachment(id);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create Partner' })
   @ApiCreatedResponse({
