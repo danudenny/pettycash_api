@@ -21,7 +21,7 @@ export class JournalResponseMapper {
   }
 
   private static toItemDTO(journal: Journal): JournalItemDTO[] {
-    const dtoItems = journal?.items.map((v) => {
+    const dtoItems = journal?.items?.map((v) => {
       const i = new JournalItemDTO();
       i.id = v.id;
       i.transactionDate = v.transactionDate;
@@ -41,7 +41,7 @@ export class JournalResponseMapper {
       return i;
     });
 
-    return dtoItems;
+    return dtoItems || [];
   }
 
   private static toManyDTO(entities: Journal[]): JournalDTO[] {

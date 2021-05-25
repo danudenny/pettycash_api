@@ -476,7 +476,7 @@ export class ExpenseService {
 
         let state: ExpenseState;
         const currentState = expense.state;
-        if ([MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)) {
+        if ([MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole) || isSystemUser) {
           // Approving with same state is not allowed
           if (currentState === ExpenseState.APPROVED_BY_SS_SPV) {
             throw new BadRequestException(
