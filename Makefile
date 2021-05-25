@@ -132,7 +132,7 @@ slack-notify-failed:
 # Pipeline Recipe
 
 build-docker:
-	docker build -t $(dockerTag):$(getHashCommit) -t $(dockerTag):latest . --target=prod
+	docker build -t $(dockerTag):$(getHashCommit) -t $(dockerTag):latest .
 
 push-docker:
 	docker login $(dockerHost) -u $(dockerUser) -p $(dockerPass)
