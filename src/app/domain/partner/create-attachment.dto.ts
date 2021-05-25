@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AttachmentType } from '../../../model/utils/enum';
 
 export class CreatePartnerAttachmentDTO {
   @ApiProperty({
@@ -17,8 +16,7 @@ export class CreatePartnerAttachmentDTO {
   attachments: any[];
 
   @ApiPropertyOptional({
-    description: 'Attachment type',
-    example: AttachmentType.KTP
+    description: 'Attachment type'
   })
-  attachmentType?: AttachmentType;
+  typeId?: string;
 }

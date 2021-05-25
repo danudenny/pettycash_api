@@ -179,10 +179,17 @@ export enum AccountTaxGroup {
   PPH4A2 = 'PPH 4(2)',
 }
 
-export enum AttachmentType {
-  KTP = 'ktp',
-  NPWP = 'npwp',
-  SIUP = 'siup',
-  AKTA_PENDIRIAN = 'akta_pendirian',
-  LAIN_LAIN = 'lain_lain'
+// export enum AttachmentType {
+//   KTP = 'ktp',
+//   NPWP = 'npwp',
+//   SIUP = 'siup',
+//   AKTA_PENDIRIAN = 'akta_pendirian',
+//   LAIN_LAIN = 'lain_lain'
+// }
+
+export enum AttachmentTypes {
+  EXPENSE = 'expense',
+  LOAN = 'loan',
+  PARTNER = 'partner',
+  DAILYCLOSING = 'daily_closing'
 }
