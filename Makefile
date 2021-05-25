@@ -45,7 +45,7 @@ getDetailCommit = $(shell $(call gitLog,%s))
 getUserCommit = $(shell $(call gitLog,%an))
 urlHashCommit = https://gitlab.com/sicepat-workspace/petty-cash-api/-/commit/$(getHashCommitLong)
 
-apiCheck = $$(curl --write-out "%{http_code}\n" "$(urlApiHealthCheck)" --output output.txt --silent)
+apiCheck = $$(curl -s -o /dev/null -w "%{http_code}\n" "$(urlApiHealthCheck)")
 
 # Notify section
 notifyHeader = Petty Cash API :dollar:
@@ -132,7 +132,7 @@ slack-notify-failed:
 # Pipeline Recipe
 
 build-docker:
-	docker build -t $(dockerTag):$(getHashCommit) -t $(dockerTag):latest .
+	docker build -t $(dockerTag):$(getHashCommit) -t $(dockerTag):latest . --target=production
 
 push-docker:
 	docker login $(dockerHost) -u $(dockerUser) -p $(dockerPass)
