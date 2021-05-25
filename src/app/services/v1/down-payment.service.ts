@@ -88,6 +88,7 @@ export class DownPaymentService {
         ['dp.branch_id', 'branchId'],
         ['dp.employee_id', 'employeeId'],
         ['dp.period_id', 'periodId'],
+        ['dp.product_id', 'productId'],
         ['dp.expenseId', 'expenseId'],
         ['dp.description', 'description'],
         ['dp.payment_type', 'paymentType'],
@@ -134,6 +135,7 @@ export class DownPaymentService {
           'employee',
           'department',
           'period',
+          'product',
           'histories',
           'histories.createUser',
         ],
@@ -168,6 +170,7 @@ export class DownPaymentService {
         downPayment.state = DownPaymentState.DRAFT;
         downPayment.type = payload.type;
         downPayment.periodId = payload.periodId;
+        downPayment.productId = payload.productId;
         downPayment.amount = payload.amount;
         downPayment.number = payload.number;
         downPayment.employeeId = payload.employeeId;
