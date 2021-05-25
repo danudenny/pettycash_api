@@ -69,4 +69,10 @@ export class AccountDailyClosingDetailDTO {
     type: [AccountCashboxItemsDTO],
   })
   accountCashboxItems: AccountCashboxItemsDTO[];
+
+  @ApiProperty({
+    description: 'Reason for execute daily closing when deviation does not meets',
+    example: 'Pending',
+  })
+  reason: string;
 }
