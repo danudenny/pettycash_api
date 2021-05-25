@@ -29,7 +29,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Response } from 'express';
-import { AttachmentType } from '../../../model/utils/enum';
 import { FindPartnerIdParams, FindAttachmentIdParams } from '../../domain/common/findId-param.dto';
 import { CreatePartnerAttachmentDTO } from '../../domain/partner/create-attachment.dto';
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
@@ -144,7 +143,7 @@ export class PartnerController {
     @UploadedFiles() attachments: any,
     @Body() body
   ) {
-    return await this.svc.createAttachment(id, attachments, body['attachmentType']);
+    return await this.svc.createAttachment(id, attachments, body['typeId']);
   }
 
   @Delete('/:partnerId/attachments/:attachmentId')

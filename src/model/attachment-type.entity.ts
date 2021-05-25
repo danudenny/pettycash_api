@@ -1,5 +1,6 @@
 import { Column, Entity } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
+import { AttachmentTypes } from './utils/enum';
 
 @Entity('attachment_type')
 export class AttachmentType extends PtcBaseEntity {
@@ -14,6 +15,12 @@ export class AttachmentType extends PtcBaseEntity {
     length: 255,
   })
   name: string;
+
+  @Column({
+    type: 'enum',
+    enum: AttachmentTypes,
+  })
+  type: AttachmentTypes;
 
   @Column({
     type: 'boolean',

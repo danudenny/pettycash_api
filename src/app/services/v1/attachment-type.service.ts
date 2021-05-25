@@ -1,10 +1,11 @@
-import { AttachmentTypeDTO, CreateAttachmentTypeDTO } from './../../domain/attachment-type/att-type.dto';
+import { AttachmentTypeDTO, CreateAttachmentTypeDTO, QueryAttachmentTypeDTO } from './../../domain/attachment-type/att-type.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
 import { AttachmentType } from '../../../model/attachment-type.entity';
 import { Repository } from 'typeorm';
 import { AttachmentTypeResponse } from '../../domain/attachment-type/att-type.response';
 import { AuthService } from './auth.service';
+import { QueryBuilder } from 'typeorm-query-builder-wrapper/query-builder';
 
 @Injectable()
 export class AttachmentTypeService {
@@ -19,20 +20,37 @@ export class AttachmentTypeService {
     return user.id;
   }
   
-  async get(): Promise<any> {
-    const getAll = await this.attTypeRepo.find({
-      where: {
-        isActive: true,
-        isDeleted: false
-      }
-    })
+  async get(query?: QueryAttachmentTypeDTO): Promise<any> {
+    const params = { ...query };
+    const qb = new QueryBuilder(AttachmentType, 'att', params);
 
-    if (!getAll) {
-      throw new HttpException('No data available', HttpStatus.NO_CONTENT)
-    }
+    qb.fieldResolverMap['type'] = 'att.type';
 
-    return new HttpException(getAll, HttpStatus.OK);
+    qb.applyFilterPagination();
+    qb.selectRaw(
+      ['att.id', 'id'],
+      ['att.code', 'code'],
+      ['att.name', 'name'],
+      ['att.type', 'type']
+    );
+
+    const attType = await qb.exec();
+    return attType
   }
+  //   const getAll = await this.attTypeRepo.find({
+  //     where: {
+  //       isActive: true,
+  //       isDeleted: false,
+  //       type: type
+  //     }
+  //   })
+
+  //   if (!getAll) {
+  //     throw new HttpException('No data available', HttpStatus.NO_CONTENT)
+  //   }
+
+  //   return new HttpException(getAll, HttpStatus.OK);
+  // }
 
   async find(id: string): Promise<AttachmentTypeResponse> {
     const checkId = await this.attTypeRepo.findOne({
