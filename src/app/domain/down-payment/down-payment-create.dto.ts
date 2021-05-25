@@ -1,5 +1,5 @@
 import { IsOptional, IsUUID } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DownPaymentPayType, DownPaymentType } from '../../../model/utils/enum';
 
 export class CreateDownPaymentDTO {
@@ -34,7 +34,7 @@ export class CreateDownPaymentDTO {
   @IsUUID()
   periodId: string;
   
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Product ID',
     example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
   })
