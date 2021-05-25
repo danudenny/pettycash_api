@@ -45,5 +45,5 @@ export class CreateAccountDailyClosingDTO {
     description: 'Reason for execute daily closing when deviation does not meets',
     example: 'Pending',
   })
-  reason: string;
+  reason?: string;
 }
