@@ -243,6 +243,7 @@ export class AccountDailyClosingService {
       payload.accountCashboxItems,
       user,
     );
+    accountDailyClosing.reason = payload.reason;
     accountDailyClosing.createUser = user;
     accountDailyClosing.updateUser = user;
 
