@@ -301,6 +301,46 @@ export class PartnerService {
         
     });
   }
+
+  public async listAttachment(
+    partnerId: string,
+  ): Promise<PartnerAttachmentResponse> {
+    const qb = new QueryBuilder(Partner, 'prt', {});
+
+    qb.selectRaw(
+      ['prt.id', 'partnerId'],
+      ['att.id', 'id'],
+      ['att."name"', 'name'],
+      ['att.filename', 'fileName'],
+      ['att.file_mime', 'fileMime'],
+      ['att.url', 'url'],
+    );
+    qb.innerJoin(
+      (e) => e.attachments,
+      'att',
+      (j) =>
+        j.andWhere(
+          (e) => e.isDeleted,
+          (v) => v.isFalse(),
+        ),
+    );
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+    qb.andWhere(
+      (e) => e.id,
+      (v) => v.equals(partnerId),
+    );
+
+    const attachments = await qb.exec();
+    if (!attachments) {
+      throw new NotFoundException(`Attachments not found!`);
+    }
+
+    return new PartnerAttachmentResponse(attachments);
+  }
+
 }
 
 // TODO: if date > 6bulan
