@@ -30,6 +30,7 @@ export class BranchService {
       ['b.id', 'id'],
       ['b.branch_name', 'name'],
       ['b.branch_code', 'code'],
+      ['b.cash_coa_id', 'coaId'],
     );
     qb.andWhere(
       (e) => e.isActive,
