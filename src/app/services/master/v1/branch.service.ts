@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getManager } from 'typeorm';
+import { Repository, getManager, In } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Branch } from '../../../../model/branch.entity';
 import { QueryBranchDTO } from '../../../domain/branch/branch.query.dto';
 import { BranchWithPaginationResponse } from '../../../domain/branch/response.dto';
+import { UpdateBranchDTO } from '../../../domain/branch/update.dto';
 import { AuthService } from '../../v1/auth.service';
 
 @Injectable()
@@ -89,6 +90,42 @@ export class BranchService {
       (branch) => !mbudgetBranches.includes(branch),
     );
     return await this.list(query, branchNoBudget);
+  }
+
+  /**
+   * Update Branch
+   *
+   * @param {string} id of Branch to update.
+   * @param {UpdateBranchDTO} payload
+   * @return {*}  {Promise<any>}
+   * @memberof BranchService
+   */
+  public async update(id: string, payload: UpdateBranchDTO): Promise<any> {
+    const {
+      userBranchIds,
+      isSuperUser,
+      user,
+    } = await AuthService.getUserBranchAndRole();
+
+    const where = { id, isDeleted: false };
+    if (!isSuperUser) {
+      Object.assign(where, { branchId: In(userBranchIds) });
+    }
+
+    const branch = await this.repo.findOne(where);
+    if (!branch) {
+      throw new NotFoundException(
+        `Branch with ID ${id} for user ${user?.username} not found!`,
+      );
+    }
+
+    // Only allow to update cashCoaId
+    if (payload?.coaId) {
+      branch.cashCoaId = payload?.coaId;
+      return await branch.save();
+    }
+
+    return;
   }
 
   public static async processQueueData(data: any) {
