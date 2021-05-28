@@ -319,6 +319,12 @@ export class ExpenseService {
   ): Promise<ExpenseResponse> {
     try {
       const updateExpense = await getManager().transaction(async (manager) => {
+        if (payload?.partnerId && payload?.employeeId) {
+          throw new BadRequestException(
+            `Please choose either 'partnerId' or 'employeeId' only!`,
+          );
+        }
+
         const {
           userBranchIds,
           isSuperUser,
@@ -343,10 +349,18 @@ export class ExpenseService {
           );
         }
 
+        if (payload?.partnerId && !exp?.partnerId) {
+          exp.partnerId = payload?.partnerId;
+          exp.employeeId = null;
+        }
+
+        if (payload?.employeeId && !exp?.employeeId) {
+          exp.employeeId = payload?.employeeId;
+          exp.partnerId = null;
+        }
+
         exp.transactionDate = payload?.transactionDate ?? exp.transactionDate;
         exp.periodId = payload?.periodId ?? exp.periodId;
-        exp.partnerId = payload?.partnerId ?? exp.partnerId;
-        exp.employeeId = payload?.employeeId ?? exp.employeeId;
         exp.sourceDocument = payload?.sourceDocument ?? exp.sourceDocument;
         exp.paymentType = payload?.paymentType ?? exp.paymentType;
         exp.updateUserId = user?.id;
