@@ -5,13 +5,6 @@ import { AccountDailyClosingDetailDTO } from '../dto/account-daily-closing-detai
 import { AccountDailyClosingDTO } from '../dto/account-daily-closing.dto';
 
 export class AccountDailyClosingMapper {
-  public static fromDTO(dto: Partial<AccountDailyClosingDTO>) {
-    const it = new AccountDailyClosingDTO();
-    it.id = dto.id;
-
-    return it;
-  }
-
   public static fromArrayDTO(dto: Partial<AccountDailyClosingDTO[]>) {
     const it = dto.map((accountDailyClosingDTO) => {
       const item = new AccountDailyClosingDTO();
