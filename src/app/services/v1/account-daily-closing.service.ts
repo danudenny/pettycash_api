@@ -38,7 +38,7 @@ export class AccountDailyClosingService {
     private readonly attachmentRepo: Repository<Attachment>,
     @InjectRepository(GlobalSetting)
     private readonly settingRepo: Repository<GlobalSetting>,
-  ) {}
+  ) { }
 
   public async list(
     query?: QueryAccountDailyClosingDTO,
@@ -65,6 +65,7 @@ export class AccountDailyClosingService {
       ['adc.closing_bank_amount', 'closingBankAmount'],
       ['adc.opening_cash_amount', 'openingCashAmount'],
       ['adc.closing_cash_amount', 'closingCashAmount'],
+      ['adc.reason', 'reason'],
     );
     qb.leftJoin((e) => e.createUser, 'usr');
     qb.andWhere(
@@ -101,16 +102,6 @@ export class AccountDailyClosingService {
   public async create(
     payload: CreateAccountDailyClosingDTO,
   ): Promise<CreateAccountDailyClosingResponse> {
-    const isDailyClosingMeetsDeviationSetting = await this.isDailyClosingMeetsDeviationSetting(
-      payload,
-    );
-
-    if (!isDailyClosingMeetsDeviationSetting) {
-      throw new UnprocessableEntityException(
-        'Unable to create Daily Closing: Deviation Amount not meets',
-      );
-    }
-
     const accountDailyClosing = await this.getAccountDailyClosingFromDTO(
       payload,
     );
@@ -252,6 +243,7 @@ export class AccountDailyClosingService {
       payload.accountCashboxItems,
       user,
     );
+    accountDailyClosing.reason = payload.reason;
     accountDailyClosing.createUser = user;
     accountDailyClosing.updateUser = user;
 
@@ -301,28 +293,5 @@ export class AccountDailyClosingService {
     }
 
     return newAttachments;
-  }
-
-  private async isDailyClosingMeetsDeviationSetting(
-    payload: CreateAccountDailyClosingDTO,
-  ): Promise<Boolean> {
-    const setting = await this.settingRepo.findOne({
-      relations: [
-        'voucherPartner',
-        'cashTransitCoa',
-        'downPaymentPerdinCoa',
-        'downPaymentReimbursementCoa',
-      ],
-    });
-    const deviationAmount = setting.deviationAmount;
-
-    const openingAmount = payload.openingBankAmount + payload.openingCashAmount;
-    const closingAmount = payload.closingBankAmount + payload.closingCashAmount;
-
-    if (openingAmount >= closingAmount) {
-      return openingAmount - closingAmount <= deviationAmount;
-    } else {
-      return closingAmount - openingAmount <= deviationAmount;
-    }
   }
 }

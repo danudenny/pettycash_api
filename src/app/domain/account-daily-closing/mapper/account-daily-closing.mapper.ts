@@ -5,13 +5,6 @@ import { AccountDailyClosingDetailDTO } from '../dto/account-daily-closing-detai
 import { AccountDailyClosingDTO } from '../dto/account-daily-closing.dto';
 
 export class AccountDailyClosingMapper {
-  public static fromDTO(dto: Partial<AccountDailyClosingDTO>) {
-    const it = new AccountDailyClosingDTO();
-    it.id = dto.id;
-
-    return it;
-  }
-
   public static fromArrayDTO(dto: Partial<AccountDailyClosingDTO[]>) {
     const it = dto.map((accountDailyClosingDTO) => {
       const item = new AccountDailyClosingDTO();
@@ -27,6 +20,7 @@ export class AccountDailyClosingMapper {
       item.closingBankAmount = +accountDailyClosingDTO.closingBankAmount;
       item.openingCashAmount = +accountDailyClosingDTO.openingCashAmount;
       item.closingCashAmount = +accountDailyClosingDTO.closingCashAmount;
+      item.reason = accountDailyClosingDTO.reason;
 
       return item;
     });
@@ -49,6 +43,7 @@ export class AccountDailyClosingMapper {
     item.openingCashAmount = entity.openingCashAmount;
     item.closingCashAmount = entity.closingCashAmount;
     item.accountCashboxItems = this.toAccountCashboxItemsDTO(entity.cashItems);
+    item.reason = entity.reason;
 
     return item;
   }

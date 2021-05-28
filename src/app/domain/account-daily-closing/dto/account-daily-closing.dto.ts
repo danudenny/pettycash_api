@@ -62,4 +62,10 @@ export class AccountDailyClosingDTO {
     example: 500000,
   })
   closingCashAmount: number;
+
+  @ApiProperty({
+    description: 'Reason for execute daily closing when deviation does not meets',
+    example: 'Pending',
+  })
+  reason: string;
 }
