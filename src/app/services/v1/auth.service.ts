@@ -25,15 +25,30 @@ export class AuthService {
     return username;
   }
 
-  public static async getUser(options?: FindOneOptions<User>): Promise<User> {
+  /**
+   * Get User data based from request header
+   * Data taken from cache or database.
+   *
+   * @static
+   * @param {FindOneOptions<User>} [options]
+   * @param {number} [retry=0]
+   * @return {*}  {Promise<User>}
+   * @memberof AuthService
+   */
+  public static async getUser(
+    options?: FindOneOptions<User>,
+    retry: number = 0,
+  ): Promise<User> {
+    const MAX_RETRY = 1;
     let username = await AuthService.getUsernameFromHeader();
+    let user: User;
     // TODO: Remove this mock after integrating with API Gateway Service
     if (!username) {
       username = 'adry';
     }
     try {
-      // Find User
-      const user = await User.findOne({
+      // Find User from Cache or Database.
+      user = await User.findOne({
         cache: {
           id: `user_${username}`,
           milliseconds: LoaderEnv.envs.AUTH_CACHE_DURATION_IN_MINUTES * 60000,
@@ -41,6 +56,18 @@ export class AuthService {
         ...options,
         where: { username, isDeleted: false },
       });
+
+      // Retry to Find User from Database.
+      if (!user && retry < MAX_RETRY) {
+        retry += 1;
+        user = await this.getUser({ ...options, cache: false }, retry);
+        // If user found. clear all cache.
+        if (user) {
+          await getConnection().queryResultCache?.clear();
+        }
+        return user;
+      }
+
       return user;
     } catch (error) {
       throw error;
