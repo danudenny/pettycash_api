@@ -5,6 +5,7 @@ import { Repository } from "typeorm";
 import { Vehicle } from "../../../model/vehicle.entity";
 import { VehicleWithPaginationResponse } from '../../domain/vehicle/vehicle-response.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
+import { AuthService } from '../v1/auth.service';
 
 @Injectable()
 export class VehicleService {
@@ -17,6 +18,10 @@ export class VehicleService {
   public async getAll(query?: QueryVehicleDTO): Promise<VehicleWithPaginationResponse> {
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(Vehicle, 'veh', params);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['vehicleNumber__contains'] = 'veh.vehicle_number';
 
@@ -29,6 +34,13 @@ export class VehicleService {
       ['veh.vehicle_kilometer', 'vehicleKilometer'],
       ['veh.is_active', 'isActive']
     );
+
+    if (userBranchIds?.length && !isSuperUser) {
+      qb.andWhere(
+        (e) => e.branchId,
+        (v) => v.in(userBranchIds),
+      );
+    }
 
     const vehicles = await qb.exec();
     return new VehicleWithPaginationResponse(vehicles, params)

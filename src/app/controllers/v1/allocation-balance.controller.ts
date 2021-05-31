@@ -93,15 +93,16 @@ export class AllocationBalanceController {
     return await this.allocBallanceService.revision(id, data);
   }
 
-  @Patch('/:id/paid')
+  @Patch('/:number/paid')
   @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiParam({name: 'number'})
   @ApiOperation({ summary: 'Change status paid from odoo' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async paid(
-    @Param() number: string, 
+    @Param('number') number,
     payload: PaidAllocationDTO,
   ) {
+    console.log(number);
     return await this.allocBallanceService.isPaid(number, payload);
   }
 }
