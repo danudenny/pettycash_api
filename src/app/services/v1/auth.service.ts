@@ -49,10 +49,7 @@ export class AuthService {
     try {
       // Find User from Cache or Database.
       user = await User.findOne({
-        cache: {
-          id: `user_${username}`,
-          milliseconds: LoaderEnv.envs.AUTH_CACHE_DURATION_IN_MINUTES * 60000,
-        },
+        cache: LoaderEnv.envs.AUTH_CACHE_DURATION_IN_MINUTES * 60000,
         ...options,
         where: { username, isDeleted: false },
       });
@@ -134,11 +131,9 @@ export class AuthService {
    * Clear cache for User.
    *
    * @static
-   * @param {string} [username]
    * @memberof AuthService
    */
-  public static async clearCache(username?: string): Promise<void> {
-    const keys = username ? [`user_${username}`] : [];
-    await getConnection().queryResultCache?.remove(keys);
+  public static async clearCache(): Promise<void> {
+    await getConnection().queryResultCache?.clear();
   }
 }
