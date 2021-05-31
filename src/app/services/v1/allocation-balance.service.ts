@@ -598,24 +598,33 @@ export class AllocationBalanceService {
 
   public async isPaid(number: string, payload: PaidAllocationDTO): Promise<any> {
     const paidDto = await this.cashbalRepo.create(payload)
-    const checkId = await this.cashbalRepo.findOne({
+    const paidAlokasi = await this.cashbalRepo.findOne({
       where: {
         number: number,
         isDeleted: false,
         isPaid: false
       }
     })
-    console.log(checkId);
+    let state: CashBalanceAllocationState;
 
-    if (!checkId) {
+    if (paidAlokasi.state != CashBalanceAllocationState.RECEIVED) {
+      throw new HttpException("Gagal Proses Alokasi Saldo Kas", HttpStatus.NOT_ACCEPTABLE);
+    }
+
+    if (!paidAlokasi) {
       throw new HttpException("Nomor Referensi tidak ditemukan", HttpStatus.NOT_FOUND);
     }
 
     paidDto.isPaid = true;
     paidDto.updatedAt = new Date();
+    paidDto.state = CashBalanceAllocationState.PAID
+
+    state = CashBalanceAllocationState.PAID
 
     try {
-      await this.cashbalRepo.update(checkId['id'], paidDto);
+      await this.cashbalRepo.update(paidAlokasi['id'], paidDto);
+      paidAlokasi.allocationHistory = await this.buildHistory(paidAlokasi, { state });
+      await this.accHistoryRepo.save(paidAlokasi.allocationHistory);
       throw new HttpException("Alokasi saldo kas sudah terbayar", HttpStatus.OK);
       
     } catch (err) {

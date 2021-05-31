@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Patch, Post, Put, Query } from '@nestjs/c
 import { ApiBadRequestResponse, ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
 import { AllocationBalanceService } from '../../services/v1/allocation-balance.service';
-import { AllocationBalanceResponse, AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
+import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import FindIdParams from '../../domain/common/findId-param.dto';
 import { PaidAllocationDTO, RejectAllocationDTO } from '../../domain/allocation-balance/dto/allocation-balance.dto';
 import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
@@ -94,7 +94,6 @@ export class AllocationBalanceController {
   }
 
   @Patch('/:number/paid')
-  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiParam({name: 'number'})
   @ApiOperation({ summary: 'Change status paid from odoo' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
@@ -102,7 +101,6 @@ export class AllocationBalanceController {
     @Param('number') number,
     payload: PaidAllocationDTO,
   ) {
-    console.log(number);
     return await this.allocBallanceService.isPaid(number, payload);
   }
 }
