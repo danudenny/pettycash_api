@@ -44,7 +44,7 @@ export class AuthService {
     let user: User;
     // TODO: Remove this mock after integrating with API Gateway Service
     if (!username) {
-      username = 'adry';
+      username = 'internalsystem';
     }
     try {
       // Find User from Cache or Database.
