@@ -105,7 +105,7 @@ export class BalanceService {
         ) br ON br.budget_id = b2.id
         WHERE b2.state = 'approved_by_spv'
           AND b2.is_deleted IS FALSE
-          AND (now() BETWEEN b2.start_date AND b2.end_date)
+          AND (now()::date BETWEEN b2.start_date AND b2.end_date)
         ORDER BY b2.end_date DESC
       )
       SELECT
