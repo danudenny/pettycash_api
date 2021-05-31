@@ -148,7 +148,7 @@ export class UserRoleService {
     user.branches = assignedBranches;
 
     const updatedUser = await user.save();
-    await AuthService.clearCache(user.username);
+    await AuthService.clearCache();
     return updatedUser;
   }
 
