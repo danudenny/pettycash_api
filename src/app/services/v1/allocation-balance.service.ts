@@ -126,6 +126,7 @@ export class AllocationBalanceService {
       ['us.username', 'nik'],
       ['cba.state', 'state'],
       ['cba.received_date', 'receivedDate'],
+      ['cba.is_paid', 'isPaid'],
       ['ru.first_name || \' \' || ru.last_name', 'receivedUserName'],
     );
     qb.leftJoin(
@@ -597,15 +598,13 @@ export class AllocationBalanceService {
 
   public async isPaid(number: string, payload: PaidAllocationDTO): Promise<any> {
     const paidDto = await this.cashbalRepo.create(payload)
-    const checkId = await await getConnection()
-                    .createQueryBuilder()
-                    .select("cba")
-                    .from(CashBalanceAllocation, "cba")
-                    .where("number = :number", { number })
-                    .andWhere("is_deleted = false")
-                    .andWhere("is_paid = false")
-                    .getOne();
-
+    const checkId = await this.cashbalRepo.findOne({
+      where: {
+        number: number,
+        isDeleted: false,
+        isPaid: false
+      }
+    })
     console.log(checkId);
 
     if (!checkId) {
@@ -616,9 +615,11 @@ export class AllocationBalanceService {
     paidDto.updatedAt = new Date();
 
     try {
-      await this.cashbalRepo.update(number, paidDto);
+      await this.cashbalRepo.update(checkId['id'], paidDto);
+      throw new HttpException("Alokasi saldo kas sudah terbayar", HttpStatus.OK);
+      
     } catch (err) {
-      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
