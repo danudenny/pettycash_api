@@ -64,11 +64,19 @@ export class Attachment extends PtcBaseEntity {
 
   @Column({
     nullable: true,
-    name: 'type_id'
+    name: 'type_id',
   })
   typeId: string;
 
-  @ManyToOne(() => AttachmentType​​)
+  @Column({
+    type: 'boolean',
+    name: 'is_checked',
+    nullable: true,
+    default: false,
+  })
+  isChecked?: boolean;
+
+  @ManyToOne(() => AttachmentType)
   @JoinColumn({ name: 'type_id', referencedColumnName: 'id' })
-  attType: AttachmentType
+  attType: AttachmentType;
 }
