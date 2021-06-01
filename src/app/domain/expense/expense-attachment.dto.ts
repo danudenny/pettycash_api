@@ -32,4 +32,10 @@ export class ExpenseAttachmentDTO {
     example: 'https://sicepatresi.s3.amazonaws.com/0009775/000977539725.jpg',
   })
   url: string;
+
+  @ApiProperty({
+    description: 'Is this attachment already checked or not',
+    example: true,
+  })
+  isChecked: boolean;
 }

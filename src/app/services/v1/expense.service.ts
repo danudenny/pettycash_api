@@ -73,6 +73,7 @@ import { UpdateExpenseItemDTO } from '../../domain/expense/update-item.dto';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import { Employee } from '../../../model/employee.entity';
 import { LoaderEnv } from '../../../config/loader';
+import { UpdateExpenseAttachmentDTO } from '../../domain/expense/update-attachment.dto';
 
 @Injectable()
 export class ExpenseService {
@@ -490,7 +491,10 @@ export class ExpenseService {
 
         let state: ExpenseState;
         const currentState = expense.state;
-        if ([MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole) || isSystemUser) {
+        if (
+          [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole) ||
+          isSystemUser
+        ) {
           // Approving with same state is not allowed
           if (currentState === ExpenseState.APPROVED_BY_SS_SPV) {
             throw new BadRequestException(
@@ -634,6 +638,7 @@ export class ExpenseService {
       ['att.filename', 'fileName'],
       ['att.file_mime', 'fileMime'],
       ['att.url', 'url'],
+      ['att.is_checked', 'isChecked'],
     );
     qb.innerJoin(
       (e) => e.attachments,
@@ -719,6 +724,43 @@ export class ExpenseService {
       );
     } catch (error) {
       throw new BadRequestException(error.message);
+    }
+  }
+
+  /**
+   * Update Expense Attachment
+   *
+   * @param {string} expenseId
+   * @param {string} attachmentId
+   * @param {UpdateExpenseAttachmentDTO} payload
+   * @return {*}  {Promise<void>}
+   * @memberof ExpenseService
+   */
+  public async updateAttachment(
+    expenseId: string,
+    attachmentId: string,
+    payload: UpdateExpenseAttachmentDTO,
+  ): Promise<void> {
+    const att = await createQueryBuilder('attachment', 'att')
+      .leftJoin('expense_attachment', 'eat', 'att.id = eat.attachment_id')
+      .where('eat.expense_id = :expenseId', { expenseId })
+      .andWhere('eat.attachment_id = :attachmentId', { attachmentId })
+      .andWhere('att.isDeleted = false')
+      .getOne();
+
+    if (!att) {
+      throw new NotFoundException('Tidak ditemukan attachment!');
+    }
+
+    const data = this.attachmentRepo.create(payload as Attachment);
+    data.updateUser = await this.getUser();
+
+    const updateAttachment = await this.attachmentRepo.update(
+      attachmentId,
+      data,
+    );
+    if (!updateAttachment) {
+      throw new BadRequestException('Failed to update attachment!');
     }
   }
 
