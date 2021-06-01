@@ -10,6 +10,7 @@ export class ExpenseAttachmentResponseMapper {
     it.fileName = dto.fileName;
     it.fileMime = dto.fileMime;
     it.url = dto.url;
+    it.isChecked = dto.isChecked;
     return it;
   }
 

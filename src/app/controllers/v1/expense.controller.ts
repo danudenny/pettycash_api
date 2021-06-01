@@ -47,6 +47,7 @@ import {
 } from '../../domain/common/findId-param.dto';
 import { Response } from 'express';
 import { UpdateExpenseDTO } from '../../domain/expense/update.dto';
+import { UpdateExpenseAttachmentDTO } from '../../domain/expense/update-attachment.dto';
 
 @Controller('v1/expenses')
 @ApiTags('Expense')
@@ -141,6 +142,21 @@ export class ExpenseController {
     @UploadedFiles() attachments: any,
   ) {
     return await this.svc.createAttachment(id, attachments);
+  }
+
+  @Put('/:expenseId/attachments/:attachmentId')
+  @ApiParam({ name: 'attachmentId' })
+  @ApiParam({ name: 'expenseId' })
+  @ApiOperation({ summary: 'Update Expense Attachment' })
+  @ApiOkResponse({ description: 'Successfully update attachment' })
+  public async updateAttachment(
+    @Param() { expenseId }: FindExpenseIdParams,
+    @Param() { attachmentId }: FindAttachmentIdParams,
+    @Body() payload: UpdateExpenseAttachmentDTO,
+    @Res() res: Response,
+  ) {
+    await this.svc.updateAttachment(expenseId, attachmentId, payload);
+    return res.status(HttpStatus.OK).json();
   }
 
   @Delete('/:expenseId/attachments/:attachmentId')
