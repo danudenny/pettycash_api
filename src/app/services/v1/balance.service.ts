@@ -77,7 +77,7 @@ export class BalanceService {
       )
       SELECT
         branch_id,
-        (COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0)) AS balance
+        (COALESCE(SUM(credit), 0) - COALESCE(SUM(debit), 0)) AS balance
       FROM acc_stt
       GROUP BY branch_id)`,
       'act',
@@ -219,7 +219,7 @@ export class BalanceService {
         )
         SELECT
           branch_id,
-          (COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0)) AS balance
+          (COALESCE(SUM(credit), 0) - COALESCE(SUM(debit), 0)) AS balance
         FROM
           acc_stt_bank
         GROUP BY
@@ -247,7 +247,7 @@ export class BalanceService {
         )
         SELECT
           branch_id,
-          (COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0)) AS balance
+          (COALESCE(SUM(credit), 0) - COALESCE(SUM(debit), 0)) AS balance
         FROM
         acc_stt_cash
         GROUP BY
