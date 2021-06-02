@@ -11,6 +11,7 @@ export class PartnerResponseMapper {
     it.npwpNumber = dto.npwpNumber;
     it.idCardNumber = dto.idCardNumber;
     it.state = dto.state;
+    it.isActive = dto.isActive;
     it.createdAt = dto.createdAt;
     return it;
   }
