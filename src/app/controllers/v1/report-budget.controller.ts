@@ -16,7 +16,7 @@ export class ReportBudgetController {
 
 
     @Get()
-    @ApiOperation({ summary: 'List all reports down payments' })
+    @ApiOperation({ summary: 'List all reports budget' })
     @ApiOkResponse({ type: ReportBudgetsWithPaginationResponse })
     @ApiBadRequestResponse({ description: 'Bad Request' })
     async getAllReports(@Query() query: QueryReportBudgetDTO,): Promise<ReportBudgetsWithPaginationResponse> {
