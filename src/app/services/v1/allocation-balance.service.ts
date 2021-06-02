@@ -71,7 +71,7 @@ export class AllocationBalanceService {
     stmt.amount = cashBal.amount;
     stmt.transactionDate = cashBal.transferDate;
     stmt.type = AccountStatementType.BANK;
-    stmt.amountPosition = AccountStatementAmountPosition.DEBIT;
+    stmt.amountPosition = AccountStatementAmountPosition.CREDIT;
 
     return stmt;
   }
