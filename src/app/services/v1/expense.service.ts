@@ -639,16 +639,21 @@ export class ExpenseService {
       ['att.filename', 'fileName'],
       ['att.file_mime', 'fileMime'],
       ['att.url', 'url'],
+      ['att.type_id', 'typeId'],
+      ['typ.code', 'typeCode'],
+      ['typ."name"', 'typeName'],
       ['att.is_checked', 'isChecked'],
     );
-    qb.innerJoin(
-      (e) => e.attachments,
+    qb.qb.innerJoin(`expense_attachment`, 'ea', 'ea.expense_id = exp.id');
+    qb.qb.innerJoin(
+      `attachment`,
       'att',
-      (j) =>
-        j.andWhere(
-          (e) => e.isDeleted,
-          (v) => v.isFalse(),
-        ),
+      'att.id = ea.attachment_id AND att.is_deleted IS FALSE',
+    );
+    qb.qb.leftJoin(
+      `attachment_type`,
+      'typ',
+      'typ.id = att.type_id AND typ.is_active IS TRUE AND typ.is_deleted IS FALSE',
     );
     qb.andWhere(
       (e) => e.isDeleted,
@@ -658,6 +663,9 @@ export class ExpenseService {
       (e) => e.id,
       (v) => v.equals(expenseId),
     );
+    qb.qb.orderBy('att.updated_at', 'DESC');
+
+    // TODO: add caching.
 
     const attachments = await qb.exec();
     if (!attachments) {
@@ -764,7 +772,7 @@ export class ExpenseService {
       );
 
       return new ExpenseAttachmentResponse(
-        createAttachment as ExpenseAttachmentDTO[],
+        (createAttachment as unknown) as ExpenseAttachmentDTO[],
       );
     } catch (error) {
       throw new BadRequestException(error.message);
