@@ -1,5 +1,12 @@
 import { Response } from 'express';
-import { ApiBadRequestResponse, ApiInternalServerErrorResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { 
+	ApiBadRequestResponse, 
+	ApiCreatedResponse, 
+	ApiInternalServerErrorResponse, 
+	ApiOkResponse, 
+	ApiOperation, 
+	ApiTags, 
+} from '@nestjs/swagger';
 import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import { ReportBalanceService } from '../../services/v1/report-balance.service';
 import { QueryReportBalanceDTO } from '../../domain/balance/balance.query.dto';
@@ -29,7 +36,7 @@ export class ReportBalanceController {
 
 	@Get('/export')
 	@ApiOperation({ summary: 'Exports Balance Report' })
-	@ApiOkResponse({ type: Buffer })
+	@ApiCreatedResponse({ description: 'Successfully generate report balance' })
 	@ApiBadRequestResponse({ description: 'Bad Request' })
 	async exportReports(@Res() res: Response) {
 		try {
