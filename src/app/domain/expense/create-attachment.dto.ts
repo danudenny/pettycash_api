@@ -1,4 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsUUID } from 'class-validator';
 
 export class CreateExpenseAttachmentDTO {
   @ApiProperty({
@@ -14,4 +15,12 @@ export class CreateExpenseAttachmentDTO {
     },
   })
   attachments: any[];
+
+  @ApiPropertyOptional({
+    description: 'Attachment Type ID',
+    example: '686fdea3-7017-44bc-bce4-223d828beb64',
+  })
+  @IsUUID()
+  @IsOptional()
+  typeId?: string;
 }
