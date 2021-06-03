@@ -140,8 +140,9 @@ export class ExpenseController {
   public async createAttachment(
     @Param('id', new ParseUUIDPipe()) id: string,
     @UploadedFiles() attachments: any,
+    @Body() body: CreateExpenseAttachmentDTO,
   ) {
-    return await this.svc.createAttachment(id, attachments);
+    return await this.svc.createAttachment(id, attachments, body?.typeId);
   }
 
   @Put('/:expenseId/attachments/:attachmentId')

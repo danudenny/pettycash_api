@@ -74,6 +74,7 @@ import { AccountStatement } from '../../../model/account-statement.entity';
 import { Employee } from '../../../model/employee.entity';
 import { LoaderEnv } from '../../../config/loader';
 import { UpdateExpenseAttachmentDTO } from '../../domain/expense/update-attachment.dto';
+import { AttachmentType } from '../../../model/attachment-type.entity';
 
 @Injectable()
 export class ExpenseService {
@@ -638,16 +639,21 @@ export class ExpenseService {
       ['att.filename', 'fileName'],
       ['att.file_mime', 'fileMime'],
       ['att.url', 'url'],
+      ['att.type_id', 'typeId'],
+      ['typ.code', 'typeCode'],
+      ['typ."name"', 'typeName'],
       ['att.is_checked', 'isChecked'],
     );
-    qb.innerJoin(
-      (e) => e.attachments,
+    qb.qb.innerJoin(`expense_attachment`, 'ea', 'ea.expense_id = exp.id');
+    qb.qb.innerJoin(
+      `attachment`,
       'att',
-      (j) =>
-        j.andWhere(
-          (e) => e.isDeleted,
-          (v) => v.isFalse(),
-        ),
+      'att.id = ea.attachment_id AND att.is_deleted IS FALSE',
+    );
+    qb.qb.leftJoin(
+      `attachment_type`,
+      'typ',
+      'typ.id = att.type_id AND typ.is_active IS TRUE AND typ.is_deleted IS FALSE',
     );
     qb.andWhere(
       (e) => e.isDeleted,
@@ -657,6 +663,9 @@ export class ExpenseService {
       (e) => e.id,
       (v) => v.equals(expenseId),
     );
+    qb.qb.orderBy('att.updated_at', 'DESC');
+
+    // TODO: add caching.
 
     const attachments = await qb.exec();
     if (!attachments) {
@@ -677,7 +686,7 @@ export class ExpenseService {
   public async createAttachment(
     expenseId: string,
     files?: any,
-    attachmentType?: any,
+    attachmentTypeId?: string,
   ): Promise<ExpenseAttachmentResponse> {
     try {
       const createAttachment = await getManager().transaction(
@@ -694,16 +703,59 @@ export class ExpenseService {
 
           // Upload file attachments
           let newAttachments: Attachment[];
+          let attType: AttachmentType;
+          let pathId: string;
           if (files && files.length) {
+            if (attachmentTypeId) {
+              attType = await manager.findOne(AttachmentType, {
+                where: {
+                  id: attachmentTypeId,
+                  isDeleted: false,
+                  isActive: true,
+                },
+              });
+            }
+
+            // TODO: move out as utils
+            const getExt = (file: any) => {
+              return file?.originalname?.split('.').pop();
+            };
+            const parseAttTypeName = (attName: string) => {
+              return attName
+                ?.replace('/', '')
+                .split(/\s+/)
+                .join(' ')
+                .replace(' ', '_')
+                .toUpperCase();
+            };
+
             const expensePath = `expense/${expenseId}`;
-            const attachments = await AttachmentService.uploadFiles(
+            const attachments = await AttachmentService.uploadFilesWithCustomName(
               files,
               (file) => {
-                const rid = uuid().split('-')[0];
-                const pathId = `${expensePath}_${rid}_${file.originalname}`;
+                const rid = uuid().split('-')[1];
+                let attachmentName: string;
+                if (attType?.name) {
+                  const attTypeName = parseAttTypeName(attType?.name);
+                  const ext = getExt(file);
+                  attachmentName = `${rid}_${attTypeName}.${ext}`;
+                } else {
+                  attachmentName = `${rid}_${file.originalname}`;
+                }
+                return attachmentName;
+              },
+              (file) => {
+                if (attType?.name) {
+                  const attTypeName = parseAttTypeName(attType?.name);
+                  const ext = getExt(file);
+                  pathId = `${expensePath}_${attTypeName}.${ext}`;
+                } else {
+                  const rid = uuid().split('-')[0];
+                  pathId = `${expensePath}_${rid}_${file.originalname}`;
+                }
                 return pathId;
               },
-              attachmentType,
+              attachmentTypeId,
               manager,
             );
             newAttachments = attachments;
@@ -720,7 +772,7 @@ export class ExpenseService {
       );
 
       return new ExpenseAttachmentResponse(
-        createAttachment as ExpenseAttachmentDTO[],
+        (createAttachment as unknown) as ExpenseAttachmentDTO[],
       );
     } catch (error) {
       throw new BadRequestException(error.message);

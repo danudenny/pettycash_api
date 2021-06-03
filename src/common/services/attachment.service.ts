@@ -16,6 +16,7 @@ export class AttachmentService {
 
   public static async uploadFileBufferToS3(
     fileBuffer: Buffer,
+    attachmentName: string,
     fileOriginalName: string,
     fileMime: string,
     pathId?: string,
@@ -36,17 +37,17 @@ export class AttachmentService {
     );
 
     const url = `https://${bucketName}.s3.amazonaws.com/${uploadResponse.awsKey}`;
-    
+
     // Get UserId from Auth
     const { id: userId } = await AuthService.getUser();
-    
+
     const repo = tx ? tx : getManager();
     const attachment = repo.create(Attachment, {
       bucketName,
       fileMime,
       fileProvider: FILE_PROVIDER.AWS_S3,
       path: uploadResponse.awsKey,
-      name: fileOriginalName,
+      name: attachmentName,
       fileName: fileOriginalName,
       url,
       typeId: typeId,
@@ -134,6 +135,7 @@ export class AttachmentService {
           attachment = await this.uploadFileBufferToS3(
             file.buffer,
             file.originalname,
+            file.originalname,
             file.mimetype,
             pathId,
             null,
@@ -141,6 +143,51 @@ export class AttachmentService {
             txManager,
           );
         }
+        attachments.push(attachment);
+      }
+
+      return attachments;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Upload Multiple Files to AWS S3 with Custom Name
+   *
+   * @static
+   * @param {*} files
+   * @param {(file: any) => string} nameHandler
+   * @param {(file: any) => string} [pathHandler]
+   * @param {*} [typeId]
+   * @param {EntityManager} [tx]
+   * @return {*}  {Promise<Attachment[]>}
+   * @memberof AttachmentService
+   */
+  public static async uploadFilesWithCustomName(
+    files: any,
+    nameHandler: (file: any) => string,
+    pathHandler?: (file: any) => string,
+    typeId?: any,
+    tx?: EntityManager,
+  ): Promise<Attachment[]> {
+    try {
+      const attachments: Attachment[] = [];
+      for (const file of files) {
+        // Upload Attachment to AWS S3
+        const txManager = tx ? tx : null;
+        const name = nameHandler(file);
+        const pathId = pathHandler(file);
+        const attachment = await this.uploadFileBufferToS3(
+          file.buffer,
+          name,
+          file.originalname,
+          file.mimetype,
+          pathId,
+          null,
+          typeId,
+          txManager,
+        );
         attachments.push(attachment);
       }
 
