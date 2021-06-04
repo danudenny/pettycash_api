@@ -2,7 +2,7 @@ import { QueryVehicleDTO } from './../../../domain/vehicle/vehicle-payload.dto';
 import { VehicleWithPaginationResponse } from '../../../domain/vehicle/vehicle-response.dto';
 import { VehicleService } from './../../../services/master/vehicle.service';
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiOkResponse, ApiBadRequestResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiOkResponse, ApiBadRequestResponse, ApiHeader } from '@nestjs/swagger';
 
 @Controller('v1/vehicles')
 @ApiTags('Vehicles')
@@ -11,6 +11,7 @@ export class VehicleController {
 
   @Get('')
   @ApiOperation({ summary: 'List all Products' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiOkResponse({ type: VehicleWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async list(@Query() query: QueryVehicleDTO){
