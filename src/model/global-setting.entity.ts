@@ -53,12 +53,12 @@ export class GlobalSetting extends BaseEntity {
 
   @Column({
     type: 'smallint',
-    name: 'partner_expiration_in_day',
+    name: 'partner_expiration_in_month',
     nullable: true,
-    default: 60,
+    default: 6,
     transformer: new ColumnNumericTransformer(),
   })
-  partnerExpirationInDay: number;
+  partnerExpirationInMonth: number;
 
   @OneToOne(() => Partner)
   @JoinColumn({ name: 'voucher_partner_id' })
