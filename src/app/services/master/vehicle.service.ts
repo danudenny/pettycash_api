@@ -26,9 +26,11 @@ export class VehicleService {
 
     const getBranch =await this.branchRepository.findOne({
       where: {
-        id:  userBranchIds[0]
+        id:  userBranchIds && userBranchIds[0]
       }
     })
+
+    console.log(getBranch)
 
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(Vehicle, 'veh', params);

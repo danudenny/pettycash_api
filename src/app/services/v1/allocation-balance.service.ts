@@ -4,7 +4,15 @@ import { EntityManager, getConnection, getManager, In, Repository } from 'typeor
 import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+  ParseUUIDPipe,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AccountStatementAmountPosition, AccountStatementType, CashBalanceAllocationState, MASTER_ROLES } from '../../../model/utils/enum';
 import { AccountStatementHistory } from '../../../model/account-statement-history.entity';
@@ -165,7 +173,7 @@ export class AllocationBalanceService {
 
     const where = { id, isDeleted: false };
     if (!isSuperUser) {
-      Object.assign(where, { branchId: In(userBranchIds) });
+      Object.assign(where, { branchId: userBranchIds.toString() });
     }
     const allocation = await this.cashbalRepo.findOne({
       where,
@@ -178,6 +186,8 @@ export class AllocationBalanceService {
         'allocationHistory.createUser',
       ],
     });
+
+    console.log(userBranchIds)
     
     if (!allocation) {
       throw new NotFoundException(`Allocation ID ${id} not found!`);

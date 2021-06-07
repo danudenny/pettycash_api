@@ -36,4 +36,10 @@ export class UpdatePartnerDTO {
   })
   @IsOptional()
   address: string;
+
+  @ApiPropertyOptional({
+    description: 'Partner Is Active',
+    example: true
+  })
+  isActive: boolean;
 }
