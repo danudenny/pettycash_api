@@ -30,8 +30,6 @@ export class VehicleService {
       }
     })
 
-    console.log(getBranch)
-
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(Vehicle, 'veh', params);
 
