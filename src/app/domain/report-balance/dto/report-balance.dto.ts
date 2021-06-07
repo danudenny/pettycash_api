@@ -33,4 +33,15 @@ export class ReportBalanceDTO {
 	})
 	totalAmount: number;
 
+  @ApiProperty({
+    description: 'Minimum Amount',
+    example: 2300000,
+  })
+  minimumAmount: number;
+
+  @ApiProperty({
+    description: 'Last time data retreive from database',
+    example: '2021-04-07T10:25:19.917Z',
+  })
+  retreiveAt: Date;
 }
