@@ -136,7 +136,7 @@ export class PartnerService {
       }
       throw err;
     }
-    return;
+    return new HttpException('Sukses update Partner', HttpStatus.OK);
   }
 
   public async delete(id: string): Promise<any> {
