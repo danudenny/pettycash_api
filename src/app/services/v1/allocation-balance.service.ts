@@ -173,7 +173,7 @@ export class AllocationBalanceService {
 
     const where = { id, isDeleted: false };
     if (!isSuperUser) {
-      Object.assign(where, { branchId: userBranchIds.toString() });
+      Object.assign(where, { branchId: userBranchIds && userBranchIds.toString() });
     }
     const allocation = await this.cashbalRepo.findOne({
       where,
