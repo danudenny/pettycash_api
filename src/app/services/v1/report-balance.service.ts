@@ -1,9 +1,9 @@
 import { Response } from 'express';
 import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  UnprocessableEntityException,
+	HttpException,
+	HttpStatus,
+	Injectable,
+	UnprocessableEntityException,
 } from '@nestjs/common';
 import { QueryReportBalanceDTO } from '../../domain/balance/balance.query.dto';
 import { ReportBalancePaginationResponse } from '../../domain/report-balance/response/report-balance-response.dto';
@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 @Injectable()
 export class ReportBalanceService {
 
-	constructor() {}
+	constructor() { }
 
 	public async getBalanceReport(
 		query?: QueryReportBalanceDTO,
@@ -26,21 +26,21 @@ export class ReportBalanceService {
 		return new ReportBalancePaginationResponse(balances);
 	}
 
-  async export(res: Response): Promise<Response> {
-    try {
-		  const balances: Partial<ReportBalanceDTO[]> = await this.getSummaryBalances();
-      const balancesReportFileName = this.createBalanceReportFilename();
-      const balancesReportBuffer = this.createBalanceReportBuffer(balances);
+	async export(res: Response): Promise<Response> {
+		try {
+			const balances: Partial<ReportBalanceDTO[]> = await this.getSummaryBalances();
+			const balancesReportFileName = this.createBalanceReportFilename();
+			const balancesReportBuffer = this.createBalanceReportBuffer(balances);
 
-      res.setHeader('Content-Disposition',`attachment;filename=${balancesReportFileName}`);
-      res.setHeader('Content-type','application/csv');
-      res.status(HttpStatus.CREATED);
+			res.setHeader('Content-Disposition', `attachment;filename=${balancesReportFileName}`);
+			res.setHeader('Content-type', 'application/csv');
+			res.status(HttpStatus.CREATED);
 
-      return res.send(balancesReportBuffer);
-    } catch (err) {
-      throw new HttpException(err.message, err.status || HttpStatus.BAD_REQUEST);
-    }
-  }
+			return res.send(balancesReportBuffer);
+		} catch (err) {
+			throw new HttpException(err.message, err.status || HttpStatus.BAD_REQUEST);
+		}
+	}
 
 	private async getSummaryBalances(
 		query?: QueryReportBalanceDTO,
@@ -155,27 +155,27 @@ export class ReportBalanceService {
 		return await qb.exec();
 	}
 
-  private createBalanceReportFilename(): string {
-    const dateTime = dayjs(new Date()).format('YYYYMMDD-HHmmss');
+	private createBalanceReportFilename(): string {
+		const dateTime = dayjs(new Date()).format('YYYYMMDD-HHmmss');
 
-    return `balances_report_${dateTime}.csv`;
-  }
+		return `balances_report_${dateTime}.csv`;
+	}
 
-  private createBalanceReportBuffer(balances: Partial<ReportBalanceDTO[]>): Buffer {
-    const delimiter = ";";
-    const header = `branchId${delimiter}branchName${delimiter}bankAmount${delimiter}cashAmount${delimiter}totalAmount`;
-    const body = balances.map(
-      balance => {
-        return balance.branchId + 
-        delimiter + balance.branchName + 
-        delimiter + balance.bankAmount + 
-        delimiter + balance.cashAmount + 
-        delimiter + balance.totalAmount
-      }
-    ).join("\n")
+	private createBalanceReportBuffer(balances: Partial<ReportBalanceDTO[]>): Buffer {
+		const delimiter = ";";
+		const header = `branchId${delimiter}branchName${delimiter}bankAmount${delimiter}cashAmount${delimiter}totalAmount`;
+		const body = balances.map(
+			balance => {
+				return balance.branchId +
+					delimiter + balance.branchName +
+					delimiter + balance.bankAmount +
+					delimiter + balance.cashAmount +
+					delimiter + balance.totalAmount
+			}
+		).join("\n")
 
-    const data = `${header}\n${body}`
+		const data = `${header}\n${body}`
 
-    return Buffer.from(data)
-  }
+		return Buffer.from(data)
+	}
 }

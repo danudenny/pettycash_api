@@ -1,11 +1,11 @@
 import { Response } from 'express';
-import { 
-	ApiBadRequestResponse, 
-	ApiCreatedResponse, 
-	ApiInternalServerErrorResponse, 
-	ApiOkResponse, 
-	ApiOperation, 
-	ApiTags, 
+import {
+	ApiBadRequestResponse,
+	ApiCreatedResponse,
+	ApiInternalServerErrorResponse,
+	ApiOkResponse,
+	ApiOperation,
+	ApiTags,
 } from '@nestjs/swagger';
 import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/common';
 import { ReportBalanceService } from '../../services/v1/report-balance.service';
@@ -19,7 +19,7 @@ export class ReportBalanceController {
 
 	constructor(
 		private readonly reportBalanceService: ReportBalanceService
-	) {}
+	) { }
 
 
 	@Get()
@@ -30,7 +30,7 @@ export class ReportBalanceController {
 		try {
 			return await this.reportBalanceService.getBalanceReport(query);
 		} catch (err) {
-			throw new HttpException( err.message, err.status || HttpStatus.BAD_REQUEST,);
+			throw new HttpException(err.message, err.status || HttpStatus.BAD_REQUEST,);
 		}
 	}
 
@@ -42,7 +42,7 @@ export class ReportBalanceController {
 		try {
 			return this.reportBalanceService.export(res);
 		} catch (err) {
-			throw new HttpException( err.message, err.status || HttpStatus.BAD_REQUEST,);
+			throw new HttpException(err.message, err.status || HttpStatus.BAD_REQUEST,);
 		}
 	}
 }
