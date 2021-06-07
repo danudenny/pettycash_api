@@ -75,6 +75,7 @@ import { Employee } from '../../../model/employee.entity';
 import { LoaderEnv } from '../../../config/loader';
 import { UpdateExpenseAttachmentDTO } from '../../domain/expense/update-attachment.dto';
 import { AttachmentType } from '../../../model/attachment-type.entity';
+import { Vehicle } from '../../../model/vehicle.entity';
 
 @Injectable()
 export class ExpenseService {
@@ -522,6 +523,9 @@ export class ExpenseService {
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
           await this.createJournal(manager, journal);
+
+          // Update Vehicle Kilometer if any.
+          await this.updateVehicleFromExpense(manager, expense);
         }
 
         if (!state) {
@@ -1782,5 +1786,62 @@ export class ExpenseService {
       branchId: expense?.branchId,
       isDeleted: false,
     });
+  }
+
+  /**
+   * Internal helper to update Vehicle data.
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} expense
+   * @return {*}  {Promise<void>}
+   * @memberof ExpenseService
+   */
+  private async updateVehicleFromExpense(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<void> {
+    // re-fetch ExpenseItems to get latest data.
+    const expenseItems = await manager
+      .getRepository(ExpenseItem)
+      .find({
+        where: { expenseId: expense?.id, isDeleted: false },
+        relations: ['attributes'],
+      });
+    for (const item of expenseItems) {
+      const attrs = item?.attributes;
+      if (!attrs.length) continue;
+
+      const vehicleId = attrs
+        ?.filter((a) => a.key === 'vehicleId')
+        ?.map((m) => m.value)
+        ?.pop();
+      const vehicleKM = attrs
+        ?.filter((a) => a.key === 'kilometerEnd')
+        ?.map((m) => m.value)
+        ?.pop();
+
+      if (vehicleId && vehicleKM) {
+        if (+vehicleKM > 0) {
+          await this.updateVehicleKilometerById(manager, vehicleId, +vehicleKM);
+        }
+      }
+    }
+  }
+
+  private async updateVehicleKilometerById(
+    manager: EntityManager,
+    id: string,
+    kmEnd: number,
+  ): Promise<any> {
+    const vehicleRepo = manager.getRepository(Vehicle);
+    const vehicle = await vehicleRepo.findOne(id, { select: ['id'] });
+    if (!vehicle) return;
+
+    // Update Vehicle data in pettycash DB
+    const sql = `UPDATE vehicle SET vehicle_kilometer = vehicle_kilometer + $2 WHERE id = $1 RETURNING id`;
+    await manager?.query(sql, [id, +(kmEnd || 0)]);
+
+    // TODO: update Vehicle data in masterdata.
   }
 }
