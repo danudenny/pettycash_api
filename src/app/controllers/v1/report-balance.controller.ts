@@ -38,9 +38,9 @@ export class ReportBalanceController {
 	@ApiOperation({ summary: 'Exports Balance Report' })
 	@ApiCreatedResponse({ description: 'Successfully generate report balance' })
 	@ApiBadRequestResponse({ description: 'Bad Request' })
-	async exportReports(@Res() res: Response) {
+	async exportReports(@Res() res: Response, @Query() query: QueryReportBalanceDTO) {
 		try {
-			return this.reportBalanceService.export(res);
+			return this.reportBalanceService.export(res, query);
 		} catch (err) {
 			throw new HttpException(err.message, err.status || HttpStatus.BAD_REQUEST,);
 		}
