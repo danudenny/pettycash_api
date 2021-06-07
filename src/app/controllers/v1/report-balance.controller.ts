@@ -14,7 +14,7 @@ import { ReportBalancePaginationResponse } from '../../domain/report-balance/res
 
 @ApiTags('Reports Balance')
 @ApiInternalServerErrorResponse({ description: 'General Error' })
-@Controller('v1/reports/balance')
+@Controller('v1/reports/balances')
 export class ReportBalanceController {
 
 	constructor(
