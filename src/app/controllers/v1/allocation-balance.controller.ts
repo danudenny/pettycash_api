@@ -25,6 +25,7 @@ export class AllocationBalanceController {
 
   @Get('/:id')
   @ApiParam({name: 'id'})
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiOperation({ summary: 'Get Allocation Balance by ID' })
   @ApiOkResponse({ type: AllocationBalanceDetailResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })

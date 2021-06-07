@@ -1,5 +1,5 @@
-import { Expense } from './../../../model/expense.entity';
-import { BadRequestException, HttpException, HttpStatus, NotFoundException, Req } from '@nestjs/common';
+import { Expense } from '../../../model/expense.entity';
+import { BadRequestException, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createQueryBuilder, getManager, Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -14,13 +14,9 @@ import { PartnerAttachmentDTO } from '../../domain/partner/partner-attahcment.dt
 import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
 import { PartnerAttachmentResponse } from '../../domain/partner/response-attachment.dto';
 import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
-import {
-  PartnerResponse,
-  PartnerWithPaginationResponse,
-} from '../../domain/partner/response.dto';
+import { PartnerResponse, PartnerWithPaginationResponse } from '../../domain/partner/response.dto';
 import { UpdatePartnerDTO } from '../../domain/partner/update.dto';
 import { AuthService } from './auth.service';
-import { CreatePartnerAttachmentDTO } from '../../domain/partner/create-attachment.dto';
 import dayjs from 'dayjs';
 import { AttachmentType } from '../../../model/attachment-type.entity';
 
@@ -205,31 +201,66 @@ export class PartnerService {
               `Expense with ID ${partnerId} not found!`,
             );
           }
-
-          const getAttType = await this.attachmentTypeRepo.findOne({
-            where: {
-              id: typeId
-            }
-          })
                     
           // Upload file attachments
           let newAttachments: Attachment[];
+          let attType: AttachmentType;
+          let pathId: string;
           if (files && files.length) {
-            const partnerPath = `partner/${partner.name}`;
-            
-            const attachments = await AttachmentService.uploadFiles(
+            if (typeId) {
+                attType = await manager.findOne(AttachmentType, {
+                where: {
+                  id: typeId,
+                  isDeleted: false,
+                  isActive: true,
+                },
+              });
+            }
+
+            // TODO: move out as utils
+            const getExt = (file: any) => {
+              return file?.originalname?.split('.').pop();
+            };
+            const parseAttTypeName = (attName: string) => {
+              return attName
+                ?.replace('/', '')
+                .split(/\s+/)
+                .join(' ')
+                .replace(' ', '_')
+                .toUpperCase();
+            };
+
+            const partnerPath = `partner/${partnerId}`;
+            newAttachments = await AttachmentService.uploadFilesWithCustomName(
               files,
               (file) => {
-                const ext = file.originalname.split('.');
-                const pathId = `${partnerPath}-${(getAttType['name']).toUpperCase()}.${ext[1]}`;
+                const rid = uuid().split('-')[1];
+                let attachmentName: string;
+                if (attType?.name) {
+                  const attTypeName = parseAttTypeName(attType?.name);
+                  const ext = getExt(file);
+                  attachmentName = `${rid}_${attTypeName}.${ext}`;
+                } else {
+                  attachmentName = `${rid}_${file.originalname}`;
+                }
+                return attachmentName;
+              },
+              (file) => {
+                if (attType?.name) {
+                  const attTypeName = parseAttTypeName(attType?.name);
+                  const ext = getExt(file);
+                  pathId = `${partnerPath}_${attTypeName}.${ext}`;
+                } else {
+                  const rid = uuid().split('-')[0];
+                  pathId = `${partnerPath}_${rid}_${file.originalname}`;
+                }
                 return pathId;
               },
               typeId,
               manager,
             );
-            newAttachments = attachments;
           }
-          
+
           const existingAttachments = partner.attachments;
           
           partner.attachments = [].concat(existingAttachments, newAttachments);
@@ -251,7 +282,7 @@ export class PartnerService {
     partnerId: string,
     attachmentId: string,
   ): Promise<void> {
-    // TODO: Implement API Delete Expense Attachments
+    // TODO: Implement API Delete Partner Attachments
     const attExist = await createQueryBuilder('attachment', 'att')
       .leftJoin('partner_attachment', 'pa', 'att.id = pa.attachment_id')
       .where('pa.partner_id = :partnerId', { partnerId })
