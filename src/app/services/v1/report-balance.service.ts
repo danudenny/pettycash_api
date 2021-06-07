@@ -83,7 +83,7 @@ export class ReportBalanceService {
 				'totalAmount',
 			],
 			['COALESCE(bgt.minimum_amount, 0)', 'minimumAmount'],
-			['now()', 'retreiveAt'],
+			['now()', 'retrieveAt'],
 		);
 		qb.qb.leftJoin(
 			`(WITH acc_stt_bank AS (
@@ -210,7 +210,7 @@ export class ReportBalanceService {
 					delimiter + balance.cashAmount +
 					delimiter + balance.totalAmount +
 					delimiter + balance.minimumAmount +
-					delimiter + balance.retreiveAt;
+					delimiter + balance.retrieveAt;
 			}
 		).join("\n")
 

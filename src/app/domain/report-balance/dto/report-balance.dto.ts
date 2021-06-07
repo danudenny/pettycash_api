@@ -43,5 +43,5 @@ export class ReportBalanceDTO {
     description: 'Last time data retreive from database',
     example: '2021-04-07T10:25:19.917Z',
   })
-  retreiveAt: Date;
+  retrieveAt: Date;
 }
