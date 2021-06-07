@@ -25,8 +25,9 @@ export class Vehicle extends BaseEntity {
   })
   vehicleNumber: string;
 
-  @Column('varchar', {
+  @Column('numeric', {
     name: 'vehicle_kilometer',
+    transformer: new ColumnNumericTransformer(),
   })
   vehicleKilometer: number;
 
