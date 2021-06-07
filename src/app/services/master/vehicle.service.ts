@@ -48,7 +48,7 @@ export class VehicleService {
     if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.branchId,
-        (v) => v.equals(getBranch.branchId),
+        (v) => v.in([getBranch.branchId]),
       );
     }
 

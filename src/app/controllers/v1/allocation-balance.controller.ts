@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
 import { AllocationBalanceService } from '../../services/v1/allocation-balance.service';
@@ -24,12 +24,11 @@ export class AllocationBalanceController {
   }
 
   @Get('/:id')
-  @ApiParam({name: 'id'})
   @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiOperation({ summary: 'Get Allocation Balance by ID' })
   @ApiOkResponse({ type: AllocationBalanceDetailResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async find(@Param() {id}: FindIdParams) {
+  public async find(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.allocBallanceService.getById(id);
   }
 
