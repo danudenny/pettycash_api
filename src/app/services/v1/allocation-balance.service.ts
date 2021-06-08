@@ -171,9 +171,10 @@ export class AllocationBalanceService {
       isSuperUser,
     } = await AuthService.getUserBranchAndRole();
 
+    console.log(userBranchIds)
     const where = { id, isDeleted: false };
     if (!isSuperUser) {
-      Object.assign(where, { branchId: userBranchIds && userBranchIds.toString() });
+      Object.assign(where, { branchId: userBranchIds && userBranchIds[0]  });
     }
     const allocation = await this.cashbalRepo.findOne({
       where,
@@ -187,8 +188,6 @@ export class AllocationBalanceService {
       ],
     });
 
-    console.log(userBranchIds)
-    
     if (!allocation) {
       throw new NotFoundException(`Allocation ID ${id} not found!`);
     }
