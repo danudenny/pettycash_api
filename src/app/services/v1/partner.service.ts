@@ -125,7 +125,7 @@ export class PartnerService {
 
     const updatedPartner = this.partnerRepo.create(payload as Partner);
     const responsiblePartner = await this.getUser();
-    partner.updateUserId = responsiblePartner.id;
+    partner.updateUserId = responsiblePartner?.id;
 
     try {
       await this.partnerRepo.update(id, updatedPartner);
