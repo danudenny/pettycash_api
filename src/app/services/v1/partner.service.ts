@@ -61,6 +61,7 @@ export class PartnerService {
       ['p.npwp_number', 'npwpNumber'],
       ['p.id_card_number', 'idCardNumber'],
       ['p.state', 'state'],
+      ['p.is_active', 'isActive'],
       ['p.created_at', 'createdAt'],
     );
     qb.andWhere(
@@ -201,7 +202,7 @@ export class PartnerService {
               `Expense with ID ${partnerId} not found!`,
             );
           }
-                    
+
           // Upload file attachments
           let newAttachments: Attachment[];
           let attType: AttachmentType;
@@ -230,18 +231,17 @@ export class PartnerService {
                 .toUpperCase();
             };
 
-            const partnerPath = `partner/${partnerId}`;
+            const partnerPath = `partner/${partner.name}`;
             newAttachments = await AttachmentService.uploadFilesWithCustomName(
               files,
               (file) => {
-                const rid = uuid().split('-')[1];
                 let attachmentName: string;
                 if (attType?.name) {
                   const attTypeName = parseAttTypeName(attType?.name);
                   const ext = getExt(file);
-                  attachmentName = `${rid}_${attTypeName}.${ext}`;
+                  attachmentName = `${partner.name}-${attTypeName}.${ext}`;
                 } else {
-                  attachmentName = `${rid}_${file.originalname}`;
+                  attachmentName = `${partner.name}-${file.originalname}`;
                 }
                 return attachmentName;
               },
@@ -249,10 +249,9 @@ export class PartnerService {
                 if (attType?.name) {
                   const attTypeName = parseAttTypeName(attType?.name);
                   const ext = getExt(file);
-                  pathId = `${partnerPath}_${attTypeName}.${ext}`;
+                  pathId = `${partnerPath}-${attTypeName}.${ext}`;
                 } else {
-                  const rid = uuid().split('-')[0];
-                  pathId = `${partnerPath}_${rid}_${file.originalname}`;
+                  pathId = `${partnerPath}_${partner.name}_${file.originalname}`;
                 }
                 return pathId;
               },
@@ -262,7 +261,7 @@ export class PartnerService {
           }
 
           const existingAttachments = partner.attachments;
-          
+
           partner.attachments = [].concat(existingAttachments, newAttachments);
           partner.updateUser = await this.getUser();
 
