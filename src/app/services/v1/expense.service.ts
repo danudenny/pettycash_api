@@ -76,6 +76,7 @@ import { LoaderEnv } from '../../../config/loader';
 import { UpdateExpenseAttachmentDTO } from '../../domain/expense/update-attachment.dto';
 import { AttachmentType } from '../../../model/attachment-type.entity';
 import { Vehicle } from '../../../model/vehicle.entity';
+import { VehicleTemp } from '../../../model/vehicle-temp.entity';
 
 @Injectable()
 export class ExpenseService {
@@ -1823,25 +1824,28 @@ export class ExpenseService {
 
       if (vehicleId && vehicleKM) {
         if (+vehicleKM > 0) {
-          await this.updateVehicleKilometerById(manager, vehicleId, +vehicleKM);
+          await this.publishUpdateVehicleById(manager, vehicleId, +vehicleKM);
         }
       }
     }
   }
 
-  private async updateVehicleKilometerById(
+  private async publishUpdateVehicleById(
     manager: EntityManager,
     id: string,
     kmEnd: number,
   ): Promise<any> {
     const vehicleRepo = manager.getRepository(Vehicle);
-    const vehicle = await vehicleRepo.findOne(id, { select: ['id'] });
+    const vehicle = await vehicleRepo.findOne(id, {
+      select: ['id', 'vehicleId'],
+    });
     if (!vehicle) return;
 
-    // Update Vehicle data in pettycash DB
-    const sql = `UPDATE vehicle SET vehicle_kilometer = vehicle_kilometer + $2 WHERE id = $1 RETURNING id`;
-    await manager?.query(sql, [id, +(kmEnd || 0)]);
-
-    // TODO: update Vehicle data in masterdata.
+    // Insert to VehicleTemp. sync data to masterdata and live table will be handle by other service.
+    const vTemp = new VehicleTemp();
+    vTemp.pettycashVehicleId = vehicle?.id;
+    vTemp.masterdataVehicleId = vehicle?.vehicleId;
+    vTemp.vehicleKilometer = kmEnd;
+    return await manager.save(vTemp);
   }
 }
