@@ -1748,9 +1748,11 @@ export class ExpenseService {
       await accStmtRepo.delete({ id: statement?.id });
     }
 
-    // insert statement
-    const stmt = await this.buildAccountStatement(expense);
-    return await accStmtRepo.save(stmt);
+    // insert statement if Expense not from DownPayment
+    if (!expense?.downPaymentId) {
+      const stmt = await this.buildAccountStatement(expense);
+      return await accStmtRepo.save(stmt);
+    }
   }
 
   private async buildAccountStatement(
@@ -1802,12 +1804,10 @@ export class ExpenseService {
     expense: Expense,
   ): Promise<void> {
     // re-fetch ExpenseItems to get latest data.
-    const expenseItems = await manager
-      .getRepository(ExpenseItem)
-      .find({
-        where: { expenseId: expense?.id, isDeleted: false },
-        relations: ['attributes'],
-      });
+    const expenseItems = await manager.getRepository(ExpenseItem).find({
+      where: { expenseId: expense?.id, isDeleted: false },
+      relations: ['attributes'],
+    });
     for (const item of expenseItems) {
       const attrs = item?.attributes;
       if (!attrs.length) continue;
