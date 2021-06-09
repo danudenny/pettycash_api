@@ -162,20 +162,13 @@ export class AllocationBalanceService {
     }
 
     const allocationBalance = await qb.exec();
+    console.log(allocationBalance)
+
     return new AllocationBalanceWithPaginationResponse(allocationBalance, params)
   }
 
   public async getById(id: string): Promise<AllocationBalanceDetailResponse> {
-    const {
-      userBranchIds,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
-
-    console.log(userBranchIds)
     const where = { id, isDeleted: false };
-    if (!isSuperUser) {
-      Object.assign(where, { branchId: userBranchIds && userBranchIds[0]  });
-    }
     const allocation = await this.cashbalRepo.findOne({
       where,
       relations: [
