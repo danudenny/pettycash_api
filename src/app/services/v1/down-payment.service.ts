@@ -155,7 +155,6 @@ export class DownPaymentService {
   ): Promise<DownPaymentResponse> {
     try {
       const create = await getManager().transaction(async (manager) => {
-        
         if (payload && !payload.number) {
           payload.number = GenerateCode.downPayment();
         }
@@ -199,14 +198,20 @@ export class DownPaymentService {
     }
   }
 
-  public async approveDownPayment(downPaymentId: string, payload: ApproveDownPaymentDTO,): Promise<any> {
+  public async approveDownPayment(
+    downPaymentId: string,
+    payload: ApproveDownPaymentDTO,
+  ): Promise<any> {
     try {
       const approve = await getManager().transaction(async (manager) => {
         const downPayment = await manager.findOne(DownPayment, {
           where: { id: downPaymentId, isDeleted: false },
           relations: ['branch', 'employee', 'department', 'histories'],
         });
-        if (!downPayment) throw new NotFoundException(`Down Payment ID ${downPaymentId} not found!`,);
+        if (!downPayment)
+          throw new NotFoundException(
+            `Down Payment ID ${downPaymentId} not found!`,
+          );
 
         const user = await AuthService.getUser({ relations: ['role'] });
         const userRole = user?.role?.name;
@@ -215,28 +220,39 @@ export class DownPaymentService {
         let isCreateJurnal = false;
         const currentState = downPayment.state;
 
-        if (currentState == DownPaymentState.REJECTED) { 
-          throw new BadRequestException(`Can't approve down payment with current state ${currentState}`);
+        if (currentState == DownPaymentState.REJECTED) {
+          throw new BadRequestException(
+            `Can't approve down payment with current state ${currentState}`,
+          );
         }
 
         if (userRole === MASTER_ROLES.PIC_HO) {
           if (currentState === DownPaymentState.APPROVED_BY_PIC_HO) {
-            throw new BadRequestException( `Can't approve down payment with current state ${currentState}`);
+            throw new BadRequestException(
+              `Can't approve down payment with current state ${currentState}`,
+            );
           }
 
           state = DownPaymentState.APPROVED_BY_PIC_HO;
           isCreateJurnal = true;
-
-        } else if (userRole === MASTER_ROLES.SS_HO || userRole === MASTER_ROLES.SPV_HO) {
+        } else if (
+          userRole === MASTER_ROLES.SS_HO ||
+          userRole === MASTER_ROLES.SPV_HO
+        ) {
           if (currentState === DownPaymentState.APPROVED_BY_SS_SPV) {
-            throw new BadRequestException(`Can't approve down payment with current state ${currentState}`);
+            throw new BadRequestException(
+              `Can't approve down payment with current state ${currentState}`,
+            );
           }
 
           state = DownPaymentState.APPROVED_BY_SS_SPV;
           isCreateJurnal = true;
         }
 
-        if (!state) throw new BadRequestException(`Failed to approve down payment due unknown user role!`);
+        if (!state)
+          throw new BadRequestException(
+            `Failed to approve down payment due unknown user role!`,
+          );
 
         downPayment.state = state;
         downPayment.amount = payload.amount;
@@ -277,7 +293,7 @@ export class DownPaymentService {
           where: { id, isDeleted: false },
           relations: ['branch', 'employee', 'department', 'histories'],
         });
-        if (!downPayment) 
+        if (!downPayment)
           throw new NotFoundException(`Down payment ID ${id} not found!`);
 
         if (downPayment.state === DownPaymentState.REJECTED) {
@@ -302,7 +318,9 @@ export class DownPaymentService {
 
         if (userRole == MASTER_ROLES.PIC_HO) {
           if (downPayment.state == DownPaymentState.APPROVED_BY_SS_SPV) {
-            throw new BadRequestException(`Can't reject it because the down payment has been approved by SS/SPV HO!`);
+            throw new BadRequestException(
+              `Can't reject it because the down payment has been approved by SS/SPV HO!`,
+            );
           }
         }
 
