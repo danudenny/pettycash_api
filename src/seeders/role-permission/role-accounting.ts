@@ -14,7 +14,6 @@ const RoleAccounting = [
 
   'menu.journal:read',
   'journal:read',
-  'journal:approve',
   'journal:reverse',
   'journal:post',
 
