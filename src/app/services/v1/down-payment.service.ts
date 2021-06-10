@@ -14,6 +14,8 @@ import { CreateDownPaymentDTO } from '../../domain/down-payment/down-payment-cre
 import { RejectDownPaymentDTO } from '../../domain/down-payment/down-payment-reject.dto';
 import { ApproveDownPaymentDTO } from '../../domain/down-payment/down-payment-approve.dto';
 import {
+  AccountStatementAmountPosition,
+  AccountStatementType,
   DownPaymentState,
   DownPaymentType,
   JournalSourceType,
@@ -37,6 +39,7 @@ import { DownPaymentHistory } from '../../../model/down-payment-history.entity';
 /** Services */
 import { AuthService } from './auth.service';
 import { GenerateCode } from '../../../common/services/generate-code.service';
+import { AccountStatement } from '../../../model/account-statement.entity';
 
 @Injectable()
 export class DownPaymentService {
@@ -257,15 +260,18 @@ export class DownPaymentService {
         downPayment.state = state;
         downPayment.amount = payload.amount;
         downPayment.paymentType = payload.paymentType;
+        downPayment.updateUserId = user?.id;
 
-        const result = await manager.save(downPayment);
+        // Upsert AccountStatement (balances)
+        await this.upsertAccountStatement(manager, downPayment);
 
         if (isCreateJurnal) {
           // Create Journal for PIC HO OR for SS/SPV HO
-          await this.removeJournal(manager, result);
+          await this.removeJournal(manager, downPayment);
           await this.createJournal(manager, downPaymentId);
         }
 
+        const result = await manager.save(downPayment);
         await this.createHistory(downPayment, {
           state,
           downPaymentId: result.id,
@@ -330,6 +336,8 @@ export class DownPaymentService {
 
         // Remove journal if state in draft, otherwise throw error
         await this.removeJournal(manager, downPayment);
+        // Remove AccountStatement if any
+        await this.removeAccountStatement(manager, downPayment);
         // retrun result
         const result = await manager.save(downPayment);
 
@@ -542,5 +550,71 @@ export class DownPaymentService {
         err.status || HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  /**
+   * Internal Helper for (re)create account statement (balances).
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {DownPayment} downPayment
+   * @return {*}  {Promise<AccountStatement>}
+   * @memberof DownPaymentService
+   */
+  private async upsertAccountStatement(
+    manager: EntityManager,
+    downPayment: DownPayment,
+  ): Promise<AccountStatement> {
+    const accStmtRepo = manager.getRepository(AccountStatement);
+    const statement = await accStmtRepo.findOne({
+      where: {
+        reference: downPayment?.number,
+        branchId: downPayment?.branchId,
+        isDeleted: false,
+      },
+    });
+
+    if (statement) {
+      // delete existing statement
+      await accStmtRepo.delete({ id: statement?.id });
+    }
+
+    const stmt = await this.buildAccountStatement(downPayment);
+    return await accStmtRepo.save(stmt);
+  }
+
+  private async buildAccountStatement(
+    downPayment: DownPayment,
+  ): Promise<AccountStatement> {
+    const stmt = new AccountStatement();
+    stmt.branchId = downPayment.branchId;
+    stmt.createUserId = downPayment.updateUserId;
+    stmt.updateUserId = downPayment.updateUserId;
+    stmt.reference = downPayment.number;
+    stmt.amount = downPayment.amount;
+    stmt.transactionDate = downPayment.transactionDate;
+    stmt.type = (downPayment.paymentType as unknown) as AccountStatementType;
+    stmt.amountPosition = AccountStatementAmountPosition.DEBIT;
+    return stmt;
+  }
+
+  /**
+   * Internal helper to remove existing account statement from downPayment
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {DownPayment} downPayment
+   * @return {*}  {Promise<void>}
+   * @memberof DownPaymentService
+   */
+  private async removeAccountStatement(
+    manager: EntityManager,
+    downPayment: DownPayment,
+  ): Promise<void> {
+    await manager.getRepository(AccountStatement).delete({
+      reference: downPayment?.number,
+      branchId: downPayment?.branchId,
+      isDeleted: false,
+    });
   }
 }
