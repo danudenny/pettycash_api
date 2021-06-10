@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import {
   AccountStatementAmountPosition,
+  AccountStatementSourceType,
   AccountStatementType,
 } from '../../../model/utils/enum';
 
@@ -50,6 +51,12 @@ export class AccountStatementDTO {
     example: 'MUT202001AAB112',
   })
   reference: string;
+
+  @ApiProperty({
+    description: 'Source Type',
+    example: AccountStatementSourceType.DP,
+  })
+  sourceType: string;
 
   @ApiProperty({
     description: 'Update User NIK',

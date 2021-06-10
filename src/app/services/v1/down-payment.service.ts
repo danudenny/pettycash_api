@@ -14,6 +14,9 @@ import { CreateDownPaymentDTO } from '../../domain/down-payment/down-payment-cre
 import { RejectDownPaymentDTO } from '../../domain/down-payment/down-payment-reject.dto';
 import { ApproveDownPaymentDTO } from '../../domain/down-payment/down-payment-approve.dto';
 import {
+  AccountStatementAmountPosition,
+  AccountStatementSourceType,
+  AccountStatementType,
   DownPaymentState,
   DownPaymentType,
   JournalSourceType,
@@ -37,6 +40,7 @@ import { DownPaymentHistory } from '../../../model/down-payment-history.entity';
 /** Services */
 import { AuthService } from './auth.service';
 import { GenerateCode } from '../../../common/services/generate-code.service';
+import { AccountStatement } from '../../../model/account-statement.entity';
 
 @Injectable()
 export class DownPaymentService {
@@ -155,7 +159,6 @@ export class DownPaymentService {
   ): Promise<DownPaymentResponse> {
     try {
       const create = await getManager().transaction(async (manager) => {
-        
         if (payload && !payload.number) {
           payload.number = GenerateCode.downPayment();
         }
@@ -199,14 +202,20 @@ export class DownPaymentService {
     }
   }
 
-  public async approveDownPayment(downPaymentId: string, payload: ApproveDownPaymentDTO,): Promise<any> {
+  public async approveDownPayment(
+    downPaymentId: string,
+    payload: ApproveDownPaymentDTO,
+  ): Promise<any> {
     try {
       const approve = await getManager().transaction(async (manager) => {
         const downPayment = await manager.findOne(DownPayment, {
           where: { id: downPaymentId, isDeleted: false },
           relations: ['branch', 'employee', 'department', 'histories'],
         });
-        if (!downPayment) throw new NotFoundException(`Down Payment ID ${downPaymentId} not found!`,);
+        if (!downPayment)
+          throw new NotFoundException(
+            `Down Payment ID ${downPaymentId} not found!`,
+          );
 
         const user = await AuthService.getUser({ relations: ['role'] });
         const userRole = user?.role?.name;
@@ -215,41 +224,55 @@ export class DownPaymentService {
         let isCreateJurnal = false;
         const currentState = downPayment.state;
 
-        if (currentState == DownPaymentState.REJECTED) { 
-          throw new BadRequestException(`Can't approve down payment with current state ${currentState}`);
+        if (currentState == DownPaymentState.REJECTED) {
+          throw new BadRequestException(
+            `Can't approve down payment with current state ${currentState}`,
+          );
         }
 
         if (userRole === MASTER_ROLES.PIC_HO) {
           if (currentState === DownPaymentState.APPROVED_BY_PIC_HO) {
-            throw new BadRequestException( `Can't approve down payment with current state ${currentState}`);
+            throw new BadRequestException(
+              `Can't approve down payment with current state ${currentState}`,
+            );
           }
 
           state = DownPaymentState.APPROVED_BY_PIC_HO;
           isCreateJurnal = true;
-
-        } else if (userRole === MASTER_ROLES.SS_HO || userRole === MASTER_ROLES.SPV_HO) {
+        } else if (
+          userRole === MASTER_ROLES.SS_HO ||
+          userRole === MASTER_ROLES.SPV_HO
+        ) {
           if (currentState === DownPaymentState.APPROVED_BY_SS_SPV) {
-            throw new BadRequestException(`Can't approve down payment with current state ${currentState}`);
+            throw new BadRequestException(
+              `Can't approve down payment with current state ${currentState}`,
+            );
           }
 
           state = DownPaymentState.APPROVED_BY_SS_SPV;
           isCreateJurnal = true;
         }
 
-        if (!state) throw new BadRequestException(`Failed to approve down payment due unknown user role!`);
+        if (!state)
+          throw new BadRequestException(
+            `Failed to approve down payment due unknown user role!`,
+          );
 
         downPayment.state = state;
         downPayment.amount = payload.amount;
         downPayment.paymentType = payload.paymentType;
+        downPayment.updateUserId = user?.id;
 
-        const result = await manager.save(downPayment);
+        // Upsert AccountStatement (balances)
+        await this.upsertAccountStatement(manager, downPayment);
 
         if (isCreateJurnal) {
           // Create Journal for PIC HO OR for SS/SPV HO
-          await this.removeJournal(manager, result);
+          await this.removeJournal(manager, downPayment);
           await this.createJournal(manager, downPaymentId);
         }
 
+        const result = await manager.save(downPayment);
         await this.createHistory(downPayment, {
           state,
           downPaymentId: result.id,
@@ -277,7 +300,7 @@ export class DownPaymentService {
           where: { id, isDeleted: false },
           relations: ['branch', 'employee', 'department', 'histories'],
         });
-        if (!downPayment) 
+        if (!downPayment)
           throw new NotFoundException(`Down payment ID ${id} not found!`);
 
         if (downPayment.state === DownPaymentState.REJECTED) {
@@ -302,7 +325,9 @@ export class DownPaymentService {
 
         if (userRole == MASTER_ROLES.PIC_HO) {
           if (downPayment.state == DownPaymentState.APPROVED_BY_SS_SPV) {
-            throw new BadRequestException(`Can't reject it because the down payment has been approved by SS/SPV HO!`);
+            throw new BadRequestException(
+              `Can't reject it because the down payment has been approved by SS/SPV HO!`,
+            );
           }
         }
 
@@ -312,6 +337,8 @@ export class DownPaymentService {
 
         // Remove journal if state in draft, otherwise throw error
         await this.removeJournal(manager, downPayment);
+        // Remove AccountStatement if any
+        await this.removeAccountStatement(manager, downPayment);
         // retrun result
         const result = await manager.save(downPayment);
 
@@ -524,5 +551,72 @@ export class DownPaymentService {
         err.status || HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  /**
+   * Internal Helper for (re)create account statement (balances).
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {DownPayment} downPayment
+   * @return {*}  {Promise<AccountStatement>}
+   * @memberof DownPaymentService
+   */
+  private async upsertAccountStatement(
+    manager: EntityManager,
+    downPayment: DownPayment,
+  ): Promise<AccountStatement> {
+    const accStmtRepo = manager.getRepository(AccountStatement);
+    const statement = await accStmtRepo.findOne({
+      where: {
+        reference: downPayment?.number,
+        branchId: downPayment?.branchId,
+        isDeleted: false,
+      },
+    });
+
+    if (statement) {
+      // delete existing statement
+      await accStmtRepo.delete({ id: statement?.id });
+    }
+
+    const stmt = await this.buildAccountStatement(downPayment);
+    return await accStmtRepo.save(stmt);
+  }
+
+  private async buildAccountStatement(
+    downPayment: DownPayment,
+  ): Promise<AccountStatement> {
+    const stmt = new AccountStatement();
+    stmt.branchId = downPayment.branchId;
+    stmt.createUserId = downPayment.updateUserId;
+    stmt.updateUserId = downPayment.updateUserId;
+    stmt.reference = downPayment.number;
+    stmt.sourceType = AccountStatementSourceType.DP;
+    stmt.amount = downPayment.amount;
+    stmt.transactionDate = downPayment.transactionDate;
+    stmt.type = (downPayment.paymentType as unknown) as AccountStatementType;
+    stmt.amountPosition = AccountStatementAmountPosition.DEBIT;
+    return stmt;
+  }
+
+  /**
+   * Internal helper to remove existing account statement from downPayment
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {DownPayment} downPayment
+   * @return {*}  {Promise<void>}
+   * @memberof DownPaymentService
+   */
+  private async removeAccountStatement(
+    manager: EntityManager,
+    downPayment: DownPayment,
+  ): Promise<void> {
+    await manager.getRepository(AccountStatement).delete({
+      reference: downPayment?.number,
+      branchId: downPayment?.branchId,
+      isDeleted: false,
+    });
   }
 }
