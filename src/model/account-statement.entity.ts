@@ -15,6 +15,16 @@ export class AccountStatement extends PtcBaseEntity {
   @Column({ type: 'varchar', name: 'reference', nullable: true })
   reference?: string;
 
+  // FIXME: use ENUM `AccountStatementSourceType`?
+  @Column({
+    type: 'varchar',
+    name: 'source_type',
+    length: 50,
+    nullable: true,
+  })
+  @Index()
+  sourceType?: string;
+
   @Column({ type: 'date', name: 'transaction_date' })
   transactionDate: Date;
 

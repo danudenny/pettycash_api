@@ -42,6 +42,10 @@ export enum AccountStatementAmountPosition {
   CREDIT = 'credit',
 }
 
+export enum AccountStatementSourceType {
+  DP = 'down_payment',
+}
+
 export enum PartnerState {
   DRAFT = 'draft',
   APPROVED = 'approved',
