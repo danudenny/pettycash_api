@@ -16,7 +16,7 @@ import { GlobalSetting } from '../../../model/global-setting.entity';
 export class BalanceService {
   constructor(
     @InjectRepository(GlobalSetting)
-    private readonly settingRepo: Repository<GlobalSetting>
+    private readonly settingRepo: Repository<GlobalSetting>,
   ) {}
 
   public async list(
@@ -40,7 +40,7 @@ export class BalanceService {
     const params = { ...query };
     const deviationAmount = await this.getDeviationAmount();
     const balances = await this.getSummaryBalances(params);
-    
+
     return new BalanceSummaryResponse(balances, deviationAmount);
   }
 
@@ -267,7 +267,7 @@ export class BalanceService {
         FROM budget b2
         WHERE b2.state = 'approved_by_spv'
           AND b2.is_deleted IS FALSE
-          AND (now() BETWEEN b2.start_date AND b2.end_date)
+          AND (now()::date BETWEEN b2.start_date AND b2.end_date)
         ORDER BY b2.end_date DESC
       )
       SELECT
@@ -281,7 +281,6 @@ export class BalanceService {
       'bgt',
       'bgt.branch_id = b.id',
     );
-    qb.qb.andWhere(`(bgt.state = 'approved_by_spv')`);
 
     if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
