@@ -15,6 +15,7 @@ import { RejectDownPaymentDTO } from '../../domain/down-payment/down-payment-rej
 import { ApproveDownPaymentDTO } from '../../domain/down-payment/down-payment-approve.dto';
 import {
   AccountStatementAmountPosition,
+  AccountStatementSourceType,
   AccountStatementType,
   DownPaymentState,
   DownPaymentType,
@@ -591,6 +592,7 @@ export class DownPaymentService {
     stmt.createUserId = downPayment.updateUserId;
     stmt.updateUserId = downPayment.updateUserId;
     stmt.reference = downPayment.number;
+    stmt.sourceType = AccountStatementSourceType.DP;
     stmt.amount = downPayment.amount;
     stmt.transactionDate = downPayment.transactionDate;
     stmt.type = (downPayment.paymentType as unknown) as AccountStatementType;
