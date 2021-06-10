@@ -36,4 +36,10 @@ export class QueryAccountStatementDTO extends BasePayload {
     enum: AccountStatementType,
   })
   type: AccountStatementType;
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Use to filter only DownPayment records.',
+  })
+  isDownPayment?: boolean;
 }

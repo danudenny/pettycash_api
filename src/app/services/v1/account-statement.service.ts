@@ -6,8 +6,10 @@ import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import {
   AccountStatementAmountPosition,
+  AccountStatementSourceType,
   AccountStatementType,
 } from '../../../model/utils/enum';
+import { parseBool } from '../../../shared/utils';
 import { QueryAccountStatementDTO } from '../../domain/account-statement/account-statement.payload.dto';
 import { CreateAccountStatementDTO } from '../../domain/account-statement/create.dto';
 import { AccountStatementWithPaginationResponse } from '../../domain/account-statement/response.dto';
@@ -65,7 +67,9 @@ export class AccountStatementService {
     return;
   }
 
-  public async list(query?: QueryAccountStatementDTO): Promise<AccountStatementWithPaginationResponse> {
+  public async list(
+    query?: QueryAccountStatementDTO,
+  ): Promise<AccountStatementWithPaginationResponse> {
     const params = { order: '-transactionDate', ...query };
     const qb = new QueryBuilder(AccountStatement, 'stmt', params);
     const {
@@ -84,6 +88,7 @@ export class AccountStatementService {
       ['stmt.transaction_date', 'transactionDate'],
       ['stmt."type"', 'type'],
       ['stmt.reference', 'reference'],
+      ['stmt.source_type', 'sourceType'],
       ['stmt.amount', 'amount'],
       ['stmt.amount_position', 'amountPosition'],
       ['brnc.id', 'branchId'],
@@ -103,6 +108,12 @@ export class AccountStatementService {
       qb.andWhere(
         (e) => e.branchId,
         (v) => v.in(userBranchIds),
+      );
+    }
+    if (parseBool(query?.isDownPayment)) {
+      qb.andWhere(
+        (e) => e.sourceType,
+        (v) => v.equals(AccountStatementSourceType.DP),
       );
     }
 
