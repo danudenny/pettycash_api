@@ -222,6 +222,7 @@ export class DownPaymentService {
 
         let state: DownPaymentState;
         let isCreateJurnal = false;
+        let shouldCreateStatement = false;
         const currentState = downPayment.state;
 
         if (currentState == DownPaymentState.REJECTED) {
@@ -251,6 +252,7 @@ export class DownPaymentService {
 
           state = DownPaymentState.APPROVED_BY_SS_SPV;
           isCreateJurnal = true;
+          shouldCreateStatement = true;
         }
 
         if (!state)
@@ -263,13 +265,14 @@ export class DownPaymentService {
         downPayment.paymentType = payload.paymentType;
         downPayment.updateUserId = user?.id;
 
-        // Upsert AccountStatement (balances)
-        await this.upsertAccountStatement(manager, downPayment);
-
         if (isCreateJurnal) {
           // Create Journal for PIC HO OR for SS/SPV HO
           await this.removeJournal(manager, downPayment);
           await this.createJournal(manager, downPaymentId);
+        }
+
+        if (shouldCreateStatement) {
+          await this.upsertAccountStatement(manager, downPayment);
         }
 
         const result = await manager.save(downPayment);
