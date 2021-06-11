@@ -23,7 +23,9 @@ export class BalanceService {
     query: QueryBalanceDTO,
   ): Promise<BalanceWithPaginationResponse> {
     const params = { limit: 10, ...query };
-    const balances = await this.getBalances(params);
+    // const balances = await this.getBalances(params);
+    // NOTE: special condition for MVP 1
+    const balances = await this.getBalanceWithoutBudget(params);
     return new BalanceWithPaginationResponse(balances, params);
   }
 
@@ -155,6 +157,62 @@ export class BalanceService {
     }
     // FIXME: use order from query params
     qb.qb.orderBy('difference_amount', 'DESC');
+
+    const result = await qb.exec();
+    return result;
+  }
+
+  /**
+   * Get Balances without Budget
+   * NOTE: this is special condition for MVP 1
+   *
+   * @private
+   * @param {QueryBalanceDTO} [query]
+   * @return {*}  {Promise<any>}
+   * @memberof BalanceService
+   */
+  private async getBalanceWithoutBudget(query?: QueryBalanceDTO): Promise<any> {
+    const params = { limit: 10, ...query };
+    const qb = new QueryBuilder(Branch, 'b', params);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
+
+    qb.fieldResolverMap['branchId'] = 'b.id';
+
+    qb.applyFilterPagination();
+    qb.selectRaw(
+      ['b.id', 'branch_id'],
+      ['b.branch_name', 'branch_name'],
+      ['COALESCE(act.balance, 0)', 'current_balance'],
+      ['now()', 'now'],
+    );
+    qb.qb.leftJoin(
+      `(WITH acc_stt AS (
+          SELECT
+            as2.branch_id,
+            CASE WHEN as2.amount_position = 'debit' THEN COALESCE(SUM(amount), 0) END AS debit,
+            CASE WHEN as2.amount_position = 'credit' THEN COALESCE(SUM(amount), 0) END AS credit
+            FROM account_statement as2
+            WHERE as2.is_deleted IS FALSE
+            GROUP BY as2.branch_id, as2.amount_position
+      )
+      SELECT
+        branch_id,
+        (COALESCE(SUM(credit), 0) - COALESCE(SUM(debit), 0)) AS balance
+      FROM acc_stt
+      GROUP BY branch_id)`,
+      'act',
+      'act.branch_id = b.id',
+    );
+
+    if (userBranchIds?.length && !isSuperUser) {
+      qb.andWhere(
+        (e) => e.id,
+        (v) => v.in(userBranchIds),
+      );
+    }
 
     const result = await qb.exec();
     return result;
