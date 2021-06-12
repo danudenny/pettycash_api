@@ -192,22 +192,16 @@ export class ReportBalanceService {
 
 	private createBalanceReportBuffer(balances: Partial<ReportBalanceDTO[]>): Buffer {
 		const delimiter = ";";
-		const header = "branchId" + 
-			delimiter + "branchName" + 
-			delimiter + "bankAmount" + 
-			delimiter + "cashAmount" + 
-			delimiter + "totalAmount" + 
-			delimiter + "minimumAmount" +
-			delimiter + "retrieveAt";
+		const header = "CABANG" + 
+			delimiter + "Kas Uang Fisik" + 
+			delimiter + "Kas Bank" + 
+			delimiter + "Total";
 		const body = balances.map(
 			balance => {
-				return balance.branchId +
-					delimiter + balance.branchName +
-					delimiter + balance.bankAmount +
+				return balance.branchName +
 					delimiter + balance.cashAmount +
-					delimiter + balance.totalAmount +
-					delimiter + balance.minimumAmount +
-					delimiter + balance.retrieveAt;
+					delimiter + balance.bankAmount +
+					delimiter + balance.totalAmount;
 			}
 		).join("\n")
 
