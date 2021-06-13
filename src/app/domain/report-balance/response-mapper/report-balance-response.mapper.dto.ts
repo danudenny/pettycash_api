@@ -8,6 +8,8 @@ export class ReportBalanceResponseMapper {
 		it.bankAmount = +dto?.bankAmount ?? null;
 		it.cashAmount = +dto?.cashAmount ?? null;
 		it.totalAmount = +dto?.totalAmount ?? null;
+		it.minimumAmount = +dto?.minimumAmount ?? null;
+		it.retrieveAt = dto?.retrieveAt ?? null;
 		return it;
 	}
 
