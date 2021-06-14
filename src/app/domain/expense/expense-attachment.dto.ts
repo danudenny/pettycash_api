@@ -32,4 +32,23 @@ export class ExpenseAttachmentDTO {
     example: 'https://sicepatresi.s3.amazonaws.com/0009775/000977539725.jpg',
   })
   url: string;
+
+  @ApiProperty({
+    description: 'Attachment Type ID',
+    example: 'd659d65c-fcf3-45c8-956e-5baf9dee2522',
+  })
+  @IsUUID()
+  typeId: string;
+
+  @ApiProperty({
+    description: 'Attachment Type Name',
+    example: 'Nota / Invoice',
+  })
+  typeName: string;
+
+  @ApiProperty({
+    description: 'Is this attachment already checked or not',
+    example: true,
+  })
+  isChecked: boolean;
 }

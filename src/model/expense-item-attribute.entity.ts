@@ -14,7 +14,7 @@ export class ExpenseItemAttribute extends PtcBaseEntity {
   @Column({ type: 'varchar', name: 'value' })
   value: string;
 
-  @ManyToOne(() => ExpenseItem, (e) => e.attributes)
+  @ManyToOne(() => ExpenseItem, (e) => e.attributes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'expense_item_id' })
   expenseItem: ExpenseItem;
 }

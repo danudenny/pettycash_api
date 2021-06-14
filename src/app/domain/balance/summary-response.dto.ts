@@ -4,10 +4,11 @@ import { BalanceSummaryDTO } from './summary-balance.dto';
 import { BalanceSummaryResponseMapper } from './summary-response.mapper';
 
 export class BalanceSummaryResponse extends BaseResponse {
-  constructor(data?: BalanceSummaryDTO[]) {
+  constructor(data?: BalanceSummaryDTO[], deviationAmount?: Number) {
     super();
     if (data) {
       this.data = BalanceSummaryResponseMapper.fromQueryBuilder(data);
+      this.data.deviationAmount = deviationAmount ?? null;
     }
   }
 

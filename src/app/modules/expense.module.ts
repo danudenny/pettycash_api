@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountTax } from '../../model/account-tax.entity';
 import { Attachment } from '../../model/attachment.entity';
+import { Employee } from '../../model/employee.entity';
 import { Expense } from '../../model/expense.entity';
 import { Partner } from '../../model/partner.entity';
 import { Product } from '../../model/product.entity';
@@ -14,6 +15,7 @@ import { ExpenseService } from '../services/v1/expense.service';
       Expense,
       AccountTax,
       Partner,
+      Employee,
       Product,
       Attachment,
     ]),

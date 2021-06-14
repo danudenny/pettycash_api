@@ -5,6 +5,7 @@ export class AllocationBalanceResponseMapper {
   public static toDTO(data: any): AllocationBalanceDTO {
     const it = new AllocationBalanceDTO();
     it.id = data.id
+    it.createdAt = data.createdAt
     it.branchId = data.branchId;
     it.branchName = data.branchName;
     it.number = data.number;
@@ -16,12 +17,14 @@ export class AllocationBalanceResponseMapper {
     it.receivedDate = data.receivedDate;
     it.receivedUserId = data.receivedUserId;
     it.receivedUserName = data.receivedUserName;
+    it.isPaid = data.isPaid;
     return it;
   }
 
   public static fromOneEntity(ety: Partial<CashBalanceAllocation>) {
     return this.toDTO({
       id: ety.id,
+      createdAt: ety.createdAt,
       branchId: ety.branchId,
       branchName: ety.branch && ety.branch.branchName,
       number: ety.number,
@@ -31,6 +34,7 @@ export class AllocationBalanceResponseMapper {
       state: ety.state,
       receivedDate: ety.receivedDate,
       receivedUserName: ety.receivedUser && `${ety.receivedUser?.firstName} ${ety.receivedUser?.lastName}`,
+      isPaid: ety.isPaid
     });
   }
 

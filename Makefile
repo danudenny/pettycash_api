@@ -18,3 +18,151 @@ force-recreate:
 	@yarn typeorm migration:run
 	@echo "${GREEN}Seeding${RESET} ${YELLOW}pettycash${RESET} ${GREEN}Database 🤑${RESET}"
 	@yarn db:seed:dev
+
+# CICD Section
+
+# Initialize
+name = petty-cash-api
+network = sicepatnet
+
+urlRepo = https://gitlab.com/sicepat-workspace/petty-cash-api
+urlPipeline = $(URL_PIPELINE)
+urlSlackWebhook = $(URL_SLACK_WEBHOOK)
+urlApiHealthCheck = $(URL_API_HEALTH_CHECK)
+
+envFile = $(ENV_FILE)
+servicePort = $(SERVICE_PORT)
+
+dockerHost = registry.gitlab.com
+dockerUser = $(DOCKER_USER)
+dockerPass = $(DOCKER_PASS)
+dockerTag = registry.gitlab.com/sicepat-workspace/$(name)/staging
+
+gitLog = git log -1 --pretty=format:"$(1)"
+getHashCommit = $(shell $(call gitLog,%h))
+getHashCommitLong = $(shell $(call gitLog,%H))
+getDetailCommit = $(shell $(call gitLog,%s))
+getUserCommit = $(shell $(call gitLog,%an))
+urlHashCommit = https://gitlab.com/sicepat-workspace/petty-cash-api/-/commit/$(getHashCommitLong)
+
+apiCheck = $$(curl -s -o /dev/null -w "%{http_code}\n" "$(urlApiHealthCheck)")
+
+# Notify section
+notifyHeader = Petty Cash API :dollar:
+notifyContext = [$(getUserCommit) | <$(urlHashCommit)|$(getHashCommit)>] $(getDetailCommit)
+
+notifyStartColor = 42e2f4
+notifyStartDescription = :runner: Building and deploy sequence start
+
+notifySuccessColor = 81b214
+notifySuccessDescription = :checkered_flag: Building and deploy sequence finish
+
+notifyFailedColor = ff4646
+notifyFailedDescription = :x: Building and deploy sequence failed
+
+slackNotify = curl -X POST -H "Content-Type: application/json" -d \
+	'{ \
+		"attachments": [ \
+			{ \
+				"color": "$(1)", \
+				"blocks": [ \
+					{ \
+						"type": "header", \
+						"text": { \
+							"type": "plain_text", \
+							"text": "$(notifyHeader)", \
+							"emoji": true \
+						} \
+					}, \
+					{ \
+						"type": "section", \
+						"text": { \
+							"type": "mrkdwn", \
+							"text": "$(2)" \
+						} \
+					}, \
+					{ \
+						"type": "context", \
+						"elements": [ \
+							{ \
+								"type": "mrkdwn", \
+								"text": "$(notifyContext)" \
+							} \
+						] \
+					}, \
+					{ \
+						"type": "actions", \
+						"elements": [ \
+							{ \
+								"type": "button", \
+								"text": { \
+									"type": "plain_text", \
+									"text": ":package: Repository", \
+									"emoji": true \
+								}, \
+								"url": "$(urlRepo)" \
+							}, \
+							{ \
+								"type": "button", \
+								"text": { \
+									"type": "plain_text", \
+									"text": ":mag: Pipelines", \
+									"emoji": true \
+								}, \
+								"url": "$(urlPipeline)" \
+							} \
+						] \
+					} \
+				] \
+			} \
+		] \
+	}' \
+	$(urlSlackWebhook)
+
+slack-notify-start:
+	$(call slackNotify,#$(notifyStartColor),$(notifyStartDescription))	
+
+slack-notify-finish:
+	$(call slackNotify,#$(notifySuccessColor),$(notifySuccessDescription))	
+
+slack-notify-failed:
+	$(call slackNotify,#$(notifyFailedColor),$(notifyFailedDescription))	
+
+
+# Pipeline Recipe
+
+build-docker:
+	docker build -t $(dockerTag):$(getHashCommit) -t $(dockerTag):latest . --target=production
+
+push-docker:
+	docker login $(dockerHost) -u $(dockerUser) -p $(dockerPass)
+	docker push -a $(dockerTag)
+
+clean-docker:
+	docker rmi $(dockerTag):$(getHashCommit)
+
+build-and-push: build-docker push-docker clean-docker
+
+login-docker:
+	docker login $(dockerHost) -u $(dockerUser) -p $(dockerPass)
+
+pull-docker:
+	docker pull $(dockerTag):latest
+
+run-docker:
+	- docker stop $(name)
+	docker run -d --rm \
+	-p $(servicePort):3010 \
+	--network $(network) \
+	--name $(name) \
+	--env-file $(envFile) \
+	$(dockerTag):latest
+
+deploy: login-docker pull-docker run-docker
+
+health-check:
+	for ((i = 0 ; i < 10 ; i++)); do \
+		if [ $(apiCheck) = 200 ]; then break; fi; \
+		sleep 3; \
+		if [ $$i = 9 ]; then exit 1; fi; \
+	done

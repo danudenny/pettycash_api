@@ -109,14 +109,18 @@ Get Expense detail.
                 "number": "REL-2020/01/AAB112",
                 "partnerId": "3aa3eac8-a62f-44c3-b53c-31372492f9a0",
                 "partnerName": "HR Sicepat",
+                "employeeId": "9f4fd156-7b54-4107-b2f6-52b165ab77e0",
+                "employeeName": "Silvia Agustin",
                 "sourceDocument": "BENSIN-0001",
                 "totalAmount": 900000,
                 "downPaymentAmount": 0,
                 "differenceAmount": 0,
                 "type": "expense",
                 "paymentType": "bank",
+                "associationType": "partner",
                 "state": "draft",
                 "downPaymentId": '5eab29b9-d6e0-4f34-bcac-185e4381d7e0',
+                "downPaymentNumber": 'DP2020/01/AAA123',
                 "items": [
                   {
                     "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
@@ -126,7 +130,6 @@ Get Expense detail.
                     "description": "Menginap 1 malam",
                     "attributes": null,
                     "amount": 250000,
-                    "picHoAmount": 250000,
                     "ssHoAmount": null,
                     "checkedNote": "OK",
                     "isValid": true
@@ -138,6 +141,10 @@ Get Expense detail.
                     "productCode": "BENSIN",
                     "description": "Bensin PP",
                     "attributes": [
+                      {
+                        "key": "vehicleId",
+                        "value": "5eab29b9-d6e0-4f34-bcac-185e4381d7e0"
+                      },
                       {
                         "key": "vehicleNumber",
                         "value": "B-1234-VKG"
@@ -160,7 +167,6 @@ Get Expense detail.
                       }
                     ],
                     "amount": 250000,
-                    "picHoAmount": 250000,
                     "ssHoAmount": null,
                     "checkedNote": "OK",
                     "isValid": true
@@ -217,6 +223,7 @@ Create Expense
         + transactionDate:  `2021-01-27` (string) - Transaction Date.
         + periodId:         `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - Period ID.
         + partnerId:        `d659d65c-fcf3-45c8-956e-5baf9dee2522` (string) - Partner ID.
+        + employeeId:       `9f4fd156-7b54-4107-b2f6-52b165ab77e0` (string) - Employee ID.
         + sourceDocument:   `Bensin001` (string) - Source Document.
         + paymentType:      `cash` (enum[string]) - Expense Payment Type.
             + cash
@@ -278,6 +285,7 @@ Update Expense
         + transactionDate:  `2021-01-27` (string) - Transaction Date.
         + periodId:         `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - Period ID.
         + partnerId:        `d659d65c-fcf3-45c8-956e-5baf9dee2522` (string) - Partner ID.
+        + employeeId:       `9f4fd156-7b54-4107-b2f6-52b165ab77e0` (string) - Employee ID.
         + sourceDocument:   `Bensin001` (string) - Source Document.
         + paymentType:      `cash` (enum[string]) - Expense Payment Type.
             + cash
@@ -340,7 +348,6 @@ Approve Expense
         + items: (array)
             + item:
                 + id: `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string) - Item ID.
-                + picHoAmount: (number) - Amount checked by PIC HO.
                 + ssHoAmount: (number) - Amount checked by SS/SPV HO.
                 + checkedNote: (string) - Checked Note.
 

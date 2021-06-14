@@ -5,7 +5,7 @@ export enum PeriodState {
 
 export enum BudgetState {
   DRAFT = 'draft',
-  APPROVED_BY_SS = 'approved_by_ss',
+  CONFIRMED_BY_SS = 'confirmed_by_ss',
   APPROVED_BY_SPV = 'approved_by_spv',
   REJECTED = 'rejected',
   CANCELED = 'canceled',
@@ -13,7 +13,7 @@ export enum BudgetState {
 
 export enum BudgetRequestState {
   DRAFT = 'draft',
-  APPROVED_BY_OPS = 'approved_by_ops_ho',
+  CONFIRMED_BY_OPS = 'confirmed_by_ops_ho',
   APPROVED_BY_PIC = 'approved_by_pic_ho',
   REJECTED = 'rejected',
   CANCELED = 'canceled',
@@ -21,12 +21,14 @@ export enum BudgetRequestState {
 
 export enum CashBalanceAllocationState {
   DRAFT = 'draft',
-  APPROVED_BY_SS = 'approved_by_ss_ho',
+  CONFIRMED_BY_SS = 'confirmed_by_ss_ho',
   APPROVED_BY_SPV = 'approved_by_spv_ho',
   REJECTED = 'rejected',
   RECEIVED = 'received',
   TRANSFERRED = 'transferred',
   EXPIRED = 'close',
+  CANCELED = 'canceled',
+  PAID = 'paid'
 }
 
 export enum AccountStatementType {
@@ -38,6 +40,10 @@ export enum AccountStatementType {
 export enum AccountStatementAmountPosition {
   DEBIT = 'debit',
   CREDIT = 'credit',
+}
+
+export enum AccountStatementSourceType {
+  DP = 'down_payment',
 }
 
 export enum PartnerState {
@@ -77,7 +83,6 @@ export enum DownPaymentState {
 export enum ExpenseState {
   DRAFT = 'draft',
   APPROVED_BY_SS_SPV = 'approved_by_ss_spv_ho',
-  APPROVED_BY_PIC = 'approved_by_pic_ho',
   REVERSED = 'reversed',
   REJECTED = 'rejected',
 }
@@ -90,6 +95,11 @@ export enum ExpensePaymentType {
 export enum ExpenseType {
   DOWN_PAYMENT = 'down_payment',
   EXPENSE = 'expense',
+}
+
+export enum ExpenseAssociationType {
+  PARTNER = 'partner',
+  EMPLOYEE = 'employee'
 }
 
 export enum AccountPaymentPayMethod {
@@ -155,4 +165,36 @@ export enum MASTER_ROLES {
   ADMIN_BRANCH = 'ADMIN BRANCH',
   OPS = 'OPS',
   TAX = 'TAX',
+}
+
+export enum ProductTaxType {
+  JASA = 'jasa',
+  SEWA_ALAT_DAN_KENDARAAN = 'sewa_alat_dan_kendaraan',
+  SEWA_BANGUNAN = 'sewa_bangunan',
+}
+
+export enum ProductType {
+  EXPENSE = 'expense',
+  DOWN_PAYMENT = 'down_payment',
+}
+
+export enum AccountTaxGroup {
+  PPH23 = 'PPH 23',
+  PPH21 = 'PPH 21',
+  PPH4A2 = 'PPH 4(2)',
+}
+
+// export enum AttachmentType {
+//   KTP = 'ktp',
+//   NPWP = 'npwp',
+//   SIUP = 'siup',
+//   AKTA_PENDIRIAN = 'akta_pendirian',
+//   LAIN_LAIN = 'lain_lain'
+// }
+
+export enum AttachmentTypes {
+  EXPENSE = 'expense',
+  LOAN = 'loan',
+  PARTNER = 'partner',
+  DAILYCLOSING = 'daily_closing'
 }

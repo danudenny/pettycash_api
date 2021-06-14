@@ -10,6 +10,7 @@ import {
   EntityManager,
   createQueryBuilder,
   In,
+  FindConditions,
 } from 'typeorm';
 import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { GenerateCode } from '../../../common/services/generate-code.service';
@@ -17,8 +18,13 @@ import { ExpenseItemAttribute } from '../../../model/expense-item-attribute.enti
 import { ExpenseItem } from '../../../model/expense-item.entity';
 import { Expense } from '../../../model/expense.entity';
 import {
+  AccountStatementAmountPosition,
+  AccountStatementType,
+  AccountTaxGroup,
+  AccountTaxPartnerType,
   DownPaymentState,
   DownPaymentType,
+  ExpenseAssociationType,
   ExpenseState,
   ExpenseType,
   JournalSourceType,
@@ -27,7 +33,9 @@ import {
   LoanType,
   MASTER_ROLES,
   PartnerState,
+  PartnerType,
   PeriodState,
+  ProductTaxType,
 } from '../../../model/utils/enum';
 import { CreateExpenseDTO } from '../../domain/expense/create.dto';
 import { AuthService } from './auth.service';
@@ -53,7 +61,7 @@ import { ExpenseHistory } from '../../../model/expense-history.entity';
 import { Journal } from '../../../model/journal.entity';
 import { JournalItem } from '../../../model/journal-item.entity';
 import { User } from '../../../model/user.entity';
-import { getPercentage, roundToTwo } from '../../../shared/utils';
+import { getPercentage } from '../../../shared/utils';
 import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 import { Period } from '../../../model/period.entity';
 import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
@@ -62,6 +70,13 @@ import { DownPayment } from '../../../model/down-payment.entity';
 import { Loan } from '../../../model/loan.entity';
 import { UpdateExpenseDTO } from '../../domain/expense/update.dto';
 import { UpdateExpenseItemDTO } from '../../domain/expense/update-item.dto';
+import { AccountStatement } from '../../../model/account-statement.entity';
+import { Employee } from '../../../model/employee.entity';
+import { LoaderEnv } from '../../../config/loader';
+import { UpdateExpenseAttachmentDTO } from '../../domain/expense/update-attachment.dto';
+import { AttachmentType } from '../../../model/attachment-type.entity';
+import { Vehicle } from '../../../model/vehicle.entity';
+import { VehicleTemp } from '../../../model/vehicle-temp.entity';
 
 @Injectable()
 export class ExpenseService {
@@ -72,6 +87,8 @@ export class ExpenseService {
     private readonly taxRepo: Repository<AccountTax>,
     @InjectRepository(Partner)
     private readonly partnerRepo: Repository<Partner>,
+    @InjectRepository(Employee)
+    private readonly employeeRepo: Repository<Employee>,
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
     @InjectRepository(Attachment)
@@ -98,8 +115,10 @@ export class ExpenseService {
   ): Promise<ExpenseWithPaginationResponse> {
     const params = { order: '-updatedAt', limit: 10, ...query };
     const qb = new QueryBuilder(Expense, 'exp', params);
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['startDate__gte'] = 'exp.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'exp.transaction_date';
@@ -132,10 +151,10 @@ export class ExpenseService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    if (userBranches?.length) {
+    if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.branchId,
-        (v) => v.in(userBranches),
+        (v) => v.in(userBranchIds),
       );
     }
 
@@ -144,14 +163,22 @@ export class ExpenseService {
   }
 
   public async getById(id: string): Promise<ExpenseDetailResponse> {
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
+    const where = { id, isDeleted: false };
+    if (!isSuperUser) {
+      Object.assign(where, { branchId: In(userBranchIds) });
+    }
     const expense = await this.expenseRepo.findOne({
-      where: { id, isDeleted: false, branchId: In(userBranches) },
+      where,
       relations: [
         'period',
         'branch',
         'partner',
+        'employee',
+        'downPayment',
         'items',
         'items.product',
         'items.attributes',
@@ -180,9 +207,26 @@ export class ExpenseService {
           payload.number = GenerateCode.expense();
         }
 
+        if (!(payload?.partnerId || payload?.employeeId)) {
+          throw new BadRequestException(
+            `Expense data must have 'partnerId' or 'employeeId'!`,
+          );
+        }
+
+        if (payload?.partnerId && payload?.employeeId) {
+          throw new BadRequestException(
+            `Please choose either 'partnerId' or 'employeeId' only!`,
+          );
+        }
+
         const user = await this.getUser(true);
         const branchId = user && user.branches && user.branches[0].id;
         let downPayment: DownPayment;
+
+        const associationType = payload?.partnerId
+          ? ExpenseAssociationType.PARTNER
+          : ExpenseAssociationType.EMPLOYEE;
+        const associationId = payload?.partnerId || payload?.employeeId;
 
         // Build ExpenseItem
         const items: ExpenseItem[] = [];
@@ -191,10 +235,13 @@ export class ExpenseService {
           item.productId = v.productId;
           item.description = v.description;
           item.amount = v.amount;
-          item.picHoAmount = v.amount;
           item.ssHoAmount = v.amount;
           // FIXME: Optimize this query!
-          item.tax = await this.getTaxValue(payload.partnerId, v.productId);
+          item.tax = await this.getTaxValue(
+            v?.productId,
+            associationType,
+            associationId,
+          );
           item.createUser = user;
           item.updateUser = user;
           item.attributes = v?.attributes?.map((a) => {
@@ -215,7 +262,8 @@ export class ExpenseService {
         expense.sourceDocument = payload.sourceDocument;
         expense.transactionDate = payload.transactionDate;
         expense.periodId = payload.periodId;
-        expense.partnerId = payload.partnerId;
+        expense.partnerId = payload?.partnerId;
+        expense.employeeId = payload?.employeeId;
         expense.type = ExpenseType.EXPENSE;
         expense.paymentType = payload.paymentType;
         expense.state = ExpenseState.DRAFT;
@@ -275,9 +323,25 @@ export class ExpenseService {
   ): Promise<ExpenseResponse> {
     try {
       const updateExpense = await getManager().transaction(async (manager) => {
-        const exp = await manager.getRepository(Expense).findOne({
-          where: { id, isDeleted: false },
-        });
+        if (payload?.partnerId && payload?.employeeId) {
+          throw new BadRequestException(
+            `Please choose either 'partnerId' or 'employeeId' only!`,
+          );
+        }
+
+        const {
+          userBranchIds,
+          isSuperUser,
+          user,
+        } = await AuthService.getUserBranchAndRole();
+
+        const where = { id, isDeleted: false };
+        if (!isSuperUser) {
+          Object.assign(where, { branchId: In(userBranchIds) });
+        }
+
+        const expenseRepo = manager.getRepository(Expense);
+        const exp = await expenseRepo.findOne({ where });
 
         if (!exp) {
           throw new NotFoundException(`Expense with ID ${id} not found!`);
@@ -289,15 +353,34 @@ export class ExpenseService {
           );
         }
 
-        const user = await AuthService.getUser();
+        if (payload?.partnerId && !exp?.partnerId) {
+          exp.partnerId = payload?.partnerId;
+          exp.employeeId = null;
+        }
+
+        if (payload?.employeeId && !exp?.employeeId) {
+          exp.employeeId = payload?.employeeId;
+          exp.partnerId = null;
+        }
 
         exp.transactionDate = payload?.transactionDate ?? exp.transactionDate;
         exp.periodId = payload?.periodId ?? exp.periodId;
-        exp.partnerId = payload?.partnerId ?? exp.partnerId;
-        // exp.downPaymentId = payload?.downPaymentId ?? exp.downPaymentId;
         exp.sourceDocument = payload?.sourceDocument ?? exp.sourceDocument;
         exp.paymentType = payload?.paymentType ?? exp.paymentType;
         exp.updateUserId = user?.id;
+
+        if (payload?.downPaymentId) {
+          const downPayment = await this.retrieveDownPaymentForExpense(
+            manager,
+            payload?.downPaymentId,
+            true,
+          );
+          downPayment.expenseId = exp.id;
+          downPayment.updateUserId = user.id;
+          await manager.save(downPayment);
+
+          exp.downPaymentId = payload?.downPaymentId;
+        }
 
         if (payload?.items) {
           const updatedExpenseItems = await this.recreateAndRetrieveExpenseItems(
@@ -320,6 +403,26 @@ export class ExpenseService {
             exp.downPaymentAmount = downPayment.amount;
             exp.differenceAmount = downPayment.amount - exp.totalAmount;
           }
+        }
+
+        // Update ExpenseItem tax if partner or employee changed and items not updated.
+        if ((payload?.partnerId || payload?.employeeId) && !payload?.items) {
+          // re-fetch expense with items
+          const expense = await expenseRepo.findOne({
+            where: { id, isDeleted: false },
+            relations: ['items'],
+          });
+          const associationType: ExpenseAssociationType = payload?.partnerId
+            ? ExpenseAssociationType.PARTNER
+            : ExpenseAssociationType.EMPLOYEE;
+          const associationId = payload?.partnerId || payload?.employeeId;
+
+          await this.updateExpenseItemTax(
+            manager,
+            expense?.items,
+            associationType,
+            associationId,
+          );
         }
 
         await manager.save(exp);
@@ -348,13 +451,15 @@ export class ExpenseService {
       const approveExpense = await getManager().transaction(async (manager) => {
         const expense = await manager.findOne(Expense, {
           where: { id: expenseId, isDeleted: false },
-          relations: ['attachments', 'partner', 'histories'],
+          relations: ['attachments', 'partner', 'histories', 'createUser'],
         });
         if (!expense) {
           throw new NotFoundException(`Expense ID ${expenseId} not found!`);
         }
 
-        if (expense.attachments && expense.attachments.length < 1) {
+        const isSystemUser =
+          LoaderEnv.envs?.APP_SYSTEM_USERNAME === expense?.createUser?.username;
+        if (expense?.attachments?.length < 1 && !isSystemUser) {
           throw new UnprocessableEntityException(
             `Expense doesn't have attachment, please add attachment first!`,
           );
@@ -371,7 +476,8 @@ export class ExpenseService {
         }
 
         const user = await AuthService.getUser({ relations: ['role'] });
-        const userRole = user?.role?.name;
+        const userRole = user?.role?.name as MASTER_ROLES;
+        expense.updateUser = user;
 
         // if any payload.items, we should update it first.
         // because the Journal Entries depends on items value.
@@ -386,39 +492,11 @@ export class ExpenseService {
           expense.items = updatedExpenseItem.items;
         }
 
-        // TODO: Implement State Machine for approval flow?
         let state: ExpenseState;
         const currentState = expense.state;
-        if (userRole === MASTER_ROLES.PIC_HO) {
-          // Approving with same state is not allowed
-          if (
-            currentState === ExpenseState.APPROVED_BY_PIC ||
-            currentState === ExpenseState.APPROVED_BY_SS_SPV
-          ) {
-            throw new BadRequestException(
-              `Can't approve expense with current state ${currentState}`,
-            );
-          }
-
-          state = ExpenseState.APPROVED_BY_PIC;
-
-          if (updatedExpenseItem) {
-            expense.totalAmount = updatedExpenseItem?.items
-              .map((m) => Number(m.picHoAmount))
-              .filter((i) => i)
-              .reduce((a, b) => a + b, 0);
-          }
-
-          // Update or Insert Loan from Expense.
-          await this.upsertLoanFromExpense(manager, expense);
-
-          // Create Journal for PIC HO
-          await this.removeJournal(manager, expense);
-          const journal = await this.buildJournal(manager, expenseId, userRole);
-          await this.createJournal(manager, journal);
-        } else if (
-          userRole === MASTER_ROLES.SS_HO ||
-          userRole === MASTER_ROLES.SPV_HO
+        if (
+          [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole) ||
+          isSystemUser
         ) {
           // Approving with same state is not allowed
           if (currentState === ExpenseState.APPROVED_BY_SS_SPV) {
@@ -439,10 +517,16 @@ export class ExpenseService {
           // Update or Insert Loan from Expense.
           await this.upsertLoanFromExpense(manager, expense);
 
+          // Update or Insert AccountStatement (Balance) from Expense.
+          await this.upsertAccountStatementFromExpense(manager, expense);
+
           // (Re)Create Journal for SS/SPV HO
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
           await this.createJournal(manager, journal);
+
+          // Update Vehicle Kilometer if any.
+          await this.updateVehicleFromExpense(manager, expense);
         }
 
         if (!state) {
@@ -452,12 +536,12 @@ export class ExpenseService {
         }
 
         if (expense?.downPaymentAmount !== 0) {
-          expense.differenceAmount = expense?.downPaymentAmount - expense.totalAmount;
+          expense.differenceAmount =
+            expense?.downPaymentAmount - expense.totalAmount;
         }
 
         expense.state = state;
         expense.histories = await this.buildHistory(expense, { state });
-        expense.updateUser = user;
         return await manager.save(expense);
       });
 
@@ -519,6 +603,10 @@ export class ExpenseService {
         await this.removeJournal(manager, expense);
         // unlink DownPayment if any
         await this.unlinkDownPayment(manager, expense);
+        // remove Loan if any
+        await this.removeLoan(manager, expense);
+        // remove AccountStatement if any
+        await this.removeAccountStatement(manager, expense);
 
         const { rejectedNote } = payload;
         const state = ExpenseState.REJECTED;
@@ -556,15 +644,21 @@ export class ExpenseService {
       ['att.filename', 'fileName'],
       ['att.file_mime', 'fileMime'],
       ['att.url', 'url'],
+      ['att.type_id', 'typeId'],
+      ['typ.code', 'typeCode'],
+      ['typ."name"', 'typeName'],
+      ['att.is_checked', 'isChecked'],
     );
-    qb.innerJoin(
-      (e) => e.attachments,
+    qb.qb.innerJoin(`expense_attachment`, 'ea', 'ea.expense_id = exp.id');
+    qb.qb.innerJoin(
+      `attachment`,
       'att',
-      (j) =>
-        j.andWhere(
-          (e) => e.isDeleted,
-          (v) => v.isFalse(),
-        ),
+      'att.id = ea.attachment_id AND att.is_deleted IS FALSE',
+    );
+    qb.qb.leftJoin(
+      `attachment_type`,
+      'typ',
+      'typ.id = att.type_id AND typ.is_active IS TRUE AND typ.is_deleted IS FALSE',
     );
     qb.andWhere(
       (e) => e.isDeleted,
@@ -574,6 +668,9 @@ export class ExpenseService {
       (e) => e.id,
       (v) => v.equals(expenseId),
     );
+    qb.qb.orderBy('att.updated_at', 'DESC');
+
+    // TODO: add caching.
 
     const attachments = await qb.exec();
     if (!attachments) {
@@ -594,6 +691,7 @@ export class ExpenseService {
   public async createAttachment(
     expenseId: string,
     files?: any,
+    attachmentTypeId?: string,
   ): Promise<ExpenseAttachmentResponse> {
     try {
       const createAttachment = await getManager().transaction(
@@ -610,15 +708,59 @@ export class ExpenseService {
 
           // Upload file attachments
           let newAttachments: Attachment[];
+          let attType: AttachmentType;
+          let pathId: string;
           if (files && files.length) {
+            if (attachmentTypeId) {
+              attType = await manager.findOne(AttachmentType, {
+                where: {
+                  id: attachmentTypeId,
+                  isDeleted: false,
+                  isActive: true,
+                },
+              });
+            }
+
+            // TODO: move out as utils
+            const getExt = (file: any) => {
+              return file?.originalname?.split('.').pop();
+            };
+            const parseAttTypeName = (attName: string) => {
+              return attName
+                ?.replace('/', '')
+                .split(/\s+/)
+                .join(' ')
+                .replace(' ', '_')
+                .toUpperCase();
+            };
+
             const expensePath = `expense/${expenseId}`;
-            const attachments = await AttachmentService.uploadFiles(
+            const attachments = await AttachmentService.uploadFilesWithCustomName(
               files,
               (file) => {
-                const rid = uuid().split('-')[0];
-                const pathId = `${expensePath}_${rid}_${file.originalname}`;
+                const rid = uuid().split('-')[1];
+                let attachmentName: string;
+                if (attType?.name) {
+                  const attTypeName = parseAttTypeName(attType?.name);
+                  const ext = getExt(file);
+                  attachmentName = `${rid}_${attTypeName}.${ext}`;
+                } else {
+                  attachmentName = `${rid}_${file.originalname}`;
+                }
+                return attachmentName;
+              },
+              (file) => {
+                if (attType?.name) {
+                  const attTypeName = parseAttTypeName(attType?.name);
+                  const ext = getExt(file);
+                  pathId = `${expensePath}_${attTypeName}.${ext}`;
+                } else {
+                  const rid = uuid().split('-')[0];
+                  pathId = `${expensePath}_${rid}_${file.originalname}`;
+                }
                 return pathId;
               },
+              attachmentTypeId,
               manager,
             );
             newAttachments = attachments;
@@ -635,10 +777,47 @@ export class ExpenseService {
       );
 
       return new ExpenseAttachmentResponse(
-        createAttachment as ExpenseAttachmentDTO[],
+        (createAttachment as unknown) as ExpenseAttachmentDTO[],
       );
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  /**
+   * Update Expense Attachment
+   *
+   * @param {string} expenseId
+   * @param {string} attachmentId
+   * @param {UpdateExpenseAttachmentDTO} payload
+   * @return {*}  {Promise<void>}
+   * @memberof ExpenseService
+   */
+  public async updateAttachment(
+    expenseId: string,
+    attachmentId: string,
+    payload: UpdateExpenseAttachmentDTO,
+  ): Promise<void> {
+    const att = await createQueryBuilder('attachment', 'att')
+      .leftJoin('expense_attachment', 'eat', 'att.id = eat.attachment_id')
+      .where('eat.expense_id = :expenseId', { expenseId })
+      .andWhere('eat.attachment_id = :attachmentId', { attachmentId })
+      .andWhere('att.isDeleted = false')
+      .getOne();
+
+    if (!att) {
+      throw new NotFoundException('Tidak ditemukan attachment!');
+    }
+
+    const data = this.attachmentRepo.create(payload as Attachment);
+    data.updateUser = await this.getUser();
+
+    const updateAttachment = await this.attachmentRepo.update(
+      attachmentId,
+      data,
+    );
+    if (!updateAttachment) {
+      throw new BadRequestException('Failed to update attachment!');
     }
   }
 
@@ -667,29 +846,76 @@ export class ExpenseService {
   }
 
   private async getTax(
-    partnerId: string,
     productId: string,
+    associationType: ExpenseAssociationType,
+    associationId: string,
   ): Promise<AccountTax> {
     // FIXME: Refactor to use single query if posible.
+    const { JASA, SEWA_ALAT_DAN_KENDARAAN, SEWA_BANGUNAN } = ProductTaxType;
+    const { PERSONAL, COMPANY } = PartnerType;
+    const isEmployee = associationType === ExpenseAssociationType.EMPLOYEE;
     let tax: AccountTax;
+    let taxGroup: AccountTaxGroup;
+    let isHasNpwp: boolean = false;
+    let partnerType: PartnerType;
 
     const product = await this.productRepo.findOne(
       { id: productId },
-      { select: ['id', 'isHasTax'] },
+      { select: ['id', 'isHasTax', 'taxType'] },
     );
-    const partner = await this.partnerRepo.findOne(
-      { id: partnerId },
-      { select: ['id', 'type', 'npwpNumber'] },
-    );
-    const hasNpwp = partner && partner.npwpNumber ? true : false;
 
-    if (product && product.isHasTax) {
+    if (isEmployee) {
+      // FIXME: check if employee has valid npwp or not.
+      // const employee = await this.employeeRepo.findOne(
+      //   { id: associationId },
+      //   { select: ['id', 'npwpNumber'] },
+      // );
+      // NOTE: based on CR PRD, employee treated like Tax Personal with NPWP.
+      partnerType = PERSONAL;
+      isHasNpwp = true;
+    } else {
+      const partner = await this.partnerRepo.findOne(
+        { id: associationId },
+        { select: ['id', 'type', 'npwpNumber'] },
+      );
+
+      partnerType = partner?.type;
+
+      if (partner?.npwpNumber) {
+        isHasNpwp = partner?.npwpNumber.length === 15;
+      }
+    }
+
+    const productHasTax = product?.isHasTax;
+    const productTaxType = product?.taxType;
+    const taxPartnerType = (partnerType as any) as AccountTaxPartnerType;
+
+    if (productHasTax) {
+      const taxWhere: FindConditions<AccountTax> = {
+        partnerType: taxPartnerType,
+        isHasNpwp,
+        isDeleted: false,
+      };
+
+      if (productTaxType === JASA) {
+        if (partnerType === PERSONAL) {
+          taxGroup = AccountTaxGroup.PPH21;
+        } else if (partnerType === COMPANY) {
+          taxGroup = AccountTaxGroup.PPH23;
+        }
+      } else if (productTaxType === SEWA_ALAT_DAN_KENDARAAN) {
+        taxGroup = AccountTaxGroup.PPH23;
+      } else if (productTaxType === SEWA_BANGUNAN) {
+        taxGroup = AccountTaxGroup.PPH4A2;
+      }
+
+      if (taxGroup) {
+        Object.assign(taxWhere, { group: taxGroup });
+      }
+
       tax = await this.taxRepo.findOne({
-        where: {
-          partnerType: partner.type,
-          isHasNpwp: hasNpwp,
-        },
-        select: ['id', 'taxInPercent', 'coaId'],
+        where: taxWhere,
+        select: ['id', 'taxInPercent', 'coaId', 'group'],
       });
     }
 
@@ -697,12 +923,13 @@ export class ExpenseService {
   }
 
   private async getTaxValue(
-    partnerId: string,
     productId: string,
+    associationType: ExpenseAssociationType,
+    associationId?: string,
   ): Promise<number> {
-    const tax = await this.getTax(partnerId, productId);
-
-    const taxValue = tax && tax.taxInPercent;
+    if (!associationId) return 0;
+    const tax = await this.getTax(productId, associationType, associationId);
+    const taxValue = tax?.taxInPercent || 0;
     return taxValue;
   }
 
@@ -710,6 +937,16 @@ export class ExpenseService {
     const val1 = amount / (1 - getPercentage(taxValue));
     const val2 = val1 * getPercentage(taxValue);
     return val2;
+  }
+
+  private getAssociationTypeAndId(
+    expense: Expense,
+  ): { associationType: ExpenseAssociationType; associationId: string } {
+    const type = expense?.partnerId
+      ? ExpenseAssociationType.PARTNER
+      : ExpenseAssociationType.EMPLOYEE;
+    const id = expense?.partnerId || expense?.employeeId;
+    return { associationType: type, associationId: id };
   }
 
   /**
@@ -743,6 +980,9 @@ export class ExpenseService {
     expense: Expense,
     items: UpdateExpenseItemDTO[],
   ): Promise<ExpenseItem[]> {
+    const { associationType, associationId } = this.getAssociationTypeAndId(
+      expense,
+    );
     const uitems: ExpenseItem[] = [];
     for (const v of items) {
       const item = new ExpenseItem();
@@ -750,11 +990,14 @@ export class ExpenseService {
       item.productId = v?.productId;
       item.description = v?.description;
       item.amount = v?.amount;
-      item.picHoAmount = v?.picHoAmount ?? v?.amount;
       item.ssHoAmount = v?.ssHoAmount ?? v?.amount;
       item.checkedNote = v?.checkedNote;
       // FIXME: Optimize this query!
-      item.tax = await this.getTaxValue(expense?.partnerId, v?.productId);
+      item.tax = await this.getTaxValue(
+        v?.productId,
+        associationType,
+        associationId,
+      );
       item.createUserId = expense?.updateUserId;
       item.updateUserId = expense?.updateUserId;
       item.attributes = v?.attributes?.map((a: any) => {
@@ -768,6 +1011,37 @@ export class ExpenseService {
       uitems.push(item);
     }
     return uitems;
+  }
+
+  /**
+   * Internal Helper for update ExpenseItem tax value.
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {ExpenseItem[]} items
+   * @param {ExpenseAssociationType} associationType
+   * @param {string} associationId
+   * @return {*}  {Promise<void>}
+   * @memberof ExpenseService
+   */
+  private async updateExpenseItemTax(
+    manager: EntityManager,
+    items: ExpenseItem[],
+    associationType: ExpenseAssociationType,
+    associationId: string,
+  ): Promise<void> {
+    const expenseItemRepo = manager.getRepository(ExpenseItem);
+    const user = await AuthService.getUser();
+
+    for (const item of items) {
+      item.tax = await this.getTaxValue(
+        item?.productId,
+        associationType,
+        associationId,
+      );
+      item.updateUserId = user?.id ?? item?.updateUserId;
+      await expenseItemRepo.save(item);
+    }
   }
 
   /**
@@ -847,24 +1121,31 @@ export class ExpenseService {
     userRole: MASTER_ROLES,
   ): Promise<Journal> {
     const user = await this.getUser();
-    // re-fetch data to get latest updated ExpenseItems
-    const data = await manager.findOne(Expense, {
+    // re-fetch expense to get latest updated ExpenseItems
+    const expense = await manager.findOne(Expense, {
       where: { id: expenseId, isDeleted: false },
-      relations: ['items', 'items.product', 'partner', 'branch', 'downPayment'],
+      relations: [
+        'items',
+        'items.product',
+        'partner',
+        'employee',
+        'branch',
+        'downPayment',
+      ],
     });
     const j = new Journal();
     j.createUser = user;
     j.updateUser = user;
-    j.branchId = data.branchId;
-    j.branchCode = data?.branch?.branchCode ?? 'NO_BRANCH_CODE';
-    j.transactionDate = data.transactionDate;
-    j.periodId = data.periodId;
-    j.number = GenerateCode.journal(data.transactionDate);
-    j.reference = data.number;
+    j.branchId = expense.branchId;
+    j.branchCode = expense?.branch?.branchCode ?? 'NO_BRANCH_CODE';
+    j.transactionDate = expense.transactionDate;
+    j.periodId = expense.periodId;
+    j.number = GenerateCode.journal(expense.transactionDate);
+    j.reference = expense.number;
     j.sourceType = JournalSourceType.EXPENSE;
-    j.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-    j.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-    j.items = await this.buildJournalItem(data, userRole);
+    j.partnerName = expense?.partner?.name ?? expense?.employee?.name;
+    j.partnerCode = expense?.partner?.code ?? expense?.employee?.nik;
+    j.items = await this.buildJournalItem(expense, userRole);
     j.totalAmount = j.items
       .map((m) => Number(m.debit))
       .filter((i) => i)
@@ -927,110 +1208,93 @@ export class ExpenseService {
    * @memberof ExpenseService
    */
   private async buildJournalItemCredit(
-    data: Expense,
+    expense: Expense,
     user: User,
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
-    let items: JournalItem[] = [];
-    const taxedItems = data?.items.filter((v) => v.tax);
-    const cashCoaId = data.branch && data.branch.cashCoaId;
-    let taxedAmount: number;
-
-    const i = new JournalItem();
-    i.createUser = user;
-    i.updateUser = user;
-    i.coaId = cashCoaId;
-    i.branchId = data.branchId;
-    i.transactionDate = data.transactionDate;
-    i.periodId = data.periodId;
-    i.reference = data.number;
-    i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-    i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-
-    // Get credit amount based on userRole
-    if (userRole === MASTER_ROLES.PIC_HO) {
-      i.credit = data?.items
-        .map((m) => Number(m.picHoAmount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-
-      taxedAmount = taxedItems
-        .map((m) => Number(m.picHoAmount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-    } else if (
-      userRole === MASTER_ROLES.SS_HO ||
-      userRole === MASTER_ROLES.SPV_HO
-    ) {
-      i.credit = data?.items
-        .map((m) => Number(m.ssHoAmount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-
-      taxedAmount = taxedItems
-        .map((m) => Number(m.ssHoAmount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-    }
-
-    // Otherwise use admin branch amount
-    if (!i.credit) {
-      i.credit = data?.items
-        .map((m) => Number(m.amount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-
-      taxedAmount = taxedItems
-        .map((m) => Number(m.amount))
-        .filter((v) => v)
-        .reduce((a, b) => a + b, 0);
-    }
-
-    // Add JournalItem for Tax
-    if (taxedItems.length > 0) {
-      // FIXME: Build JournalItem for each tax?
-      const taxedItem = taxedItems[0];
-      const taxValue = this.calculateTax(taxedAmount, taxedItem.tax);
-      if (taxValue && taxValue > 0) {
-        i.credit = i.credit + roundToTwo(taxValue);
-      }
-    }
-
-    items.push(i);
+    const items: JournalItem[] = [];
+    let itemCoaId: string;
+    let isLedger: boolean = false;
+    let isReimbursement: boolean = false;
+    const partnerName = expense?.partner?.name || expense?.employee?.name;
+    const partnerCode = expense?.partner?.code || expense?.employee?.nik;
 
     // If Expense from DownPayment
-    if (data?.downPayment) {
-      const downPayment = data?.downPayment;
+    if (expense?.downPayment) {
+      const downPayment = expense?.downPayment;
       const downPaymentType = downPayment?.type;
       const setting = await getManager().getRepository(GlobalSetting).findOne();
 
-      const dpJournalItem = new JournalItem();
-      dpJournalItem.createUser = user;
-      dpJournalItem.updateUser = user;
-      dpJournalItem.branchId = data.branchId;
-      dpJournalItem.transactionDate = data.transactionDate;
-      dpJournalItem.periodId = data.periodId;
-      dpJournalItem.reference = data.number;
-      dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-      dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-
       if (downPaymentType === DownPaymentType.PERDIN) {
-        dpJournalItem.coaId = setting?.downPaymentPerdinCoaId;
+        const dpJournalItem = new JournalItem();
+        dpJournalItem.createUser = user;
+        dpJournalItem.updateUser = user;
+        dpJournalItem.branchId = expense.branchId;
+        dpJournalItem.transactionDate = expense.transactionDate;
+        dpJournalItem.periodId = expense.periodId;
+        dpJournalItem.reference = expense.number;
+        dpJournalItem.description = downPayment?.description;
+        dpJournalItem.partnerName = partnerName;
+        dpJournalItem.partnerCode = partnerCode;
         dpJournalItem.credit = downPayment?.amount;
+        dpJournalItem.coaId = setting?.downPaymentPerdinCoaId;
         items.push(dpJournalItem);
       } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
-        const totalItemCredit = items
-          .map((m) => Number(m.credit))
-          .reduce((a, b) => a + b, 0);
-
-        dpJournalItem.coaId = setting?.downPaymentReimbursementCoaId;
-        dpJournalItem.credit = totalItemCredit + downPayment?.amount;
-
-        // merge all items to use single CoA
-        items = [dpJournalItem];
+        itemCoaId = setting?.downPaymentReimbursementCoaId;
+        isLedger = true;
+        isReimbursement = true;
       }
     }
 
+    for (const v of expense?.items) {
+      if (!isReimbursement) {
+        itemCoaId = expense?.branch?.cashCoaId;
+      }
+
+      const i = new JournalItem();
+      i.createUser = user;
+      i.updateUser = user;
+      i.coaId = itemCoaId;
+      i.branchId = expense.branchId;
+      i.transactionDate = expense.transactionDate;
+      i.periodId = expense.periodId;
+      i.reference = expense.number;
+      i.description = v?.description;
+      i.partnerName = partnerName;
+      i.partnerCode = partnerCode;
+      i.isLedger = isLedger;
+      i.credit = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)
+        ? v.ssHoAmount
+        : v.amount;
+      items.push(i);
+
+      // Add JournalItem for Tax
+      if (v?.tax > 0) {
+        const { associationType, associationId } = this.getAssociationTypeAndId(
+          expense,
+        );
+        const taxedAmount = this.calculateTax(i.credit, v.tax);
+        const tax = await this.getTax(
+          v.productId,
+          associationType,
+          associationId,
+        );
+        const jTax = new JournalItem();
+        jTax.createUser = user;
+        jTax.updateUser = user;
+        jTax.coaId = isReimbursement ? itemCoaId : tax?.coaId;
+        jTax.branchId = expense.branchId;
+        jTax.transactionDate = expense.transactionDate;
+        jTax.periodId = expense.periodId;
+        jTax.reference = expense.number;
+        jTax.description = `[${tax?.group} YMH] ${v.description}`;
+        jTax.partnerName = partnerName;
+        jTax.partnerCode = partnerCode;
+        jTax.credit = taxedAmount;
+        jTax.isLedger = isLedger;
+        items.push(jTax);
+      }
+    }
     return items;
   }
 
@@ -1045,92 +1309,91 @@ export class ExpenseService {
    * @memberof ExpenseService
    */
   private async buildJournalItemDebit(
-    data: Expense,
+    expense: Expense,
     user: User,
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
-    let items: JournalItem[] = [];
-    const taxes: number[] = [];
-    for (const v of data?.items) {
+    const items: JournalItem[] = [];
+    let itemCoaId: string;
+    let isLedger: boolean = true;
+    let isReimbursement: boolean = false;
+    const partnerName = expense?.partner?.name || expense?.employee?.name;
+    const partnerCode = expense?.partner?.code || expense?.employee?.nik;
+
+    // If Expense from DownPayment
+    if (expense?.downPayment) {
+      const downPayment = expense?.downPayment;
+      const downPaymentType = downPayment?.type;
+
+      if (downPaymentType === DownPaymentType.PERDIN) {
+        const dpJournalItem = new JournalItem();
+        dpJournalItem.createUser = user;
+        dpJournalItem.updateUser = user;
+        dpJournalItem.branchId = expense.branchId;
+        dpJournalItem.transactionDate = expense.transactionDate;
+        dpJournalItem.periodId = expense.periodId;
+        dpJournalItem.reference = expense.number;
+        dpJournalItem.description = downPayment?.description;
+        dpJournalItem.partnerName = partnerName;
+        dpJournalItem.partnerCode = partnerCode;
+        dpJournalItem.coaId = expense?.branch?.cashCoaId;
+        dpJournalItem.debit = downPayment?.amount;
+        dpJournalItem.coaId = expense?.branch?.cashCoaId;
+        items.push(dpJournalItem);
+      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
+        itemCoaId = expense?.branch?.cashCoaId;
+        isLedger = false;
+        isReimbursement = true;
+      }
+    }
+
+    for (const v of expense?.items) {
+      if (!isReimbursement) {
+        itemCoaId = v?.product?.coaId;
+      }
+
       const i = new JournalItem();
       i.createUser = user;
       i.updateUser = user;
-      i.coaId = v.product && v.product.coaId;
-      i.branchId = data.branchId;
-      i.transactionDate = data.transactionDate;
-      i.periodId = data.periodId;
-      i.reference = data.number;
-      i.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-      i.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-
-      // Get credit amount based on userRole
-      if (userRole === MASTER_ROLES.PIC_HO) {
-        i.debit = v.picHoAmount;
-      } else if (
-        userRole === MASTER_ROLES.SS_HO ||
-        userRole === MASTER_ROLES.SPV_HO
-      ) {
-        i.debit = v.ssHoAmount;
-      }
-
-      // Otherwise use admin branch amount
-      if (!i.debit) {
-        i.debit = v.amount;
-      }
-
-      if (v.tax) {
-        taxes.push(this.calculateTax(i.debit, v.tax));
-      }
-
+      i.coaId = itemCoaId;
+      i.branchId = expense.branchId;
+      i.transactionDate = expense.transactionDate;
+      i.periodId = expense.periodId;
+      i.reference = expense.number;
+      i.description = v?.description;
+      i.partnerName = partnerName;
+      i.partnerCode = partnerCode;
+      i.isLedger = isLedger;
+      i.debit = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)
+        ? v.ssHoAmount
+        : v.amount;
       items.push(i);
-    }
 
-    // Add JournalItem for Tax
-    if (taxes.length) {
-      const taxedItems = data?.items.filter((v) => v.tax);
-      const taxedItem = taxedItems[0];
-      const tax = await this.getTax(data.partnerId, taxedItem.productId);
-      const jTax = new JournalItem();
-      jTax.createUser = user;
-      jTax.updateUser = user;
-      jTax.coaId = tax && tax.coaId;
-      jTax.branchId = data.branchId;
-      jTax.transactionDate = data.transactionDate;
-      jTax.periodId = data.periodId;
-      jTax.reference = data.number;
-      jTax.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-      jTax.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-      jTax.debit = roundToTwo(taxes.reduce((a, b) => a + b, 0));
-      items.push(jTax);
-    }
-
-    // If Expense from DownPayment
-    if (data?.downPayment) {
-      const downPayment = data?.downPayment;
-      const downPaymentType = downPayment?.type;
-
-      const dpJournalItem = new JournalItem();
-      dpJournalItem.createUser = user;
-      dpJournalItem.updateUser = user;
-      dpJournalItem.branchId = data.branchId;
-      dpJournalItem.transactionDate = data.transactionDate;
-      dpJournalItem.periodId = data.periodId;
-      dpJournalItem.reference = data.number;
-      dpJournalItem.partnerName = data?.partner?.name ?? 'NO_PARTNER_NAME';
-      dpJournalItem.partnerCode = data?.partner?.code ?? 'NO_PARTNER_CODE';
-      dpJournalItem.coaId = data?.branch?.cashCoaId;
-
-      if (downPaymentType === DownPaymentType.PERDIN) {
-        dpJournalItem.debit = downPayment?.amount;
-        items.push(dpJournalItem);
-      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
-        const totalItemDebit = items
-          .map((m) => Number(m.debit))
-          .reduce((a, b) => a + b, 0);
-        dpJournalItem.debit = totalItemDebit + downPayment?.amount;
-
-        // merge all items to use single CoA
-        items = [dpJournalItem];
+      // Add JournalItem for Tax
+      if (v?.tax > 0) {
+        const { associationType, associationId } = this.getAssociationTypeAndId(
+          expense,
+        );
+        const taxedAmount = this.calculateTax(i.debit, v.tax);
+        const tax = await this.getTax(
+          v.productId,
+          associationType,
+          associationId,
+        );
+        const jTax = new JournalItem();
+        jTax.createUser = user;
+        jTax.updateUser = user;
+        jTax.coaId = itemCoaId;
+        jTax.branchId = expense.branchId;
+        jTax.transactionDate = expense.transactionDate;
+        jTax.periodId = expense.periodId;
+        jTax.reference = expense.number;
+        jTax.description = `[${tax?.group} Gross UP] ${v.description}`;
+        jTax.partnerName = partnerName;
+        jTax.partnerCode = partnerCode;
+        jTax.debit = taxedAmount;
+        jTax.isLedger = isLedger;
+        items.push(jTax);
       }
     }
 
@@ -1190,9 +1453,6 @@ export class ExpenseService {
 
       if (v.checkedNote) {
         item.checkedNote = v.checkedNote;
-      }
-      if (v.picHoAmount) {
-        item.picHoAmount = v.picHoAmount;
       }
       if (v.ssHoAmount) {
         item.ssHoAmount = v.ssHoAmount;
@@ -1435,5 +1695,157 @@ export class ExpenseService {
     loan.updateUserId = expense.updateUserId;
 
     return await manager.save(loan);
+  }
+
+  /**
+   * Internal Helper for remove existing loan if no payments.
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} data
+   * @return {*}  {Promise<any>}
+   * @memberof ExpenseService
+   */
+  private async removeLoan(
+    manager: EntityManager,
+    data: Expense,
+  ): Promise<any> {
+    const loan = await this.retrieveLoanForExpense(manager, data);
+    if (!loan) return;
+
+    if (loan?.payments?.length > 0) {
+      throw new UnprocessableEntityException(
+        `Loan has payments, can't remove it!`,
+      );
+    }
+
+    return await manager.getRepository(Loan).delete({ id: loan?.id });
+  }
+
+  /**
+   * Internal Helper for (re)create account statement (balances).
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} expense
+   * @return {*}  {Promise<AccountStatement>}
+   * @memberof ExpenseService
+   */
+  private async upsertAccountStatementFromExpense(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<AccountStatement> {
+    const accStmtRepo = manager.getRepository(AccountStatement);
+    const statement = await accStmtRepo.findOne({
+      where: {
+        reference: expense?.number,
+        branchId: expense?.branchId,
+        isDeleted: false,
+      },
+    });
+
+    if (statement) {
+      // delete existing statement
+      await accStmtRepo.delete({ id: statement?.id });
+    }
+
+    // insert statement if Expense not from DownPayment
+    if (!expense?.downPaymentId) {
+      const stmt = await this.buildAccountStatement(expense);
+      return await accStmtRepo.save(stmt);
+    }
+  }
+
+  private async buildAccountStatement(
+    expense: Expense,
+  ): Promise<AccountStatement> {
+    const stmt = new AccountStatement();
+    stmt.branchId = expense.branchId;
+    stmt.createUser = expense.updateUser;
+    stmt.updateUser = expense.updateUser;
+    stmt.reference = expense.number;
+    stmt.amount = expense.totalAmount;
+    stmt.transactionDate = expense.transactionDate;
+    stmt.type = (expense.paymentType as unknown) as AccountStatementType;
+    stmt.amountPosition = AccountStatementAmountPosition.DEBIT;
+    return stmt;
+  }
+
+  /**
+   * Internal helper to remove existing account statement from expense
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} expense
+   * @return {*}  {Promise<void>}
+   * @memberof ExpenseService
+   */
+  private async removeAccountStatement(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<void> {
+    await manager.getRepository(AccountStatement).delete({
+      reference: expense?.number,
+      branchId: expense?.branchId,
+      isDeleted: false,
+    });
+  }
+
+  /**
+   * Internal helper to update Vehicle data.
+   *
+   * @private
+   * @param {EntityManager} manager
+   * @param {Expense} expense
+   * @return {*}  {Promise<void>}
+   * @memberof ExpenseService
+   */
+  private async updateVehicleFromExpense(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<void> {
+    // re-fetch ExpenseItems to get latest data.
+    const expenseItems = await manager.getRepository(ExpenseItem).find({
+      where: { expenseId: expense?.id, isDeleted: false },
+      relations: ['attributes'],
+    });
+    for (const item of expenseItems) {
+      const attrs = item?.attributes;
+      if (!attrs.length) continue;
+
+      const vehicleId = attrs
+        ?.filter((a) => a.key === 'vehicleId')
+        ?.map((m) => m.value)
+        ?.pop();
+      const vehicleKM = attrs
+        ?.filter((a) => a.key === 'kilometerEnd')
+        ?.map((m) => m.value)
+        ?.pop();
+
+      if (vehicleId && vehicleKM) {
+        if (+vehicleKM > 0) {
+          await this.publishUpdateVehicleById(manager, vehicleId, +vehicleKM);
+        }
+      }
+    }
+  }
+
+  private async publishUpdateVehicleById(
+    manager: EntityManager,
+    id: string,
+    kmEnd: number,
+  ): Promise<any> {
+    const vehicleRepo = manager.getRepository(Vehicle);
+    const vehicle = await vehicleRepo.findOne(id, {
+      select: ['id', 'vehicleId'],
+    });
+    if (!vehicle) return;
+
+    // Insert to VehicleTemp. sync data to masterdata and live table will be handle by other service.
+    const vTemp = new VehicleTemp();
+    vTemp.pettycashVehicleId = vehicle?.id;
+    vTemp.masterdataVehicleId = vehicle?.vehicleId;
+    vTemp.vehicleKilometer = kmEnd;
+    return await manager.save(vTemp);
   }
 }

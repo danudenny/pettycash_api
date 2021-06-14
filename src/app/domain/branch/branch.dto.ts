@@ -20,4 +20,11 @@ export class BranchDTO {
     example: 'Tangerang Pinang',
   })
   name: string;
+
+  @ApiProperty({
+    description: 'Cash CoA ID',
+    example: 'cf1390aa-7543-4c5d-afae-e50c53a58625',
+  })
+  @IsUUID()
+  coaId: string;
 }

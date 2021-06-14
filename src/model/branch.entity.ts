@@ -1,4 +1,12 @@
-import { Column, Entity, PrimaryGeneratedColumn, BaseEntity } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  BaseEntity,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { AccountCoa } from './account-coa.entity';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 // NOTE: source data from db master data
@@ -67,4 +75,8 @@ export class Branch extends BaseEntity {
     name: 'is_deleted',
   })
   isDeleted: boolean;
+
+  @ManyToOne(() => AccountCoa, { cascade: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'cash_coa_id', referencedColumnName: 'id' })
+  cashCoa?: AccountCoa;
 }

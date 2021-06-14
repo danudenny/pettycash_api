@@ -12,6 +12,15 @@ export class AccountTax extends PtcBaseEntity {
   })
   name: string;
 
+  // use `varchar` but consider to use enum AccountTaxGroup
+  // when insert/update to database.
+  @Column({
+    type: 'varchar',
+    name: 'group',
+    nullable: true,
+  })
+  group: string;
+
   @Column({
     type: 'boolean',
     nullable: false,

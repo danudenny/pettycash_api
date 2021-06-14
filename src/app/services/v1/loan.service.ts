@@ -86,8 +86,10 @@ export class LoanService {
   public async list(query?: QueryLoanDTO): Promise<LoanWithPaginationResponse> {
     const params = { ...query };
     const qb = new QueryBuilder(Loan, 'l', params);
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['startDate__gte'] = 'l.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'l.transaction_date';
@@ -125,10 +127,10 @@ export class LoanService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    if (userBranches?.length) {
+    if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.branchId,
-        (v) => v.in(userBranches),
+        (v) => v.in(userBranchIds),
       );
     }
 
@@ -203,6 +205,7 @@ export class LoanService {
   public async createAttachment(
     loanId: string,
     files?: any,
+    attachmentType?: any
   ): Promise<LoanAttachmentResponse> {
     try {
       const createAttachment = await getManager().transaction(
@@ -226,6 +229,7 @@ export class LoanService {
                 const pathId = `${loanPath}_${rid}_${file.originalname}`;
                 return pathId;
               },
+              attachmentType,
               manager,
             );
             newAttachments = attachments;
@@ -416,7 +420,7 @@ export class LoanService {
     stmt: AccountStatement,
   ): Promise<AccountStatement> {
     const repo = manager.getRepository(AccountStatement);
-    const statement = repo.save(stmt);
+    const statement = await repo.save(stmt);
     return statement;
   }
 

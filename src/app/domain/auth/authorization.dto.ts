@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-import { MASTER_ROLES } from '../../../model/utils/enum';
 
 export class AuthorizationDTO {
   @ApiProperty({
@@ -15,6 +14,18 @@ export class AuthorizationDTO {
     example: '190000280',
   })
   username: string;
+
+  @ApiProperty({
+    description: 'First Name',
+    example: 'Silvia',
+  })
+  firstName: string;
+
+  @ApiProperty({
+    description: 'Last Name',
+    example: 'Agustin',
+  })
+  lastName: string;
 
   @ApiProperty({
     description: 'Role ID',

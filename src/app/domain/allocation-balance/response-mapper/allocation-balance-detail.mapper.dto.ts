@@ -38,6 +38,7 @@ export class AllocationDetailResponseMapper {
       id: ety.id,
       number: ety.number,
       amount: ety.amount,
+      createdAt: ety.createdAt,
       branchId: ety.branchId,
       branchName: ety.branch && ety.branch.branchName,
       transferDate: ety.transferDate,
@@ -52,6 +53,7 @@ export class AllocationDetailResponseMapper {
       destinationBankId: ety.destinationBankId,
       bankName: ety.destinationBank && ety.destinationBank.bankName,
       accountNumber: ety.destinationBank && ety.destinationBank.accountNumber,
+      isPaid: ety.isPaid,
       histories: this.toAccountStatementHistoryDTO(ety.allocationHistory, ety.branch),
     });
   }

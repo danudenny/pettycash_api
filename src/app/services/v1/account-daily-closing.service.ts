@@ -38,18 +38,20 @@ export class AccountDailyClosingService {
     private readonly attachmentRepo: Repository<Attachment>,
     @InjectRepository(GlobalSetting)
     private readonly settingRepo: Repository<GlobalSetting>,
-  ) {}
+  ) { }
 
   public async list(
     query?: QueryAccountDailyClosingDTO,
   ): Promise<AccountDailyClosingWithPaginationResponse> {
     const params = { order: '^created_at', limit: 10, ...query };
     const qb = new QueryBuilder(AccountDailyClosing, 'adc', params);
-    const user = await AuthService.getUser({ relations: ['branches'] });
-    const userBranches = user?.branches?.map((v) => v.id);
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
-    qb.fieldResolverMap['startDate__gte'] = 'adc.closingDate';
-    qb.fieldResolverMap['endDate__gte'] = 'adc.closingDate';
+    qb.fieldResolverMap['startDate__gte'] = 'adc.closing_date';
+    qb.fieldResolverMap['endDate__lte'] = 'adc.closing_date';
 
     qb.applyFilterPagination();
     qb.selectRaw(
@@ -63,16 +65,17 @@ export class AccountDailyClosingService {
       ['adc.closing_bank_amount', 'closingBankAmount'],
       ['adc.opening_cash_amount', 'openingCashAmount'],
       ['adc.closing_cash_amount', 'closingCashAmount'],
+      ['adc.reason', 'reason'],
     );
     qb.leftJoin((e) => e.createUser, 'usr');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    if (userBranches?.length) {
+    if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.branchId,
-        (v) => v.in(userBranches),
+        (v) => v.in(userBranchIds),
       );
     }
 
@@ -99,16 +102,6 @@ export class AccountDailyClosingService {
   public async create(
     payload: CreateAccountDailyClosingDTO,
   ): Promise<CreateAccountDailyClosingResponse> {
-    const isDailyClosingMeetsDeviationSetting = await this.isDailyClosingMeetsDeviationSetting(
-      payload,
-    );
-
-    if (!isDailyClosingMeetsDeviationSetting) {
-      throw new UnprocessableEntityException(
-        'Unable to create Daily Closing: Deviation Amount not meets',
-      );
-    }
-
     const accountDailyClosing = await this.getAccountDailyClosingFromDTO(
       payload,
     );
@@ -250,6 +243,7 @@ export class AccountDailyClosingService {
       payload.accountCashboxItems,
       user,
     );
+    accountDailyClosing.reason = payload.reason;
     accountDailyClosing.createUser = user;
     accountDailyClosing.updateUser = user;
 
@@ -279,6 +273,7 @@ export class AccountDailyClosingService {
     accountDailyClosingId: string,
     manager: EntityManager,
     files?: any,
+    attachmentType?: any
   ): Promise<Attachment[]> {
     let newAttachments: Attachment[] = [];
 
@@ -292,33 +287,11 @@ export class AccountDailyClosingService {
 
           return pathId;
         },
+        attachmentType,
         manager,
       );
     }
 
     return newAttachments;
-  }
-
-  private async isDailyClosingMeetsDeviationSetting(
-    payload: CreateAccountDailyClosingDTO,
-  ): Promise<Boolean> {
-    const setting = await this.settingRepo.findOne({
-      relations: [
-        'voucherPartner',
-        'cashTransitCoa',
-        'downPaymentPerdinCoa',
-        'downPaymentReimbursementCoa',
-      ],
-    });
-    const deviationAmount = setting.deviationAmount;
-
-    const openingAmount = payload.openingBankAmount + payload.openingCashAmount;
-    const closingAmount = payload.closingBankAmount + payload.closingCashAmount;
-
-    if (openingAmount >= closingAmount) {
-      return openingAmount - closingAmount <= deviationAmount;
-    } else {
-      return closingAmount - openingAmount <= deviationAmount;
-    }
   }
 }

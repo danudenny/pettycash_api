@@ -58,8 +58,13 @@ export class BudgetService {
     return history.filter((v) => v);
   }
 
+  public getDifferenceInDays(date1, date2) {
+    const diffInMs = Math.abs(date2 - date1);
+    return diffInMs / (1000 * 60 * 60 * 24) + 1;
+  }
+
   public async list(query?: QueryBudgetDTO): Promise<BudgetWithPaginationResponse> {
-    const params = { order: '-minimumAmount', limit: 10, ...query };
+    const params = { order: '-createdAt', limit: 10, ...query };
     const qb = new QueryBuilder(Budget, 'bgt', params);
     const user = await AuthService.getUser({ relations: ['branches'] });
     const userBranches = user?.branches?.map((v) => v.id);
@@ -82,6 +87,7 @@ export class BudgetService {
       ['us.first_name', 'responsibleUserFirstName'],
       ['us.last_name', 'responsibleUserLastName'],
       ['us.username', 'responsibleUserUsername'],
+      ['bgt.created_at', 'createdAt'],
       ['bgt.start_date', 'startDate'],
       ['bgt.end_date', 'endDate'],
       ['bgt.minimum_amount', 'minimumAmount'],
@@ -213,15 +219,20 @@ export class BudgetService {
         items.push(item);
       }
 
+      const date1 = new Date(data.startDate);
+      const date2 = new Date(data.endDate);
+      const totalDays = this.getDifferenceInDays(date1, date2);
+      const getMinimumAmount = Number(Math.ceil((totalAmountItem/totalDays)*2));
+
       // Build Budget
       const budget = new Budget();
-      budget.branchId = branchId;
+      budget.branchId = data.branchId;
       budget.number = data.number;
       budget.responsibleUserId = data.responsibleUserId;
       budget.startDate = data.startDate;
       budget.endDate = data.endDate;
       budget.totalAmount = totalAmountItem;
-      budget.minimumAmount = data.minimumAmount;
+      budget.minimumAmount = getMinimumAmount;
       budget.rejectedNote = null;
       budget.state = BudgetState.DRAFT;
       budget.histories = await this.buildHistory(budget, {
@@ -268,16 +279,21 @@ export class BudgetService {
           totalAmountItem = totalAmountItem + Number(v.amount);
           items.push(item);
         }
+
+        const date1 = new Date(data.startDate);
+        const date2 = new Date(data.endDate);
+        const totalDays = this.getDifferenceInDays(date1, date2);
+        const getMinimumAmount = Number(Math.ceil((totalAmountItem/totalDays)*2));
   
         // Build Budget
         const budget = new Budget();
-        budget.branchId = branchId;
+        budget.branchId = data.branchId;
         budget.number = data.number;
         budget.responsibleUserId = data.responsibleUserId;
         budget.startDate = data.startDate;
         budget.endDate = data.endDate;
         budget.totalAmount = totalAmountItem;
-        budget.minimumAmount = data.minimumAmount;
+        budget.minimumAmount = getMinimumAmount;
         budget.rejectedNote = null;
         budget.state = BudgetState.DRAFT;
         budget.histories = await this.buildHistory(budget, {
@@ -350,23 +366,109 @@ export class BudgetService {
               totalAmountItem = totalAmountItem + Number(y.amount);
             }
     
+            const date1 = new Date(data.startDate);
+            const date2 = new Date(data.endDate);
+            const totalDays = this.getDifferenceInDays(date1, date2);
+            const getMinimumAmount = Number(Math.ceil((totalAmountItem/totalDays)*2));
+
             // Build Budget
-            budgetExist.branchId = branchId;
+            budgetExist.branchId = data.branchId;
             budgetExist.number = budgetExist.number;
             budgetExist.responsibleUserId = data.responsibleUserId;
             budgetExist.startDate = data.startDate;
             budgetExist.endDate = data.endDate;
             budgetExist.totalAmount = totalAmountItem;
-            budgetExist.minimumAmount = data.minimumAmount;
+            budgetExist.minimumAmount = getMinimumAmount;
             budgetExist.rejectedNote = null;
             budgetExist.state = BudgetState.DRAFT;
-            // budgetExist.histories = await this.buildHistory(budgetExist, {
-            //   state: BudgetState.DRAFT,
-            //   endDate: data.endDate,
-            // });
-            // if (items.length > 0) {
-            //   budgetExist.items = items;
-            // }
+            budgetExist.createUser = user;
+            budgetExist.updateUser = user;
+    
+            const result = await this.budgetRepo.save(budgetExist);
+            return new BudgetResponse(result as any);
+          }
+        }
+      });
+      return updateBudget as any;
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  public async reSubmission(id: string, data: UpdateBudgetDTO): Promise<BudgetResponse> {
+    try{
+      const updateBudget = await getManager().transaction(async (manager) => {
+        const budgetExist = await manager.findOne(Budget, {
+          where: { id: id, isDeleted: false },
+          relations: ['histories'],
+        });
+
+        if (!budgetExist) {
+          throw new NotFoundException();
+        } else {
+          if (budgetExist.state !== BudgetState.DRAFT && budgetExist.state !== BudgetState.REJECTED && budgetExist.state !== BudgetState.CANCELED) {
+            throw new HttpException('Cannot Edit, Status Budget is Not DRAFT, REJECTED OR CANCELED!', HttpStatus.BAD_REQUEST);
+          } else {
+            const user = await this.getUser(true);
+            const branchId = user && user.branches && user.branches[0].id;
+      
+            // Build BudgetItem
+            let items: BudgetItem[] = [];
+            const budgetItemExist = await manager.find(BudgetItem, {
+              where: { budgetId: id, isDeleted: false }
+            });
+
+            let totalAmountItem = 0;
+            for (const v of data.items) {
+              if (v.id) {
+                for (const x of budgetItemExist) {
+                  if (v.id === x.id) {
+                    x.productId = v.productId;
+                    x.description = v.description;
+                    x.isDeleted = v.isDeleted;
+                    x.amount = v.amount;
+                    await this.budgetItemRepo.update(v.id, x)
+                  }
+                }
+              } else {
+                const item = new BudgetItem();;
+                item.productId = v.productId;
+                item.budgetId = id;
+                item.description = v.description;
+                item.amount = v.amount;
+                item.createUser = user;
+                item.updateUser = user;
+                await this.budgetItemRepo.insert(item)
+              }
+            }
+
+            // Get Total Amount
+            const budgetItemExistNew = await manager.find(BudgetItem, {
+              where: { budgetId: id, isDeleted: false }
+            });
+            for (const y of budgetItemExistNew) {
+              totalAmountItem = totalAmountItem + Number(y.amount);
+            }
+    
+            const date1 = new Date(data.startDate);
+            const date2 = new Date(data.endDate);
+            const totalDays = this.getDifferenceInDays(date1, date2);
+            const getMinimumAmount = Number(Math.ceil((totalAmountItem/totalDays)*2));
+
+            // Build Budget
+            budgetExist.branchId = data.branchId;
+            budgetExist.number = budgetExist.number;
+            budgetExist.responsibleUserId = data.responsibleUserId;
+            budgetExist.startDate = data.startDate;
+            budgetExist.endDate = data.endDate;
+            budgetExist.totalAmount = totalAmountItem;
+            budgetExist.minimumAmount = getMinimumAmount;
+            budgetExist.rejectedNote = null;
+            budgetExist.state = BudgetState.DRAFT;
+            budgetExist.histories = await this.buildHistory(budgetExist, {
+              state: BudgetState.DRAFT,
+              endDate: data.endDate,
+            });
             budgetExist.createUser = user;
             budgetExist.updateUser = user;
     
@@ -416,13 +518,13 @@ export class BudgetService {
         const userRole = user?.role?.name;
 
         if (userRole === MASTER_ROLES.SS_HO) {
-          if (budgetExists.state === BudgetState.APPROVED_BY_SPV || budgetExists.state === BudgetState.APPROVED_BY_SS) {
+          if (budgetExists.state === BudgetState.APPROVED_BY_SPV || budgetExists.state === BudgetState.CONFIRMED_BY_SS) {
             throw new BadRequestException(
               `Budget ${budgetExists.number} already approved!`,
             );
           }
       
-          const state = BudgetState.APPROVED_BY_SS;
+          const state = BudgetState.CONFIRMED_BY_SS;
           const endDate = budgetExists.endDate;
 
           budgetExists.state = state;
@@ -492,19 +594,6 @@ export class BudgetService {
           );
         }
 
-        // if (
-        //   ![
-        //     MASTER_ROLES.PIC_HO,
-        //     MASTER_ROLES.ACCOUNTING,
-        //     MASTER_ROLES.ADMIN_BRANCH,
-        //     MASTER_ROLES.SUPERUSER,
-        //   ].includes(userRole)
-        // ) {
-        //   throw new BadRequestException(
-        //     `Only PIC/SS/SPV HO can reject budget!`,
-        //   );
-        // }
-
         const rejectedNote = data.rejectedNote;
         const state = BudgetState.REJECTED;
         const endDate = budgetExist.endDate;
@@ -515,6 +604,7 @@ export class BudgetService {
           rejectedNote,
           endDate
         });
+        budgetExist.rejectedNote = rejectedNote;
         budgetExist.updateUser = user;
 
         return await manager.save(budgetExist);

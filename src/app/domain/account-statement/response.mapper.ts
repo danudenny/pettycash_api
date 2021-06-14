@@ -7,6 +7,7 @@ export class AccountStatementResponseMapper {
     it.transactionDate = data.transactionDate;
     it.type = data.type;
     it.reference = data.reference;
+    it.sourceType = data.sourceType;
     it.amount = +data.amount;
     it.amountPosition = data.amountPosition;
     it.branchId = data.branchId;

@@ -54,6 +54,12 @@ export class PartnerDTO {
   state: string;
 
   @ApiProperty({
+    description: 'Partner Status',
+    example: true
+  })
+  isActive: boolean;
+
+  @ApiProperty({
     description: 'Partner CreatedAt in string ISO8601 format',
     example: '2021-01-29T09:00:29.803Z',
   })

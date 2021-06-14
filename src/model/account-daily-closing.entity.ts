@@ -59,6 +59,13 @@ export class AccountDailyClosing extends PtcBaseEntity {
   })
   closingCashAmount: number;
 
+  @Column({ 
+    type: 'text', 
+    name: 'reason',
+    nullable: true,
+  })
+  reason?: string;
+
   @OneToMany(() => AccountCashboxItem, (e) => e.accountDailyClosing, {
     cascade: true,
   })

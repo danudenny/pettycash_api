@@ -46,6 +46,13 @@ export class JournalItem extends PtcBaseEntity {
   reference?: string;
 
   @Column({
+    type: 'text',
+    name: 'description',
+    nullable: true,
+  })
+  description?: string;
+
+  @Column({
     type: 'uuid',
     name: 'coa_id',
     nullable: false,
@@ -83,6 +90,14 @@ export class JournalItem extends PtcBaseEntity {
     transformer: new ColumnNumericTransformer(),
   })
   credit: number;
+
+  @Column({
+    type: 'boolean',
+    nullable: false,
+    default: () => 'false',
+    name: 'is_ledger',
+  })
+  isLedger: boolean;
 
   @ManyToOne(() => Journal, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'journal_id' })

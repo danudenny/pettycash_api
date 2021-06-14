@@ -9,22 +9,31 @@ import {
   Post,
   Put,
   Query,
+  Req,
   Res,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiConsumes,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { Response } from 'express';
+import { FindPartnerIdParams, FindAttachmentIdParams } from '../../domain/common/findId-param.dto';
+import { CreatePartnerAttachmentDTO } from '../../domain/partner/create-attachment.dto';
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
 import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
+import { PartnerAttachmentResponse } from '../../domain/partner/response-attachment.dto';
 import {
   PartnerResponse,
   PartnerWithPaginationResponse,
@@ -44,6 +53,22 @@ export class PartnerController {
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async list(@Query() query: QueryPartnerDTO) {
     return await this.svc.list(query);
+  }
+
+  @Get('check-partner')
+  @ApiOperation({ summary: 'List all Partners' })
+  @ApiOkResponse({ type: PartnerWithPaginationResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async activePartner() {
+    return await this.svc.updatePartnerActive();
+  }
+
+  @Get('/:id/attachments')
+  @ApiOperation({ summary: 'List Expense Attachment' })
+  @ApiOkResponse({ type: PartnerAttachmentResponse })
+  @ApiNotFoundResponse({ description: 'Attachments not found.' })
+  public async listAttachment(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.svc.listAttachment(id);
   }
 
   @Post()
@@ -104,5 +129,34 @@ export class PartnerController {
   @ApiBadRequestResponse({ description: 'Failed to approve partner' })
   public async approve(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.svc.approve(id);
+  }
+
+  @Post('/:id/attachments')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Create Partner Attachment' })
+  @UseInterceptors(FilesInterceptor('attachments'))
+  @ApiCreatedResponse({ type: PartnerAttachmentResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiBody({ type: CreatePartnerAttachmentDTO })
+  public async createAttachment(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @UploadedFiles() attachments: any,
+    @Body() body
+  ) {
+    return await this.svc.createAttachment(id, attachments, body['typeId']);
+  }
+
+  @Delete('/:partnerId/attachments/:attachmentId')
+  @ApiParam({ name: 'attachmentId' })
+  @ApiParam({ name: 'partnerId' })
+  @ApiOperation({ summary: 'Delete Partner Attachment' })
+  @ApiNoContentResponse({ description: 'Successfully delete attachment' })
+  public async deleteAttachment(
+    @Param() { partnerId }: FindPartnerIdParams,
+    @Param() { attachmentId }: FindAttachmentIdParams,
+    @Res() res: Response,
+  ) {
+    await this.svc.deleteAttachment(partnerId, attachmentId);
+    return res.status(HttpStatus.NO_CONTENT).json();
   }
 }

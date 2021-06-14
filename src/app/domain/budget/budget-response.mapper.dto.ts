@@ -7,6 +7,7 @@ export class BudgetResponseMapper {
     it.id = dto.id;
     it.branchId = dto.branchId;
     it.branchName = dto.branchName;
+    it.branchCode = dto.branchCode;
     it.number = dto.number;
     it.responsibleUserId = dto.responsibleUserId;
     it.responsibleUserFirstName = dto.responsibleUserFirstName;

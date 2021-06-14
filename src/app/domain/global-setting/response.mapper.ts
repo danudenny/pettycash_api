@@ -13,6 +13,7 @@ export class GlobalSettingResponseMapper {
     it.downPaymentPerdinCoaCode = dto.downPaymentPerdinCoaCode;
     it.downPaymentReimbursementCoaId = dto.downPaymentReimbursementCoaId;
     it.downPaymentReimbursementCoaCode = dto.downPaymentReimbursementCoaCode;
+    it.partnerExpirationInMonth = dto.partnerExpirationInMonth;
     return it;
   }
 

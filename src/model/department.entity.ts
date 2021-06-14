@@ -45,6 +45,14 @@ export class Department extends BaseEntity {
   @Column({
     type: 'boolean',
     nullable: false,
+    default: true,
+    name: 'is_active',
+  })
+  isActive: boolean;
+
+  @Column({
+    type: 'boolean',
+    nullable: false,
     default: () => 'false',
     name: 'is_deleted',
   })

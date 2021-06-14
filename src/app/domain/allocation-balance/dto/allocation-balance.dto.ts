@@ -77,6 +77,26 @@ export class AllocationBalanceDTO {
     example: null,
   })
   receivedUserName: string;
+
+  @ApiProperty({
+    description: 'Created At',
+    example: '2021-03-11',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'Is Paid',
+    example: false,
+  })
+  isPaid: boolean;
+}
+
+export class PaidAllocationDTO {
+  @ApiProperty({
+    description: 'Is Paid',
+    example: false,
+  })
+  isPaid: boolean;
 }
 
 export class RejectAllocationDTO {
@@ -195,6 +215,18 @@ export class AllocationBalanceDetailDTO {
     example: 'This is description field...',
   })
   description: string;
+
+  @ApiProperty({
+    description: 'Created Date',
+    example: '2021-03-11',
+  })
+  createdAt: Date;
+
+  @ApiProperty({
+    description: 'Is Paid',
+    example: false,
+  })
+  isPaid: boolean;
 
   @ApiProperty({
     description: 'Expense Histories',

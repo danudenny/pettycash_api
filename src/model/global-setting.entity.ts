@@ -51,6 +51,15 @@ export class GlobalSetting extends BaseEntity {
   })
   downPaymentReimbursementCoaId: string;
 
+  @Column({
+    type: 'smallint',
+    name: 'partner_expiration_in_month',
+    nullable: true,
+    default: 6,
+    transformer: new ColumnNumericTransformer(),
+  })
+  partnerExpirationInMonth: number;
+
   @OneToOne(() => Partner)
   @JoinColumn({ name: 'voucher_partner_id' })
   voucherPartner: Partner;

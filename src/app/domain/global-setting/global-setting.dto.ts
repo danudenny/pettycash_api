@@ -20,7 +20,7 @@ export class GlobalSettingDTO {
     example: 1000,
   })
   @IsNumber()
-  deviationAmount: Number;
+  deviationAmount: number;
 
   @ApiProperty({
     description: 'Cash Transit CoA ID',
@@ -60,4 +60,11 @@ export class GlobalSettingDTO {
     example: '600.111.40',
   })
   downPaymentReimbursementCoaCode: string;
+
+  @ApiProperty({
+    description: 'Partner Expiration in Month',
+    example: 6,
+  })
+  @IsNumber()
+  partnerExpirationInMonth: number;
 }

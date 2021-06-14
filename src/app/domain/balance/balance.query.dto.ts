@@ -39,4 +39,13 @@ export class QueryBalanceDTO {
     enum: ['lessThan', 'equal', 'moreThan'],
   })
   state: string;
+
+}
+
+export class QueryReportBalanceDTO {
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Force to not use cache',
+  })
+  noCache?: boolean;
 }

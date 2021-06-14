@@ -18,6 +18,7 @@ import { Department } from './department.entity';
 import { DownPaymentHistory } from './down-payment-history.entity';
 import { Expense } from './expense.entity';
 import { Period } from './period.entity';
+import { Product } from './product.entity';
 
 @Entity('down_payment')
 export class DownPayment extends PtcBaseEntity {
@@ -66,7 +67,11 @@ export class DownPayment extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'expense_id', nullable: true })
   @Index()
   expenseId?: string;
-
+  
+  @Column({ type: 'uuid', name: 'product_id', nullable: true })
+  @Index()
+  productId?: string;
+  
   @ManyToOne(() => Expense, (e) => e.downPayment, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'expense_id' })
   expense?: Expense;
@@ -86,6 +91,10 @@ export class DownPayment extends PtcBaseEntity {
   @ManyToOne(() => Period)
   @JoinColumn({ name: 'period_id' })
   period: Period;
+
+  @ManyToOne(() => Product)
+  @JoinColumn({ name: 'product_id' })
+  product?: Product;
 
   @OneToMany(() => DownPaymentHistory, (e) => e.downPayment, { cascade: true })
   histories: DownPaymentHistory[];

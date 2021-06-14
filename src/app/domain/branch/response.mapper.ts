@@ -6,6 +6,7 @@ export class BranchResponseMapper {
     it.id = dto.id;
     it.code = dto.code;
     it.name = dto.name;
+    it.coaId = dto.coaId;
     return it;
   }
 

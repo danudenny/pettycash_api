@@ -36,4 +36,11 @@ export class UpdateGlobalSettingDTO {
   })
   @IsUUID()
   downPaymentReimbursementCoaId: string;
+
+  @ApiProperty({
+    description: 'Partner Expiration in Month',
+    example: 6,
+  })
+  @IsNumber()
+  partnerExpirationInMonth: number;
 }

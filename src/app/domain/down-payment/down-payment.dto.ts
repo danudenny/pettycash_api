@@ -1,5 +1,5 @@
 import { IsArray, IsUUID } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DownPaymentHistoryDTO } from './down-payment-history.dto';
 import {
   DownPaymentPayType,
@@ -75,6 +75,13 @@ export class DownPaymentDTO {
   @ApiProperty({ description: 'Employee Nik', example: '998736762732172' })
   employeeNik: string;
 
+  @ApiPropertyOptional({
+    description: 'Product ID',
+    example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
+  })
+  @IsUUID()
+  productId?: string;
+
   @ApiProperty({
     description: 'Period ID',
     example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
@@ -142,6 +149,9 @@ export class ShowDownPaymentDTO {
 
   @ApiProperty({ description: 'Branch Name', example: 'Kebun Jeruk' })
   branchName: string;
+  
+  @ApiProperty({ description: 'Branch Code', example: '1101006' })
+  branchCode: string;
 
   @ApiProperty({
     description: 'Department ID',
@@ -175,6 +185,16 @@ export class ShowDownPaymentDTO {
   
   @ApiProperty({ description: 'Period Name', example: '01-2020' })
   periodName: string;
+  
+  @ApiPropertyOptional({
+    description: 'Product ID',
+    example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
+  })
+  @IsUUID()
+  productId?: string;
+  
+  @ApiPropertyOptional({ description: 'Product Name', example: 'Uang Bensin' })
+  productName?: string;
 
   @ApiProperty({ description: 'Description', example: 'Isi Description' })
   description?: string;

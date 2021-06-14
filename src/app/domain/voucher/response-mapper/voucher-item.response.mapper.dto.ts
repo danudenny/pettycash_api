@@ -4,9 +4,6 @@ import { VoucherItem } from '../../../../model/voucher-item.entity';
 export class VoucherItemResponseMapper {
 	public static toDTO(dto: Partial<VoucherItemDTO>): VoucherItemDTO {
 		const it = new VoucherItemDTO();
-		it.id = dto.id;
-		it.voucherId = dto.voucherId;
-		it.productId = dto.productId;
 		it.productName = dto.productName;
 		it.amount = dto.amount;
 		return it;
@@ -14,9 +11,6 @@ export class VoucherItemResponseMapper {
 
 	public static fromOneEntity(ety: Partial<VoucherItem>) {
 		return this.toDTO({
-			id: ety.id,
-			voucherId: ety.voucherId,
-			productId: ety.productId,
 			productName: ety.products && ety.products.name,
 			amount: ety.amount,
 		});

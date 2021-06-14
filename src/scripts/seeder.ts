@@ -16,7 +16,11 @@ import PermissionSeed from '../seeders/permission.seed';
 import RoleSeed from '../seeders/role.seed';
 import { UserSeed } from '../seeders/user.seed';
 
-import { AssignRandomUserToRole, ResetRolePermission, SeedRolePermission } from '../seeders/role-permission.seed';
+import {
+  AssignRandomUserToRole,
+  ResetRolePermission,
+  SeedRolePermission,
+} from '../seeders/role-permission.seed';
 import { AccountTax } from '../model/account-tax.entity';
 import { AccountTaxSeed } from '../seeders/tax.seed';
 import GenerateEmployeeRandom from '../seeders/employee.seed';
@@ -25,6 +29,10 @@ import { Department } from '../model/department.entity';
 import { DepartmentSeed } from '../seeders/department.seed';
 import { BankBranch } from '../model/bank-branch.entity';
 import BankBranchSeed from '../seeders/bank-branch.seed';
+import { Product } from '../model/product.entity';
+import { ProductSeed } from '../seeders/product.seed';
+import { AttachmentType } from '../model/attachment-type.entity';
+import AttachmentTypeSeed from '../seeders/attachment-type.seed';
 
 async function run() {
   // init connection
@@ -56,11 +64,17 @@ async function run() {
 
   await AssignCoaToBranch(connection);
 
+  // seed data product with coa
+  await connection.getRepository(Product).save(ProductSeed);
+
   // seed data account tax
   await connection.getRepository(AccountTax).save(AccountTaxSeed);
 
   // seed data global setting
   await connection.getRepository(GlobalSetting).save(GlobalSettingSeed);
+
+  // seed data attachment type
+  await connection.getRepository(AttachmentType).save(AttachmentTypeSeed);
 
   // --- Role and Permissions --- //
   /**
