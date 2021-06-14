@@ -1,6 +1,6 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.entity';
-import { EntityManager, getConnection, getManager, In, Repository } from 'typeorm';
+import { EntityManager, getManager, Repository } from 'typeorm';
 import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -10,7 +10,6 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
-  ParseUUIDPipe,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -162,7 +161,6 @@ export class AllocationBalanceService {
     }
 
     const allocationBalance = await qb.exec();
-    console.log(allocationBalance)
 
     return new AllocationBalanceWithPaginationResponse(allocationBalance, params)
   }

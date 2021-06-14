@@ -76,6 +76,13 @@ export class Branch extends BaseEntity {
   })
   isDeleted: boolean;
 
+  @Column('boolean', {
+    nullable: true,
+    default: () => 'false',
+    name: 'is_head_office',
+  })
+  isHeadOffice: boolean;
+
   @ManyToOne(() => AccountCoa, { cascade: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'cash_coa_id', referencedColumnName: 'id' })
   cashCoa?: AccountCoa;

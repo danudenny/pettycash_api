@@ -13,7 +13,6 @@ import { CreatePartnerDTO } from '../../domain/partner/create.dto';
 import { PartnerAttachmentDTO } from '../../domain/partner/partner-attahcment.dto';
 import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
 import { PartnerAttachmentResponse } from '../../domain/partner/response-attachment.dto';
-import { randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { PartnerResponse, PartnerWithPaginationResponse } from '../../domain/partner/response.dto';
 import { UpdatePartnerDTO } from '../../domain/partner/update.dto';
 import { AuthService } from './auth.service';
