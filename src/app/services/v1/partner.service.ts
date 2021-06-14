@@ -11,13 +11,15 @@ import { PartnerState } from '../../../model/utils/enum';
 import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../shared/errors';
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
 import { PartnerAttachmentDTO } from '../../domain/partner/partner-attahcment.dto';
-import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
+import { QueryPartnerDTO, QueryReportPartnerDTO } from '../../domain/partner/partner.payload.dto';
 import { PartnerAttachmentResponse } from '../../domain/partner/response-attachment.dto';
 import { PartnerResponse, PartnerWithPaginationResponse } from '../../domain/partner/response.dto';
 import { UpdatePartnerDTO } from '../../domain/partner/update.dto';
 import { AuthService } from './auth.service';
 import dayjs from 'dayjs';
 import { AttachmentType } from '../../../model/attachment-type.entity';
+import * as XLSX from 'xlsx';
+import { Response } from 'express';
 
 export class PartnerService {
   constructor(
@@ -376,6 +378,78 @@ export class PartnerService {
     }
 
     return new PartnerAttachmentResponse(attachments);
+  }
+
+  async excel(res: Response, query: QueryReportPartnerDTO): Promise<Buffer> {
+    try {
+      const { write, utils } = XLSX;
+      const params = { order: '-createdAt', limit: 100, ...query };
+      const qb = new QueryBuilder(Partner, 'p', params);
+
+      qb.fieldResolverMap['name__icontains'] = 'p.name';
+      qb.fieldResolverMap['code__icontains'] = 'p.code';
+      qb.fieldResolverMap['state'] = 'p.state';
+      qb.fieldResolverMap['type'] = 'p."type"';
+
+      qb.applyFilterPagination();
+      qb.selectRaw(
+        ['p.id', 'id'],
+        ['p.code', 'code'],
+        ['p.name', 'name'],
+        ['p.address', 'address'],
+        ['p.email', 'email'],
+        ['p.mobile', 'mobile'],
+        ['p.website', 'website'],
+        ['p."type"', 'type'],
+        ['p.npwp_number', 'npwpNumber'],
+        ['p.id_card_number', 'idCardNumber'],
+        ['p.state', 'state'],
+        ['p.is_active', 'isActive'],
+        ['p.created_at', 'createdAt'],
+      );
+      qb.andWhere(
+        (e) => e.isDeleted,
+        (v) => v.isFalse(),
+      );
+
+      const partners = await qb.exec();
+      const heading = [
+        ["PT. SiCepat Express Indonesia"],
+        ["Data Partner PT. Sicepat Express Indonesia"], [],
+        ["Kode Partner", "Nama Partner", "Alamat", "Tipe Partner", "NPWP", "KTP", "Status"],
+      ];
+
+      const dtSheet = partners.map((prt) => {
+        return {
+          code: prt.code,
+          name: prt.name,
+          address: prt.address,
+          type: prt.type,
+          npwpNumber: prt.npwpNumber,
+          idCardNumber: prt.idCardNumber,
+          state: prt.state,
+        }
+      })
+
+      const wb = utils.book_new();
+      const ws = utils.aoa_to_sheet(heading);
+
+      utils.sheet_add_json(ws, dtSheet, { origin : 5, skipHeader: true})
+      utils.book_append_sheet(wb, ws, "Report Partner");
+
+      let buff = write(wb,{ type: 'buffer' });
+
+      const fileName = `partners-report-${new Date()}.xlsx`;
+
+      res.setHeader('Content-Disposition',`attachment;filename=${fileName}`)
+      res.setHeader('Content-type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      res.status(200).send(buff);
+
+      return
+    } catch (err) {
+      throw new HttpException(err, HttpStatus.BAD_REQUEST)
+    }
+
   }
 
 }

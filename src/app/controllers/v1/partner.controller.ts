@@ -2,14 +2,13 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
+  Get, HttpException,
   HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
   Put,
   Query,
-  Req,
   Res,
   UploadedFiles,
   UseInterceptors,
@@ -32,7 +31,7 @@ import { Response } from 'express';
 import { FindPartnerIdParams, FindAttachmentIdParams } from '../../domain/common/findId-param.dto';
 import { CreatePartnerAttachmentDTO } from '../../domain/partner/create-attachment.dto';
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
-import { QueryPartnerDTO } from '../../domain/partner/partner.payload.dto';
+import { QueryPartnerDTO, QueryReportPartnerDTO } from '../../domain/partner/partner.payload.dto';
 import { PartnerAttachmentResponse } from '../../domain/partner/response-attachment.dto';
 import {
   PartnerResponse,
@@ -69,6 +68,18 @@ export class PartnerController {
   @ApiNotFoundResponse({ description: 'Attachments not found.' })
   public async listAttachment(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.svc.listAttachment(id);
+  }
+
+  @Get('/export')
+  @ApiOperation({ summary: 'Exports report partners' })
+  @ApiOkResponse({ type: Buffer })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  async excel(@Res() res: Response , @Query() query: QueryReportPartnerDTO,): Promise<Buffer>{
+    try {
+      return this.svc.excel(res, query)
+    } catch (err) {
+      throw new HttpException( err.message, err.status || HttpStatus.BAD_REQUEST,);
+    }
   }
 
   @Post()
