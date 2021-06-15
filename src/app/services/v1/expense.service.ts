@@ -699,6 +699,7 @@ export class ExpenseService {
           const expense = await manager.findOne(Expense, {
             where: { id: expenseId, isDeleted: false },
             relations: ['attachments'],
+            select: ['id'],
           });
           if (!expense) {
             throw new NotFoundException(
@@ -766,12 +767,17 @@ export class ExpenseService {
             newAttachments = attachments;
           }
 
-          const existingAttachments = expense.attachments;
+          // Insert Attachment in `expense_attachment`.
+          for (const attachment of newAttachments) {
+            const iSql = `INSERT INTO expense_attachment (expense_id, attachment_id) VALUES ($1, $2)`;
+            await manager.query(iSql, [expenseId, attachment?.id]);
+          }
 
-          expense.attachments = [].concat(existingAttachments, newAttachments);
-          expense.updateUser = await this.getUser();
-
-          await manager.save(expense);
+          await manager.update(
+            Expense,
+            { id: expenseId },
+            { updateUser: await this.getUser(), updatedAt: new Date() },
+          );
           return newAttachments;
         },
       );

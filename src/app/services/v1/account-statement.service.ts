@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, getConnection } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
@@ -64,6 +64,8 @@ export class AccountStatementService {
     statementCredit.updateUser = user;
 
     await this.repo.save([statementDebit, statementCredit]);
+    // remove cache Balance Summary after create statement
+    await getConnection().queryResultCache?.remove([`branch_balance_${userBranch?.id}`]);
     return;
   }
 
