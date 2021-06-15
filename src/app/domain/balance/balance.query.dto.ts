@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsOptional, IsUUID } from 'class-validator';
+import { BasePayload } from '../common/base-payload.dto';
 
 export class QueryBalanceDTO {
   @ApiPropertyOptional({
@@ -42,10 +43,21 @@ export class QueryBalanceDTO {
 
 }
 
-export class QueryReportBalanceDTO {
+export class QueryReportBalanceDTO extends BasePayload {
   @ApiPropertyOptional({
-    example: false,
-    description: 'Force to not use cache',
+    example: '2020-03-15',
   })
-  noCache?: boolean;
+  dateStart__gte: Date
+
+  @ApiPropertyOptional({
+    example: '2020-03-15',
+  })
+  dateEnd__lte: Date
+
+  @ApiPropertyOptional({
+    example: 'eaaf465b-65bc-4784-909e-8d0180c6eb4c',
+  })
+  @IsOptional()
+  @IsUUID()
+  branchId: string
 }

@@ -32,7 +32,7 @@ export class ReportBalanceService {
 	async export(res: Response, query: QueryReportBalanceDTO): Promise<Response> {
 		try {
 			const balances: Partial<ReportBalanceDTO[]> = await this.getSummaryBalances(query);
-			const balancesReportFileName = this.createBalanceReportFilename();
+			const balancesReportFileName = ReportBalanceService.createBalanceReportFilename();
 			const balancesReportBuffer = this.createBalanceReportBuffer(balances);
 
 			res.setHeader('Content-Disposition', `attachment;filename=${balancesReportFileName}`);
@@ -48,11 +48,11 @@ export class ReportBalanceService {
 	private async getSummaryBalances(
 		query?: QueryReportBalanceDTO,
 	): Promise<any> {
-		const qb = new QueryBuilder(Branch, 'b', {});
+		const params = { limit: 10, ...query };
+		const qb = new QueryBuilder(Branch, 'b', params);
     const {
       userBranchIds,
-      userRoleName,
-      isSuperUser,
+			isSuperUser,
     } = await AuthService.getUserBranchAndRole();
 
     if (!userBranchIds?.length) {
@@ -69,10 +69,14 @@ export class ReportBalanceService {
     // }
 
     const cacheKey = `branch_balance_${userBranchIds[0]}`;
-    if (parseBool(query?.noCache)) {
-      await getConnection().queryResultCache?.remove([cacheKey]);
-    }
+    // if (parseBool(query?.noCache)) {
+    //   await getConnection().queryResultCache?.remove([cacheKey]);
+    // }
+		qb.fieldResolverMap['dateStart__gte'] = 'as2.transaction_date';
+		qb.fieldResolverMap['dateEnd__lte'] = 'as2.transaction_date';
+		qb.fieldResolverMap['branchId'] = 'b.branch_id';
 
+		qb.applyFilterPagination();
     qb.selectRaw(
       ['b.id', 'branchId'],
       ['b.branch_name', 'branchName'],
@@ -184,7 +188,7 @@ export class ReportBalanceService {
     return await qb.exec();
 	}
 
-	private createBalanceReportFilename(): string {
+	private static createBalanceReportFilename(): string {
 		const dateTime = dayjs(new Date()).format('YYYYMMDD-HHmmss');
 
 		return `balances_report_${dateTime}.csv`;
