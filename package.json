@@ -63,6 +63,7 @@
     "pg-query-stream": "^4.0.0",
     "redis": "^3.0.2",
     "reflect-metadata": "^0.1.13",
+    "request": "^2.88.2",
     "request-context": "^2.0.0",
     "rxjs": "^6.6.3",
     "swagger-ui-express": "^4.1.6",
