@@ -8,7 +8,7 @@ import { AccountStatementHistory } from './account-statement-history.entity';
 
 @Entity('cash_balance_allocation')
 export class CashBalanceAllocation extends PtcBaseEntity {
-  @Column({ type: 'uuid', name: 'branch_id' })
+  @Column({ type: 'uuid', name: 'branch_id', nullable: true })
   @Index()
   branchId: string;
 

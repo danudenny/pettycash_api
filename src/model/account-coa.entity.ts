@@ -12,6 +12,9 @@ export class AccountCoa extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   code: string;
 
+  @Column({ type: 'uuid', name: 'coa_id', nullable: true })
+  coaId: string;
+
   @Column({ type: 'varchar', length: 250 })
   name: string;
 
