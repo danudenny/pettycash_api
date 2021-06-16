@@ -529,6 +529,10 @@ export class AllocationBalanceService {
         throw new NotFoundException(`Alokasi ID ${id} tidak ditemukan!`);
       }
 
+      if (!allocation.branchId) {
+        throw new NotFoundException(`Cabang Tidak Ditemukan.`);
+      }
+
       const user = await AuthService.getUser({ relations: ['role'] });
       const userRole = user?.role?.name;
 
