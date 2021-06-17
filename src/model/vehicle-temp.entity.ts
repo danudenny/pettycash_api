@@ -20,6 +20,12 @@ export class VehicleTemp extends BaseEntity {
   })
   masterdataVehicleId: number;
 
+  @Column('varchar', {
+    length: 10,
+    name: 'vehicle_number',
+  })
+  vehicleNumber: string;
+
   @Column('numeric', {
     name: 'vehicle_kilometer',
     transformer: new ColumnNumericTransformer(),

@@ -1843,7 +1843,7 @@ export class ExpenseService {
   ): Promise<any> {
     const vehicleRepo = manager.getRepository(Vehicle);
     const vehicle = await vehicleRepo.findOne(id, {
-      select: ['id', 'vehicleId'],
+      select: ['id', 'vehicleId', 'vehicleNumber'],
     });
     if (!vehicle) return;
 
@@ -1851,6 +1851,7 @@ export class ExpenseService {
     const vTemp = new VehicleTemp();
     vTemp.pettycashVehicleId = vehicle?.id;
     vTemp.masterdataVehicleId = vehicle?.vehicleId;
+    vTemp.vehicleNumber = vehicle?.vehicleNumber;
     vTemp.vehicleKilometer = kmEnd;
     return await manager.save(vTemp);
   }
