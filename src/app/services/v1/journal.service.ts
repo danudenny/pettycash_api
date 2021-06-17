@@ -1,5 +1,11 @@
 import { cloneDeep } from 'lodash';
-import { Repository, getManager, EntityManager, In } from 'typeorm';
+import {
+  getConnection,
+  Repository,
+  getManager,
+  EntityManager,
+  In,
+} from 'typeorm';
 import {
   BadRequestException,
   ForbiddenException,
@@ -495,6 +501,7 @@ export class JournalService {
   ): Promise<{ success: object[]; fail: object[] }> {
     const user = await AuthService.getUser({ relations: ['role'] });
     const userRole = user?.role?.name as MASTER_ROLES;
+    const NOT_ALLOWED_STATE = [JournalState.POSTED, JournalState.DRAFT];
 
     if (userRole !== MASTER_ROLES.ACCOUNTING) {
       throw new BadRequestException(
@@ -509,12 +516,22 @@ export class JournalService {
         id: In(ids),
         isDeleted: false,
       },
+      select: ['id', 'state'],
     });
+    const journalTaxIds = await this.getJournalTaxIds(ids);
 
     for (const journal of journals) {
-      if (journal.state === JournalState.POSTED) {
-        failedIds.push({ id: journal.id });
-        continue;
+      // if journal has tax, must be approve by tax first.
+      if (journalTaxIds.includes(journal.id)) {
+        if (journal.state !== JournalState.APPROVED_BY_TAX) {
+          failedIds.push({ id: journal.id });
+          continue;
+        }
+      } else {
+        if (NOT_ALLOWED_STATE.includes(journal.state)) {
+          failedIds.push({ id: journal.id });
+          continue;
+        }
       }
       journalToUpdateIds.push(journal.id);
     }
@@ -534,5 +551,26 @@ export class JournalService {
     });
     const result = { success: successIds, fail: failedIds };
     return result;
+  }
+
+  /**
+   * Internal helper for get journal that has tax.
+   *
+   * @static
+   * @param {string[]} ids Array of Journal ID.
+   * @return {*}  {Promise<any[]>}
+   * @memberof JournalService
+   */
+  private async getJournalTaxIds(ids: string[]): Promise<string[]> {
+    const journalTaxSql = `SELECT tji.journal_id
+    FROM journal_item tji
+    INNER JOIN account_coa tac ON tac.id = tji.coa_id
+    WHERE tac.id IN (SELECT coa_id FROM account_tax WHERE is_deleted = FALSE AND coa_id IS NOT NULL GROUP BY coa_id)
+      AND tji.journal_id = ANY($1)
+    GROUP BY tji.journal_id`;
+    const journals = await getConnection().query(journalTaxSql, [ids]);
+    return journals?.map((j: any) => {
+      return j.journal_id;
+    });
   }
 }
