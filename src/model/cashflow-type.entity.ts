@@ -1,5 +1,4 @@
 import {
-  BaseEntity,
   Entity,
   Column,
   JoinColumn,
@@ -7,10 +6,10 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { AccountCoa } from './account-coa.entity';
-import { ColumnNumericTransformer } from './utils/transformer';
+import { PtcBaseEntity } from './base.entity';
 
 @Entity('cashflow_type')
-export class CashflowType extends BaseEntity {
+export class CashflowType extends PtcBaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -24,45 +23,12 @@ export class CashflowType extends BaseEntity {
   })
   coaId: string;
 
-  @Column('bigint', {
-    nullable: true,
-    name: 'user_id_created',
-    transformer: new ColumnNumericTransformer(),
-  })
-  userIdCreated: number;
-
-  @Column('timestamp without time zone', {
-    nullable: true,
-    name: 'created_time',
-  })
-  createdTime: Date;
-
-  @Column('bigint', {
-    nullable: true,
-    name: 'user_id_updated',
-    transformer: new ColumnNumericTransformer(),
-  })
-  userIdUpdated: number;
-
-  @Column('timestamp without time zone', {
-    nullable: true,
-    name: 'updated_time',
-  })
-  updatedTime: Date;
-
   @Column('boolean', {
     nullable: false,
     default: () => 'true',
     name: 'is_active',
   })
   isActive: boolean;
-
-  @Column('boolean', {
-    nullable: false,
-    default: () => 'false',
-    name: 'is_deleted',
-  })
-  isDeleted: boolean;
 
   @ManyToOne(() => AccountCoa)
   @JoinColumn({ name: 'coa_id', referencedColumnName: 'id' })
