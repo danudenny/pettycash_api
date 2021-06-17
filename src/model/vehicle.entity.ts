@@ -36,4 +36,44 @@ export class Vehicle extends BaseEntity {
     default: () => 'true',
   })
   isActive: boolean;
+
+  @Column('bigint', {
+    name: 'brand_id',
+    nullable: true,
+    transformer: new ColumnNumericTransformer(),
+  })
+  brandId: number;
+
+  @Column('bigint', {
+    name: 'brand_vehicle_id',
+    nullable: true,
+    transformer: new ColumnNumericTransformer(),
+  })
+  brandVehicleId: number;
+
+  @Column('varchar', {
+    length: 100,
+    nullable: true,
+    name: 'ownership',
+  })
+  ownership: string;
+
+  @Column('varchar', {
+    length: 100,
+    nullable: true,
+    name: 'rent_cost',
+  })
+  rent_cost: string;
+
+  @Column('timestamp without time zone', {
+    nullable: true,
+    name: 'rent_duration_start_date',
+  })
+  rentDurationStartDate: Date;
+
+  @Column('timestamp without time zone', {
+    nullable: true,
+    name: 'rent_duration_end_date',
+  })
+  rentDurationEndDate: Date;
 }

@@ -76,4 +76,16 @@ export class Employee extends BaseEntity {
     name: 'is_deleted',
   })
   isDeleted: boolean;
+
+  @Column('timestamp without time zone', {
+    nullable: true,
+    name: 'date_of_entry',
+  })
+  dateOfEntry: Date;
+
+  @Column('timestamp without time zone', {
+    nullable: true,
+    name: 'date_of_resign',
+  })
+  dateOfResign: Date;
 }
