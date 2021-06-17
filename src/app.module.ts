@@ -35,6 +35,7 @@ import { ReportBalanceModule } from './app/modules/report-balance.module';
 import { VehicleModule } from './app/modules/vehicle.module';
 import { OtherModule } from './app/modules/other.module';
 import { AttachmentTypeModule } from './app/modules/attachment-type.module';
+import { CashflowTypeModule } from './app/modules/cashflow-type.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { AttachmentTypeModule } from './app/modules/attachment-type.module';
     ReportDownPaymentModule,
     ReportBudgetModule,
     ReportBalanceModule,
+    CashflowTypeModule,
     OtherModule,
   ],
   controllers: [],
