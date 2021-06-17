@@ -25,7 +25,7 @@ export class CashBalanceAllocation extends PtcBaseEntity {
   @Column({ type: 'numeric', name: 'amount', default: 0 })
   amount: number;
 
-  @Column({ type: 'uuid', name: 'destination_bank_id' })
+  @Column({ type: 'uuid', name: 'destination_bank_id', nullable: true })
   destinationBankId: string;
 
   @Column({ type: 'text', name: 'description', nullable: true })
