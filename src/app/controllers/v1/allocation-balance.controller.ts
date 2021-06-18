@@ -9,7 +9,7 @@ import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
 import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/dto/allocation-balance-detail.dto';
 import { RevisionAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-balance-revision.dto';
 
-@Controller('v1/allocation-balance')
+@Controller('v1/allocation-balances')
 @ApiTags('Cash Allocation Balance')
 export class AllocationBalanceController {
   constructor(private allocBallanceService: AllocationBalanceService) {
