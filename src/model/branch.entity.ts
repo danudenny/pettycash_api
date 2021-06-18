@@ -29,6 +29,12 @@ export class Branch extends BaseEntity {
   })
   branchTypeId: number | null;
 
+  @Column('bigint', {
+    nullable: true,
+    name: 'representative_id',
+  })
+  representativeId: number | null;
+
   @Column('character varying', {
     nullable: false,
     length: 255,
