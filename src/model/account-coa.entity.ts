@@ -9,15 +9,6 @@ export class AccountCoa extends BaseEntity {
   @Column({ type: 'uuid', name: 'parent_id', nullable: true })
   parentId?: string;
 
-  @Column('bigint', {
-    nullable: true,
-    name: 'coa_id',
-    unique: true,
-    transformer: new ColumnNumericTransformer(),
-    comment: 'Legacy field master data `account_coa_id`',
-  })
-  coaId?: number;
-
   @Column({ type: 'varchar', length: 50 })
   code: string;
 
