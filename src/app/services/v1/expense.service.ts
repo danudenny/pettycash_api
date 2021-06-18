@@ -739,24 +739,23 @@ export class ExpenseService {
             const attachments = await AttachmentService.uploadFilesWithCustomName(
               files,
               (file) => {
-                const rid = uuid().split('-')[1];
                 let attachmentName: string;
                 if (attType?.name) {
                   const attTypeName = parseAttTypeName(attType?.name);
                   const ext = getExt(file);
-                  attachmentName = `${rid}_${attTypeName}.${ext}`;
+                  attachmentName = `${attTypeName}.${ext}`;
                 } else {
-                  attachmentName = `${rid}_${file.originalname}`;
+                  attachmentName = `${file.originalname}`;
                 }
                 return attachmentName;
               },
               (file) => {
+                const rid = uuid().split('-')[0];
                 if (attType?.name) {
                   const attTypeName = parseAttTypeName(attType?.name);
                   const ext = getExt(file);
-                  pathId = `${expensePath}_${attTypeName}.${ext}`;
+                  pathId = `${expensePath}_${rid}_${attTypeName}.${ext}`;
                 } else {
-                  const rid = uuid().split('-')[0];
                   pathId = `${expensePath}_${rid}_${file.originalname}`;
                 }
                 return pathId;
