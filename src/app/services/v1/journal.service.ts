@@ -54,6 +54,11 @@ export class JournalService {
       isSuperUser,
     } = await AuthService.getUserBranchAndRole();
     const SS_SPV_ROLES = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO];
+    const NOT_ALLOWED_ROLES = [
+      MASTER_ROLES.ADMIN_BRANCH,
+      MASTER_ROLES.OPS,
+      MASTER_ROLES.PIC_HO,
+    ];
 
     const params = { order: '-transactionDate', ...query };
     const qb = new QueryBuilder(Journal, 'j', params);
@@ -127,6 +132,11 @@ export class JournalService {
     );
 
     if (!isSuperUser) {
+      // Throw error for some user role.
+      if (NOT_ALLOWED_ROLES.includes(userRoleName)) {
+        throw new UnprocessableEntityException();
+      }
+
       // filter by assigned branch if userRoleName SS/SPV HO.
       if (SS_SPV_ROLES.includes(userRoleName)) {
         if (userBranchIds?.length) {
@@ -146,6 +156,32 @@ export class JournalService {
         GROUP BY tji.journal_id`;
 
         qb.qb.andWhere(`(j.id IN (${journalTaxSql}))`);
+      }
+
+      // if role accounting then only show for
+      // - journal no tax: state `approved_by_ss_spv_ho`
+      // - journal has tax: state `approved_by_tax`
+      // - journal with state `posted`
+      if (userRoleName === MASTER_ROLES.ACCOUNTING) {
+        const journalIdsAccounting = `(
+          WITH journal_id_has_tax AS (
+            SELECT tji.journal_id
+            FROM journal_item tji
+            INNER JOIN account_coa tac ON tac.id = tji.coa_id
+            WHERE tac.id IN (SELECT coa_id FROM account_tax WHERE is_deleted = FALSE AND coa_id IS NOT NULL GROUP BY coa_id) AND tji.is_deleted = FALSE
+            GROUP BY tji.journal_id
+          ),
+          journal_id_no_tax AS (
+            SELECT id FROM journal WHERE state = 'approved_by_ss_spv_ho' AND id NOT IN (SELECT * FROM journal_id_has_tax) AND is_deleted = FALSE
+          )
+          SELECT id FROM journal WHERE id IN (SELECT * FROM journal_id_has_tax) AND state = 'approved_by_tax' AND is_deleted = FALSE
+          UNION
+          SELECT id FROM journal WHERE id IN (SELECT * FROM journal_id_no_tax) AND is_deleted = FALSE
+          UNION
+          SELECT id FROM journal WHERE state = 'posted' AND is_deleted = FALSE
+        )`;
+
+        qb.qb.andWhere(`(j.id IN (${journalIdsAccounting}))`);
       }
     }
 
