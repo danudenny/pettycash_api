@@ -24,6 +24,7 @@ import { CreateAllocationBalanceOdooDTO } from '../../domain/allocation-balance/
 import { CashBalanceAllocationOdoo } from '../../../model/cash.balance.allocation-odoo.entity';
 import { RevisionAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-balance-revision.dto';
 import { AccountStatement } from '../../../model/account-statement.entity';
+import { CreateAllocationBalanceDto } from '../../domain/allocation-balance/dto/create-allocation-balance.dto';
 
 @Injectable()
 export class AllocationBalanceService {
@@ -170,6 +171,7 @@ export class AllocationBalanceService {
     const allocation = await this.cashbalRepo.findOne({
       where,
       relations: [
+        'cashflowType',
         'branch',
         'responsibleUser',
         'receivedUser',
@@ -633,6 +635,35 @@ export class AllocationBalanceService {
       
     } catch (err) {
       throw new HttpException(err, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  public async create(data: CreateAllocationBalanceDto): Promise<any> {
+    const createDto = await this.cashbalRepo.create(data);
+    const userResponsible = await this.getUser();
+    let state: CashBalanceAllocationState;
+    createDto.createUserId = userResponsible.id;
+    createDto.updateUserId = userResponsible.id;
+    createDto.number = GenerateCode.createBalance();
+    createDto.state = CashBalanceAllocationState.DRAFT;
+
+    if(!createDto.amount) {
+      throw new BadRequestException(
+        `Nominal tidak boleh kosong!`,
+      );
+    }
+
+    state = createDto.state
+
+    try {
+      const transfer = await this.cashbalRepo.save(createDto);
+      if(transfer) {
+        createDto.allocationHistory = await this.buildHistory(createDto, { state });
+        await this.accHistoryRepo.save(createDto.allocationHistory);
+      }
+      return transfer;
+    } catch (err) {
+      throw new BadRequestException(err);
     }
   }
 }

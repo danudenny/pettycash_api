@@ -5,6 +5,7 @@ import { Branch } from './branch.entity';
 import { User } from './user.entity';
 import { CashBalanceAllocationState } from './utils/enum';
 import { AccountStatementHistory } from './account-statement-history.entity';
+import { CashflowType } from './cashflow-type.entity';
 
 @Entity('cash_balance_allocation')
 export class CashBalanceAllocation extends PtcBaseEntity {
@@ -27,6 +28,9 @@ export class CashBalanceAllocation extends PtcBaseEntity {
 
   @Column({ type: 'uuid', name: 'destination_bank_id', nullable: true })
   destinationBankId: string;
+
+  @Column({ type: 'uuid', name: 'cashflow_type_id', nullable: true })
+  cashflowTypeId: string;
 
   @Column({ type: 'text', name: 'description', nullable: true })
   description?: string;
@@ -55,6 +59,10 @@ export class CashBalanceAllocation extends PtcBaseEntity {
   @ManyToOne(() => Branch)
   @JoinColumn({ name: 'branch_id' })
   branch: Branch;
+
+  @ManyToOne(() => CashflowType)
+  @JoinColumn({ name: 'cashflow_type_id' })
+  cashflowType: CashflowType;
 
   @ManyToOne(() => BankBranch)
   @JoinColumn({ name: 'destination_bank_id' })
