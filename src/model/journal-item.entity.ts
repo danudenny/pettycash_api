@@ -4,6 +4,7 @@ import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Journal } from './journal.entity';
 import { Period } from './period.entity';
+import { Product } from './product.entity';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('journal_item')
@@ -60,6 +61,14 @@ export class JournalItem extends PtcBaseEntity {
   coaId: string;
 
   @Column({
+    type: 'uuid',
+    name: 'product_id',
+    nullable: true,
+  })
+  @Index()
+  productId?: string;
+
+  @Column({
     type: 'varchar',
     name: 'partner_name',
     length: 250,
@@ -114,4 +123,8 @@ export class JournalItem extends PtcBaseEntity {
   @ManyToOne(() => AccountCoa)
   @JoinColumn({ name: 'coa_id' })
   coa: AccountCoa;
+
+  @ManyToOne(() => Product)
+  @JoinColumn({ name: 'product_id' })
+  product?: Product;
 }
