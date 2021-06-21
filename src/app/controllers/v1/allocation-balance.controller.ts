@@ -8,6 +8,7 @@ import { PaidAllocationDTO, RejectAllocationDTO } from '../../domain/allocation-
 import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
 import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/dto/allocation-balance-detail.dto';
 import { RevisionAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-balance-revision.dto';
+import { CreateAllocationBalanceDto } from '../../domain/allocation-balance/dto/create-allocation-balance.dto';
 
 @Controller('v1/allocation-balance')
 @ApiTags('Cash Allocation Balance')
@@ -37,6 +38,13 @@ export class AllocationBalanceController {
   @ApiBadRequestResponse({ description: 'Bad request' })
   async transfer(@Body() data: TransferBalanceDTO) {
     return await this.allocBallanceService.transfer(data);
+  }
+
+  @Post('/create')
+  @ApiOperation({ summary: 'Create Cash Balance Allocation' })
+  @ApiBadRequestResponse({ description: 'Bad request' })
+  async create(@Body() data: CreateAllocationBalanceDto) {
+    return await this.allocBallanceService.create(data);
   }
 
   @Patch('/:id/approve')

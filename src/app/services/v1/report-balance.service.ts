@@ -74,7 +74,7 @@ export class ReportBalanceService {
     // }
 		qb.fieldResolverMap['dateStart__gte'] = 'as2.transaction_date';
 		qb.fieldResolverMap['dateEnd__lte'] = 'as2.transaction_date';
-		qb.fieldResolverMap['branchId'] = 'b.branch_id';
+		qb.fieldResolverMap['branchId'] = 'b.id';
 
 		qb.applyFilterPagination();
     qb.selectRaw(

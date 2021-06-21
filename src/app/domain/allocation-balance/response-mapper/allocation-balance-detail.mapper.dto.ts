@@ -48,6 +48,8 @@ export class AllocationDetailResponseMapper {
       nik: ety.responsibleUser.username,
       receivedUserId: ety.receivedUserId,
       receivedUserName: ety.receivedUser && `${ety.receivedUser?.firstName} ${ety.receivedUser?.lastName}`,
+      cashflowTypeId: ety.cashflowType && ety.cashflowType.id,
+      cashflowTypeName: ety.cashflowType && ety.cashflowType.name,
       description: ety.description,
       receivedDate: ety.receivedDate,
       destinationBankId: ety.destinationBankId,

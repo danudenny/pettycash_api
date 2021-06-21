@@ -211,6 +211,18 @@ export class AllocationBalanceDetailDTO {
   receivedUserName: string;
 
   @ApiProperty({
+    description: 'Cashfow Type ID',
+    example: null,
+  })
+  cashflowTypeId: string;
+
+  @ApiProperty({
+    description: 'Cashfow Type Name',
+    example: null,
+  })
+  cashflowTypeName: string;
+
+  @ApiProperty({
     description: 'Description',
     example: 'This is description field...',
   })
