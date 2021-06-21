@@ -32,6 +32,8 @@ const RoleAccounting = [
   'report.trialbalance:export',
   'report.balancesheet:read',
   'report.balancesheet:export',
+  'report.parking.journal:read',
+  'report.parking.journal:export',
 
   'menu.setting:read',
   'setting.product:read',
