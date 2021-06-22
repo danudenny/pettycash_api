@@ -50,14 +50,6 @@ export class User extends BaseEntity {
   })
   username: string;
 
-  @Column('character varying', {
-    nullable: false,
-    length: 500,
-    name: 'password',
-    select: false,
-  })
-  password: string;
-
   @Column('integer', {
     nullable: true,
     name: 'login_count',
@@ -154,14 +146,4 @@ export class User extends BaseEntity {
   })
   branches: Branch[];
 
-  // additional method
-  validatePassword(passwordToValidate: string) {
-    const crypto = require('crypto');
-    const hashPass = crypto
-      .createHash('md5')
-      .update(passwordToValidate)
-      .digest('hex');
-    // compare md5 hash password
-    return hashPass === this.password;
-  }
 }
