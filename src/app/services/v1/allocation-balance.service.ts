@@ -16,7 +16,7 @@ import { AuthService } from './auth.service';
 import {
   AccountStatementAmountPosition,
   AccountStatementType,
-  CashBalanceAllocationState, DownPaymentType,
+  CashBalanceAllocationState,
   JournalSourceType,
   MASTER_ROLES,
   PeriodState,
@@ -36,7 +36,8 @@ import { Journal } from '../../../model/journal.entity';
 import { Period } from '../../../model/period.entity';
 import { JournalItem } from '../../../model/journal-item.entity';
 import { User } from '../../../model/user.entity';
-import { GlobalSetting } from '../../../model/global-setting.entity';
+import { Branch } from '../../../model/branch.entity';
+import { AccountCoa } from '../../../model/account-coa.entity';
 
 @Injectable()
 export class AllocationBalanceService {
@@ -554,7 +555,7 @@ export class AllocationBalanceService {
       // TODO: Implement State Machine for approval flow?
       let state: CashBalanceAllocationState;
       const currentState = allocation.state;
-      if (userRole === MASTER_ROLES.ADMIN_BRANCH || userRole === MASTER_ROLES.PIC_HO  ) {
+      if (userRole === MASTER_ROLES.ADMIN_BRANCH || userRole === MASTER_ROLES.PIC_HO ||  userRole === MASTER_ROLES.SUPERUSER ) {
         if(
           currentState === CashBalanceAllocationState.RECEIVED
         ) {
@@ -741,16 +742,26 @@ export class AllocationBalanceService {
     const items: JournalItem[] = [];
     let isLedger: boolean = true;
 
+    const { userBranchIds } = await AuthService.getUserBranchAndRole();
+
     const getPeriod = await this.periodRepo.findOne({
       where: {
         name: dayjs(new Date()).format('MM-YYYY')
       }
     })
 
+    const getbranchCoa = await Branch.findOne({
+      id: userBranchIds[0]
+    })
+
+    const getCoa = await AccountCoa.findOne({
+      id: getbranchCoa.cashCoaId
+    })
+
     const i = new JournalItem();
     i.createUser = user;
     i.updateUser = user;
-    i.coaId = alokasi.cashflowType.coaId;
+    i.coaId = getCoa.id;
     i.branchId = alokasi.branchId;
     i.transactionDate = alokasi.receivedDate;
     i.periodId = getPeriod.id;
