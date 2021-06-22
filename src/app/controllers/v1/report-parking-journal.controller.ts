@@ -7,6 +7,8 @@ import {
   ApiHeader,
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
+import { QueryReportParkingJournalDTO } from '../../domain/report-parking-journal/query.dto';
+import { ReportParkingJournalWithPaginationResponse } from '../../domain/report-parking-journal/response.dto';
 import { ReportParkingJournalService } from '../../services/v1/report-parking-journal.service';
 
 @Controller('v1/reports/parking-journals')
@@ -18,9 +20,14 @@ export class ReportParkingJournalController {
 
   @Get()
   @ApiOperation({ summary: 'List all parking journal' })
-  @ApiOkResponse({ description: 'Successfully get data' })
+  @ApiOkResponse({
+    type: ReportParkingJournalWithPaginationResponse,
+    description: 'Successfully get data',
+  })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async list(@Query() query: any): Promise<any> {
+  public async list(
+    @Query() query: QueryReportParkingJournalDTO,
+  ): Promise<ReportParkingJournalWithPaginationResponse> {
     return this.svc.list(query);
   }
 
