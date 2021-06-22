@@ -5,9 +5,10 @@ import { AllocationBalanceService } from '../services/v1/allocation-balance.serv
 import { CashBalanceAllocation } from '../../model/cash.balance.allocation.entity';
 import { AccountStatementHistory } from '../../model/account-statement-history.entity';
 import { CashBalanceAllocationOdoo } from '../../model/cash.balance.allocation-odoo.entity';
+import { Period } from '../../model/period.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CashBalanceAllocation, AccountStatementHistory, CashBalanceAllocationOdoo])],
+  imports: [TypeOrmModule.forFeature([CashBalanceAllocation, AccountStatementHistory, CashBalanceAllocationOdoo, Period])],
   providers: [AllocationBalanceService],
   controllers: [AllocationBalanceController],
   exports: [],
