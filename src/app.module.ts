@@ -36,6 +36,7 @@ import { VehicleModule } from './app/modules/vehicle.module';
 import { OtherModule } from './app/modules/other.module';
 import { AttachmentTypeModule } from './app/modules/attachment-type.module';
 import { CashflowTypeModule } from './app/modules/cashflow-type.module';
+import { ReportParkingJournalModule } from './app/modules/report-parking-journal.module';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { CashflowTypeModule } from './app/modules/cashflow-type.module';
     ReportDownPaymentModule,
     ReportBudgetModule,
     ReportBalanceModule,
+    ReportParkingJournalModule,
     CashflowTypeModule,
     OtherModule,
   ],

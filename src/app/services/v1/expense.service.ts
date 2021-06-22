@@ -1361,6 +1361,7 @@ export class ExpenseService {
       i.createUser = user;
       i.updateUser = user;
       i.coaId = itemCoaId;
+      i.productId = v?.productId;
       i.branchId = expense.branchId;
       i.transactionDate = expense.transactionDate;
       i.periodId = expense.periodId;
@@ -1389,6 +1390,7 @@ export class ExpenseService {
         jTax.createUser = user;
         jTax.updateUser = user;
         jTax.coaId = itemCoaId;
+        jTax.productId = v?.productId;
         jTax.branchId = expense.branchId;
         jTax.transactionDate = expense.transactionDate;
         jTax.periodId = expense.periodId;
