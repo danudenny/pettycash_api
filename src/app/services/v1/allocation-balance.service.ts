@@ -13,7 +13,14 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AccountStatementAmountPosition, AccountStatementType, CashBalanceAllocationState, MASTER_ROLES } from '../../../model/utils/enum';
+import {
+  AccountStatementAmountPosition,
+  AccountStatementType,
+  CashBalanceAllocationState, DownPaymentType,
+  JournalSourceType,
+  MASTER_ROLES,
+  PeriodState,
+} from '../../../model/utils/enum';
 import { AccountStatementHistory } from '../../../model/account-statement-history.entity';
 import { PaidAllocationDTO, RejectAllocationDTO } from '../../domain/allocation-balance/dto/allocation-balance.dto';
 import dayjs from 'dayjs';
@@ -25,6 +32,11 @@ import { CashBalanceAllocationOdoo } from '../../../model/cash.balance.allocatio
 import { RevisionAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-balance-revision.dto';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import { CreateAllocationBalanceDto } from '../../domain/allocation-balance/dto/create-allocation-balance.dto';
+import { Journal } from '../../../model/journal.entity';
+import { Period } from '../../../model/period.entity';
+import { JournalItem } from '../../../model/journal-item.entity';
+import { User } from '../../../model/user.entity';
+import { GlobalSetting } from '../../../model/global-setting.entity';
 
 @Injectable()
 export class AllocationBalanceService {
@@ -36,6 +48,8 @@ export class AllocationBalanceService {
     private readonly accHistoryRepo: Repository<AccountStatementHistory>,
     @InjectRepository(CashBalanceAllocationOdoo)
     private readonly odooRepo: Repository<CashBalanceAllocationOdoo>,
+    @InjectRepository(Period)
+    private readonly periodRepo: Repository<Period>,
   ) {}
 
   private async getUser(includeBranch: boolean = false) {
@@ -104,7 +118,6 @@ export class AllocationBalanceService {
 
     // insert statement
     const stmt = await this.buildAccountStatement(cashBal);
-    console.log(stmt);
     return await accStmtRepo.save(stmt);
   }
 
@@ -536,7 +549,7 @@ export class AllocationBalanceService {
       }
 
       const user = await AuthService.getUser({ relations: ['role'] });
-      const userRole = user?.role?.name;
+      const userRole = user?.role?.name as MASTER_ROLES;
 
       // TODO: Implement State Machine for approval flow?
       let state: CashBalanceAllocationState;
@@ -597,7 +610,11 @@ export class AllocationBalanceService {
       allocation.receivedUserId = userResponsible.id;
       allocation.allocationHistory = await this.buildHistory(allocation, { state });
       await this.accHistoryRepo.save(allocation.allocationHistory);
-      await manager.save(allocation);
+      const saveAllocation = await manager.save(allocation);
+      if (saveAllocation) {
+        const journal = await this.buildJournal(manager, id?.toString(), userRole);
+        return AllocationBalanceService.createJournal(manager, journal);
+      }
     });
     throw new HttpException('Dana diterima oleh Admin Branch', HttpStatus.OK)
   }
@@ -665,5 +682,142 @@ export class AllocationBalanceService {
     } catch (err) {
       throw new BadRequestException(err);
     }
+  }
+
+  private static async createJournal(
+    manager: EntityManager,
+    journal: Journal,
+  ): Promise<Journal> {
+    const journalRepo = manager.getRepository<Journal>(Journal);
+    const periodRepo = manager.getRepository<Period>(Period);
+    const period = await periodRepo.findOne({
+      where: { id: journal.periodId, isDeleted: false },
+    });
+
+    if (!period || (period && period.state === PeriodState.CLOSE)) {
+      throw new BadRequestException(
+        `Failed create journal due period already closed!`,
+      );
+    }
+
+    return await journalRepo.save(journal);
+  }
+
+  private async buildJournalItemCredit(
+    alokasi: CashBalanceAllocation,
+    user: User,
+    userRole: MASTER_ROLES,
+  ): Promise<JournalItem[]> {
+    const items: JournalItem[] = [];
+    let isLedger: boolean = false;
+
+    const getPeriod = await this.periodRepo.findOne({
+      where: {
+        name: dayjs(new Date()).format('MM-YYYY')
+      }
+    })
+
+    const i = new JournalItem();
+    i.createUser = user;
+    i.updateUser = user;
+    i.coaId = alokasi.cashflowType.coaId;
+    i.branchId = alokasi.branchId;
+    i.transactionDate = alokasi.receivedDate;
+    i.periodId = getPeriod.id;
+    i.reference = alokasi.number;
+    i.description = alokasi?.description;
+    i.isLedger = isLedger;
+    i.credit = alokasi.amount;
+    items.push(i);
+
+    return items;
+  }
+
+  private async buildJournalItemDebit(
+    alokasi: CashBalanceAllocation,
+    user: User,
+    userRole: MASTER_ROLES,
+  ): Promise<JournalItem[]> {
+    const items: JournalItem[] = [];
+    let isLedger: boolean = true;
+
+    const getPeriod = await this.periodRepo.findOne({
+      where: {
+        name: dayjs(new Date()).format('MM-YYYY')
+      }
+    })
+
+    const i = new JournalItem();
+    i.createUser = user;
+    i.updateUser = user;
+    i.coaId = alokasi.cashflowType.coaId;
+    i.branchId = alokasi.branchId;
+    i.transactionDate = alokasi.receivedDate;
+    i.periodId = getPeriod.id;
+    i.reference = alokasi.number;
+    i.description = alokasi?.description;
+    i.isLedger = isLedger;
+    i.debit = alokasi.amount;
+    items.push(i);
+
+    return items;
+  }
+
+  private async buildJournalItem(
+    data: CashBalanceAllocation,
+    userRole: MASTER_ROLES,
+  ): Promise<JournalItem[]> {
+    const user = await this.getUser();
+    const debit = await this.buildJournalItemDebit(data, user, userRole);
+    const credit = await this.buildJournalItemCredit(data, user, userRole);
+    const amountDebit = debit
+      .map((m) => Number(m.debit))
+      .filter((i) => i)
+      .reduce((a, b) => a + b, 0);
+    const amountCredit = credit
+      .map((m) => Number(m.credit))
+      .filter((i) => i)
+      .reduce((a, b) => a + b, 0);
+
+    if (amountDebit !== amountCredit) {
+      throw new Error(`Amount debit and credit should equal!`);
+    }
+
+    return [...new Set([...debit, ...credit])];
+  }
+
+  private async buildJournal(
+    manager: EntityManager,
+    id: string,
+    userRole: MASTER_ROLES,
+  ): Promise<Journal> {
+    const user = await this.getUser();
+    // re-fetch expense to get latest updated ExpenseItems
+    const alokasi = await manager.findOne(CashBalanceAllocation, {
+      where: { id, isDeleted: false },
+      relations: [
+        'branch',
+        'cashflowType'
+      ],
+    });
+    const getPeriod = await this.periodRepo.findOne({
+      where: {
+        name: dayjs(new Date()).format('MM-YYYY')
+      }
+    })
+    const j = new Journal();
+    j.createUser = user;
+    j.updateUser = user;
+    j.branchId = alokasi.branchId;
+    j.branchCode = alokasi?.branch?.branchCode ?? 'NO_BRANCH_CODE';
+    j.transactionDate = alokasi.receivedDate;
+    j.periodId = getPeriod.id;
+    j.number = GenerateCode.journal(alokasi.receivedDate);
+    j.reference = alokasi.number;
+    j.sourceType = JournalSourceType.ALOKASI;
+    j.items = await this.buildJournalItem(alokasi, userRole);
+    j.totalAmount = alokasi.amount
+
+    return j;
   }
 }
