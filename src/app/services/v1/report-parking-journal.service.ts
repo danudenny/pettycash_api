@@ -39,16 +39,33 @@ export class ReportParkingJournalService {
       ['b."branch_name"', 'branchName'],
       ['ji.debit', 'debit'],
       ['ji.credit', 'credit'],
-      ['ji.partner_code', 'partnerCode'],
-      ['ji.partner_name', 'partnerName'],
-      ['null', 'partnerNik'],
+      ['j.source_type', 'origin'],
+      ['null', 'destination'],
+      [
+        `CASE WHEN e.id IS NOT NULL THEN ji.partner_code ELSE NULL END`,
+        'employeeNik',
+      ],
+      [
+        `CASE WHEN e.id IS NOT NULL THEN ji.partner_name ELSE NULL END`,
+        'employeeName',
+      ],
+      ['e.position_name', 'employeePositionName'],
+      [
+        `CASE WHEN e.id IS NULL THEN ji.partner_name ELSE NULL END`,
+        'partnerName',
+      ],
       ['ji.description', 'description'],
       ['ji.is_ledger', 'isLedger'],
+      [`CONCAT(u.first_name, ' ', u.last_name)`, 'createUserFullName'],
+      [`NULLIF(exp.source_document, '')`, 'nota'],
     );
     qb.leftJoin((e) => e.journal, 'j');
     qb.leftJoin((e) => e.coa, 'c');
     qb.leftJoin((e) => e.product, 'p');
     qb.leftJoin((e) => e.branch, 'b');
+    qb.leftJoin((e) => e.createUser, 'u');
+    qb.qb.leftJoin('employee', 'e', 'e.nik = ji.partner_code');
+    qb.qb.leftJoin('expense', 'exp', 'exp."number" = ji.reference');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),

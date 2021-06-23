@@ -64,8 +64,55 @@ export class ReportParkingJournalDTO {
   credit: number;
 
   @ApiProperty({
+    description: 'Employee NIK',
+    example: '202011844',
+  })
+  employeeNik: string;
+
+  @ApiProperty({
+    description: 'Employee Name',
+    example: 'Silvia Agustin',
+  })
+  employeeName: string;
+
+  @ApiProperty({
+    description: 'Employee Position Name (Jabatan)',
+    example: 'Admin Finance',
+  })
+  employeePositionName: string;
+
+  @ApiProperty({
+    description: 'Origin',
+    example: 'expense',
+  })
+  origin: string;
+
+  @ApiProperty({
+    description: 'Destination',
+  })
+  destination: string;
+
+  @ApiProperty({
     description: 'Partner Name',
-    example: 'Rivan Amzar Maunia',
+    example: 'CV. Elaraya Abadi',
   })
   partnerName: string;
+
+  @ApiProperty({
+    description: 'Create User Full Name',
+    example: 'Evalia Damayanti',
+  })
+  createUserFullName: string;
+
+  @ApiProperty({
+    description: 'NOTA/NO.INVOICE',
+    example: 'Parkir Admin',
+  })
+  nota: string;
+
+  @ApiProperty({
+    description: 'Description',
+    example: 'penarikan uang harian',
+  })
+  description: string;
 }
