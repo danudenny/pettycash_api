@@ -11,20 +11,32 @@ export class CashflowTypeDto {
 
   @ApiProperty({
     description: 'Jenis Kas Masuk',
-    example: 'Kas Masuk'
+    example: 'Kas Masuk',
   })
   name: string;
 
   @ApiProperty({
+    description: 'Coa ID',
+    example: 'bc598bc8-aefd-44f1-92cf-2a3a0f1f2750',
+  })
+  coaId: string;
+
+  @ApiProperty({
     description: 'Coa Code',
-    example: '700.001.000'
+    example: '700.001.000',
   })
   coaCode: string;
 
   @ApiProperty({
+    description: 'Coa Name',
+    example: 'Cash Transit Coa',
+  })
+  coaName: string;
+
+  @ApiProperty({
     description: 'Kas Masuk Aktif',
-    example: true
+    example: true,
   })
   isActive: boolean;
-
 }
+

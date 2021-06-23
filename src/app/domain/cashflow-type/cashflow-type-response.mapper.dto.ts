@@ -6,7 +6,9 @@ export class CashFlowResponseMapper {
     const it = new CashflowTypeDto();
     it.id = dto.id;
     it.name = dto.name;
+    it.coaId = dto.coaId;
     it.coaCode = dto.coaCode;
+    it.coaName = dto.coaName;
     it.isActive = dto.isActive;
     return it;
   }
@@ -48,3 +50,4 @@ export class CashFlowResponseMapper {
     }
   }
 }
+

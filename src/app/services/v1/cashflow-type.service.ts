@@ -1,4 +1,10 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CashflowType } from '../../../model/cashflow-type.entity';
 import { Repository } from 'typeorm';
@@ -11,12 +17,11 @@ import { AccountCoa } from '../../../model/account-coa.entity';
 
 @Injectable()
 export class CashflowTypeService {
-
   constructor(
     @InjectRepository(CashflowType)
     private readonly cashflowRepo: Repository<CashflowType>,
     @InjectRepository(AccountCoa)
-    private readonly coaRepo: Repository<AccountCoa>
+    private readonly coaRepo: Repository<AccountCoa>,
   ) {}
 
   private static async getUserId() {
@@ -24,7 +29,9 @@ export class CashflowTypeService {
     return user.id;
   }
 
-  public async list(query?: QueryCashFlowTypeDTO): Promise<CashflowTypeWithPaginationResponse> {
+  public async list(
+    query?: QueryCashFlowTypeDTO,
+  ): Promise<CashflowTypeWithPaginationResponse> {
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(CashflowType, 'cft', params);
 
@@ -36,43 +43,43 @@ export class CashflowTypeService {
     qb.selectRaw(
       ['cft.id', 'id'],
       ['cft.name', 'name'],
+      ['coa.id', 'coaId'],
       ['coa.code', 'coaCode'],
-      ['cft.is_active', 'isActive']
+      ['coa.name', 'coaName'],
+      ['cft.is_active', 'isActive'],
     );
-    qb.leftJoin(
-      (e) => e.coaProduct,
-      'coa'
-    );
+    qb.leftJoin((e) => e.coaProduct, 'coa');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
 
     const cashflowType = await qb.exec();
-    return new CashflowTypeWithPaginationResponse(cashflowType, params)
+    return new CashflowTypeWithPaginationResponse(cashflowType, params);
   }
 
   public async create(payload: CreateCashflowTypeDto): Promise<any> {
     const cashflowDto = await this.cashflowRepo.create(payload);
     const cashflowExist = await this.cashflowRepo.findOne({
       name: cashflowDto.name,
-      isDeleted: false
-    })
+      isDeleted: false,
+    });
     const checkCoaId = await this.coaRepo.findOne({
-      id: cashflowDto.coaId
-    })
+      id: cashflowDto.coaId,
+    });
 
-    if(!checkCoaId) {
-      throw new HttpException("Akun COA tidak ditemukan", HttpStatus.BAD_REQUEST)
-    }
-
-    if(!cashflowDto.name) {
-      throw new BadRequestException(
-        `Nama Kas Masuk tidak boleh kosong!`,
+    if (!checkCoaId) {
+      throw new HttpException(
+        'Akun COA tidak ditemukan',
+        HttpStatus.BAD_REQUEST,
       );
     }
 
-    if(cashflowExist) {
+    if (!cashflowDto.name) {
+      throw new BadRequestException(`Nama Kas Masuk tidak boleh kosong!`);
+    }
+
+    if (cashflowExist) {
       throw new BadRequestException(`Nama kas masuk sudah terdaftar!`);
     }
 
@@ -81,7 +88,10 @@ export class CashflowTypeService {
 
     try {
       await this.cashflowRepo.save(cashflowDto);
-      return new HttpException("Berhasil menambahkan kas masuk.", HttpStatus.OK)
+      return new HttpException(
+        'Berhasil menambahkan kas masuk.',
+        HttpStatus.OK,
+      );
     } catch (err) {
       throw err;
     }
@@ -92,7 +102,9 @@ export class CashflowTypeService {
       where: { id, isDeleted: false },
     });
     if (!getcashFlow) {
-      throw new NotFoundException(`Kas Masuk dengan ID : ${id} tidak ditemukan!`);
+      throw new NotFoundException(
+        `Kas Masuk dengan ID : ${id} tidak ditemukan!`,
+      );
     }
 
     const updatedCashFlow = this.cashflowRepo.create(data as CashflowType);
@@ -100,25 +112,30 @@ export class CashflowTypeService {
 
     try {
       await this.cashflowRepo.update(id, updatedCashFlow);
-      return new HttpException("Berhasil update kas masuk.", HttpStatus.OK)
+      return new HttpException('Berhasil update kas masuk.', HttpStatus.OK);
     } catch (err) {
       throw err;
     }
-
   }
 
   public async delete(id: string): Promise<any> {
-    const cashflowExists = await this.cashflowRepo.findOne({ id, isDeleted: false });
+    const cashflowExists = await this.cashflowRepo.findOne({
+      id,
+      isDeleted: false,
+    });
     if (!cashflowExists) {
       throw new NotFoundException();
     }
 
     // SoftDelete
-    const cashflowDelete = await this.cashflowRepo.update(id, { isDeleted: true });
+    const cashflowDelete = await this.cashflowRepo.update(id, {
+      isDeleted: true,
+    });
     if (!cashflowDelete) {
       throw new BadRequestException();
     }
 
-    return new HttpException("Berhasil menghapus kas masuk.", HttpStatus.OK)
+    return new HttpException('Berhasil menghapus kas masuk.', HttpStatus.OK);
   }
 }
+
