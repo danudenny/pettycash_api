@@ -13,4 +13,10 @@ export class QueryDepartmentDTO extends BasePayload {
     example: 'Accounting',
   })
   name__icontains: string;
+
+  @ApiPropertyOptional({
+    description: 'Department isActive',
+    example: 'true',
+  })
+  isActive: boolean;
 }

@@ -9,6 +9,7 @@ export class DepartmentResponseMapper {
     it.departmentParentId = dto.departmentParentId;
     it.code = dto.code;
     it.name = dto.name;
+    it.isActive = dto.isActive;
     return it;
   }
 
@@ -18,7 +19,7 @@ export class DepartmentResponseMapper {
       departmentId: ety.departmentId,
       departmentParentId: ety.departmentParentId,
       code: ety.code,
-      name: ety.name
+      name: ety.name,
     });
   }
 

@@ -15,6 +15,7 @@ export class DownPaymentResponseMapper {
     dp.branchName = dto.branchName;
     dp.departmentId = dto.departmentId;
     dp.departmentName = dto.departmentName;
+    dp.departmentIsActive = dto.departmentIsActive;
     dp.employeeId = dto.employeeId;
     dp.employeeName = dto.employeeName;
     dp.employeeNik = dto.employeeNik;
@@ -23,12 +24,12 @@ export class DownPaymentResponseMapper {
     dp.destinationPlace = dto.destinationPlace;
     dp.description = dto.description;
     dp.state = dto.state;
-    dp.isRealized = dto.expenseId ? true : false,
-    dp.transactionDate = dto.transactionDate;
+    (dp.isRealized = dto.expenseId ? true : false),
+      (dp.transactionDate = dto.transactionDate);
     return dp;
   }
 
-  public static fromOneEntity(ety: Partial<DownPayment>) {   
+  public static fromOneEntity(ety: Partial<DownPayment>) {
     return this.toDTO({
       id: ety.id,
       type: ety.type,
