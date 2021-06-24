@@ -35,7 +35,7 @@ export class CashflowTypeService {
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(CashflowType, 'cft', params);
 
-    qb.fieldResolverMap['name__contains'] = 'cft.name';
+    qb.fieldResolverMap['name__icontains'] = 'cft.name';
     qb.fieldResolverMap['coaId'] = 'cft.coa_id';
     qb.fieldResolverMap['isActive'] = 'cft.is_active';
 

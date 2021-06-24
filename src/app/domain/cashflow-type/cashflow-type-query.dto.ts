@@ -6,7 +6,7 @@ export class QueryCashFlowTypeDTO extends BasePayload {
     description: 'Cashflow Type Name',
     example: 'Kas Masuk',
   })
-  name__contains: string
+  name__icontains: string
 
   @ApiPropertyOptional({
     description: 'Coa ID',
