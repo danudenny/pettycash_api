@@ -73,6 +73,7 @@ export class JournalService {
     qb.applyFilterPagination();
     qb.selectRaw(
       ['j.id', 'id'],
+      ['j.reverse_journal_id', 'reverseJournalId'],
       ['j."number"', 'number'],
       ['j.partner_code', 'partnerCode'],
       ['j.partner_name', 'partnerName'],

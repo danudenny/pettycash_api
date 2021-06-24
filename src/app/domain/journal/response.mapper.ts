@@ -7,6 +7,7 @@ export class JournalResponseMapper {
   public static toDTO(ety: Journal): JournalDTO {
     const j = new JournalDTO();
     j.id = ety.id;
+    j.reverseJournalId = ety.reverseJournalId;
     j.transactionDate = ety.transactionDate;
     j.periodMonth = ety?.period?.month;
     j.periodYear = ety?.period?.year;

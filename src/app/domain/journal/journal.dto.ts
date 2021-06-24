@@ -12,6 +12,13 @@ export class JournalDTO {
   id: string;
 
   @ApiProperty({
+    description: 'Reversal Journal ID',
+    example: 'e92f3424-9aef-4ed0-a591-e521df4af763',
+  })
+  @IsUUID()
+  reverseJournalId: string;
+
+  @ApiProperty({
     description: 'Transaction Date',
     example: '2021-01-27',
   })

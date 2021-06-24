@@ -35,6 +35,7 @@ Get list all Journal.
           "data": [
             {
               "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+              "reverseJournalId": "45e5bbb9-636f-4a17-8037-953f626fdcbc",
               "transactionDate": "2021-01-27",
               "periodMonth": 1,
               "periodYear": 2021,
@@ -52,13 +53,15 @@ Get list all Journal.
                   "periodYear": 2021,
                   "number": "JRNL20200201AAA123",
                   "reference": "REF DOC 001",
+                  "description": "CATATAN",
                   "partnerName": "PT. ABC DEF",
                   "partnerCode": "PRTN001",
                   "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
                   "coaCode": "500.001.009",
                   "coaName": "Piutang Karyawan",
                   "debit": 900000,
-                  "credit": 0
+                  "credit": 0,
+                  "isLedger": true,
                 },
                 {
                   "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
@@ -67,13 +70,15 @@ Get list all Journal.
                   "periodYear": 2021,
                   "number": "JRNL20200201AAA123",
                   "reference": "REF DOC 001",
+                  "description": "CATATAN",
                   "partnerName": "PT. ABC DEF",
                   "partnerCode": "PRTN001",
                   "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
                   "coaCode": "200.001.009",
                   "coaName": "Kas Cabang Jeruk",
                   "debit": 0,
-                  "credit": 900000
+                  "credit": 900000,
+                  "isLedger": false,
                 }
               ]
             },
