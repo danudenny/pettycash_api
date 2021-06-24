@@ -1848,6 +1848,10 @@ export class ExpenseService {
     });
     if (!vehicle) return;
 
+    // Update Vehicle data in pettycash DB
+    const sql = `UPDATE vehicle SET vehicle_kilometer = vehicle_kilometer + $2 WHERE id = $1 RETURNING id`;
+    await manager?.query(sql, [id, +(kmEnd || 0)]);
+
     // Insert to VehicleTemp. sync data to masterdata and live table will be handle by other service.
     const vTemp = new VehicleTemp();
     vTemp.pettycashVehicleId = vehicle?.id;
