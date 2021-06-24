@@ -1,6 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn, BaseEntity } from 'typeorm';
 import { ColumnNumericTransformer } from './utils/transformer';
 
+// NOTE: source data from db master data
 @Entity('vehicle')
 export class Vehicle extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -64,6 +65,20 @@ export class Vehicle extends BaseEntity {
     name: 'rent_cost',
   })
   rent_cost: string;
+
+  @Column('int', {
+    name: 'vehicle_year',
+    nullable: true,
+    transformer: new ColumnNumericTransformer(),
+  })
+  vehicleYear: number;
+
+  // additional_notes
+  @Column('text', {
+    nullable: true,
+    name: 'notes',
+  })
+  notes: string;
 
   @Column('timestamp without time zone', {
     nullable: true,
