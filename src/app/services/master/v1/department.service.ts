@@ -40,6 +40,10 @@ export class DepartmentService {
       ['dept.isActive', 'isActive'],
     );
     qb.andWhere(
+      (e) => e.isActive,
+      (v) => v.isTrue(),
+    );
+    qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
