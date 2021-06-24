@@ -101,6 +101,7 @@ export class DownPaymentService {
         ['dp.destination_place', 'destinationPlace'],
         ['brc.branch_name', 'branchName'],
         ['dpr.name', 'departmentName'],
+        ['dpr.isActive', 'departmentIsActive'],
         ['epl.name', 'employeeName'],
         ['epl.nik', 'employeeNik'],
         ['pd.name', 'periodName'],
@@ -112,6 +113,10 @@ export class DownPaymentService {
       qb.andWhere(
         (e) => e.isDeleted,
         (v) => v.isFalse(),
+      );
+      qb.andWhere(
+        (e) => e.department.isActive,
+        (v) => v.isTrue(),
       );
       if (userBranches?.length) {
         qb.andWhere(

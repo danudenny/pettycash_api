@@ -33,4 +33,9 @@ export class DepartmentDTO {
   })
   name: string;
 
+  @ApiProperty({
+    description: 'Department isActive',
+    example: 'true',
+  })
+  isActive: boolean;
 }

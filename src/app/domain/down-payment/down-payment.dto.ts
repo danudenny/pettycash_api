@@ -41,7 +41,7 @@ export class DownPaymentDTO {
   })
   @IsUUID()
   branchId: string;
-  
+
   @ApiProperty({
     description: 'Expense ID',
     example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
@@ -61,6 +61,9 @@ export class DownPaymentDTO {
 
   @ApiProperty({ description: 'Department Name', example: 'IT' })
   departmentName: string;
+
+  @ApiProperty({ description: 'Departement isActive', example: 'true' })
+  departmentIsActive: string;
 
   @ApiProperty({
     description: 'Employee ID',
@@ -97,7 +100,7 @@ export class DownPaymentDTO {
 
   @ApiProperty({ description: 'Destination Place', example: 'Jakarta' })
   destinationPlace?: string;
-  
+
   @ApiProperty({
     description: 'State',
     example: DownPaymentState.DRAFT,
@@ -149,7 +152,7 @@ export class ShowDownPaymentDTO {
 
   @ApiProperty({ description: 'Branch Name', example: 'Kebun Jeruk' })
   branchName: string;
-  
+
   @ApiProperty({ description: 'Branch Code', example: '1101006' })
   branchCode: string;
 
@@ -182,17 +185,17 @@ export class ShowDownPaymentDTO {
   })
   @IsUUID()
   periodId: string;
-  
+
   @ApiProperty({ description: 'Period Name', example: '01-2020' })
   periodName: string;
-  
+
   @ApiPropertyOptional({
     description: 'Product ID',
     example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
   })
   @IsUUID()
   productId?: string;
-  
+
   @ApiPropertyOptional({ description: 'Product Name', example: 'Uang Bensin' })
   productName?: string;
 
