@@ -23,6 +23,8 @@ import {
 import { VoucherDetailResponse } from '../../domain/voucher/response/voucher-detail.response.dto';
 import { PrintService } from '../../services/v1/print.service';
 import express = require('express');
+import { ProductService } from '../../services/master/v1/product.service';
+import { ProductWithPaginationResponse } from '../../domain/product/response.dto';
 
 @Controller('v1/vouchers')
 @ApiTags('Voucher')
@@ -31,6 +33,7 @@ export class VoucherController {
   constructor(
     private vcrService: VoucherService,
     private printService: PrintService,
+    private prodService: ProductService,
   ) {}
 
   @Get('')
@@ -43,6 +46,14 @@ export class VoucherController {
     return await this.vcrService.list(query);
   }
 
+  @Get('products')
+  @ApiOperation({ summary: 'List all Voucher Product' })
+  @ApiOkResponse({ type: ProductWithPaginationResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  public async products() {
+    return await this.prodService.voucher();
+  }
+
   @Get('/:id')
   @ApiOperation({ summary: 'Get Voucher by ID' })
   @ApiOkResponse({ status: HttpStatus.OK, type: VoucherDetailResponse })
@@ -52,7 +63,7 @@ export class VoucherController {
   }
 
   @Get('/print/:id')
-  @ApiParam({name: 'id'})
+  @ApiParam({ name: 'id' })
   @ApiOkResponse({ status: HttpStatus.OK })
   @ApiOperation({ summary: 'Print Voucher' })
   public async print(
@@ -60,6 +71,10 @@ export class VoucherController {
     @Query() queryParams: any,
     @Response() serverResponse: express.Response,
   ) {
-    return await this.printService.printVoucher(serverResponse, id, queryParams);
+    return await this.printService.printVoucher(
+      serverResponse,
+      id,
+      queryParams,
+    );
   }
 }

@@ -30,7 +30,6 @@ export class VoucherService {
       isSuperUser,
     } = await AuthService.getUserBranchAndRole();
 
-
     qb.fieldResolverMap['startDate__gte'] = 'vcr.transactionDate';
     qb.fieldResolverMap['endDate__lte'] = 'vcr.transactionDate';
     qb.fieldResolverMap['branchId'] = 'vcr.branchId';
@@ -81,12 +80,7 @@ export class VoucherService {
 
     const voucher = await this.voucherRepo.findOne({
       where,
-      relations: [
-        'branch',
-        'employee',
-        'items',
-        'items.products'
-      ]
+      relations: ['branch', 'employee', 'items', 'items.products'],
     });
     if (!voucher) {
       throw new NotFoundException(`Voucher ID ${id} tidak ditemukan!`);
