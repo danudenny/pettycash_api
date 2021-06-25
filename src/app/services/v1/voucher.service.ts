@@ -4,9 +4,7 @@ import { In, Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Voucher } from '../../../model/voucher.entity';
 import { VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
-import {
-  QueryVoucherDTO
-} from '../../domain/voucher/voucher-query.payload';
+import { QueryVoucherDTO } from '../../domain/voucher/voucher-query.payload';
 import { VoucherDetailResponse } from '../../domain/voucher/response/voucher-detail.response.dto';
 import { VoucherSunfish } from '../../../model/voucher-sunfish.entity';
 import { Product } from '../../../model/product.entity';
@@ -30,7 +28,7 @@ export class VoucherService {
       isSuperUser,
     } = await AuthService.getUserBranchAndRole();
 
-
+    qb.fieldResolverMap['number__icontains'] = 'vcr.number';
     qb.fieldResolverMap['startDate__gte'] = 'vcr.transactionDate';
     qb.fieldResolverMap['endDate__lte'] = 'vcr.transactionDate';
     qb.fieldResolverMap['branchId'] = 'vcr.branchId';
@@ -81,12 +79,7 @@ export class VoucherService {
 
     const voucher = await this.voucherRepo.findOne({
       where,
-      relations: [
-        'branch',
-        'employee',
-        'items',
-        'items.products'
-      ]
+      relations: ['branch', 'employee', 'items', 'items.products'],
     });
     if (!voucher) {
       throw new NotFoundException(`Voucher ID ${id} tidak ditemukan!`);
