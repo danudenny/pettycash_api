@@ -24,6 +24,14 @@ export class QueryReportParkingJournalDTO extends BasePayload {
   branchId?: string;
 
   @ApiPropertyOptional({
+    description: 'Product ID',
+    example: '4efcf567-0aa7-4cdf-b928-cc9c4521c17b',
+  })
+  @IsUUID()
+  @IsOptional()
+  productId?: string;
+
+  @ApiPropertyOptional({
     description: 'Journal Number to search',
     example: 'JRNL20200201AAA123',
   })
