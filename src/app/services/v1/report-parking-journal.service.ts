@@ -24,6 +24,7 @@ export class ReportParkingJournalService {
     qb.fieldResolverMap['startDate__gte'] = 'ji.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'ji.transaction_date';
     qb.fieldResolverMap['branchId'] = 'ji.branch_id';
+    qb.fieldResolverMap['productId'] = 'p.id';
     qb.fieldResolverMap['number__icontains'] = 'j."number"';
     qb.fieldResolverMap['reference__icontains'] = 'j.reference';
 
