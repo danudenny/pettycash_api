@@ -443,7 +443,7 @@ export class DownPaymentService {
 
       const downPayment = await manager.findOne(DownPayment, {
         where: { id: downPayId, isDeleted: false },
-        relations: ['branch'],
+        relations: ['branch', 'employee'],
       });
       const period = await periodEntity.findOne({
         id: downPayment.periodId,
@@ -469,6 +469,8 @@ export class DownPaymentService {
       jrnl.transactionDate = downPayment.transactionDate;
       jrnl.number = GenerateCode.journal(downPayment.transactionDate);
       jrnl.branchCode = downPayment?.branch?.branchCode ?? 'NO_BRANCH_CODE';
+      jrnl.partnerCode = downPayment?.employee?.nik;
+      jrnl.partnerName = downPayment?.employee?.name;
 
       const result = await jurnalEntity.save(jrnl);
 
@@ -510,6 +512,7 @@ export class DownPaymentService {
       jrnlItem.createUser = user;
       jrnlItem.updateUser = user;
       jrnlItem.coaId = coaId;
+      jrnlItem.productId = downPayment?.productId;
       jrnlItem.isLedger = true;
       jrnlItem.journalId = jurnalId;
       jrnlItem.branchId = downPayment.branchId;
@@ -517,6 +520,8 @@ export class DownPaymentService {
       jrnlItem.reference = downPayment.number;
       jrnlItem.periodId = downPayment.periodId;
       jrnlItem.transactionDate = downPayment.transactionDate;
+      jrnlItem.partnerCode = downPayment?.employee?.nik;
+      jrnlItem.partnerName = downPayment?.employee?.name;
 
       return await jurnalItemEntity.save(jrnlItem);
     } catch (err) {
@@ -546,11 +551,14 @@ export class DownPaymentService {
       jrnlItem.journalId = jurnalId;
       jrnlItem.isLedger = false;
       jrnlItem.coaId = branch?.cashCoaId;
+      jrnlItem.productId = downPayment?.productId;
       jrnlItem.branchId = downPayment.branchId;
       jrnlItem.credit = downPayment.amount;
       jrnlItem.reference = downPayment.number;
       jrnlItem.periodId = downPayment.periodId;
       jrnlItem.transactionDate = downPayment.transactionDate;
+      jrnlItem.partnerCode = downPayment?.employee?.nik;
+      jrnlItem.partnerName = downPayment?.employee?.name;
 
       return await jurnalItemEntity.save(jrnlItem);
     } catch (err) {
