@@ -57,6 +57,8 @@ export class ReportParkingJournalService {
       ],
       ['ji.description', 'description'],
       ['ji.is_ledger', 'isLedger'],
+      ['attr.origin', 'origin'],
+      ['attr.destination', 'destination'],
       [`CONCAT(u.first_name, ' ', u.last_name)`, 'createUserFullName'],
       [`NULLIF(exp.source_document, '')`, 'nota'],
     );
@@ -67,6 +69,19 @@ export class ReportParkingJournalService {
     qb.leftJoin((e) => e.createUser, 'u');
     qb.qb.leftJoin('employee', 'e', 'e.nik = ji.partner_code');
     qb.qb.leftJoin('expense', 'exp', 'exp."number" = ji.reference');
+    qb.qb.leftJoin(
+      `(
+        SELECT
+          ei.id AS expense_item_id,
+          fo.value AS origin,
+          fd.value AS destination
+        FROM expense_item ei
+        LEFT JOIN expense_item_attribute fo ON fo.expense_item_id = ei.id AND fo."key" = 'departure'
+        LEFT JOIN expense_item_attribute fd ON fd.expense_item_id = ei.id AND fd."key" = 'destination'
+      )`,
+      'attr',
+      'attr.expense_item_id = ji.expense_item_id',
+    );
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
