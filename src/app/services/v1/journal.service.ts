@@ -37,6 +37,7 @@ import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { JournalBatchResponse } from '../../domain/journal/response-batch.dto';
 import { DownPayment } from '../../../model/down-payment.entity';
 import { DownPaymentHistory } from '../../../model/down-payment-history.entity';
+import { ExpenseHistory } from '../../../model/expense-history.entity';
 
 @Injectable()
 export class JournalService {
@@ -428,6 +429,15 @@ export class JournalService {
     // Set Expense State as `reversed`
     expense.state = ExpenseState.REVERSED;
     expense.updateUser = journal.updateUser;
+
+    // add history
+    const history = new ExpenseHistory();
+    history.expenseId = expense.id;
+    history.state = expense.state;
+    history.createUser = expense.updateUser;
+    history.updateUser = expense.updateUser;
+    history.rejectedNote = `Journal reversed by ${journal?.updateUser?.firstName} ${journal?.updateUser?.lastName}`;
+    await manager.save(history);
 
     return await manager.save(expense);
   }
