@@ -37,6 +37,7 @@ import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { JournalBatchResponse } from '../../domain/journal/response-batch.dto';
 import { DownPayment } from '../../../model/down-payment.entity';
 import { DownPaymentHistory } from '../../../model/down-payment-history.entity';
+import { ExpenseHistory } from '../../../model/expense-history.entity';
 
 @Injectable()
 export class JournalService {
@@ -139,6 +140,9 @@ export class JournalService {
       }
 
       // filter by assigned branch if userRoleName SS/SPV HO.
+      // only show journals:
+      //  - state: `draft`
+      //  - state: `approved_by_ss_spv_ho`
       if (SS_SPV_ROLES.includes(userRoleName)) {
         if (userBranchIds?.length) {
           qb.andWhere(
@@ -146,14 +150,20 @@ export class JournalService {
             (v) => v.in(userBranchIds),
           );
         }
+        qb.qb.andWhere(`(j.state IN ('draft', 'approved_by_ss_spv_ho'))`);
       }
 
-      // if userRoleName is Tax, only show journal that contains tax
+      // if userRoleName is Tax
+      // only show journal that contains tax and
+      //  - state: `approved_by_tax`
+      //  - state: `approved_by_ss_spv_ho`
       if (userRoleName === MASTER_ROLES.TAX) {
         const journalTaxSql = `SELECT tji.journal_id
         FROM journal_item tji
         INNER JOIN account_coa tac ON tac.id = tji.coa_id
+        INNER JOIN journal jl ON jl.id = tji.journal_id
         WHERE tac.id IN (SELECT coa_id FROM account_tax WHERE is_deleted = FALSE AND coa_id IS NOT NULL GROUP BY coa_id)
+          AND jl.state IN ('approved_by_tax', 'approved_by_ss_spv_ho')
         GROUP BY tji.journal_id`;
 
         qb.qb.andWhere(`(j.id IN (${journalTaxSql}))`);
@@ -428,6 +438,15 @@ export class JournalService {
     // Set Expense State as `reversed`
     expense.state = ExpenseState.REVERSED;
     expense.updateUser = journal.updateUser;
+
+    // add history
+    const history = new ExpenseHistory();
+    history.expenseId = expense.id;
+    history.state = expense.state;
+    history.createUser = expense.updateUser;
+    history.updateUser = expense.updateUser;
+    history.rejectedNote = `Journal reversed by ${journal?.updateUser?.firstName} ${journal?.updateUser?.lastName}`;
+    await manager.save(history);
 
     return await manager.save(expense);
   }

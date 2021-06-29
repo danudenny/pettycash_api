@@ -113,7 +113,7 @@ export class ProductService {
       }
       throw err;
     }
-    return new ProductResponse;
+    return new ProductResponse();
 
   }
 
@@ -130,5 +130,44 @@ export class ProductService {
     }
 
     return new ProductResponse();
+  }
+
+  public async voucher(): Promise<ProductWithPaginationResponse> {
+    const params = { order: '^code', limit: 10 };
+    const qb = new QueryBuilder(Product, 'prod', params);
+
+    qb.applyFilterPagination();
+    qb.selectRaw(
+      ['prod.id', 'id'],
+      ['prod.code', 'code'],
+      ['prod.name', 'name'],
+      ['prod.description', 'description'],
+      ['prod.is_has_tax', 'isHasTax'],
+      ['prod.amount', 'amount'],
+      ['prod.is_has_km', 'isHasKm'],
+      ['prod.type', 'type'],
+      ['prod.coa_id', 'coaId'],
+      ['prod.is_active', 'isActive'],
+      ['prod.tax_type', 'taxType']
+    );
+    qb.andWhere(
+      (e) => e.code,
+      (v) => v.beginsWith('VCR'),
+    );
+    qb.andWhere(
+      (e) => e.isActive,
+      (v) => v.isTrue(),
+    );
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+    qb.qb.cache(
+      'pettycash:voucher:products',
+      1000 * 60 * 60,
+    );
+
+    const products = await qb.exec();
+    return new ProductWithPaginationResponse(products, params);
   }
 }

@@ -2,6 +2,7 @@ import { Entity, Column, ManyToOne, Index, JoinColumn } from 'typeorm';
 import { AccountCoa } from './account-coa.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
+import { ExpenseItem } from './expense-item.entity';
 import { Journal } from './journal.entity';
 import { Period } from './period.entity';
 import { Product } from './product.entity';
@@ -108,6 +109,13 @@ export class JournalItem extends PtcBaseEntity {
   })
   isLedger: boolean;
 
+  @Column({
+    type: 'uuid',
+    name: 'expense_item_id',
+    nullable: true,
+  })
+  expenseItemId?: string;
+
   @ManyToOne(() => Journal, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'journal_id' })
   journal: Journal;
@@ -127,4 +135,8 @@ export class JournalItem extends PtcBaseEntity {
   @ManyToOne(() => Product)
   @JoinColumn({ name: 'product_id' })
   product?: Product;
+
+  @ManyToOne(() => ExpenseItem)
+  @JoinColumn({ name: 'expense_item_id' })
+  expenseItem?: ExpenseItem;
 }

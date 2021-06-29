@@ -7,6 +7,7 @@ import { VoucherSunfish } from '../../model/voucher-sunfish.entity';
 import { Product } from '../../model/product.entity';
 import { VoucherItem } from '../../model/voucher-item.entity';
 import { PrintService } from '../services/v1/print.service';
+import { ProductService } from '../services/master/v1/product.service';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { PrintService } from '../services/v1/print.service';
       }),
     }),
   ],
-  providers: [VoucherService, PrintService],
+  providers: [VoucherService, PrintService, ProductService],
   controllers: [VoucherController],
   exports: [],
 })
