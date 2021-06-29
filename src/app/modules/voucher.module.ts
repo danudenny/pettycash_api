@@ -8,10 +8,11 @@ import { Product } from '../../model/product.entity';
 import { VoucherItem } from '../../model/voucher-item.entity';
 import { PrintService } from '../services/v1/print.service';
 import { ProductService } from '../services/master/v1/product.service';
+import { Attachment } from '../../model/attachment.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Voucher, VoucherSunfish, VoucherItem, Product]),
+    TypeOrmModule.forFeature([Voucher, VoucherSunfish, VoucherItem, Product, Attachment]),
     HttpModule.registerAsync({
       useFactory: () => ({
         timeout: 5000,

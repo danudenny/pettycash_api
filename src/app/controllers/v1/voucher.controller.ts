@@ -2,6 +2,7 @@ import { VoucherResponse } from './../../domain/voucher/response/voucher.respons
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Param,
@@ -9,13 +10,17 @@ import {
   Post,
   Query,
   Response,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiConsumes,
   ApiCreatedResponse,
   ApiHeader,
   ApiInternalServerErrorResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation, ApiParam,
@@ -32,6 +37,10 @@ import express = require('express');
 import { VoucherCreateDTO } from '../../domain/voucher/dto/voucher-create.dto';
 import { ProductService } from '../../services/master/v1/product.service';
 import { ProductWithPaginationResponse } from '../../domain/product/response.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { VoucherAttachmentResponse } from '../../domain/voucher/response/voucer-attachment.response.dto';
+import { CreateVoucherAttachmentDTO } from '../../domain/voucher/dto/create-attachment.dto';
+import { FindAttachmentIdParams, FindVoucherIdParams } from '../../domain/common/findId-param.dto';
 
 @Controller('v1/vouchers')
 @ApiTags('Voucher')
@@ -69,6 +78,14 @@ export class VoucherController {
     return await this.vcrService.getById(id);
   }
 
+  @Get('/:id/attachments')
+  @ApiOperation({ summary: 'List Voucher Attachment' })
+  @ApiOkResponse({ type: VoucherAttachmentResponse })
+  @ApiNotFoundResponse({ description: 'Attachments not found.' })
+  public async listAttachment(@Param('id', new ParseUUIDPipe()) id: string) {
+    return await this.vcrService.listAttachment(id);
+  }
+
   @Get('/print/:id')
   @ApiParam({ name: 'id' })
   @ApiOkResponse({ status: HttpStatus.OK })
@@ -97,4 +114,31 @@ export class VoucherController {
   public async create(@Body() payload: VoucherCreateDTO) {
     return await this.vcrService.create(payload);
   }
+
+  @Post('/:id/attachments')
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Create Voucher Attachment' })
+  @UseInterceptors(FilesInterceptor('attachments'))
+  @ApiCreatedResponse({ type: VoucherAttachmentResponse })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiBody({ type: CreateVoucherAttachmentDTO })
+  public async createAttachment(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @UploadedFiles() attachments: any,
+  ) {
+    return await this.vcrService.createAttachment(id, attachments);
+  }
+
+  @Delete('/:voucherId/attachments/:attachmentId')
+  @ApiParam({ name: 'attachmentId' })
+  @ApiParam({ name: 'voucherId' })
+  @ApiOperation({ summary: 'Delete Voucher Attachment' })
+  @ApiNoContentResponse({ description: 'Successfully delete attachment' })
+  public async deleteAttachment(
+    @Param() { voucherId }: FindVoucherIdParams,
+    @Param() { attachmentId }: FindAttachmentIdParams,
+  ) {
+    return await this.vcrService.deleteAttachment(voucherId, attachmentId);
+  }
+
 }

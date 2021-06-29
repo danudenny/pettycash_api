@@ -18,4 +18,9 @@ export class FindAttachmentIdParams {
   attachmentId: string;
 }
 
+export class FindVoucherIdParams {
+  @IsUUID()
+  voucherId: string;
+}
+
 export default FindIdParams;
