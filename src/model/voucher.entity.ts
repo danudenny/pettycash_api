@@ -1,10 +1,11 @@
-import { Column, Entity, JoinColumn, OneToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany, ManyToOne, ManyToMany, JoinTable, PrimaryGeneratedColumn } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Employee } from './employee.entity';
 import { VoucherState } from './utils/enum';
 import { VoucherItem } from './voucher-item.entity';
 import { IsUUID } from 'class-validator';
+import { Attachment } from './attachment.entity';
 
 @Entity('voucher')
 export class Voucher extends PtcBaseEntity {
@@ -82,6 +83,20 @@ export class Voucher extends PtcBaseEntity {
     default: VoucherState.DRAFT,
   })
   state: VoucherState;
+
+  @ManyToMany(() => Attachment)
+  @JoinTable({
+    name: 'voucher_attachment',
+    joinColumn: {
+      name: 'voucher_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'attachment_id',
+      referencedColumnName: 'id',
+    },
+  })
+  attachments: Attachment[];
 
   @OneToMany(() => VoucherItem, (voucherItem) => voucherItem.voucher, { cascade: true })
   items: VoucherItem[];
