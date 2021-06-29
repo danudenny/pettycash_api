@@ -14,3 +14,17 @@ export class VoucherItemDTO {
 	amount: number;
 }
 
+export class CreateVoucherItemDTO {
+	@ApiProperty({
+		description: 'Product Id',
+		example: 'ce9ff0fe-0295-4aa1-8bd7-9eb1cd3bb26e',
+	})
+	productId: string;
+
+	@ApiProperty({
+		description: 'Amount',
+		example: 25000,
+	})
+	amount: number;
+}
+

@@ -105,4 +105,11 @@ export class GenerateCode {
     const randomCode = this.randomCode(digit);
     return prefix + randomCode.toString();
   }
+
+  public static voucherManual(dateTime: Date = new Date(), digit: number = 6) {
+    // Format Code: VCR202102ABC123
+    const prefix = `VCRM${dayjs(dateTime).format('YYYYMM')}`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
 }

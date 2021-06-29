@@ -1,14 +1,20 @@
+import { VoucherResponse } from './../../domain/voucher/response/voucher.response.dto';
 import {
+  Body,
   Controller,
   Get,
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Post,
   Query,
   Response,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiHeader,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -23,6 +29,7 @@ import {
 import { VoucherDetailResponse } from '../../domain/voucher/response/voucher-detail.response.dto';
 import { PrintService } from '../../services/v1/print.service';
 import express = require('express');
+import { VoucherCreateDTO } from '../../domain/voucher/dto/voucher-create.dto';
 
 @Controller('v1/vouchers')
 @ApiTags('Voucher')
@@ -61,5 +68,18 @@ export class VoucherController {
     @Response() serverResponse: express.Response,
   ) {
     return await this.printService.printVoucher(serverResponse, id, queryParams);
+  }
+
+  @Post('create')
+  @ApiOperation({ summary: 'Create Voucher' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
+  @ApiCreatedResponse({
+    type: VoucherResponse,
+    description: 'Voucher Successfully Created',
+  })
+  @ApiBadRequestResponse({ description: 'Bad Request' })
+  @ApiBody({ type: VoucherCreateDTO })
+  public async create(@Body() payload: VoucherCreateDTO) {
+    return await this.vcrService.create(payload);
   }
 }
