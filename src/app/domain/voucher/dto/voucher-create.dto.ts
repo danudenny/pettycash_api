@@ -9,12 +9,6 @@ export class VoucherCreateDTO {
 	})
 	number: string;
 
-	@ApiProperty({
-		description: 'Transaction Date',
-		example: '2021-04-01'
-	})
-	transactionDate: Date;
-
 	@ApiProperty( {
 		description: 'Employee ID',
 		example: '0c601cd2-735d-48ff-9f24-ce841ea7f5d1'
@@ -34,12 +28,6 @@ export class VoucherCreateDTO {
 		example: '2021-04-30 08:03:31'
 	})
 	checkinTime: Date;
-
-  @ApiProperty({
-		description: 'Check Out Time',
-		example: '2021-04-30 17:03:31'
-	})
-	checkoutTime: Date;
 
 	@ApiProperty( {
 		description: 'Total Amount',
