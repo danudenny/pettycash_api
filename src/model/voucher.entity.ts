@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToMany, ManyToOne, ManyToMany, JoinTable, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany, ManyToOne, ManyToMany, JoinTable, Index, PrimaryGeneratedColumn } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Employee } from './employee.entity';
@@ -23,6 +23,7 @@ export class Voucher extends PtcBaseEntity {
     length: 25,
     unique: true,
   })
+  @Index({unique: true})
   number: string;
 
   @Column({
