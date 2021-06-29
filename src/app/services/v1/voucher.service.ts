@@ -181,8 +181,8 @@ export class VoucherService {
         voucher.branchId = branchId;
         voucher.number = payload.number;
         voucher.checkinTime = payload.checkinTime;
-        voucher.checkoutTime = payload.checkoutTime;
-        voucher.transactionDate = payload.transactionDate;
+        voucher.checkoutTime = payload.checkinTime;
+        voucher.transactionDate = new Date();
         voucher.employeeId = payload?.employeeId;
         voucher.items = items;
         voucher.totalAmount = payload?.totalAmount;
