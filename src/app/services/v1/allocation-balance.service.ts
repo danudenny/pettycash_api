@@ -353,7 +353,7 @@ export class AllocationBalanceService {
         const userResponsible = await this.getUser();
         createOdoo.createUserId = userResponsible.id;
         createOdoo.updateUserId = userResponsible.id;
-        createOdoo.accountNumber = allocation.destinationBank.accountNumber;
+        createOdoo.accountNumber = null;
         createOdoo.amount = allocation.amount;
         createOdoo.number = allocation.number;
         createOdoo.branchName = allocation.branch.branchName;
