@@ -1,5 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getManager, EntityManager } from 'typeorm';
+import { Repository, getManager, EntityManager, createQueryBuilder } from 'typeorm';
 import {
   BadRequestException,
   HttpException,
@@ -493,25 +493,21 @@ export class DownPaymentService {
   ): Promise<JournalItem> {
     try {
       const jurnalItemEntity = manager.getRepository<JournalItem>(JournalItem);
-      const globalSettingEntity = manager.getRepository<GlobalSetting>(
-        GlobalSetting,
-      );
 
-      const globalSetting = await globalSettingEntity.findOne();
       const user = await this.getUser(true);
       const jrnlItem = new JournalItem();
 
-      let coaId;
+      const prodId = downPayment?.productId
 
-      if (downPayment.type == DownPaymentType.PERDIN) {
-        coaId = globalSetting && globalSetting.downPaymentPerdinCoaId;
-      } else if (downPayment.type == DownPaymentType.REIMBURSEMENT) {
-        coaId = globalSetting && globalSetting.downPaymentReimbursementCoaId;
-      }
+      const getCoa = await createQueryBuilder('product', 'prod')
+                          .leftJoin('down_payment', 'dp', 'prod.id = dp.product_id')
+                          .where('prod.id = :prodId', { prodId })
+                          .andWhere('dp.isDeleted = false')
+                          .getOne();
 
       jrnlItem.createUser = user;
       jrnlItem.updateUser = user;
-      jrnlItem.coaId = coaId;
+      jrnlItem.coaId = getCoa['coaId'];
       jrnlItem.productId = downPayment?.productId;
       jrnlItem.isLedger = true;
       jrnlItem.journalId = jurnalId;
