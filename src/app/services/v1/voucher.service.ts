@@ -1,6 +1,6 @@
 import { VoucherResponse } from './../../domain/voucher/response/voucher.response.dto';
 import { VoucherCreateDTO } from './../../domain/voucher/dto/voucher-create.dto';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpService, Injectable, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository, getManager, EntityManager, createQueryBuilder } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -17,6 +17,8 @@ import { AttachmentService } from '../../../common/services/attachment.service';
 import { randomStringGenerator, randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
 import { VoucherAttachmentResponse } from '../../domain/voucher/response/voucer-attachment.response.dto';
 import { VoucherAttachmentDTO } from '../../domain/voucher/dto/voucher-attachment.dto';
+import { Observable } from 'rxjs';
+import axios, { AxiosResponse } from 'axios';
 
 
 @Injectable()
@@ -26,6 +28,7 @@ export class VoucherService {
     private readonly voucherRepo: Repository<Voucher>,
     @InjectRepository(Attachment)
     private readonly attachmentRepo: Repository<Attachment>,
+    private httpService: HttpService
   ) {}
 
   private static async getUserId() {
@@ -39,6 +42,13 @@ export class VoucherService {
     } else {
       return await AuthService.getUser();
     }
+  }
+
+  private static get headerWebhook() {
+    return {
+      'API-Key':"d73c76de-abe7-42cd-97e7-ef4fb33b323f",
+      'Content-Type': 'application/json'
+    };
   }
 
   private static async uploadAndRetrieveFiles(
@@ -136,7 +146,7 @@ export class VoucherService {
     return new VoucherDetailResponse(voucher);
   }
 
-  public async create(payload: VoucherCreateDTO): Promise<VoucherResponse> {
+  public async create(payload: VoucherCreateDTO): Promise<AxiosResponse<any>> {
     try {
       const createVoucher = await getManager().transaction(async (manager) => {
         if (payload && !payload.number) {
@@ -189,13 +199,26 @@ export class VoucherService {
         voucher.createUserId = await VoucherService.getUserId();
         voucher.updateUserId = await VoucherService.getUserId();
 
-        const voucherResult = await manager.save(voucher);
+        const result = await manager.save(voucher)
+    
+        try {
+          const data = JSON.stringify({
+            "voucher_id": result.id
+          });
+  
+          const options = {
+            headers: VoucherService.headerWebhook,
+          };
 
-        return voucherResult;
+          const response = await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', data, options)
+          console.log(response)
+        } catch (e) {
+          console.log(e)
+        }
       });
-      return new VoucherResponse(createVoucher)
-    } catch (error) {
-      throw error;
+      return
+    } catch (err) {
+      throw err.message;
     }
   }
 
