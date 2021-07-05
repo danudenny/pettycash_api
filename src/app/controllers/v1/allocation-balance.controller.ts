@@ -1,3 +1,4 @@
+import { ReceivedAllocationBalanceDTO } from './../../domain/allocation-balance/dto/allocation-received.dto';
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
@@ -81,12 +82,14 @@ export class AllocationBalanceController {
   @Patch('/:id/received')
   @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiParam({name: 'id'})
+  @ApiBody({ type: ReceivedAllocationBalanceDTO })
   @ApiOperation({ summary: 'Received Cash Allocation Balance' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async received(
     @Param() {id}: FindIdParams,
+    @Body() payload: ReceivedAllocationBalanceDTO
   ) {
-    return await this.allocBallanceService.received(id);
+    return await this.allocBallanceService.received(id, payload);
   }
 
   @Put('/:id/revision')

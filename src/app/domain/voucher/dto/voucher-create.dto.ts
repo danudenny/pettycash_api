@@ -16,12 +16,6 @@ export class VoucherCreateDTO {
   @IsUUID()
 	employeeId: string
 
-	@ApiProperty({
-		description: 'Branch ID',
-		example: '7387e81d-e8fc-429d-929a-0b6bcd0ee729'
-	})
-	branchId: string;
-
   @ApiProperty({
 		description: 'Check In Time',
 		example: '2021-04-30 08:03:31'

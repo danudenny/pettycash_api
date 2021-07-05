@@ -38,6 +38,7 @@ import { JournalItem } from '../../../model/journal-item.entity';
 import { User } from '../../../model/user.entity';
 import { Branch } from '../../../model/branch.entity';
 import { AccountCoa } from '../../../model/account-coa.entity';
+import { ReceivedAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-received.dto';
 
 @Injectable()
 export class AllocationBalanceService {
@@ -534,7 +535,7 @@ export class AllocationBalanceService {
     }
   }
 
-  public async received(id: string): Promise<any> {
+  public async received(id: string, payload: ReceivedAllocationBalanceDTO): Promise<any> {
     const userResponsible = await this.getUser();
     const approveAllocation = await getManager().transaction(async (manager) => {
       const allocation = await manager.findOne(CashBalanceAllocation, {
@@ -561,15 +562,6 @@ export class AllocationBalanceService {
         ) {
           throw new BadRequestException(
             `Tidak bisa menerima alokasi saldo kas karena Sudah Diterima oleh ${userRole}`,
-          );
-        }
-
-        if (
-          dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')
-        ) {
-          state = CashBalanceAllocationState.EXPIRED
-          throw new BadRequestException(
-            `Form yang telah lewat batas tanggal transfer`,
           );
         }
         
@@ -606,16 +598,23 @@ export class AllocationBalanceService {
         );
       }
 
+      console.log(payload.receivedDate)
+
       allocation.state = state;
-      allocation.receivedDate = new Date();
+      allocation.receivedDate = payload.receivedDate;
       allocation.receivedUserId = userResponsible.id;
-      allocation.allocationHistory = await this.buildHistory(allocation, { state });
-      await this.accHistoryRepo.save(allocation.allocationHistory);
-      const saveAllocation = await manager.save(allocation);
-      if (saveAllocation) {
-        const journal = await this.buildJournal(manager, id?.toString(), userRole);
-        return AllocationBalanceService.createJournal(manager, journal);
+      try {
+        allocation.allocationHistory = await this.buildHistory(allocation, { state });
+        await this.accHistoryRepo.save(allocation.allocationHistory);
+        const saveAllocation = await manager.save(allocation);
+        if (saveAllocation) {
+          const journal = await this.buildJournal(manager, id?.toString(), userRole);
+          return AllocationBalanceService.createJournal(manager, journal);
+        }
+      } catch (error) {
+        console.log(error)
       }
+      
     });
     throw new HttpException('Dana diterima oleh Admin Branch', HttpStatus.OK)
   }
