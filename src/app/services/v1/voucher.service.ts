@@ -200,25 +200,20 @@ export class VoucherService {
         voucher.createUserId = await VoucherService.getUserId();
         voucher.updateUserId = await VoucherService.getUserId();
 
-        try {
-          const result = await manager.save(voucher);
-          const data = JSON.stringify({
-            'voucher_id': result.id
-          });
-          const options = {
-            headers: VoucherService.headerWebhook
-          };
-
-          setTimeout(async() => {
-            const response = await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', data, options)
-            console.log(response)
-          }, 100)
-        } catch (error) {
-          throw error.message
-        }
-        
+        const result = await manager.save(voucher);
+        return result
       });
-      return new HttpException("Sukses Membuat Voucher", HttpStatus.OK)
+
+      const resultVoucher = new VoucherResponse(createVoucher);
+      const data = JSON.stringify({
+        'voucher_id':resultVoucher.data['id']
+      });
+      const options = {
+        headers: VoucherService.headerWebhook
+      };
+
+      await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', data, options)
+      return resultVoucher
     } catch (err) {
       throw err.message;
     }
