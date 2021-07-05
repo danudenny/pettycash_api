@@ -50,10 +50,6 @@ export class CashflowTypeService {
     );
     qb.leftJoin((e) => e.coaProduct, 'coa');
     qb.andWhere(
-      (e) => e.isActive,
-      (v) => v.isTrue(),
-    );
-    qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
