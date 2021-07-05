@@ -18,7 +18,7 @@ import { randomStringGenerator, randomStringGenerator as uuid } from '@nestjs/co
 import { VoucherAttachmentResponse } from '../../domain/voucher/response/voucer-attachment.response.dto';
 import { VoucherAttachmentDTO } from '../../domain/voucher/dto/voucher-attachment.dto';
 import { Observable } from 'rxjs';
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 
 @Injectable()
@@ -47,7 +47,8 @@ export class VoucherService {
   private static get headerWebhook() {
     return {
       'API-Key':"d73c76de-abe7-42cd-97e7-ef4fb33b323f",
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Connection': 'keep-alive',
     };
   }
 
@@ -146,7 +147,7 @@ export class VoucherService {
     return new VoucherDetailResponse(voucher);
   }
 
-  public async create(payload: VoucherCreateDTO): Promise<AxiosResponse<any>> {
+  public async create(payload: VoucherCreateDTO): Promise<any> {
     try {
       const createVoucher = await getManager().transaction(async (manager) => {
         if (payload && !payload.number) {
@@ -199,24 +200,25 @@ export class VoucherService {
         voucher.createUserId = await VoucherService.getUserId();
         voucher.updateUserId = await VoucherService.getUserId();
 
-        const result = await manager.save(voucher)
-    
         try {
+          const result = await manager.save(voucher);
           const data = JSON.stringify({
-            "voucher_id": result.id
+            'voucher_id': result.id
           });
-  
           const options = {
-            headers: VoucherService.headerWebhook,
+            headers: VoucherService.headerWebhook
           };
 
-          const response = await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', data, options)
-          console.log(response)
-        } catch (e) {
-          console.log(e)
+          setTimeout(async() => {
+            const response = await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', data, options)
+            console.log(response)
+          }, 100)
+        } catch (error) {
+          throw error.message
         }
+        
       });
-      return
+      return new HttpException("Sukses Membuat Voucher", HttpStatus.OK)
     } catch (err) {
       throw err.message;
     }
