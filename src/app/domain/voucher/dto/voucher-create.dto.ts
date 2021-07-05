@@ -20,7 +20,6 @@ export class VoucherCreateDTO {
 		description: 'Branch ID',
 		example: '7387e81d-e8fc-429d-929a-0b6bcd0ee729'
 	})
-	@IsUUID()
 	branchId: string;
 
   @ApiProperty({
