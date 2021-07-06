@@ -598,7 +598,9 @@ export class AllocationBalanceService {
         );
       }
 
-      console.log(payload.receivedDate)
+      if (new Date(payload.receivedDate) > new Date) {
+        throw new HttpException("Tidak bisa memilih tanggal setelah hari ini", HttpStatus.BAD_REQUEST);
+      }
 
       allocation.state = state;
       allocation.receivedDate = payload.receivedDate;
@@ -613,6 +615,7 @@ export class AllocationBalanceService {
         }
       } catch (error) {
         console.log(error)
+        throw new Error(error);        
       }
       
     });
