@@ -511,12 +511,13 @@ export class AllocationBalanceService {
 
         if (
           ![
+            MASTER_ROLES.ADMIN_BRANCH,
             MASTER_ROLES.PIC_HO,
             MASTER_ROLES.SUPERUSER,
           ].includes(userRole)
         ) {
           throw new BadRequestException(
-            `Hanya PIC HO yang dapat membatalkan Alokasi Saldo Kas!`,
+            `Hanya PIC HO / Admin yang dapat membatalkan Alokasi Saldo Kas!`,
           );
         }
 
