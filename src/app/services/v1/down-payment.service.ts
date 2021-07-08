@@ -41,6 +41,7 @@ import { DownPaymentHistory } from '../../../model/down-payment-history.entity';
 import { AuthService } from './auth.service';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
+import { BalanceService } from './balance.service';
 
 @Injectable()
 export class DownPaymentService {
@@ -593,7 +594,10 @@ export class DownPaymentService {
     }
 
     const stmt = await this.buildAccountStatement(downPayment);
-    return await accStmtRepo.save(stmt);
+    const result = await accStmtRepo.save(stmt);
+    // Invalidate Cache Balance
+    await BalanceService.invalidateCache(downPayment?.branchId);
+    return result;
   }
 
   private async buildAccountStatement(
@@ -630,5 +634,7 @@ export class DownPaymentService {
       branchId: downPayment?.branchId,
       isDeleted: false,
     });
+    // Invalidate Cache Balance
+    await BalanceService.invalidateCache(downPayment?.branchId);
   }
 }

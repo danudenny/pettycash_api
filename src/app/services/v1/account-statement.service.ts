@@ -14,6 +14,7 @@ import { QueryAccountStatementDTO } from '../../domain/account-statement/account
 import { CreateAccountStatementDTO } from '../../domain/account-statement/create.dto';
 import { AccountStatementWithPaginationResponse } from '../../domain/account-statement/response.dto';
 import { AuthService } from './auth.service';
+import { BalanceService } from './balance.service';
 
 @Injectable()
 export class AccountStatementService {
@@ -65,7 +66,7 @@ export class AccountStatementService {
 
     await this.repo.save([statementDebit, statementCredit]);
     // remove cache Balance Summary after create statement
-    await getConnection().queryResultCache?.remove([`branch_balance_${userBranch?.id}`]);
+    await BalanceService.invalidateCache(userBranch?.id);
     return;
   }
 

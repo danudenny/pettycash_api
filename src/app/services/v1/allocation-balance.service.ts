@@ -39,6 +39,7 @@ import { User } from '../../../model/user.entity';
 import { Branch } from '../../../model/branch.entity';
 import { AccountCoa } from '../../../model/account-coa.entity';
 import { ReceivedAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-received.dto';
+import { BalanceService } from './balance.service';
 
 @Injectable()
 export class AllocationBalanceService {
@@ -120,7 +121,10 @@ export class AllocationBalanceService {
 
     // insert statement
     const stmt = await this.buildAccountStatement(cashBal);
-    return await accStmtRepo.save(stmt);
+    const result = await accStmtRepo.save(stmt);
+    // Invalidate Cache Balance
+    await BalanceService.invalidateCache(cashBal?.branchId);
+    return result;
   }
 
   public async list(

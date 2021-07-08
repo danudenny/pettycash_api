@@ -77,6 +77,7 @@ import { UpdateExpenseAttachmentDTO } from '../../domain/expense/update-attachme
 import { AttachmentType } from '../../../model/attachment-type.entity';
 import { Vehicle } from '../../../model/vehicle.entity';
 import { VehicleTemp } from '../../../model/vehicle-temp.entity';
+import { BalanceService } from './balance.service';
 
 @Injectable()
 export class ExpenseService {
@@ -1761,10 +1762,15 @@ export class ExpenseService {
     }
 
     // insert statement if Expense not from DownPayment
+    let result: AccountStatement;
     if (!expense?.downPaymentId) {
       const stmt = await this.buildAccountStatement(expense);
-      return await accStmtRepo.save(stmt);
+      result = await accStmtRepo.save(stmt);
     }
+
+    // Invalidate Cache Balance
+    await BalanceService.invalidateCache(expense?.branchId);
+    return result;
   }
 
   private async buildAccountStatement(
@@ -1800,6 +1806,8 @@ export class ExpenseService {
       branchId: expense?.branchId,
       isDeleted: false,
     });
+    // Invalidate Cache Balance
+    await BalanceService.invalidateCache(expense?.branchId);
   }
 
   /**

@@ -36,6 +36,7 @@ import { CreateLoanDTO } from '../../domain/loan/create.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { PeriodService } from './period.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
+import { BalanceService } from './balance.service';
 
 @Injectable()
 export class LoanService {
@@ -421,6 +422,8 @@ export class LoanService {
   ): Promise<AccountStatement> {
     const repo = manager.getRepository(AccountStatement);
     const statement = await repo.save(stmt);
+    // Invalidate Cache Balance
+    await BalanceService.invalidateCache(stmt?.branchId);
     return statement;
   }
 
