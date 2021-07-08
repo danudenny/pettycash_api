@@ -357,9 +357,8 @@ export class BalanceService {
   }
 
   private async getDeviationAmount(): Promise<number> {
-    const setting = await this.settingRepo.findOne();
-
-    return setting.deviationAmount;
+    const setting = await this.settingRepo.findOne({ select: ['deviationAmount'] });
+    return setting?.deviationAmount;
   }
 
   /**
