@@ -24,6 +24,7 @@ import {
 } from '../../../model/utils/enum';
 import { Journal } from '../../../model/journal.entity';
 import { Expense } from '../../../model/expense.entity';
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class PeriodService {
@@ -35,10 +36,9 @@ export class PeriodService {
     private readonly expenseRepo: Repository<Expense>,
   ) {}
 
-  async getUserId() {
-    // TODO: Use From Authentication User.
-    const userId = '3aa3eac8-a62f-44c3-b53c-31372492f9a0';
-    return userId;
+  private static async getUserId() {
+    const user = await AuthService.getUser();
+    return user.id;
   }
 
   async list(query?: QueryPeriodDTO): Promise<PeriodResponse> {
@@ -123,8 +123,8 @@ export class PeriodService {
       p.endDate = endDate;
       p.month = Number(month);
       p.year = now.year();
-      p.createUserId = await this.getUserId();
-      p.updateUserId = await this.getUserId();
+      p.createUserId = await PeriodService.getUserId();
+      p.updateUserId = await PeriodService.getUserId();
       periods.push(p);
     }
 
@@ -178,7 +178,7 @@ export class PeriodService {
 
     period.state = PeriodState.CLOSE;
     period.closeDate = dayjs(payload && payload.closeDate).toDate();
-    period.closeUserId = await this.getUserId();
+    period.closeUserId = await PeriodService.getUserId();
     await this.periodRepo.save(period);
 
     // Refetch period with closeUser info for FE need! \(o_o)/
