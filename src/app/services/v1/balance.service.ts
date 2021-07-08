@@ -357,8 +357,19 @@ export class BalanceService {
   }
 
   private async getDeviationAmount(): Promise<number> {
-    const setting = await this.settingRepo.findOne();
+    const setting = await this.settingRepo.findOne({ select: ['deviationAmount'] });
+    return setting?.deviationAmount;
+  }
 
-    return setting.deviationAmount;
+  /**
+   * Invalidate Balance Cache
+   *
+   * @param {string} branchId
+   * @return {*}  {Promise<void>}
+   * @memberof BalanceService
+   */
+  public static async invalidateCache(branchId: string): Promise<void> {
+    const cacheKey = `branch_balance_${branchId}`;
+    await getConnection().queryResultCache?.remove([cacheKey]);
   }
 }
