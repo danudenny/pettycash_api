@@ -164,7 +164,8 @@ export class VoucherService {
         const checkEmployee = await this.voucherRepo.findOne({
           where: {
             employeeId: payload.employeeId,
-            transactionDate: dayjs(new Date).format('YYYY-MM-DD')
+            transactionDate: dayjs(new Date).format('YYYY-MM-DD'),
+            isDeleted: false
           }
         })
   
