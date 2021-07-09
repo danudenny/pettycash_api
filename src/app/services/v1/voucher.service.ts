@@ -19,6 +19,7 @@ import { VoucherAttachmentResponse } from '../../domain/voucher/response/voucer-
 import { VoucherAttachmentDTO } from '../../domain/voucher/dto/voucher-attachment.dto';
 import { Observable } from 'rxjs';
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { VoucherState } from '../../../model/utils/enum';
 
 
 @Injectable()
@@ -166,13 +167,13 @@ export class VoucherService {
             transactionDate: dayjs(new Date).format('YYYY-MM-DD')
           }
         })
-
+  
         if (checkEmployee) {
           throw new BadRequestException(
             `'Employee Hanya diperbolehkan melakukan transaksi 1 kali / hari.`,
           );
         }
-
+        
         // Build Voucher Item
         const items: VoucherItem[] = [];
         for (const v of payload.items) {
@@ -197,6 +198,7 @@ export class VoucherService {
         voucher.employeeId = payload?.employeeId;
         voucher.items = items;
         voucher.totalAmount = payload?.totalAmount;
+        voucher.state = VoucherState.APPROVED;
         voucher.createUserId = await VoucherService.getUserId();
         voucher.updateUserId = await VoucherService.getUserId();
 
@@ -212,10 +214,20 @@ export class VoucherService {
         headers: VoucherService.headerWebhook
       };
 
-      await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', data, options)
+      try {
+        await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', data, options)
+      } catch (error) {
+        const checkId = await this.voucherRepo.findByIds(resultVoucher.data['id'])
+        if (checkId) {
+          await this.voucherRepo.delete({id: resultVoucher.data['id']})
+        }
+        throw new HttpException('Gagal Menyambungkan ke Webhook', HttpStatus.GATEWAY_TIMEOUT);
+      }
+
       return resultVoucher
     } catch (err) {
-      throw err.message;
+      console.log(err)
+      throw err;
     }
   }
 
