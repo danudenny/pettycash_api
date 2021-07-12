@@ -1,16 +1,25 @@
-import { Connection, createConnection } from 'typeorm';
+import { INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { LoggerModule } from 'nestjs-pino';
+import { LoaderEnv } from '../src/config/loader';
 
 jest.setTimeout(5 * 60 * 1000);
-
-const connection: Connection = null;
+let app: INestApplication;
 
 beforeAll(async () => {
-  const ormConfig = require('../src/config/typeorm.config.cli');
-  await createConnection(Object.assign(ormConfig, { name: 'unit_test' }));
+  const module = await Test.createTestingModule({
+    imports: [
+      LoaderEnv,
+      TypeOrmModule.forRoot(LoaderEnv.getTypeOrmConfig()),
+      LoggerModule.forRoot(),
+    ],
+  }).compile();
+
+  app = module.createNestApplication();
+  await app.init();
 });
 
 afterAll(async () => {
-  if (connection) {
-    await connection.close();
-  }
+  await app.close();
 });

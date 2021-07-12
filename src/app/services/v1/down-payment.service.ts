@@ -513,6 +513,7 @@ export class DownPaymentService {
       jrnlItem.isLedger = true;
       jrnlItem.journalId = jurnalId;
       jrnlItem.branchId = downPayment.branchId;
+      jrnlItem.description = downPayment.description;
       jrnlItem.debit = downPayment.amount;
       jrnlItem.reference = downPayment.number;
       jrnlItem.periodId = downPayment.periodId;
@@ -550,6 +551,7 @@ export class DownPaymentService {
       jrnlItem.coaId = branch?.cashCoaId;
       jrnlItem.productId = downPayment?.productId;
       jrnlItem.branchId = downPayment.branchId;
+      jrnlItem.description = downPayment.description;
       jrnlItem.credit = downPayment.amount;
       jrnlItem.reference = downPayment.number;
       jrnlItem.periodId = downPayment.periodId;
