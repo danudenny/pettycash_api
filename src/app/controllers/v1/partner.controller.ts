@@ -106,6 +106,15 @@ export class PartnerController {
     return await this.svc.get(id);
   }
 
+  @Put('/nonactive-partner')
+  @ApiOperation({ summary: 'Nonactive partner after 6mo' })
+  @ApiOkResponse({ description: 'Partner successfully inactivated' })
+  @ApiBadRequestResponse({ description: 'Failed inactivated partner' })
+  @ApiNoContentResponse({ description: 'All Partner has activity within 6mo' })
+  public async updatePartnerActive() {
+    return await this.svc.updatePartnerActive()
+  }
+
   @Put('/:id')
   @ApiOperation({ summary: 'Update Partner' })
   @ApiOkResponse({ description: 'Partner successfully updated' })
@@ -116,16 +125,6 @@ export class PartnerController {
     @Body() payload: UpdatePartnerDTO,
   ) {
     return await this.svc.update(id, payload);
-  }
-
-  
-  @Put('/nonactive-partner')
-  @ApiOperation({ summary: 'Nonactive partner after 6mo' })
-  @ApiOkResponse({ description: 'Partner successfully inactivated' })
-  @ApiBadRequestResponse({ description: 'Failed inactivated partner' })
-  @ApiNoContentResponse({ description: 'All Partner has activity within 6mo' })
-  public async updatePartnerActive() {
-    return await this.svc.updatePartnerActive()
   }
 
   @Delete('/:id')
