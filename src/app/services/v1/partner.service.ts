@@ -1,3 +1,4 @@
+import { PartnerState } from './../../../model/utils/enum';
 import { Expense } from '../../../model/expense.entity';
 import { BadRequestException, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,7 +8,6 @@ import { AttachmentService } from '../../../common/services/attachment.service';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { Attachment } from '../../../model/attachment.entity';
 import { Partner } from '../../../model/partner.entity';
-import { PartnerState } from '../../../model/utils/enum';
 import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../shared/errors';
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
 import { PartnerAttachmentDTO } from '../../domain/partner/partner-attahcment.dto';
@@ -318,6 +318,10 @@ export class PartnerService {
       (v) => v.isFalse(),
     );
     qb.andWhere(
+      (e) => e.partner.state,
+      (v) => v.equals(PartnerState.APPROVED),
+    );
+    qb.andWhere(
       (e) => e.partner.isActive,
       (v) => v.isTrue(),
     );
@@ -326,7 +330,8 @@ export class PartnerService {
 
     const update = await this.partnerRepo.create({
       isActive: false,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      updateUserId: '69b99e7c-d23a-4fb0-a3dc-ea5968306a41'
     });
 
     getPartner.forEach(element => {
@@ -334,8 +339,8 @@ export class PartnerService {
       const trxDate = dayjs(element.transactionDate);
       const diffDate = dateNow.diff(trxDate, 'days')
       if (diffDate > 182.6) {
-        let nonActPartner =  this.partnerRepo.update(element.id, update);
-        return new HttpException(nonActPartner, HttpStatus.OK);
+        this.partnerRepo.update(element.id, update);
+        return new HttpException('Partner successfuly inactivated', HttpStatus.OK);
       }
         
     });
