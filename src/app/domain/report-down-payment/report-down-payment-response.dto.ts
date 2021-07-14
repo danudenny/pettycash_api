@@ -7,7 +7,10 @@ import { ReportDownPaymentDTO } from './report-down-payment.dto';
 import { ReportDownPaymentResponseMapper } from './report-down-payment-response.mapper.dto';
 
 export class ReportDownPaymentsWithPaginationResponse extends BaseResponse {
-  constructor(data?: Partial<ReportDownPaymentDTO | ReportDownPaymentDTO[]>, params?: any) {
+  constructor(
+    data?: Partial<ReportDownPaymentDTO | ReportDownPaymentDTO[]>,
+    params?: any,
+  ) {
     super();
     if (data) {
       this.data = ReportDownPaymentResponseMapper.fromDTO(data);
@@ -21,4 +24,3 @@ export class ReportDownPaymentsWithPaginationResponse extends BaseResponse {
   @ApiPropertyOptional({ type: () => BasePaginationResponse })
   meta?: BasePaginationResponse;
 }
-

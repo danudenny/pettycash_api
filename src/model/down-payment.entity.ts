@@ -67,11 +67,11 @@ export class DownPayment extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'expense_id', nullable: true })
   @Index()
   expenseId?: string;
-  
+
   @Column({ type: 'uuid', name: 'product_id', nullable: true })
   @Index()
   productId?: string;
-  
+
   @ManyToOne(() => Expense, (e) => e.downPayment, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'expense_id' })
   expense?: Expense;

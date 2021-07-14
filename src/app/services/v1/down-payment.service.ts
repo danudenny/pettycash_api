@@ -1,5 +1,10 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getManager, EntityManager, createQueryBuilder } from 'typeorm';
+import {
+  Repository,
+  getManager,
+  EntityManager,
+  createQueryBuilder,
+} from 'typeorm';
 import {
   BadRequestException,
   HttpException,
@@ -498,13 +503,13 @@ export class DownPaymentService {
       const user = await this.getUser(true);
       const jrnlItem = new JournalItem();
 
-      const prodId = downPayment?.productId
+      const prodId = downPayment?.productId;
 
       const getCoa = await createQueryBuilder('product', 'prod')
-                          .leftJoin('down_payment', 'dp', 'prod.id = dp.product_id')
-                          .where('prod.id = :prodId', { prodId })
-                          .andWhere('dp.isDeleted = false')
-                          .getOne();
+        .leftJoin('down_payment', 'dp', 'prod.id = dp.product_id')
+        .where('prod.id = :prodId', { prodId })
+        .andWhere('dp.isDeleted = false')
+        .getOne();
 
       jrnlItem.createUser = user;
       jrnlItem.updateUser = user;

@@ -70,7 +70,10 @@ export class ReportDownPaymentService {
     }
   }
 
-  async export(res: Response, query?: QueryReportDownPaymentDTO): Promise<Buffer> {
+  async export(
+    res: Response,
+    query?: QueryReportDownPaymentDTO,
+  ): Promise<Buffer> {
     try {
       const { read, write, utils } = XLSX;
       const params = { order: '^created_at', ...query };
@@ -119,13 +122,28 @@ export class ReportDownPaymentService {
 
       const reportDownPayment = await qb.exec();
 
-      let startDate = this.formatDate(query && query?.startDate__gte || new Date(), "id")
-      let endDate = this.formatDate(query && query?.endDate__lte || new Date(), "id")
+      let startDate = this.formatDate(
+        (query && query?.startDate__gte) || new Date(),
+        'id',
+      );
+      let endDate = this.formatDate(
+        (query && query?.endDate__lte) || new Date(),
+        'id',
+      );
       /* Define Header*/
       const heading = [
-        ["PT. SiCepat Express Indonesia"], [],
-        [`Data Uang Muka Mulai: ${startDate+' Sampai Dengan '+endDate}`], [],
-        ["No Transaksi Uang Muka", "Source Document", "Branch", "Nilai Uang Muka", "Nilai Realisasi", "Pelunasan"],
+        ['PT. SiCepat Express Indonesia'],
+        [],
+        [`Data Uang Muka Mulai: ${startDate + ' Sampai Dengan ' + endDate}`],
+        [],
+        [
+          'No Transaksi Uang Muka',
+          'Source Document',
+          'Branch',
+          'Nilai Uang Muka',
+          'Nilai Realisasi',
+          'Pelunasan',
+        ],
       ];
 
       const dtSheet = reportDownPayment.map((t) => {
@@ -136,8 +154,8 @@ export class ReportDownPaymentService {
           amountDownPayment: t.amountDownPayment,
           amountRealized: t.amountRealized,
           amountRepayment: t.amountRepayment,
-        }
-      })
+        };
+      });
 
       /* merge cells*/
       const mergeCop = { s: { c: 0, r: 0 }, e: { c: 5, r: 0 } };
@@ -154,12 +172,12 @@ export class ReportDownPaymentService {
       ws['!merges'].push(mergeCop);
       ws['!merges'].push(mergeRangeDate);
       /* Write data */
-      utils.sheet_add_json(ws, dtSheet, { origin : 5, skipHeader: true})
-      utils.book_append_sheet(wb, ws, "Report Uang Muka");
+      utils.sheet_add_json(ws, dtSheet, { origin: 5, skipHeader: true });
+      utils.book_append_sheet(wb, ws, 'Report Uang Muka');
 
       /* generate buffer */
       // var buf = writeFile(wb, `report-auang-muka-${startDate+ '-' +endDate}`,{ type: 'buffer' });
-      var buf = write(wb,{ type: 'buffer' });
+      var buf = write(wb, { type: 'buffer' });
 
       var d = new Date(),
         year = d.getFullYear().toString().substr(-2),
@@ -167,37 +185,45 @@ export class ReportDownPaymentService {
         day = d.getDate().toString(),
         hours = d.getHours().toString(),
         minute = d.getMinutes().toString(),
-        second = d.getSeconds().toString()
-        //if month is 1-9 pad right with a 0 for two digits
-        if (month.length === 1){
-          month = "0"+month;
-        }
-        //if day is between 1-9 pad right with a 0 for two digits
-        if (day.length === 1){
-          day = "0"+day;
-        }
-        //if hours is between 1-9 pad right with a 0 for two digits
-        if (hours.length === 1) {
-          hours = "0"+hours;
-        }
-        //if minute is between 1-9 pad right with a 0 for two digits
-        if (minute.length === 1) {
-          minute = "0"+minute
-        }
-        //if minute is between 1-9 pad right with a 0 for two digits
-        if (second.length === 1) {
-          second = "0"+second;
-        }
-    
-      const fileName = `down_payment_report_${year+month+day+'-'+hours+minute+second}.xlsx`;
+        second = d.getSeconds().toString();
+      //if month is 1-9 pad right with a 0 for two digits
+      if (month.length === 1) {
+        month = '0' + month;
+      }
+      //if day is between 1-9 pad right with a 0 for two digits
+      if (day.length === 1) {
+        day = '0' + day;
+      }
+      //if hours is between 1-9 pad right with a 0 for two digits
+      if (hours.length === 1) {
+        hours = '0' + hours;
+      }
+      //if minute is between 1-9 pad right with a 0 for two digits
+      if (minute.length === 1) {
+        minute = '0' + minute;
+      }
+      //if minute is between 1-9 pad right with a 0 for two digits
+      if (second.length === 1) {
+        second = '0' + second;
+      }
+
+      const fileName = `down_payment_report_${
+        year + month + day + '-' + hours + minute + second
+      }.xlsx`;
       /* send to client */
-      res.setHeader('Content-Disposition',`attachment;filename=${fileName}`)
-      res.setHeader('Content-type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      res.setHeader('Content-Disposition', `attachment;filename=${fileName}`);
+      res.setHeader(
+        'Content-type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
       res.status(200).send(buf);
 
-      return
+      return;
     } catch (err) {
-      throw new HttpException(err.message, err.status || HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        err.message,
+        err.status || HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
@@ -205,52 +231,82 @@ export class ReportDownPaymentService {
    * Get a format date y-m-d
    * @param {string} date - request date.
    * @return {formatDateFn} format date y-m-d
-  */
-  formatDate(date: Date, lang:string='en') {
+   */
+  formatDate(date: Date, lang: string = 'en') {
     var d = new Date(date),
-        gd = d.getDate(),
-        month = this.convertMonth(d.getMonth(), lang),
-        year = d.getFullYear();
-    
-    return gd+' '+month+' '+year;
+      gd = d.getDate(),
+      month = this.convertMonth(d.getMonth(), lang),
+      year = d.getFullYear();
+
+    return gd + ' ' + month + ' ' + year;
   }
   /**
    * Get a month
    * @param {number} month - value month
    * @param {lang} string - value en or id
    * @return {convertMonthFn} month
-  */
-  convertMonth(month: number, lang:string = 'en') {
-      var month = <number>month;
-      var arr_month = [];
-      var month_converted = '';
+   */
+  convertMonth(month: number, lang: string = 'en') {
+    var month = <number>month;
+    var arr_month = [];
+    var month_converted = '';
 
-      switch (lang) {
-        case 'id':
-            arr_month = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'Nopember', 'Desember'];
-            break;
+    switch (lang) {
+      case 'id':
+        arr_month = [
+          'Januari',
+          'Februari',
+          'Maret',
+          'April',
+          'Mei',
+          'Juni',
+          'Juli',
+          'Agustus',
+          'September',
+          'Oktober',
+          'Nopember',
+          'Desember',
+        ];
+        break;
 
-        default:
-            arr_month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            break;
-      }
+      default:
+        arr_month = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
+        break;
+    }
 
-      if (this.arrayKeyExists(month, arr_month)) {
-          month_converted = arr_month[month];
-      }
+    if (this.arrayKeyExists(month, arr_month)) {
+      month_converted = arr_month[month];
+    }
 
-      return month_converted;
+    return month_converted;
   }
   /**
-   * @param {number} key - value 
+   * @param {number} key - value
    * @param {search} any - value array or object
    * @return {arrayKeyExistsFn} month
-  */
-  arrayKeyExists(key: number, search: any) { // eslint-disable-line camelcase
+   */
+  arrayKeyExists(key: number, search: any) {
+    // eslint-disable-line camelcase
 
-    if (!search || (search.constructor !== Array && search.constructor !== Object)) {
-        return false
+    if (
+      !search ||
+      (search.constructor !== Array && search.constructor !== Object)
+    ) {
+      return false;
     }
-    return key in search
+    return key in search;
   }
 }
