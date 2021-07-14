@@ -62,6 +62,11 @@ export enum VoucherState {
   APPROVED = 'approved',
 }
 
+export enum VoucherPaymentType {
+  CASH = 'cash',
+  BANK = 'bank',
+}
+
 export enum DownPaymentType {
   PERDIN = 'perdin',
   REIMBURSEMENT = 'reimbursement',
