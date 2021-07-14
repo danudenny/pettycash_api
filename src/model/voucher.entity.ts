@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, OneToMany, ManyToOne, ManyToMany, JoinTable
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Employee } from './employee.entity';
-import { VoucherState } from './utils/enum';
+import { VoucherState, VoucherPaymentType } from './utils/enum';
 import { VoucherItem } from './voucher-item.entity';
 import { IsUUID } from 'class-validator';
 import { Attachment } from './attachment.entity';
@@ -84,6 +84,15 @@ export class Voucher extends PtcBaseEntity {
     default: VoucherState.DRAFT,
   })
   state: VoucherState;
+
+  @Column({
+    type: 'enum',
+    enum: VoucherPaymentType,
+    default: VoucherPaymentType.CASH,
+    nullable: true,
+    name: 'payment_type'
+  })
+  paymentType: VoucherPaymentType;
 
   @ManyToMany(() => Attachment)
   @JoinTable({
