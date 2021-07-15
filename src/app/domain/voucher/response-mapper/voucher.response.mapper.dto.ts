@@ -18,6 +18,7 @@ export class VoucherResponseMapper {
 		it.totalAmount = dto.totalAmount;
 		it.isRealized = dto.isRealized;
 		it.state = dto.state;
+		it.paymentType = dto.paymentType;
 		return it;
 	}
 
@@ -37,6 +38,7 @@ export class VoucherResponseMapper {
 			totalAmount: ety.totalAmount,
 			isRealized: ety.isRealized,
 			state: ety.state,
+			paymentType: ety.paymentType
 		});
 	}
 

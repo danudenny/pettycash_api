@@ -28,6 +28,7 @@ export class VoucherDetailResponseMapper {
 			employeeName: ety.employee && ety.employee.name,
 			employeePosition: ety.employee && ety.employee.positionName,
 			totalAmount: ety.totalAmount,
+			paymentType: ety.paymentType,
 			items: this.toVoucherItemDTO(ety.items),
 		});
 	}
