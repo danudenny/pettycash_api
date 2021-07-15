@@ -13,7 +13,7 @@ import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Employee } from './employee.entity';
 import { Period } from './period.entity';
-import { LoanState, LoanType } from './utils/enum';
+import { LoanSourceType, LoanState, LoanType } from './utils/enum';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('loan')
@@ -32,6 +32,14 @@ export class Loan extends PtcBaseEntity {
     nullable: true,
   })
   sourceDocument?: string;
+
+  @Column({
+    type: 'enum',
+    enum: LoanSourceType,
+    name: 'source_type',
+    nullable: true,
+  })
+  sourceType?: LoanSourceType;
 
   @Column({ type: 'date', name: 'transaction_date' })
   transactionDate: Date;
