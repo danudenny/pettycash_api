@@ -1,6 +1,6 @@
 import { VoucherResponse } from './../../domain/voucher/response/voucher.response.dto';
-import { VoucherCreateDTO } from './../../domain/voucher/dto/voucher-create.dto';
-import { BadRequestException, HttpService, Injectable, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
+import { RedeemVoucherDTO, VoucherCreateDTO } from './../../domain/voucher/dto/voucher-create.dto';
+import { BadRequestException, HttpService, Injectable, NotFoundException, HttpException, HttpStatus, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository, getManager, EntityManager, createQueryBuilder } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -19,7 +19,7 @@ import { VoucherAttachmentResponse } from '../../domain/voucher/response/voucer-
 import { VoucherAttachmentDTO } from '../../domain/voucher/dto/voucher-attachment.dto';
 import { Observable } from 'rxjs';
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { VoucherState } from '../../../model/utils/enum';
+import { MASTER_ROLES, VoucherState } from '../../../model/utils/enum';
 
 
 @Injectable()
@@ -199,6 +199,7 @@ export class VoucherService {
         voucher.employeeId = payload?.employeeId;
         voucher.items = items;
         voucher.totalAmount = payload?.totalAmount;
+        voucher.paymentType = payload.paymentType;
         voucher.state = VoucherState.APPROVED;
         voucher.createUserId = await VoucherService.getUserId();
         voucher.updateUserId = await VoucherService.getUserId();
@@ -349,5 +350,48 @@ export class VoucherService {
     if (!deleteAttachment) {
       throw new BadRequestException('Failed to delete attachment!');
     }
+  }
+
+  public async redeem(ids: string[], data: RedeemVoucherDTO): Promise<{ success: object[]; fail: object[] }> {
+    const { DRAFT, APPROVED } = VoucherState;
+
+    let state: VoucherState;
+    
+    const voucherToUpdateIds: string[] = [];
+    const failedIds: object[] = [];
+    const vouchers = await this.voucherRepo.find({
+      where: {
+        id: In(ids),
+        isDeleted: false,
+      },
+    });
+
+    for (const voucher of vouchers) {
+      if ([state, APPROVED].includes(voucher.state)) {
+        failedIds.push({ id: voucher.id });
+        continue;
+      }
+      voucherToUpdateIds.push(voucher.id);
+    }
+
+    if (!state) {
+      throw new UnprocessableEntityException(
+        `Gagal redeem voucher!`,
+      );
+    }
+
+    const updatedVoucher = this.voucherRepo.create(data as Voucher);
+    updatedVoucher.updatedAt = new Date();
+    updatedVoucher.updateUserId = await VoucherService.getUserId();
+
+    await this.voucherRepo.update(
+      { id: In(voucherToUpdateIds) },updatedVoucher,
+    );
+
+    const successIds = voucherToUpdateIds?.map((id) => {
+      return { id };
+    });
+    const result = { success: successIds, fail: failedIds };
+    return result;
   }
 }

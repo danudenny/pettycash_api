@@ -1,3 +1,4 @@
+import { VoucherPaymentType } from './../../../../model/utils/enum';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { VoucherState } from '../../../../model/utils/enum';
@@ -89,4 +90,11 @@ export class VoucherDTO {
     example: VoucherState.DRAFT,
   })
   state: VoucherState;
+
+  @ApiProperty( {
+    description: 'Voucher Payment Type',
+    example: VoucherPaymentType.CASH,
+  })
+  paymentType: VoucherPaymentType;
+
 }
