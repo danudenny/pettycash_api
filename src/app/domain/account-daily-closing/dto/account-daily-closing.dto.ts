@@ -64,6 +64,18 @@ export class AccountDailyClosingDTO {
   closingCashAmount: number;
 
   @ApiProperty({
+    description: 'Closing Cash Amount Diff',
+    example: 500000,
+  })
+  cashDifference: number;
+
+  @ApiProperty({
+    description: 'Closing Bank Amount  Diff',
+    example: 500000,
+  })
+  bankDifference: number;
+
+  @ApiProperty({
     description: 'Reason for execute daily closing when deviation does not meets',
     example: 'Pending',
   })
