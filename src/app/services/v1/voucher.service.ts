@@ -226,7 +226,14 @@ export class VoucherService {
         throw new HttpException('Gagal Menyambungkan ke Webhook', HttpStatus.GATEWAY_TIMEOUT);
       }
 
-      return resultVoucher
+      const resJson = {
+        "voucher_ids": [
+          resultVoucher.data['id']
+        ],
+        "payment_type": resultVoucher.data['paymentType']
+      };
+      
+      return resJson
     } catch (err) {
       console.log(err)
       throw err;
