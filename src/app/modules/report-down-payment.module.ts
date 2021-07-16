@@ -3,7 +3,7 @@ import { ReportDownPaymentService } from './../services/v1/report-down-payment.s
 import { ReportDownPaymentController } from './../controllers/v1/report-down-payment.controller';
 
 @Module({
-    controllers: [ReportDownPaymentController,],
-    providers: [ReportDownPaymentService,],
+  controllers: [ReportDownPaymentController],
+  providers: [ReportDownPaymentService],
 })
-export class ReportDownPaymentModule { }
+export class ReportDownPaymentModule {}

@@ -19,6 +19,7 @@ import { DownPaymentHistory } from './down-payment-history.entity';
 import { Expense } from './expense.entity';
 import { Period } from './period.entity';
 import { Product } from './product.entity';
+import { Loan } from './loan.entity';
 
 @Entity('down_payment')
 export class DownPayment extends PtcBaseEntity {
@@ -67,14 +68,22 @@ export class DownPayment extends PtcBaseEntity {
   @Column({ type: 'uuid', name: 'expense_id', nullable: true })
   @Index()
   expenseId?: string;
-  
+
+  @Column({ type: 'uuid', name: 'loan_id', nullable: true })
+  @Index()
+  loanId?: string;
+
   @Column({ type: 'uuid', name: 'product_id', nullable: true })
   @Index()
   productId?: string;
-  
+
   @ManyToOne(() => Expense, (e) => e.downPayment, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'expense_id' })
   expense?: Expense;
+
+  @ManyToOne(() => Loan, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'loan_id' })
+  loan?: Loan;
 
   @ManyToOne(() => Branch)
   @JoinColumn({ name: 'branch_id' })

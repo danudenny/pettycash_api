@@ -26,6 +26,9 @@ export class DownPaymentResponseMapper {
     dp.state = dto.state;
     (dp.isRealized = dto.expenseId ? true : false),
       (dp.transactionDate = dto.transactionDate);
+    dp.loanId = dto.loanId;
+    dp.loanNumber = dto.loanNumber;
+    dp.loanState = dto.loanState;
     return dp;
   }
 
@@ -50,6 +53,9 @@ export class DownPaymentResponseMapper {
       state: ety.state,
       isRealized: ety.expenseId ? true : false,
       transactionDate: ety.transactionDate,
+      loanId: ety.loanId,
+      loanNumber: ety.loan?.number || null,
+      loanState: ety.loan?.state || null,
     });
   }
 

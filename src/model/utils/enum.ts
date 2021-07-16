@@ -70,6 +70,8 @@ export enum VoucherPaymentType {
 export enum DownPaymentType {
   PERDIN = 'perdin',
   REIMBURSEMENT = 'reimbursement',
+  REIMBURSEMENT_HO = 'reimbursement_ho',
+  REIMBURSEMENT_OTHER = 'reimbursement_other',
 }
 
 export enum DownPaymentPayType {
@@ -129,6 +131,13 @@ export enum LoanType {
 export enum LoanState {
   PAID = 'paid',
   UNPAID = 'unpaid',
+}
+
+export enum LoanSourceType {
+  DP = 'down_payment',
+  EXPENSE = 'expense',
+  MANUAL = 'manual'
+  // Add other type
 }
 
 export enum AccountTaxPartnerType {

@@ -1,5 +1,10 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getManager, EntityManager, createQueryBuilder } from 'typeorm';
+import {
+  Repository,
+  getManager,
+  EntityManager,
+  createQueryBuilder,
+} from 'typeorm';
 import {
   BadRequestException,
   HttpException,
@@ -21,6 +26,8 @@ import {
   DownPaymentType,
   JournalSourceType,
   JournalState,
+  LoanSourceType,
+  LoanType,
   MASTER_ROLES,
   PeriodState,
 } from '../../../model/utils/enum';
@@ -42,6 +49,7 @@ import { AuthService } from './auth.service';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import { BalanceService } from './balance.service';
+import { Loan } from '../../../model/loan.entity';
 
 @Injectable()
 export class DownPaymentService {
@@ -106,11 +114,15 @@ export class DownPaymentService {
         ['epl.name', 'employeeName'],
         ['epl.nik', 'employeeNik'],
         ['pd.name', 'periodName'],
+        ['lo.id', 'loanId'],
+        ['lo."number"', 'loanNumber'],
+        ['lo.state', 'loanState'],
       );
       qb.leftJoin((e) => e.branch, 'brc');
       qb.leftJoin((e) => e.department, 'dpr');
       qb.leftJoin((e) => e.employee, 'epl');
       qb.leftJoin((e) => e.period, 'pd');
+      qb.leftJoin((e) => e.loan, 'lo');
       qb.andWhere(
         (e) => e.isDeleted,
         (v) => v.isFalse(),
@@ -146,6 +158,7 @@ export class DownPaymentService {
           'department',
           'period',
           'product',
+          'loan',
           'histories',
           'histories.createUser',
         ],
@@ -225,13 +238,21 @@ export class DownPaymentService {
 
         const user = await AuthService.getUser({ relations: ['role'] });
         const userRole = user?.role?.name;
+        const downPaymentType = downPayment?.type;
+        const { REIMBURSEMENT_HO, REIMBURSEMENT_OTHER } = DownPaymentType;
+        const { REJECTED, REVERSED } = DownPaymentState;
+        const TYPES_SHOULD_CREATE_LOAN = [
+          REIMBURSEMENT_HO,
+          REIMBURSEMENT_OTHER,
+        ];
 
         let state: DownPaymentState;
         let isCreateJurnal = false;
         let shouldCreateStatement = false;
+        let shouldCreateLoan = false;
         const currentState = downPayment.state;
 
-        if (currentState == DownPaymentState.REJECTED) {
+        if ([REJECTED, REVERSED].includes(currentState)) {
           throw new BadRequestException(
             `Can't approve down payment with current state ${currentState}`,
           );
@@ -259,6 +280,7 @@ export class DownPaymentService {
           state = DownPaymentState.APPROVED_BY_SS_SPV;
           isCreateJurnal = true;
           shouldCreateStatement = true;
+          shouldCreateLoan = TYPES_SHOULD_CREATE_LOAN.includes(downPaymentType);
         }
 
         if (!state)
@@ -279,6 +301,11 @@ export class DownPaymentService {
 
         if (shouldCreateStatement) {
           await this.upsertAccountStatement(manager, downPayment);
+        }
+
+        if (shouldCreateLoan) {
+          const loan = await this.createLoan(manager, downPayment);
+          downPayment.loanId = loan?.id;
         }
 
         const result = await manager.save(downPayment);
@@ -498,13 +525,13 @@ export class DownPaymentService {
       const user = await this.getUser(true);
       const jrnlItem = new JournalItem();
 
-      const prodId = downPayment?.productId
+      const prodId = downPayment?.productId;
 
       const getCoa = await createQueryBuilder('product', 'prod')
-                          .leftJoin('down_payment', 'dp', 'prod.id = dp.product_id')
-                          .where('prod.id = :prodId', { prodId })
-                          .andWhere('dp.isDeleted = false')
-                          .getOne();
+        .leftJoin('down_payment', 'dp', 'prod.id = dp.product_id')
+        .where('prod.id = :prodId', { prodId })
+        .andWhere('dp.isDeleted = false')
+        .getOne();
 
       jrnlItem.createUser = user;
       jrnlItem.updateUser = user;
@@ -638,5 +665,26 @@ export class DownPaymentService {
     });
     // Invalidate Cache Balance
     await BalanceService.invalidateCache(downPayment?.branchId);
+  }
+
+  private async createLoan(
+    manager: EntityManager,
+    downPayment: DownPayment,
+  ): Promise<Loan> {
+    const loan = new Loan();
+    loan.branchId = downPayment.branchId;
+    loan.periodId = downPayment.periodId;
+    loan.transactionDate = new Date();
+    loan.number = GenerateCode.loan(loan.transactionDate);
+    loan.sourceDocument = downPayment.number;
+    loan.sourceType = LoanSourceType.DP;
+    loan.type = LoanType.PAYABLE;
+    loan.amount = downPayment.amount;
+    loan.residualAmount = downPayment.amount;
+    loan.employeeId = downPayment?.employeeId;
+    loan.createUserId = downPayment.createUserId;
+    loan.updateUserId = downPayment.updateUserId;
+
+    return await manager.save(loan);
   }
 }
