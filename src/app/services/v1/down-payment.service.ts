@@ -672,6 +672,7 @@ export class DownPaymentService {
     downPayment: DownPayment,
   ): Promise<Loan> {
     const loan = new Loan();
+    loan.downPaymentId = downPayment.id;
     loan.branchId = downPayment.branchId;
     loan.periodId = downPayment.periodId;
     loan.transactionDate = new Date();

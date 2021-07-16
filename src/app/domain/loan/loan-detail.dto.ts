@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
-import { LoanState } from '../../../model/utils/enum';
+import { DownPaymentType, LoanState } from '../../../model/utils/enum';
 import { LoanPaymentDTO } from './loan-payment.dto';
 
 export class LoanDetailDTO {
@@ -28,6 +28,12 @@ export class LoanDetailDTO {
     example: '1008991',
   })
   sourceDocument: string;
+
+  @ApiProperty({
+    description: 'Down Payment Type',
+    example: DownPaymentType.REIMBURSEMENT_HO,
+  })
+  downPaymentType: DownPaymentType;
 
   @ApiProperty({
     description: 'Loan Amount',
