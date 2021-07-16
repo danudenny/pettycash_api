@@ -1,6 +1,6 @@
 import { VoucherResponse } from './../../domain/voucher/response/voucher.response.dto';
-import { RedeemVoucherDTO, VoucherCreateDTO } from './../../domain/voucher/dto/voucher-create.dto';
-import { BadRequestException, HttpService, Injectable, NotFoundException, HttpException, HttpStatus, UnprocessableEntityException } from '@nestjs/common';
+import { BatchPayloadVoucherDTO, VoucherCreateDTO } from './../../domain/voucher/dto/voucher-create.dto';
+import { BadRequestException, Injectable, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository, getManager, EntityManager, createQueryBuilder } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -14,12 +14,11 @@ import { GenerateCode } from '../../../common/services/generate-code.service';
 import dayjs from 'dayjs';
 import { Attachment } from '../../../model/attachment.entity';
 import { AttachmentService } from '../../../common/services/attachment.service';
-import { randomStringGenerator, randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
+import { randomStringGenerator} from '@nestjs/common/utils/random-string-generator.util';
 import { VoucherAttachmentResponse } from '../../domain/voucher/response/voucer-attachment.response.dto';
 import { VoucherAttachmentDTO } from '../../domain/voucher/dto/voucher-attachment.dto';
-import { Observable } from 'rxjs';
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { MASTER_ROLES, VoucherState } from '../../../model/utils/enum';
+import axios from 'axios';
+import { VoucherState } from '../../../model/utils/enum';
 
 
 @Injectable()
@@ -29,7 +28,6 @@ export class VoucherService {
     private readonly voucherRepo: Repository<Voucher>,
     @InjectRepository(Attachment)
     private readonly attachmentRepo: Repository<Attachment>,
-    private httpService: HttpService
   ) {}
 
   private static async getUserId() {
@@ -210,7 +208,10 @@ export class VoucherService {
 
       const resultVoucher = new VoucherResponse(createVoucher);
       const data = JSON.stringify({
-        'voucher_id':resultVoucher.data['id']
+        "voucher_ids": [
+          resultVoucher.data['id']
+        ],
+        "payment_type": resultVoucher.data['paymentType']
       });
       const options = {
         headers: VoucherService.headerWebhook
@@ -225,15 +226,8 @@ export class VoucherService {
         }
         throw new HttpException('Gagal Menyambungkan ke Webhook', HttpStatus.GATEWAY_TIMEOUT);
       }
-
-      const resJson = {
-        "voucher_ids": [
-          resultVoucher.data['id']
-        ],
-        "payment_type": resultVoucher.data['paymentType']
-      };
       
-      return resJson
+      return resultVoucher
     } catch (err) {
       console.log(err)
       throw err;
@@ -359,46 +353,55 @@ export class VoucherService {
     }
   }
 
-  public async redeem(ids: string[], data: RedeemVoucherDTO): Promise<{ success: object[]; fail: object[] }> {
-    const { DRAFT, APPROVED } = VoucherState;
+  public async redeem(
+    data: BatchPayloadVoucherDTO,
+  ): Promise<any> {
+    const user = await AuthService.getUser({ relations: ['role'] });
 
-    let state: VoucherState;
-    
     const voucherToUpdateIds: string[] = [];
-    const failedIds: object[] = [];
     const vouchers = await this.voucherRepo.find({
       where: {
-        id: In(ids),
+        id: In(data.voucher_ids),
         isDeleted: false,
       },
     });
 
     for (const voucher of vouchers) {
-      if ([state, APPROVED].includes(voucher.state)) {
-        failedIds.push({ id: voucher.id });
-        continue;
-      }
       voucherToUpdateIds.push(voucher.id);
     }
 
-    if (!state) {
-      throw new UnprocessableEntityException(
-        `Gagal redeem voucher!`,
-      );
-    }
-
-    const updatedVoucher = this.voucherRepo.create(data as Voucher);
-    updatedVoucher.updatedAt = new Date();
-    updatedVoucher.updateUserId = await VoucherService.getUserId();
-
     await this.voucherRepo.update(
-      { id: In(voucherToUpdateIds) },updatedVoucher,
-    );
+      { id: In(data.voucher_ids) },
+      { paymentType: data.payment_type, updateUser: user }
+    )
 
     const successIds = voucherToUpdateIds?.map((id) => {
-      return { id };
+      return id;
     });
-    const result = { success: successIds, fail: failedIds };
-    return result;
+    const resultRedeem = {
+      voucher_ids: successIds,
+      payment_type: data.payment_type
+    }
+
+    const dataJson = JSON.stringify(resultRedeem);
+    const options = {
+      headers: VoucherService.headerWebhook
+    };
+
+    try {
+      await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', dataJson, options)
+    } catch (error) {
+      const checkId = await this.voucherRepo.find({
+        where: {
+          id: In(resultRedeem.voucher_ids)
+        }
+      })
+      if (checkId) {
+        await this.voucherRepo.delete({id: In(resultRedeem.voucher_ids)})
+      }
+      throw new HttpException('Gagal Menyambungkan ke Webhook', HttpStatus.GATEWAY_TIMEOUT);
+    }
+    return resultRedeem;
   }
+
 }

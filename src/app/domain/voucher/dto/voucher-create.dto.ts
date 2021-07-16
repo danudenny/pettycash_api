@@ -43,11 +43,16 @@ export class VoucherCreateDTO {
 	items: CreateVoucherItemDTO[]
 }
 
-export class RedeemVoucherDTO {
-	@ApiProperty( {
-    description: 'Voucher Payment Type',
-    example: VoucherPaymentType.CASH,
+export class BatchPayloadVoucherDataDTO {
+  @ApiProperty({
+    description: 'Voucher ID',
+    example: 'b7726b7b-6882-42ea-b623-d8f8a347ba0b',
   })
-	@IsArray()
-  paymentType: VoucherPaymentType;
+  @IsUUID()
+  voucher_ids: string;
+}
+
+export class BatchPayloadVoucherDTO {
+	voucher_ids: string[];
+	payment_type: VoucherPaymentType
 }
