@@ -113,6 +113,7 @@ export class LoanService {
       ['l.residual_amount', 'residualAmount'],
       ['l.paid_amount', 'paidAmount'],
       ['l.source_document', 'sourceDocument'],
+      ['l.down_payment_id', 'downPaymentId'],
       ['l.created_at', 'createdAt'],
       ['p.month', 'periodMonth'],
       ['p.year', 'periodYear'],
@@ -142,7 +143,7 @@ export class LoanService {
   public async getById(id: string) {
     const loan = await this.loanRepo.findOne({
       where: { id, isDeleted: false },
-      relations: ['employee', 'payments'],
+      relations: ['employee', 'downPayment', 'payments'],
     });
 
     if (!loan) {
@@ -206,7 +207,7 @@ export class LoanService {
   public async createAttachment(
     loanId: string,
     files?: any,
-    attachmentType?: any
+    attachmentType?: any,
   ): Promise<LoanAttachmentResponse> {
     try {
       const createAttachment = await getManager().transaction(

@@ -53,6 +53,13 @@ export class LoanDTO {
   sourceDocument: string;
 
   @ApiProperty({
+    description: 'DownPayment ID',
+    example: 'd659d65c-fcf3-45c8-956e-5baf9dee2522',
+  })
+  @IsUUID()
+  downPaymentId: string;
+
+  @ApiProperty({
     description: 'Employee Name',
     example: 'Arianty Silvia',
   })

@@ -9,6 +9,7 @@ export class LoanDetailResponseMapper {
     dto.employeeName = ety.employee?.name;
     dto.employeeNik = ety.employee?.nik;
     dto.sourceDocument = ety.sourceDocument;
+    dto.downPaymentType = ety.downPayment?.type || null;
     dto.amount = ety.amount;
     dto.residualAmount = ety.residualAmount;
     dto.state = ety.state;
