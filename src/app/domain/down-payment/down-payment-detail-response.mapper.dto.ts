@@ -59,6 +59,9 @@ export class ShowDownPaymentResponseMapper {
       state: ety.state,
       isRealized: ety.expenseId ? true : false,
       transactionDate: ety.transactionDate,
+      loanId: ety.loanId,
+      loanNumber: ety.loan?.number || null,
+      loanState: ety.loan?.state || null,
       histories: this.toDownPaymenteHistoryDTO(ety.histories, ety.branch),
     });
   }

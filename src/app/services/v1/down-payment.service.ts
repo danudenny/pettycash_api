@@ -114,11 +114,15 @@ export class DownPaymentService {
         ['epl.name', 'employeeName'],
         ['epl.nik', 'employeeNik'],
         ['pd.name', 'periodName'],
+        ['lo.id', 'loanId'],
+        ['lo."number"', 'loanNumber'],
+        ['lo.state', 'loanState'],
       );
       qb.leftJoin((e) => e.branch, 'brc');
       qb.leftJoin((e) => e.department, 'dpr');
       qb.leftJoin((e) => e.employee, 'epl');
       qb.leftJoin((e) => e.period, 'pd');
+      qb.leftJoin((e) => e.loan, 'lo');
       qb.andWhere(
         (e) => e.isDeleted,
         (v) => v.isFalse(),
@@ -154,6 +158,7 @@ export class DownPaymentService {
           'department',
           'period',
           'product',
+          'loan',
           'histories',
           'histories.createUser',
         ],
@@ -299,7 +304,8 @@ export class DownPaymentService {
         }
 
         if (shouldCreateLoan) {
-          await this.createLoan(manager, downPayment);
+          const loan = await this.createLoan(manager, downPayment);
+          downPayment.loanId = loan?.id;
         }
 
         const result = await manager.save(downPayment);
