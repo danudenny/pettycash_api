@@ -54,5 +54,5 @@ export class BatchPayloadVoucherDataDTO {
 
 export class BatchPayloadVoucherDTO {
 	voucher_ids: string[];
-	payment_type: VoucherPaymentType
+	paymentType: VoucherPaymentType
 }

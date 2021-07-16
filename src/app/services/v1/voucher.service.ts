@@ -366,13 +366,16 @@ export class VoucherService {
       },
     });
 
+    const paymentTypeFromQuery = [];
+
     for (const voucher of vouchers) {
+      paymentTypeFromQuery.push(voucher.paymentType)
       voucherToUpdateIds.push(voucher.id);
     }
 
     await this.voucherRepo.update(
       { id: In(data.voucher_ids) },
-      { paymentType: data.payment_type, updateUser: user }
+      { paymentType: data.paymentType, updateUser: user }
     )
 
     const successIds = voucherToUpdateIds?.map((id) => {
@@ -380,28 +383,45 @@ export class VoucherService {
     });
     const resultRedeem = {
       voucher_ids: successIds,
-      payment_type: data.payment_type
+      payment_type: data.paymentType
     }
 
     const dataJson = JSON.stringify(resultRedeem);
+
     const options = {
       headers: VoucherService.headerWebhook
     };
 
+    const webhookResp = [];
+
     try {
-      await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', dataJson, options)
-    } catch (error) {
-      const checkId = await this.voucherRepo.find({
-        where: {
-          id: In(resultRedeem.voucher_ids)
-        }
+      await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', dataJson, options).then((result) => {
+        webhookResp.push(result.data)
       })
-      if (checkId) {
-        await this.voucherRepo.delete({id: In(resultRedeem.voucher_ids)})
-      }
-      throw new HttpException('Gagal Menyambungkan ke Webhook', HttpStatus.GATEWAY_TIMEOUT);
+
+      // FIXME: Refactoring this looping query
+
+      const resp = []
+      webhookResp[0].forEach(async res => {
+        // console.log(res['voucher_id'])
+        resp.push(res);
+        if (res['status'] == 'FAILED') {
+          await this.voucherRepo.update(
+            { id: res['voucher_id'] },
+            { paymentType: paymentTypeFromQuery[0] }
+          )
+        }
+      });
+      console.log(JSON.parse(resp['voucher_id']))
+    } catch (error) {
+      await this.voucherRepo.update(
+        { id: In(successIds) },
+        { paymentType: paymentTypeFromQuery[0] }
+      )
+      throw new HttpException('Gagal Terhubung dengan Webhook!', HttpStatus.GATEWAY_TIMEOUT);
     }
-    return resultRedeem;
+    const webHookResult = webhookResp[0]
+    return {resultRedeem, webHookResult};
   }
 
 }
