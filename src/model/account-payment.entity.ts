@@ -10,6 +10,9 @@ export class AccountPayment extends PtcBaseEntity {
   @Index()
   branchId: string;
 
+  @Column({ type: 'varchar', length: 25, unique: true })
+  number: string;
+
   @Column({ type: 'date', name: 'transaction_date' })
   transactionDate: Date;
 
