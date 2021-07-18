@@ -19,6 +19,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiHeader,
   ApiInternalServerErrorResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -39,6 +40,7 @@ import { CreateLoanDTO } from '../../domain/loan/create.dto';
 @Controller('v1/loans')
 @ApiTags('Loan')
 @ApiInternalServerErrorResponse({ description: 'General Error' })
+@ApiHeader({ name: 'x-username', description: 'Custom User Request' })
 export class LoanController {
   constructor(private svc: LoanService) {}
 
