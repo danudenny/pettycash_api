@@ -155,7 +155,8 @@ export enum JournalState {
 export enum JournalSourceType {
   DP = 'down_payment',
   EXPENSE = 'expense',
-  ALOKASI = 'alokasi_saldo'
+  ALOKASI = 'alokasi_saldo',
+  PAYMENT = 'payment',
   // Add other type
 }
 
