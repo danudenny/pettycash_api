@@ -3,6 +3,7 @@ import {
   getManager,
   EntityManager,
   createQueryBuilder,
+  getConnection,
 } from 'typeorm';
 import {
   BadRequestException,
@@ -25,8 +26,10 @@ import {
   AccountPaymentType,
   AccountStatementAmountPosition,
   AccountStatementType,
+  JournalSourceType,
   LoanState,
   LoanType,
+  PeriodState,
 } from '../../../model/utils/enum';
 import { LoanAttachmentResponse } from '../../domain/loan/response-attachment.dto';
 import { Attachment } from '../../../model/attachment.entity';
@@ -37,6 +40,11 @@ import { GenerateCode } from '../../../common/services/generate-code.service';
 import { PeriodService } from './period.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import { BalanceService } from './balance.service';
+import { Journal } from '../../../model/journal.entity';
+import { Period } from '../../../model/period.entity';
+import { Branch } from '../../../model/branch.entity';
+import { JournalItem } from '../../../model/journal-item.entity';
+import { DownPayment } from '../../../model/down-payment.entity';
 
 @Injectable()
 export class LoanService {
@@ -304,7 +312,7 @@ export class LoanService {
       const createPayment = await getManager().transaction(async (manager) => {
         const loan = await manager.getRepository(Loan).findOne({
           where: { id, isDeleted: false },
-          relations: ['employee', 'payments'],
+          relations: ['branch', 'employee', 'payments'],
         });
 
         if (!loan) {
@@ -325,6 +333,10 @@ export class LoanService {
         // Create AccountStatement (Mutasi Saldo)
         const buildStmt = await this.buildStatement(loan, payment);
         await this.createStatement(manager, buildStmt);
+
+        // Create Journal
+        const journal = await this.buildJournal(manager, loan, payment);
+        await this.createJournal(manager, journal);
 
         // Update Loan Payments
         const existingPayments = loan.payments || [];
@@ -402,6 +414,7 @@ export class LoanService {
     const payment = new AccountPayment();
     payment.branchId = loan.branchId;
     payment.transactionDate = new Date();
+    payment.number = GenerateCode.payment(payment.transactionDate);
     payment.paymentMethod = payload.paymentMethod;
     payment.createUser = loan.updateUser;
     payment.updateUser = loan.updateUser;
@@ -453,5 +466,144 @@ export class LoanService {
     }
 
     return stmt;
+  }
+
+  private async createJournal(
+    manager: EntityManager,
+    journal: Journal,
+  ): Promise<Journal> {
+    const journalRepo = manager.getRepository<Journal>(Journal);
+    const periodRepo = manager.getRepository<Period>(Period);
+    const period = await periodRepo.findOne({
+      where: { id: journal.periodId, isDeleted: false },
+      select: ['state'],
+    });
+
+    if (!period || period?.state === PeriodState.CLOSE) {
+      throw new BadRequestException(
+        `Failed create journal due period already closed!`,
+      );
+    }
+
+    return await journalRepo.save(journal);
+  }
+
+  private async buildJournal(
+    manager: EntityManager,
+    loan: Loan,
+    payment: AccountPayment,
+  ): Promise<Journal> {
+    const user = await AuthService.getUser();
+    const branchRepo = manager.getRepository(Branch);
+    const branch = await branchRepo.findOne({
+      where: { id: payment?.branchId },
+      select: ['branchCode'],
+    });
+
+    const j = new Journal();
+    j.createUserId = user?.id;
+    j.updateUserId = user?.id;
+    j.branchId = payment.branchId;
+    j.branchCode = branch?.branchCode ?? 'NO_BRANCH_CODE';
+    j.transactionDate = payment.transactionDate;
+    j.periodId = loan.periodId;
+    j.number = GenerateCode.journal(payment.transactionDate);
+    j.reference = payment.number;
+    j.sourceType = JournalSourceType.PAYMENT;
+    j.partnerName = loan?.employee?.name;
+    j.partnerCode = loan?.employee?.nik;
+    j.items = await this.buildJournalItem(loan, payment);
+    j.totalAmount = j.items
+      .map((m) => Number(m.debit))
+      .filter((i) => i)
+      .reduce((a, b) => a + b, 0);
+    return j;
+  }
+
+  private async buildJournalItem(
+    loan: Loan,
+    payment: AccountPayment,
+  ): Promise<JournalItem[]> {
+    const debit = await this.buildJournalItemDebit(loan, payment);
+    const credit = await this.buildJournalItemCredit(loan, payment);
+
+    const amountDebit = debit
+      .map((m) => Number(m.debit))
+      .filter((i) => i)
+      .reduce((a, b) => a + b, 0);
+    const amountCredit = credit
+      .map((m) => Number(m.credit))
+      .filter((i) => i)
+      .reduce((a, b) => a + b, 0);
+
+    if (amountDebit !== amountCredit) {
+      throw new Error(`Amount debit and credit should equal!`);
+    }
+
+    const items = [...new Set([...debit, ...credit])];
+    return items;
+  }
+
+  private async buildJournalItemDebit(
+    loan: Loan,
+    payment: AccountPayment,
+  ): Promise<JournalItem[]> {
+    const user = await AuthService.getUser();
+    const dpRepo = getConnection().manager.getRepository(DownPayment);
+    const dp = await dpRepo.findOne({
+      where: { id: loan?.downPaymentId },
+      select: ['productId'],
+    });
+
+    const items: JournalItem[] = [];
+
+    const i = new JournalItem();
+    i.createUserId = user?.id;
+    i.updateUserId = user?.id;
+    i.coaId = loan?.branch?.cashCoaId;
+    i.productId = dp?.productId;
+    i.branchId = payment.branchId;
+    i.transactionDate = payment.transactionDate;
+    i.periodId = loan.periodId;
+    i.reference = payment.number;
+    i.partnerName = loan?.employee?.name;
+    i.partnerCode = loan?.employee?.nik;
+    i.isLedger = false;
+    i.debit = payment.amount;
+    items.push(i);
+
+    return items;
+  }
+
+  private async buildJournalItemCredit(
+    loan: Loan,
+    payment: AccountPayment,
+  ): Promise<JournalItem[]> {
+    const user = await AuthService.getUser();
+    const dpRepo = getConnection().manager.getRepository(DownPayment);
+    const dp = await dpRepo.findOne({
+      where: { id: loan?.downPaymentId },
+      select: ['id', 'productId', 'product'],
+      relations: ['product'],
+    });
+
+    const items: JournalItem[] = [];
+
+    const i = new JournalItem();
+    i.createUserId = user?.id;
+    i.updateUserId = user?.id;
+    i.coaId = dp?.product?.coaId;
+    i.productId = dp?.productId;
+    i.branchId = payment.branchId;
+    i.transactionDate = payment.transactionDate;
+    i.periodId = loan.periodId;
+    i.reference = payment.number;
+    i.partnerName = loan?.employee?.name;
+    i.partnerCode = loan?.employee?.nik;
+    i.isLedger = true;
+    i.credit = payment.amount;
+    items.push(i);
+
+    return items;
   }
 }

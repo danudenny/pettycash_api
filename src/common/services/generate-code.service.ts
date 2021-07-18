@@ -71,14 +71,27 @@ export class GenerateCode {
     return prefix + randomCode.toString();
   }
 
-  public static accountStatement(dateTime: Date = new Date(), digit: number = 6) {
+  public static payment(dateTime: Date = new Date(), digit: number = 6) {
+    // Format Code: PAY202102ABC123
+    const prefix = `PAY${dayjs(dateTime).format('YYYYMM')}`;
+    const randomCode = this.randomCode(digit);
+    return prefix + randomCode.toString();
+  }
+
+  public static accountStatement(
+    dateTime: Date = new Date(),
+    digit: number = 6,
+  ) {
     // Format Code: MUT202102ABC123
     const prefix = `MUT${dayjs(dateTime).format('YYYYMM')}`;
     const randomCode = this.randomCode(digit);
     return prefix + randomCode.toString();
   }
 
-  public static transferBalance(dateTime: Date = new Date(), digit: number = 6) {
+  public static transferBalance(
+    dateTime: Date = new Date(),
+    digit: number = 6,
+  ) {
     // Format Code: TRF202102ABC123
     const prefix = `TRF${dayjs(dateTime).format('YYYYMM')}`;
     const randomCode = this.randomCode(digit);
@@ -92,7 +105,10 @@ export class GenerateCode {
     return prefix + randomCode.toString();
   }
 
-  public static revisionCashBalance(dateTime: Date = new Date(), digit: number = 6) {
+  public static revisionCashBalance(
+    dateTime: Date = new Date(),
+    digit: number = 6,
+  ) {
     // Format Code: RVS-CBA202102ABC123
     const prefix = `RVS-CBA${dayjs(dateTime).format('YYYYMM')}`;
     const randomCode = this.randomCode(digit);
