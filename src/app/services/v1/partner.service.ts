@@ -1,3 +1,4 @@
+import { GlobalSetting } from './../../../model/global-setting.entity';
 import { PartnerState } from './../../../model/utils/enum';
 import { Expense } from '../../../model/expense.entity';
 import { BadRequestException, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
@@ -305,6 +306,8 @@ export class PartnerService {
   }
 
   public async updatePartnerActive() {
+    const getGlobalSetting = await GlobalSetting.find();
+
     const qb = new QueryBuilder(Expense, 'exp');
     qb.selectRaw(
       ['prt.id', 'id'],
@@ -334,15 +337,22 @@ export class PartnerService {
       updateUserId: '69b99e7c-d23a-4fb0-a3dc-ea5968306a41'
     });
 
-    getPartner.forEach(element => {
-      const dateNow = dayjs(new Date());
-      const trxDate = dayjs(element.transactionDate);
-      const diffDate = dateNow.diff(trxDate, 'days')
-      if (diffDate > 182.6) {
-        this.partnerRepo.update(element.id, update);
-        return new HttpException('Partner successfuly inactivated', HttpStatus.OK);
+    // 
+
+    getPartner.forEach(async element => {
+      const monthNow = dayjs(new Date()).month();
+      const trxDate = dayjs(element.transactionDate).month();
+      const diffMonth = monthNow - trxDate;
+      const globalSetExp = getGlobalSetting[0].partnerExpirationInMonth;
+      if (diffMonth > globalSetExp) {
+        this.partnerRepo.update(element.id, update)
+        const resp = {
+          id: element.id,
+          name: element.name,
+          status: 'success-inactivate'
+        }
+        return new HttpException(resp, HttpStatus.OK);
       }
-        
     });
   }
 
