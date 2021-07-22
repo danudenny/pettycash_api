@@ -37,8 +37,13 @@ export class DownPayment extends PtcBaseEntity {
   @Column({ type: 'date', name: 'transaction_date' })
   transactionDate: Date;
 
-  @Column({ type: 'enum', enum: DownPaymentType, name: 'type' })
-  type: DownPaymentType;
+  /**
+   * This field based on productId.isHasKm
+   * if `isHasKm` is true then DownPaymentType = `perdin`
+   * otherwise DownPaymentType = `reimbursement`.
+   */
+  @Column({ type: 'enum', enum: DownPaymentType, name: 'type', nullable: true })
+  type?: DownPaymentType;
 
   @Column({ type: 'uuid', name: 'department_id' })
   departmentId: string;
@@ -73,9 +78,9 @@ export class DownPayment extends PtcBaseEntity {
   @Index()
   loanId?: string;
 
-  @Column({ type: 'uuid', name: 'product_id', nullable: true })
+  @Column({ type: 'uuid', name: 'product_id' })
   @Index()
-  productId?: string;
+  productId: string;
 
   @ManyToOne(() => Expense, (e) => e.downPayment, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'expense_id' })
@@ -103,7 +108,7 @@ export class DownPayment extends PtcBaseEntity {
 
   @ManyToOne(() => Product)
   @JoinColumn({ name: 'product_id' })
-  product?: Product;
+  product: Product;
 
   @OneToMany(() => DownPaymentHistory, (e) => e.downPayment, { cascade: true })
   histories: DownPaymentHistory[];
