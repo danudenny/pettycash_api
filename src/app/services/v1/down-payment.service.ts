@@ -78,8 +78,10 @@ export class DownPaymentService {
     try {
       const params = { order: '-updated_at', limit: 10, ...query };
       const qb = new QueryBuilder(DownPayment, 'dp', params);
-      const user = await AuthService.getUser({ relations: ['branches'] });
-      const userBranches = user?.branches?.map((v) => v.id);
+      const {
+        userBranchIds,
+        isSuperUser,
+      } = await AuthService.getUserBranchAndRole();
 
       qb.fieldResolverMap['type'] = 'dp.type';
       qb.fieldResolverMap['state'] = 'dp.state';
@@ -87,6 +89,7 @@ export class DownPaymentService {
       qb.fieldResolverMap['paymentType'] = 'dp.payment_type';
       qb.fieldResolverMap['number__icontains'] = 'dp.number';
       qb.fieldResolverMap['departmentId'] = 'dp.department_Id';
+      qb.fieldResolverMap['productId'] = 'dp.product_id';
       qb.fieldResolverMap['startDate__gte'] = 'dp.transaction_date';
       qb.fieldResolverMap['endDate__lte'] = 'dp.transaction_date';
       qb.fieldResolverMap['destinationPlace'] = 'dp.destination_place';
@@ -114,6 +117,7 @@ export class DownPaymentService {
         ['epl.name', 'employeeName'],
         ['epl.nik', 'employeeNik'],
         ['pd.name', 'periodName'],
+        ['prd.name', 'productName'],
         ['lo.id', 'loanId'],
         ['lo."number"', 'loanNumber'],
         ['lo.state', 'loanState'],
@@ -123,6 +127,7 @@ export class DownPaymentService {
       qb.leftJoin((e) => e.employee, 'epl');
       qb.leftJoin((e) => e.period, 'pd');
       qb.leftJoin((e) => e.loan, 'lo');
+      qb.leftJoin((e) => e.product, 'prd');
       qb.andWhere(
         (e) => e.isDeleted,
         (v) => v.isFalse(),
@@ -131,10 +136,10 @@ export class DownPaymentService {
         (e) => e.department.isActive,
         (v) => v.isTrue(),
       );
-      if (userBranches?.length) {
+      if (userBranchIds?.length > 0 && !isSuperUser) {
         qb.andWhere(
           (e) => e.branchId,
-          (v) => v.in(userBranches),
+          (v) => v.in(userBranchIds),
         );
       }
 
