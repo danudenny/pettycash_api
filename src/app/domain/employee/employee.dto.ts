@@ -34,22 +34,6 @@ export class EmployeeDTO {
   name: string;
 
   @ApiProperty({
-    description: 'Employee NPWP Number',
-    example: '66330028436048',
-  })
-  @IsOptional()
-  @IsString()
-  npwpNumber: string;
-
-  @ApiProperty({
-    description: 'Employee ID Card Number',
-    example: '20090134',
-  })
-  @IsOptional()
-  @IsString()
-  idCardNumber: string;
-
-  @ApiProperty({
     description: 'Employee Position ID',
     example: 10,
   })
