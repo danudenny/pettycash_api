@@ -34,8 +34,6 @@ export class EmployeeService {
       ['emp.employee_id', 'employeeId'],
       ['emp.nik', 'nik'],
       ['emp.name', 'name'],
-      ['emp.npwp_number', 'npwpNumber'],
-      ['emp.id_card_number', 'idCardNumber'],
       ['emp.position_id', 'positionId'],
       ['emp.position_name', 'positionName'],
       ['emp.branch_id', 'branchId'],
