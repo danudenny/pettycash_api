@@ -31,7 +31,7 @@ export class LoanDetailDTO {
 
   @ApiProperty({
     description: 'Down Payment Type',
-    example: DownPaymentType.REIMBURSEMENT_HO,
+    example: DownPaymentType.REIMBURSEMENT,
   })
   downPaymentType: DownPaymentType;
 
