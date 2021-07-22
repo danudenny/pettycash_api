@@ -50,6 +50,7 @@ import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import { BalanceService } from './balance.service';
 import { Loan } from '../../../model/loan.entity';
+import { Product } from '../../../model/product.entity';
 
 @Injectable()
 export class DownPaymentService {
@@ -187,15 +188,29 @@ export class DownPaymentService {
           payload.number = GenerateCode.downPayment();
         }
 
-        const user = await this.getUser(true);
-        const branchId = user && user.branches && user.branches[0].id;
+        const user = await AuthService.getUser({ relations: ['branches'] });
+        const branchId = user?.branches[0]?.id;
+        const productRepo = manager.getRepository(Product);
+        const product = await productRepo.findOne({
+          where: { id: payload?.productId, isDeleted: false },
+          select: ['id', 'isHasKm'],
+        });
+
+        if (!product) {
+          throw new BadRequestException(
+            `Product ID ${payload?.productId} not found!`,
+          );
+        }
+
+        const { DRAFT } = DownPaymentState;
+        const { PERDIN, REIMBURSEMENT } = DownPaymentType;
 
         const downPayment = new DownPayment();
-        downPayment.createUser = user;
-        downPayment.updateUser = user;
+        downPayment.createUserId = user?.id;
+        downPayment.updateUserId = user?.id;
         downPayment.branchId = branchId;
-        downPayment.state = DownPaymentState.DRAFT;
-        downPayment.type = payload.type;
+        downPayment.state = DRAFT;
+        downPayment.type = product?.isHasKm ? PERDIN : REIMBURSEMENT;
         downPayment.periodId = payload.periodId;
         downPayment.productId = payload.productId;
         downPayment.amount = payload.amount;
@@ -206,14 +221,11 @@ export class DownPaymentService {
         downPayment.departmentId = payload.departmentId;
         downPayment.destinationPlace = payload.destinationPlace;
         downPayment.transactionDate = payload.transactionDate;
-
-        const result = await this.downPayEntity.save(downPayment);
-
-        await this.createHistory(downPayment, {
-          state: DownPaymentState.DRAFT,
-          downPaymentId: result.id,
+        downPayment.histories = await this.buildHistory(downPayment, {
+          state: DRAFT,
         });
 
+        const result = await manager.save(downPayment);
         return result;
       });
 
@@ -244,12 +256,9 @@ export class DownPaymentService {
         const user = await AuthService.getUser({ relations: ['role'] });
         const userRole = user?.role?.name;
         const downPaymentType = downPayment?.type;
-        const { REIMBURSEMENT_HO, REIMBURSEMENT_OTHER } = DownPaymentType;
+        const { REIMBURSEMENT } = DownPaymentType;
         const { REJECTED, REVERSED } = DownPaymentState;
-        const TYPES_SHOULD_CREATE_LOAN = [
-          REIMBURSEMENT_HO,
-          REIMBURSEMENT_OTHER,
-        ];
+        const TYPES_SHOULD_CREATE_LOAN = [REIMBURSEMENT];
 
         let state: DownPaymentState;
         let isCreateJurnal = false;
@@ -399,6 +408,26 @@ export class DownPaymentService {
         err.status || HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  private async buildHistory(
+    downPayment: DownPayment,
+    data?: {
+      state: DownPaymentState;
+      rejectedNote?: string;
+    },
+  ): Promise<DownPaymentHistory[]> {
+    const user = await AuthService.getUser();
+    const newHistory = new DownPaymentHistory();
+    newHistory.state = data?.state;
+    newHistory.rejectedNote = data?.rejectedNote;
+    newHistory.createUserId = user?.id;
+    newHistory.updateUserId = user?.id;
+
+    const history: DownPaymentHistory[] = [].concat(downPayment.histories, [
+      newHistory,
+    ]);
+    return history.filter((v) => v);
   }
 
   private async createHistory(
