@@ -114,6 +114,7 @@ export class AccountStatementService {
       ['stmt.transaction_date', 'transactionDate'],
       ['stmt."type"', 'type'],
       ['stmt.reference', 'reference'],
+      ['stmt.description', 'description'],
       ['stmt.source_type', 'sourceType'],
       ['stmt.amount', 'amount'],
       ['stmt.amount_position', 'amountPosition'],
@@ -130,6 +131,7 @@ export class AccountStatementService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    qb.qb.addOrderBy('stmt.updated_at', 'DESC');
     if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.branchId,

@@ -53,6 +53,12 @@ export class AccountStatementDTO {
   reference: string;
 
   @ApiProperty({
+    description: 'Description',
+    example: 'Tarik Tunai',
+  })
+  description: string;
+
+  @ApiProperty({
     description: 'Source Type',
     example: AccountStatementSourceType.DP,
   })
