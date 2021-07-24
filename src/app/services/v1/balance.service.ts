@@ -178,6 +178,8 @@ export class BalanceService {
       userBranchIds,
       isSuperUser,
     } = await AuthService.getUserBranchAndRole();
+    // Hack branchIds for leftJoin query.
+    const branchIds = userBranchIds?.length > 0 ? userBranchIds.toString().split(',') : null;
 
     qb.fieldResolverMap['branchId'] = 'b.id';
 
@@ -195,7 +197,7 @@ export class BalanceService {
             CASE WHEN as2.amount_position = 'debit' THEN COALESCE(SUM(amount), 0) END AS debit,
             CASE WHEN as2.amount_position = 'credit' THEN COALESCE(SUM(amount), 0) END AS credit
             FROM account_statement as2
-            WHERE as2.is_deleted IS FALSE
+            WHERE as2.is_deleted IS FALSE AND as2.branch_id = ANY(:branchIds)
             GROUP BY as2.branch_id, as2.amount_position
       )
       SELECT
@@ -205,6 +207,7 @@ export class BalanceService {
       GROUP BY branch_id)`,
       'act',
       'act.branch_id = b.id',
+      { branchIds },
     );
 
     if (userBranchIds?.length && !isSuperUser) {
