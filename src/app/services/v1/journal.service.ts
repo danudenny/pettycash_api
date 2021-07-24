@@ -132,6 +132,7 @@ export class JournalService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    qb.qb.addOrderBy('j.updated_at', 'DESC');
 
     if (!isSuperUser) {
       // Throw error for some user role.
