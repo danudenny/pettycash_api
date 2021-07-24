@@ -34,6 +34,7 @@ export enum CashBalanceAllocationState {
 export enum AccountStatementType {
   CASH = 'cash',
   BANK = 'bank',
+  BON = 'bon',
   // VA = 'virtual_account',
 }
 
