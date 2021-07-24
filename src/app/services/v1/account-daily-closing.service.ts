@@ -38,7 +38,7 @@ export class AccountDailyClosingService {
     private readonly attachmentRepo: Repository<Attachment>,
     @InjectRepository(GlobalSetting)
     private readonly settingRepo: Repository<GlobalSetting>,
-  ) { }
+  ) {}
 
   public async list(
     query?: QueryAccountDailyClosingDTO,
@@ -65,7 +65,6 @@ export class AccountDailyClosingService {
       ['adc.closing_bank_amount', 'closingBankAmount'],
       ['adc.opening_cash_amount', 'openingCashAmount'],
       ['adc.closing_cash_amount', 'closingCashAmount'],
-      ['adc.reason', 'reason'],
     );
     qb.leftJoin((e) => e.createUser, 'usr');
     qb.andWhere(
@@ -239,13 +238,17 @@ export class AccountDailyClosingService {
     accountDailyClosing.closingBankAmount = payload.closingBankAmount;
     accountDailyClosing.openingCashAmount = payload.openingCashAmount;
     accountDailyClosing.closingCashAmount = payload.closingCashAmount;
+    accountDailyClosing.openingBonAmount = payload.openingBonAmount;
+    accountDailyClosing.closingBonAmount = payload.closingBonAmount;
     accountDailyClosing.cashItems = this.getAccountCashboxItemsFromDTO(
       payload.accountCashboxItems,
       user,
     );
-    accountDailyClosing.reason = payload.reason;
-    accountDailyClosing.createUser = user;
-    accountDailyClosing.updateUser = user;
+    accountDailyClosing.reasonBank = payload.reasonBank;
+    accountDailyClosing.reasonCash = payload.reasonCash;
+    accountDailyClosing.reasonBon = payload.reasonBon;
+    accountDailyClosing.createUserId = user?.id;
+    accountDailyClosing.updateUserId = user?.id;
 
     return accountDailyClosing;
   }
@@ -273,7 +276,7 @@ export class AccountDailyClosingService {
     accountDailyClosingId: string,
     manager: EntityManager,
     files?: any,
-    attachmentType?: any
+    attachmentType?: any,
   ): Promise<Attachment[]> {
     let newAttachments: Attachment[] = [];
 
