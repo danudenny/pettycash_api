@@ -51,6 +51,7 @@ import { AccountStatement } from '../../../model/account-statement.entity';
 import { BalanceService } from './balance.service';
 import { Loan } from '../../../model/loan.entity';
 import { Product } from '../../../model/product.entity';
+import { BranchService } from '../master/v1/branch.service';
 
 @Injectable()
 export class DownPaymentService {
@@ -303,12 +304,15 @@ export class DownPaymentService {
           );
 
         downPayment.state = state;
-        downPayment.amount = payload.amount;
-        downPayment.paymentType = payload.paymentType;
+        downPayment.amount = payload?.amount || downPayment?.amount;
+        downPayment.paymentType =
+          payload?.paymentType || downPayment?.paymentType;
         downPayment.updateUserId = user?.id;
+        downPayment.histories = await this.buildHistory(downPayment, { state });
 
         if (isCreateJurnal) {
-          // Create Journal for PIC HO OR for SS/SPV HO
+          await BranchService.checkCashCoa(downPayment?.branchId);
+
           await this.removeJournal(manager, downPayment);
           await this.createJournal(manager, downPaymentId);
         }
@@ -323,11 +327,6 @@ export class DownPaymentService {
         }
 
         const result = await manager.save(downPayment);
-        await this.createHistory(downPayment, {
-          state,
-          downPaymentId: result.id,
-        });
-
         return result;
       });
 
