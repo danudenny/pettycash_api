@@ -1499,6 +1499,12 @@ export class ExpenseService {
       throw new BadRequestException(`Down Payment with ID ${id} not found!`);
     }
 
+    if (downPayment?.type !== DownPaymentType.PERDIN) {
+      throw new BadRequestException(
+        `Only DownPayment with type PERDIN can be realized!`,
+      );
+    }
+
     if (checkRealization) {
       if (downPayment?.expenseId) {
         throw new BadRequestException(`Down Payment already realized!`);
