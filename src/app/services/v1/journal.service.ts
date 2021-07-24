@@ -79,6 +79,7 @@ export class JournalService {
       ['j.partner_code', 'partnerCode'],
       ['j.partner_name', 'partnerName'],
       ['j.reference', 'reference'],
+      ['j.sync_fail_reason', 'syncFailReason'],
       ['j.state', 'state'],
       ['j.total_amount', 'totalAmount'],
       ['j.transaction_date', 'transactionDate'],
