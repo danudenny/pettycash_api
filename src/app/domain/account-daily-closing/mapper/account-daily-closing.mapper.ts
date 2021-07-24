@@ -20,9 +20,26 @@ export class AccountDailyClosingMapper {
       item.closingBankAmount = +accountDailyClosingDTO.closingBankAmount;
       item.openingCashAmount = +accountDailyClosingDTO.openingCashAmount;
       item.closingCashAmount = +accountDailyClosingDTO.closingCashAmount;
-      item.reason = accountDailyClosingDTO.reason;
-      item.bankDifference = accountDailyClosingDTO.openingBankAmount - accountDailyClosingDTO.closingBankAmount;
-      item.cashDifference = accountDailyClosingDTO.openingCashAmount - accountDailyClosingDTO.closingCashAmount
+      item.openingBonAmount = +accountDailyClosingDTO.openingBonAmount;
+      item.closingBonAmount = +accountDailyClosingDTO.closingBonAmount;
+      item.reasonBank = accountDailyClosingDTO.reasonBank;
+      item.reasonCash = accountDailyClosingDTO.reasonCash;
+      item.reasonBon = accountDailyClosingDTO.reasonBon;
+      item.bankDifference =
+        accountDailyClosingDTO.openingBankAmount -
+        accountDailyClosingDTO.closingBankAmount;
+      item.cashDifference =
+        accountDailyClosingDTO.openingCashAmount -
+        accountDailyClosingDTO.closingCashAmount;
+      item.bonDifference =
+        accountDailyClosingDTO.openingBonAmount -
+        accountDailyClosingDTO.closingBonAmount;
+      item.totalDifference =
+        item.bankDifference + item.cashDifference + item.bonDifference;
+      item.totalOpeningAmount =
+        item.openingBankAmount + item.openingCashAmount + item.openingBonAmount;
+      item.totalClosingAmount =
+        item.closingBankAmount + item.closingCashAmount + item.closingBonAmount;
       return item;
     });
 

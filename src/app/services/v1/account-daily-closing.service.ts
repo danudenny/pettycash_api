@@ -65,6 +65,11 @@ export class AccountDailyClosingService {
       ['adc.closing_bank_amount', 'closingBankAmount'],
       ['adc.opening_cash_amount', 'openingCashAmount'],
       ['adc.closing_cash_amount', 'closingCashAmount'],
+      ['adc.opening_bon_amount', 'openingBonAmount'],
+      ['adc.closing_bon_amount', 'closingBonAmount'],
+      ['adc.reason_bank', 'reasonBank'],
+      ['adc.reason_cash', 'reasonCash'],
+      ['adc.reason_bon', 'reasonBon'],
     );
     qb.leftJoin((e) => e.createUser, 'usr');
     qb.andWhere(

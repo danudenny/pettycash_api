@@ -64,20 +64,71 @@ export class AccountDailyClosingDTO {
   closingCashAmount: number;
 
   @ApiProperty({
+    description: 'Opening Bon Amount (Bon Fisik)',
+    example: 2000000,
+  })
+  openingBonAmount: number;
+
+  @ApiProperty({
+    description: 'Closing Bon Amount (Saldo Bon Fisik)',
+    example: 500000,
+  })
+  closingBonAmount: number;
+
+  @ApiProperty({
+    description: 'Total Opening Amount (Total Saldo Fisik)',
+    example: 2000000,
+  })
+  totalOpeningAmount: number;
+
+  @ApiProperty({
+    description: 'Total Closing Amount (Total Saldo Aktual)',
+    example: 2000000,
+  })
+  totalClosingAmount: number;
+
+  @ApiProperty({
     description: 'Closing Cash Amount Diff',
     example: 500000,
   })
   cashDifference: number;
 
   @ApiProperty({
-    description: 'Closing Bank Amount  Diff',
+    description: 'Closing Bank Amount Diff',
     example: 500000,
   })
   bankDifference: number;
 
   @ApiProperty({
-    description: 'Reason for execute daily closing when deviation does not meets',
+    description: 'Closing Bon Amount Diff',
+    example: 500000,
+  })
+  bonDifference: number;
+
+  @ApiProperty({
+    description: 'Total Closing Amount Diff',
+    example: 500000,
+  })
+  totalDifference: number;
+
+  @ApiProperty({
+    description:
+      'Reason for execute daily closing when deviation does not meets',
     example: 'Pending',
   })
-  reason: string;
+  reasonBank: string;
+
+  @ApiProperty({
+    description:
+      'Reason for execute daily closing when deviation does not meets',
+    example: 'Pending',
+  })
+  reasonCash: string;
+
+  @ApiProperty({
+    description:
+      'Reason for execute daily closing when deviation does not meets',
+    example: 'Pending',
+  })
+  reasonBon: string;
 }
