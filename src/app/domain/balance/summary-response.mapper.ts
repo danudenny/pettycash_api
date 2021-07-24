@@ -11,6 +11,7 @@ export class BalanceSummaryResponseMapper {
     it.branchName = data?.branchName ?? null;
     it.bankAmount = +data?.bankAmount ?? null;
     it.cashAmount = +data?.cashAmount ?? null;
+    it.bonAmount = +data?.bonAmount ?? null;
     it.totalAmount = +data?.totalAmount ?? null;
     it.minimumAmount = +data?.minimumAmount ?? null;
     it.retreiveAt = data?.retreiveAt ?? null;
