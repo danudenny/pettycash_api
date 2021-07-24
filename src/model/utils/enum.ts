@@ -54,6 +54,7 @@ export enum AccountStatementAmountPosition {
 
 export enum AccountStatementSourceType {
   DP = 'down_payment',
+  PAYMENT = 'payment',
 }
 
 export enum PartnerState {

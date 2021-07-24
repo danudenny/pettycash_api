@@ -17,6 +17,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Journal } from '../../../model/journal.entity';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
 import {
+  AccountStatementSourceType,
   DownPaymentState,
   ExpenseState,
   JournalSourceType,
@@ -38,6 +39,10 @@ import { JournalBatchResponse } from '../../domain/journal/response-batch.dto';
 import { DownPayment } from '../../../model/down-payment.entity';
 import { DownPaymentHistory } from '../../../model/down-payment-history.entity';
 import { ExpenseHistory } from '../../../model/expense-history.entity';
+import { AccountPayment } from '../../../model/account-payment.entity';
+import { AccountStatement } from '../../../model/account-statement.entity';
+import { BalanceService } from './balance.service';
+import { Loan } from '../../../model/loan.entity';
 
 @Injectable()
 export class JournalService {
@@ -309,6 +314,8 @@ export class JournalService {
           await this.reverseExpense(manager, journal);
         } else if (sourceType === JournalSourceType.DP) {
           await this.reverseDownPayment(manager, journal);
+        } else if (sourceType === JournalSourceType.PAYMENT) {
+          await this.removePayment(manager, journal);
         }
 
         // Clone Journal for Creating new Reversal Journal
@@ -479,6 +486,62 @@ export class JournalService {
     await manager.save(history);
 
     return await manager.save(downPayment);
+  }
+
+  private async removePayment(
+    manager: EntityManager,
+    journal: Journal,
+  ): Promise<void> {
+    const payment = await manager.findOne(AccountPayment, {
+      where: {
+        number: journal?.reference,
+        branchId: journal?.branchId,
+        isDeleted: false,
+      },
+      select: ['id', 'number', 'amount'],
+    });
+
+    if (!payment) return;
+
+    // Hard Delete AccountStatement (mutasi) from payment.
+    const stmt = await manager.find(AccountStatement, {
+      where: {
+        sourceType: AccountStatementSourceType.PAYMENT,
+        reference: payment?.number,
+        branchId: journal?.branchId,
+      },
+      select: ['id'],
+    });
+
+    if (stmt) {
+      await manager.delete(AccountStatement, {
+        sourceType: AccountStatementSourceType.PAYMENT,
+        reference: payment?.number,
+        branchId: journal?.branchId,
+      });
+      await BalanceService.invalidateCache(journal?.branchId);
+    }
+    // Update Loan
+    const amount = payment?.amount || 0;
+    const sqlUpdateLoan = `UPDATE loan
+      SET paid_amount = paid_amount - ${amount},
+        residual_amount = residual_amount + ${amount},
+        state = 'unpaid',
+        updated_at = now(),
+        update_user_id = '${journal?.updateUser?.id}'
+      WHERE id IN (
+        SELECT loan_id FROM loan_payment WHERE payment_id IN (
+          SELECT id FROM account_payment WHERE number = '${journal?.reference}' AND branch_id = '${journal?.branchId}'
+        )
+      )`;
+    await manager.query(sqlUpdateLoan);
+
+    // Hard Delete Payments.
+    await manager.delete(AccountPayment, {
+      number: journal?.reference,
+      branchId: journal?.branchId,
+      isDeleted: false,
+    });
   }
 
   /**

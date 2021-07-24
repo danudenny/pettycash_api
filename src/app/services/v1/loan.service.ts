@@ -25,6 +25,7 @@ import {
   AccountPaymentPayMethod,
   AccountPaymentType,
   AccountStatementAmountPosition,
+  AccountStatementSourceType,
   AccountStatementType,
   DownPaymentType,
   JournalSourceType,
@@ -470,7 +471,9 @@ export class LoanService {
     payment: AccountPayment,
   ): Promise<AccountStatement> {
     const stmt = new AccountStatement();
-    stmt.reference = loan.number;
+    stmt.description = loan.number;
+    stmt.reference = payment.number;
+    stmt.sourceType = AccountStatementSourceType.PAYMENT;
     stmt.amount = payment.amount;
     stmt.transactionDate = payment.transactionDate;
     stmt.branchId = payment.branchId;
