@@ -1218,9 +1218,6 @@ export class ExpenseService {
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
     const items: JournalItem[] = [];
-    let itemCoaId: string;
-    let isLedger: boolean = false;
-    let isReimbursement: boolean = false;
     const partnerName = expense?.partner?.name || expense?.employee?.name;
     const partnerCode = expense?.partner?.code || expense?.employee?.nik;
 
@@ -1244,22 +1241,14 @@ export class ExpenseService {
         dpJournalItem.credit = downPayment?.amount;
         dpJournalItem.coaId = setting?.downPaymentPerdinCoaId;
         items.push(dpJournalItem);
-      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
-        itemCoaId = setting?.downPaymentReimbursementCoaId;
-        isLedger = true;
-        isReimbursement = true;
       }
     }
 
     for (const v of expense?.items) {
-      if (!isReimbursement) {
-        itemCoaId = expense?.branch?.cashCoaId;
-      }
-
       const i = new JournalItem();
       i.createUser = user;
       i.updateUser = user;
-      i.coaId = itemCoaId;
+      i.coaId = expense?.branch?.cashCoaId;
       i.branchId = expense.branchId;
       i.transactionDate = expense.transactionDate;
       i.periodId = expense.periodId;
@@ -1267,7 +1256,7 @@ export class ExpenseService {
       i.description = v?.description;
       i.partnerName = partnerName;
       i.partnerCode = partnerCode;
-      i.isLedger = isLedger;
+      i.isLedger = false;
       i.expenseItemId = v?.id;
       i.credit = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)
         ? v.ssHoAmount
@@ -1288,7 +1277,7 @@ export class ExpenseService {
         const jTax = new JournalItem();
         jTax.createUser = user;
         jTax.updateUser = user;
-        jTax.coaId = isReimbursement ? itemCoaId : tax?.coaId;
+        jTax.coaId = tax?.coaId;
         jTax.branchId = expense.branchId;
         jTax.transactionDate = expense.transactionDate;
         jTax.periodId = expense.periodId;
@@ -1297,7 +1286,7 @@ export class ExpenseService {
         jTax.partnerName = partnerName;
         jTax.partnerCode = partnerCode;
         jTax.credit = taxedAmount;
-        jTax.isLedger = isLedger;
+        jTax.isLedger = false;
         jTax.expenseItemId = v?.id;
         items.push(jTax);
       }
@@ -1321,9 +1310,6 @@ export class ExpenseService {
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
     const items: JournalItem[] = [];
-    let itemCoaId: string;
-    let isLedger: boolean = true;
-    let isReimbursement: boolean = false;
     const partnerName = expense?.partner?.name || expense?.employee?.name;
     const partnerCode = expense?.partner?.code || expense?.employee?.nik;
 
@@ -1347,22 +1333,14 @@ export class ExpenseService {
         dpJournalItem.debit = downPayment?.amount;
         dpJournalItem.coaId = expense?.branch?.cashCoaId;
         items.push(dpJournalItem);
-      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
-        itemCoaId = expense?.branch?.cashCoaId;
-        isLedger = false;
-        isReimbursement = true;
       }
     }
 
     for (const v of expense?.items) {
-      if (!isReimbursement) {
-        itemCoaId = v?.product?.coaId;
-      }
-
       const i = new JournalItem();
       i.createUser = user;
       i.updateUser = user;
-      i.coaId = itemCoaId;
+      i.coaId = v?.product?.coaId;
       i.productId = v?.productId;
       i.branchId = expense.branchId;
       i.transactionDate = expense.transactionDate;
@@ -1371,7 +1349,7 @@ export class ExpenseService {
       i.description = v?.description;
       i.partnerName = partnerName;
       i.partnerCode = partnerCode;
-      i.isLedger = isLedger;
+      i.isLedger = true;
       i.expenseItemId = v?.id;
       i.debit = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)
         ? v.ssHoAmount
@@ -1392,7 +1370,7 @@ export class ExpenseService {
         const jTax = new JournalItem();
         jTax.createUser = user;
         jTax.updateUser = user;
-        jTax.coaId = itemCoaId;
+        jTax.coaId = v?.product?.coaId;
         jTax.productId = v?.productId;
         jTax.branchId = expense.branchId;
         jTax.transactionDate = expense.transactionDate;
@@ -1402,7 +1380,7 @@ export class ExpenseService {
         jTax.partnerName = partnerName;
         jTax.partnerCode = partnerCode;
         jTax.debit = taxedAmount;
-        jTax.isLedger = isLedger;
+        jTax.isLedger = true;
         jTax.expenseItemId = v?.id;
         items.push(jTax);
       }
