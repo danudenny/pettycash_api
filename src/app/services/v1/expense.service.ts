@@ -29,6 +29,7 @@ import {
   ExpenseType,
   JournalSourceType,
   JournalState,
+  LoanSourceType,
   LoanState,
   LoanType,
   MASTER_ROLES,
@@ -1612,6 +1613,8 @@ export class ExpenseService {
     loan.transactionDate = new Date();
     loan.number = GenerateCode.loan(loan.transactionDate);
     loan.sourceDocument = expense.number;
+    loan.sourceType = LoanSourceType.EXPENSE;
+    loan.downPaymentId = downPayment?.id;
     loan.type = loanType;
     loan.amount = loanAmount;
     loan.residualAmount = loanAmount;
