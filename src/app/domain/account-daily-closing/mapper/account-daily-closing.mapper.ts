@@ -60,6 +60,11 @@ export class AccountDailyClosingMapper {
     item.closingBankAmount = entity.closingBankAmount;
     item.openingCashAmount = entity.openingCashAmount;
     item.closingCashAmount = entity.closingCashAmount;
+    item.openingBonAmount = entity.openingBonAmount;
+    item.closingBonAmount = entity.closingBonAmount;
+    item.reasonBank = entity.reasonBank;
+    item.reasonCash = entity.reasonCash;
+    item.reasonBon = entity.reasonBon;
     item.accountCashboxItems = this.toAccountCashboxItemsDTO(entity.cashItems);
 
     return item;
