@@ -23,14 +23,6 @@ export class Journal extends PtcBaseEntity {
   branchId: string;
 
   @Column({
-    type: 'varchar',
-    name: 'branch_code',
-    length: 25,
-    comment: 'Tracking field for sync to ERP',
-  })
-  branchCode: string;
-
-  @Column({
     type: 'date',
     name: 'transaction_date',
   })
@@ -110,6 +102,9 @@ export class Journal extends PtcBaseEntity {
     default: false,
   })
   isSynced: boolean;
+
+  @Column({ type: 'text', name: 'sync_fail_reason', nullable: true })
+  syncFailReason?: string;
 
   @ManyToOne(() => Journal, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'reverse_journal_id' })
