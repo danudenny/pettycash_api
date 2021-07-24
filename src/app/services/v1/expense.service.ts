@@ -1143,7 +1143,6 @@ export class ExpenseService {
     j.createUser = user;
     j.updateUser = user;
     j.branchId = expense.branchId;
-    j.branchCode = expense?.branch?.branchCode ?? 'NO_BRANCH_CODE';
     j.transactionDate = expense.transactionDate;
     j.periodId = expense.periodId;
     j.number = GenerateCode.journal(expense.transactionDate);

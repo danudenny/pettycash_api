@@ -827,7 +827,6 @@ export class AllocationBalanceService {
     j.createUser = user;
     j.updateUser = user;
     j.branchId = alokasi.branchId;
-    j.branchCode = alokasi?.branch?.branchCode ?? 'NO_BRANCH_CODE';
     j.transactionDate = alokasi.receivedDate;
     j.periodId = getPeriod.id;
     j.number = GenerateCode.journal(alokasi.receivedDate);

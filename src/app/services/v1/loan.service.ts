@@ -535,7 +535,6 @@ export class LoanService {
     j.createUserId = loan?.updateUserId;
     j.updateUserId = loan?.updateUserId;
     j.branchId = payment.branchId;
-    j.branchCode = branch?.branchCode ?? 'NO_BRANCH_CODE';
     j.transactionDate = payment.transactionDate;
     j.periodId = loan.periodId;
     j.number = GenerateCode.journal(payment.transactionDate);

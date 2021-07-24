@@ -529,7 +529,6 @@ export class DownPaymentService {
       jrnl.totalAmount = downPayment.amount;
       jrnl.transactionDate = downPayment.transactionDate;
       jrnl.number = GenerateCode.journal(downPayment.transactionDate);
-      jrnl.branchCode = downPayment?.branch?.branchCode ?? 'NO_BRANCH_CODE';
       jrnl.partnerCode = downPayment?.employee?.nik;
       jrnl.partnerName = downPayment?.employee?.name;
 
