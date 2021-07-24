@@ -4,6 +4,7 @@ import {
   EntityManager,
   createQueryBuilder,
   getConnection,
+  In,
 } from 'typeorm';
 import {
   BadRequestException,
@@ -148,10 +149,20 @@ export class LoanService {
     return new LoanWithPaginationResponse(loan, params);
   }
 
-  public async getById(id: string) {
+  public async getById(id: string): Promise<LoanDetailResponse> {
+    const {
+      isSuperUser,
+      userBranchIds,
+    } = await AuthService.getUserBranchAndRole();
+
+    const where = { id, isDeleted: false };
+    if (!isSuperUser) {
+      Object.assign(where, { branchId: In(userBranchIds) });
+    }
+
     const loan = await this.loanRepo.findOne({
-      where: { id, isDeleted: false },
-      relations: ['employee', 'downPayment', 'payments'],
+      where,
+      relations: ['employee', 'downPayment', 'downPayment.product', 'payments'],
     });
 
     if (!loan) {
