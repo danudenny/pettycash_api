@@ -109,6 +109,7 @@ export class PartnerService {
 
     const partner = this.partnerRepo.create(payload as Partner);
     const responsiblePartner = await this.getUser();
+    partner.state = PartnerState.APPROVED;
     partner.createUserId = responsiblePartner.id;
     partner.updateUserId = responsiblePartner.id;
     partner.isActive = true;

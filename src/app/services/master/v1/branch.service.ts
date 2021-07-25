@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, getManager, In } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -126,6 +130,34 @@ export class BranchService {
     }
 
     return;
+  }
+
+  /**
+   * Helper for checking if the branch has CoA or not.
+   *
+   * @static
+   * @param {string} branchId
+   * @return {*}  {Promise<void>}
+   * @memberof BranchService
+   */
+  public static async checkCashCoa(branchId: string): Promise<void> {
+    const branch = await getManager()
+      .getRepository(Branch)
+      .findOne({
+        where: { id: branchId, isDeleted: false },
+        select: ['id', 'cashCoaId'],
+      });
+
+    if (!branch) {
+      throw new NotFoundException(`Branch with ID ${branchId} not found!`);
+    }
+
+    if (!branch?.cashCoaId) {
+      throw new UnprocessableEntityException(
+        'Transaksi tidak dapat dilakukan karena Branch tidak memiliki CoA, ' +
+          'Silakan set CoA terlebih dahulu pada Menu Branch di Master Data.',
+      );
+    }
   }
 
   public static async processQueueData(data: any) {

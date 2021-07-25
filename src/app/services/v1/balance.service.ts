@@ -178,6 +178,9 @@ export class BalanceService {
       userBranchIds,
       isSuperUser,
     } = await AuthService.getUserBranchAndRole();
+    // Hack branchIds for leftJoin query.
+    const branchIds =
+      userBranchIds?.length > 0 ? userBranchIds.toString().split(',') : null;
 
     qb.fieldResolverMap['branchId'] = 'b.id';
 
@@ -195,7 +198,7 @@ export class BalanceService {
             CASE WHEN as2.amount_position = 'debit' THEN COALESCE(SUM(amount), 0) END AS debit,
             CASE WHEN as2.amount_position = 'credit' THEN COALESCE(SUM(amount), 0) END AS credit
             FROM account_statement as2
-            WHERE as2.is_deleted IS FALSE
+            WHERE as2.is_deleted IS FALSE AND as2.branch_id = ANY(:branchIds)
             GROUP BY as2.branch_id, as2.amount_position
       )
       SELECT
@@ -205,6 +208,7 @@ export class BalanceService {
       GROUP BY branch_id)`,
       'act',
       'act.branch_id = b.id',
+      { branchIds },
     );
 
     if (userBranchIds?.length && !isSuperUser) {
@@ -234,6 +238,9 @@ export class BalanceService {
       );
     }
 
+    // Hack branchIds for leftJoin query.
+    const branchIds = userBranchIds.toString().split(',');
+
     // TODO: Should be validate when release in production!
     // if (userRoleName !== MASTER_ROLES.ADMIN_BRANCH) {
     //   throw new UnprocessableEntityException(
@@ -251,8 +258,9 @@ export class BalanceService {
       ['b.branch_name', 'branchName'],
       ['COALESCE(acc_bank.balance, 0)', 'bankAmount'],
       ['COALESCE(acc_cash.balance, 0)', 'cashAmount'],
+      ['COALESCE(acc_bon.balance, 0)', 'bonAmount'],
       [
-        '(COALESCE(acc_bank.balance, 0) + COALESCE(acc_cash.balance, 0))',
+        `(COALESCE(acc_bank.balance, 0) + COALESCE(acc_cash.balance, 0) + COALESCE(acc_bon.balance, 0))`,
         'totalAmount',
       ],
       ['COALESCE(bgt.minimum_amount, 0)', 'minimumAmount'],
@@ -270,7 +278,7 @@ export class BalanceService {
             END AS credit
           FROM
             account_statement as2
-          WHERE as2."type" = 'bank' AND as2.is_deleted IS FALSE
+          WHERE as2."type" = 'bank' AND as2.is_deleted IS FALSE AND as2.branch_id = ANY(:branchIds)
           GROUP BY
             as2.branch_id,
             as2.amount_position
@@ -285,6 +293,7 @@ export class BalanceService {
       )`,
       'acc_bank',
       'acc_bank.branch_id = b.id',
+      { branchIds },
     );
     qb.qb.leftJoin(
       `(WITH acc_stt_cash AS (
@@ -298,7 +307,7 @@ export class BalanceService {
             END AS credit
           FROM
             account_statement as2
-          WHERE as2."type" = 'cash' AND as2.is_deleted IS FALSE
+          WHERE as2."type" = 'cash' AND as2.is_deleted IS FALSE AND as2.branch_id = ANY(:branchIds)
           GROUP BY
             as2.branch_id,
             as2.amount_position
@@ -313,6 +322,36 @@ export class BalanceService {
       )`,
       'acc_cash',
       'acc_cash.branch_id = b.id',
+      { branchIds },
+    );
+    qb.qb.leftJoin(
+      `(WITH acc_stt_bon AS (
+          SELECT
+            as2.branch_id,
+            CASE
+              WHEN as2.amount_position = 'debit' THEN COALESCE(SUM(amount), 0)
+            END AS debit,
+            CASE
+              WHEN as2.amount_position = 'credit' THEN COALESCE(SUM(amount), 0)
+            END AS credit
+          FROM
+            account_statement as2
+          WHERE as2."type" = 'bon' AND as2.is_deleted IS FALSE AND as2.branch_id = ANY(:branchIds)
+          GROUP BY
+            as2.branch_id,
+            as2.amount_position
+        )
+        SELECT
+          branch_id,
+          (COALESCE(SUM(credit), 0) - COALESCE(SUM(debit), 0)) AS balance
+        FROM
+        acc_stt_bon
+        GROUP BY
+          branch_id
+      )`,
+      'acc_bon',
+      'acc_bon.branch_id = b.id',
+      { branchIds },
     );
     qb.qb.leftJoin(
       `(WITH x_budget AS (
@@ -326,6 +365,7 @@ export class BalanceService {
         WHERE b2.state = 'approved_by_spv'
           AND b2.is_deleted IS FALSE
           AND (now()::date BETWEEN b2.start_date AND b2.end_date)
+          AND b2.branch_id = ANY(:branchIds)
         ORDER BY b2.end_date DESC
       )
       SELECT
@@ -338,6 +378,7 @@ export class BalanceService {
       FROM x_budget)`,
       'bgt',
       'bgt.branch_id = b.id',
+      { branchIds },
     );
 
     if (userBranchIds?.length && !isSuperUser) {
@@ -357,7 +398,9 @@ export class BalanceService {
   }
 
   private async getDeviationAmount(): Promise<number> {
-    const setting = await this.settingRepo.findOne({ select: ['deviationAmount'] });
+    const setting = await this.settingRepo.findOne({
+      select: ['deviationAmount'],
+    });
     return setting?.deviationAmount;
   }
 

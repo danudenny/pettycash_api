@@ -15,6 +15,9 @@ export class AccountStatement extends PtcBaseEntity {
   @Column({ type: 'varchar', name: 'reference', nullable: true })
   reference?: string;
 
+  @Column({ type: 'text', name: 'description', nullable: true })
+  description?: string;
+
   // FIXME: use ENUM `AccountStatementSourceType`?
   @Column({
     type: 'varchar',

@@ -79,12 +79,15 @@ export class DownPaymentDTO {
   @ApiProperty({ description: 'Employee Nik', example: '998736762732172' })
   employeeNik: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Product ID',
     example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
   })
   @IsUUID()
-  productId?: string;
+  productId: string;
+
+  @ApiProperty({ description: 'Product Name', example: 'Uang Bensin' })
+  productName: string;
 
   @ApiProperty({
     description: 'Period ID',

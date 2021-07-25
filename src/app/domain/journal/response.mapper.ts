@@ -13,6 +13,7 @@ export class JournalResponseMapper {
     j.periodYear = ety?.period?.year;
     j.number = ety.number;
     j.reference = ety.reference;
+    j.syncFailReason = ety.syncFailReason;
     j.partnerName = ety.partnerName;
     j.partnerCode = ety.partnerCode;
     j.totalAmount = roundToTwo(ety.totalAmount);

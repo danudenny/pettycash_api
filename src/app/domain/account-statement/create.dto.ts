@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsISO8601 } from 'class-validator';
-import { AccountStatementType } from '../../../model/utils/enum';
+import { AccountStatementMutationType } from '../../../model/utils/enum';
 
 export class CreateAccountStatementDTO {
   @ApiProperty({
@@ -12,14 +12,20 @@ export class CreateAccountStatementDTO {
 
   @ApiProperty({
     description: 'Transaction Type',
-    example: AccountStatementType.BANK,
-    enum: AccountStatementType,
+    example: AccountStatementMutationType.BANK_TO_CASH,
+    enum: AccountStatementMutationType,
   })
-  type: AccountStatementType;
+  type: AccountStatementMutationType;
 
   @ApiProperty({
     description: 'Amount',
     example: 25000,
   })
   amount: number;
+
+  @ApiPropertyOptional({
+    description: 'Description',
+    example: 'Tarik Tunai',
+  })
+  description?: string;
 }

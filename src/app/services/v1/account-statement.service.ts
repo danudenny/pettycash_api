@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getConnection } from 'typeorm';
+import { Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import {
   AccountStatementAmountPosition,
+  AccountStatementMutationType,
   AccountStatementSourceType,
   AccountStatementType,
 } from '../../../model/utils/enum';
@@ -24,28 +25,49 @@ export class AccountStatementService {
   ) {}
 
   public async create(payload: CreateAccountStatementDTO): Promise<any> {
-    const { amount, type, transactionDate } = payload;
+    const { amount, type, transactionDate, description } = payload;
     const reference = GenerateCode.accountStatement(transactionDate);
     const user = await AuthService.getUser({ relations: ['branches'] });
     const userBranch = user?.branches[0];
 
+    const {
+      BANK_TO_CASH,
+      BANK_TO_BON,
+      CASH_TO_BANK,
+      CASH_TO_BON,
+      BON_TO_CASH,
+      BON_TO_BANK,
+    } = AccountStatementMutationType;
+    const { BANK, CASH, BON } = AccountStatementType;
+
     let typeDebit: AccountStatementType;
     let typeCredit: AccountStatementType;
 
-    // type `BANK`: Transfer from Bank to Cash
-    if (type === AccountStatementType.BANK) {
-      typeDebit = AccountStatementType.BANK;
-      typeCredit = AccountStatementType.CASH;
-      // type `CASH`: Transfer from Cash to Bank
-    } else if (type === AccountStatementType.CASH) {
-      typeDebit = AccountStatementType.CASH;
-      typeCredit = AccountStatementType.BANK;
+    if (type === BANK_TO_CASH) {
+      typeDebit = BANK;
+      typeCredit = CASH;
+    } else if (type === BANK_TO_BON) {
+      typeDebit = BANK;
+      typeCredit = BON;
+    } else if (type === CASH_TO_BANK) {
+      typeDebit = CASH;
+      typeCredit = BANK;
+    } else if (type === CASH_TO_BON) {
+      typeDebit = CASH;
+      typeCredit = BON;
+    } else if (type === BON_TO_CASH) {
+      typeDebit = BON;
+      typeCredit = CASH;
+    } else if (type === BON_TO_BANK) {
+      typeDebit = BON;
+      typeCredit = BANK;
     } else {
       throw new BadRequestException(`Transaction Type is required!`);
     }
 
     const statementDebit = new AccountStatement();
     statementDebit.reference = reference;
+    statementDebit.description = description;
     statementDebit.amount = amount;
     statementDebit.transactionDate = transactionDate;
     statementDebit.branch = userBranch;
@@ -56,6 +78,7 @@ export class AccountStatementService {
 
     const statementCredit = new AccountStatement();
     statementCredit.reference = reference;
+    statementCredit.description = description;
     statementCredit.amount = amount;
     statementCredit.transactionDate = transactionDate;
     statementCredit.branch = userBranch;
@@ -91,6 +114,7 @@ export class AccountStatementService {
       ['stmt.transaction_date', 'transactionDate'],
       ['stmt."type"', 'type'],
       ['stmt.reference', 'reference'],
+      ['stmt.description', 'description'],
       ['stmt.source_type', 'sourceType'],
       ['stmt.amount', 'amount'],
       ['stmt.amount_position', 'amountPosition'],
@@ -107,6 +131,7 @@ export class AccountStatementService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    qb.qb.addOrderBy('stmt.updated_at', 'DESC');
     if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.branchId,

@@ -50,6 +50,8 @@ import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import { BalanceService } from './balance.service';
 import { Loan } from '../../../model/loan.entity';
+import { Product } from '../../../model/product.entity';
+import { BranchService } from '../master/v1/branch.service';
 
 @Injectable()
 export class DownPaymentService {
@@ -78,8 +80,10 @@ export class DownPaymentService {
     try {
       const params = { order: '-updated_at', limit: 10, ...query };
       const qb = new QueryBuilder(DownPayment, 'dp', params);
-      const user = await AuthService.getUser({ relations: ['branches'] });
-      const userBranches = user?.branches?.map((v) => v.id);
+      const {
+        userBranchIds,
+        isSuperUser,
+      } = await AuthService.getUserBranchAndRole();
 
       qb.fieldResolverMap['type'] = 'dp.type';
       qb.fieldResolverMap['state'] = 'dp.state';
@@ -87,6 +91,7 @@ export class DownPaymentService {
       qb.fieldResolverMap['paymentType'] = 'dp.payment_type';
       qb.fieldResolverMap['number__icontains'] = 'dp.number';
       qb.fieldResolverMap['departmentId'] = 'dp.department_Id';
+      qb.fieldResolverMap['productId'] = 'dp.product_id';
       qb.fieldResolverMap['startDate__gte'] = 'dp.transaction_date';
       qb.fieldResolverMap['endDate__lte'] = 'dp.transaction_date';
       qb.fieldResolverMap['destinationPlace'] = 'dp.destination_place';
@@ -114,6 +119,7 @@ export class DownPaymentService {
         ['epl.name', 'employeeName'],
         ['epl.nik', 'employeeNik'],
         ['pd.name', 'periodName'],
+        ['prd.name', 'productName'],
         ['lo.id', 'loanId'],
         ['lo."number"', 'loanNumber'],
         ['lo.state', 'loanState'],
@@ -123,6 +129,7 @@ export class DownPaymentService {
       qb.leftJoin((e) => e.employee, 'epl');
       qb.leftJoin((e) => e.period, 'pd');
       qb.leftJoin((e) => e.loan, 'lo');
+      qb.leftJoin((e) => e.product, 'prd');
       qb.andWhere(
         (e) => e.isDeleted,
         (v) => v.isFalse(),
@@ -131,10 +138,10 @@ export class DownPaymentService {
         (e) => e.department.isActive,
         (v) => v.isTrue(),
       );
-      if (userBranches?.length) {
+      if (userBranchIds?.length > 0 && !isSuperUser) {
         qb.andWhere(
           (e) => e.branchId,
-          (v) => v.in(userBranches),
+          (v) => v.in(userBranchIds),
         );
       }
 
@@ -182,15 +189,29 @@ export class DownPaymentService {
           payload.number = GenerateCode.downPayment();
         }
 
-        const user = await this.getUser(true);
-        const branchId = user && user.branches && user.branches[0].id;
+        const user = await AuthService.getUser({ relations: ['branches'] });
+        const branchId = user?.branches[0]?.id;
+        const productRepo = manager.getRepository(Product);
+        const product = await productRepo.findOne({
+          where: { id: payload?.productId, isDeleted: false },
+          select: ['id', 'isHasKm'],
+        });
+
+        if (!product) {
+          throw new BadRequestException(
+            `Product ID ${payload?.productId} not found!`,
+          );
+        }
+
+        const { DRAFT } = DownPaymentState;
+        const { PERDIN, REIMBURSEMENT } = DownPaymentType;
 
         const downPayment = new DownPayment();
-        downPayment.createUser = user;
-        downPayment.updateUser = user;
+        downPayment.createUserId = user?.id;
+        downPayment.updateUserId = user?.id;
         downPayment.branchId = branchId;
-        downPayment.state = DownPaymentState.DRAFT;
-        downPayment.type = payload.type;
+        downPayment.state = DRAFT;
+        downPayment.type = product?.isHasKm ? PERDIN : REIMBURSEMENT;
         downPayment.periodId = payload.periodId;
         downPayment.productId = payload.productId;
         downPayment.amount = payload.amount;
@@ -201,14 +222,11 @@ export class DownPaymentService {
         downPayment.departmentId = payload.departmentId;
         downPayment.destinationPlace = payload.destinationPlace;
         downPayment.transactionDate = payload.transactionDate;
-
-        const result = await this.downPayEntity.save(downPayment);
-
-        await this.createHistory(downPayment, {
-          state: DownPaymentState.DRAFT,
-          downPaymentId: result.id,
+        downPayment.histories = await this.buildHistory(downPayment, {
+          state: DRAFT,
         });
 
+        const result = await manager.save(downPayment);
         return result;
       });
 
@@ -239,12 +257,9 @@ export class DownPaymentService {
         const user = await AuthService.getUser({ relations: ['role'] });
         const userRole = user?.role?.name;
         const downPaymentType = downPayment?.type;
-        const { REIMBURSEMENT_HO, REIMBURSEMENT_OTHER } = DownPaymentType;
+        const { REIMBURSEMENT } = DownPaymentType;
         const { REJECTED, REVERSED } = DownPaymentState;
-        const TYPES_SHOULD_CREATE_LOAN = [
-          REIMBURSEMENT_HO,
-          REIMBURSEMENT_OTHER,
-        ];
+        const TYPES_SHOULD_CREATE_LOAN = [REIMBURSEMENT];
 
         let state: DownPaymentState;
         let isCreateJurnal = false;
@@ -289,12 +304,15 @@ export class DownPaymentService {
           );
 
         downPayment.state = state;
-        downPayment.amount = payload.amount;
-        downPayment.paymentType = payload.paymentType;
+        downPayment.amount = payload?.amount || downPayment?.amount;
+        downPayment.paymentType =
+          payload?.paymentType || downPayment?.paymentType;
         downPayment.updateUserId = user?.id;
+        downPayment.histories = await this.buildHistory(downPayment, { state });
 
         if (isCreateJurnal) {
-          // Create Journal for PIC HO OR for SS/SPV HO
+          await BranchService.checkCashCoa(downPayment?.branchId);
+
           await this.removeJournal(manager, downPayment);
           await this.createJournal(manager, downPaymentId);
         }
@@ -309,11 +327,6 @@ export class DownPaymentService {
         }
 
         const result = await manager.save(downPayment);
-        await this.createHistory(downPayment, {
-          state,
-          downPaymentId: result.id,
-        });
-
         return result;
       });
 
@@ -394,6 +407,26 @@ export class DownPaymentService {
         err.status || HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  private async buildHistory(
+    downPayment: DownPayment,
+    data?: {
+      state: DownPaymentState;
+      rejectedNote?: string;
+    },
+  ): Promise<DownPaymentHistory[]> {
+    const user = await AuthService.getUser();
+    const newHistory = new DownPaymentHistory();
+    newHistory.state = data?.state;
+    newHistory.rejectedNote = data?.rejectedNote;
+    newHistory.createUserId = user?.id;
+    newHistory.updateUserId = user?.id;
+
+    const history: DownPaymentHistory[] = [].concat(downPayment.histories, [
+      newHistory,
+    ]);
+    return history.filter((v) => v);
   }
 
   private async createHistory(
@@ -496,7 +529,6 @@ export class DownPaymentService {
       jrnl.totalAmount = downPayment.amount;
       jrnl.transactionDate = downPayment.transactionDate;
       jrnl.number = GenerateCode.journal(downPayment.transactionDate);
-      jrnl.branchCode = downPayment?.branch?.branchCode ?? 'NO_BRANCH_CODE';
       jrnl.partnerCode = downPayment?.employee?.nik;
       jrnl.partnerName = downPayment?.employee?.name;
 

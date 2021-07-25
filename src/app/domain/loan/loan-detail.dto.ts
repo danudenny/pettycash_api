@@ -1,6 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
-import { DownPaymentType, LoanState } from '../../../model/utils/enum';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsUUID } from 'class-validator';
+import {
+  DownPaymentType,
+  LoanSourceType,
+  LoanState,
+} from '../../../model/utils/enum';
 import { LoanPaymentDTO } from './loan-payment.dto';
 
 export class LoanDetailDTO {
@@ -30,10 +34,30 @@ export class LoanDetailDTO {
   sourceDocument: string;
 
   @ApiProperty({
+    description: 'Loan Source Type',
+    example: LoanSourceType.DP,
+  })
+  sourceType: LoanSourceType;
+
+  @ApiProperty({
     description: 'Down Payment Type',
-    example: DownPaymentType.REIMBURSEMENT_HO,
+    example: DownPaymentType.REIMBURSEMENT,
   })
   downPaymentType: DownPaymentType;
+
+  @ApiPropertyOptional({
+    description: 'DownPayment Product ID',
+    example: 'd659d65c-fcf3-45c8-956e-5baf9dee2522',
+  })
+  @IsUUID()
+  @IsOptional()
+  downPaymentProductId?: string;
+
+  @ApiPropertyOptional({
+    description: 'DownPayment Product Name',
+    example: 'Reimbursement HO',
+  })
+  downPaymentProductName?: string;
 
   @ApiProperty({
     description: 'Loan Amount',

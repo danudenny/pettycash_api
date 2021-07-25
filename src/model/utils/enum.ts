@@ -31,9 +31,19 @@ export enum CashBalanceAllocationState {
   PAID = 'paid'
 }
 
+export enum AccountStatementMutationType {
+  BANK_TO_CASH = 'bank_to_cash',
+  BANK_TO_BON = 'bank_to_bon',
+  CASH_TO_BANK = 'cash_to_bank',
+  CASH_TO_BON = 'cash_to_bon',
+  BON_TO_CASH = 'bon_to_cash',
+  BON_TO_BANK = 'bon_to_bank',
+}
+
 export enum AccountStatementType {
   CASH = 'cash',
   BANK = 'bank',
+  BON = 'bon',
   // VA = 'virtual_account',
 }
 
@@ -44,6 +54,7 @@ export enum AccountStatementAmountPosition {
 
 export enum AccountStatementSourceType {
   DP = 'down_payment',
+  PAYMENT = 'payment',
 }
 
 export enum PartnerState {
@@ -70,8 +81,6 @@ export enum VoucherPaymentType {
 export enum DownPaymentType {
   PERDIN = 'perdin',
   REIMBURSEMENT = 'reimbursement',
-  REIMBURSEMENT_HO = 'reimbursement_ho',
-  REIMBURSEMENT_OTHER = 'reimbursement_other',
 }
 
 export enum DownPaymentPayType {
@@ -150,6 +159,7 @@ export enum JournalState {
   APPROVED_BY_SS_SPV_HO = 'approved_by_ss_spv_ho',
   APPROVED_BY_TAX = 'approved_by_tax',
   POSTED = 'posted',
+  SYNC_FAILED = 'sync_failed',
 }
 
 export enum JournalSourceType {

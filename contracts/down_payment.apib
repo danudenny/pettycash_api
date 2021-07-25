@@ -14,6 +14,7 @@ API to get all down payments
     + endDate__lte: `2021-01-29T09:00:29.803Z`  (date) - Start Date to filter.
     + branchId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb`  (string) - Branch to filter.
     + departmentId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb`  (string, optional) - Department to filter.
+    + productId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb`  (string, optional) - Product ID (Jenis Biaya) to filter.
     + state: `draft` (enum[string], optional) - Status to filter
         + draft
         + approved_by_pic_ho 
@@ -52,6 +53,8 @@ API to get all down payments
                     "employeeNik": "998366263636277627",
                     "periodId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
                     "periodName": "01-2010",
+                    "productId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "productName": "Reimbursement HO",
                     "destinationPlace": "Jakarta",
                     "description": "isi description",
                     "state": "draft",
@@ -76,6 +79,8 @@ API to get all down payments
                     "employeeNik": "998366263636277627",
                     "periodId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
                     "periodName": "01-2010",
+                    "productId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "productName": "Perdin",
                     "destinationPlace": "Jakarta",
                     "description": "isi description",
                     "state": "draft",
@@ -132,7 +137,7 @@ API to get detail down payment
                 "periodId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
                 "periodName": "01-2010",
                 "productId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
-                "productName": "Uang Bensin",
+                "productName": "Perdin",
                 "destinationPlace": "Jakarta",
                 "description": "isi description",
                 "state": "draft",
@@ -181,10 +186,7 @@ API to create down payment
     + Header
         Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
     + Attributes (object)
-        + transactionDate: `2021-01-29T09:00:29.803Z` (Date) - Transaction date.
-        + type: `reimbursement` (string) - Type Down Payment.
-            + reimbursement
-            + perdin
+        + transactionDate: `2021-01-29T09:00:29.803Z` (string) - Transaction date.
         + departmentId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - Department.
         + employeeId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - Employee.
         + periodId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - Period.

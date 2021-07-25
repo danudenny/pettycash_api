@@ -7,6 +7,7 @@ export class LoanResponseMapper {
     data.amount = +data.amount;
     data.residualAmount = +data.residualAmount;
     data.paidAmount = +data.paidAmount;
+    data.downPaymentNumber = data.downPaymentId ? data.sourceDocument : null;
     return data;
   }
 
