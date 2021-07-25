@@ -28,22 +28,6 @@ export class Employee extends BaseEntity {
   name: string;
 
   @Column({
-    type: 'varchar',
-    length: 30,
-    nullable: true,
-    name: 'npwp_number',
-  })
-  npwpNumber: string;
-
-  @Column({
-    type: 'varchar',
-    length: 25,
-    nullable: true,
-    name: 'id_card_number',
-  })
-  idCardNumber: string;
-
-  @Column({
     type: 'int8', // Legacy using `int8`
     nullable: true,
     name: 'position_id',
