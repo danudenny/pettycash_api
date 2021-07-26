@@ -131,10 +131,12 @@ export class LoanService {
       ['b.branch_code', 'branchCode'],
       ['e.name', 'employeeName'],
       ['e.nik', 'employeeNik'],
+      ['er.employee_role_name', 'positionName'],
     );
     qb.leftJoin((e) => e.branch, 'b');
     qb.leftJoin((e) => e.period, 'p');
     qb.leftJoin((e) => e.employee, 'e');
+    qb.leftJoin((e) => e.employee.employeeRole, 'er');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),

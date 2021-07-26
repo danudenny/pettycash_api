@@ -78,6 +78,12 @@ export class LoanDTO {
   employeeNik: string;
 
   @ApiProperty({
+    description: 'Position Name (Jabatan)',
+    example: 'Admin Purchasing',
+  })
+  positionName: string;
+
+  @ApiProperty({
     description: 'Loan Type: `payable` = `hutang`. `receivable` = `piutang`',
     example: LoanType.PAYABLE,
     enum: LoanType,
