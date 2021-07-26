@@ -32,7 +32,7 @@ export class VoucherResponseMapper {
 			employeeId: ety.employeeId,
 			employeeNik: ety.employee && ety.employee.nik,
 			employeeName: ety.employee && ety.employee.name,
-			employeePosition: ety.employee && ety.employee.positionName,
+			employeePosition: ety.employee && ety.employee.employeeRole.employeePosition,
 			checkinTime : ety.checkinTime,
 			checkoutTime : ety.checkoutTime,
 			totalAmount: ety.totalAmount,
