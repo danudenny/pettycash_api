@@ -26,7 +26,7 @@ export class VoucherDetailResponseMapper {
 			transactionDate: ety.transactionDate,
 			employeeNik: ety.employee && ety.employee.nik,
 			employeeName: ety.employee && ety.employee.name,
-			employeePosition: ety.employee && ety.employee.positionName,
+			employeePosition: ety.employee && ety.employee.employeeRole.employeePosition,
 			totalAmount: ety.totalAmount,
 			paymentType: ety.paymentType,
 			items: this.toVoucherItemDTO(ety.items),

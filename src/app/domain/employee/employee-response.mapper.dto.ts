@@ -8,7 +8,7 @@ export class EmployeeResponseMapper {
     it.employeeId = dto.employeeId;
     it.nik = dto.nik;
     it.name = dto.name;
-    it.positionId = dto.positionId;
+    it.employeeRoleId = dto.employeeRoleId;
     it.positionName = dto.positionName;
     it.branchId = dto.branchId;
     return it;
@@ -20,8 +20,7 @@ export class EmployeeResponseMapper {
       employeeId: ety.employeeId,
       nik: ety.nik,
       name: ety.name,
-      positionId: ety.positionId,
-      positionName: ety.positionName,
+      positionName: ety.employeeRole && ety.employeeRole.employeeRoleName,
       branchId: ety.branchId,
     });
   }

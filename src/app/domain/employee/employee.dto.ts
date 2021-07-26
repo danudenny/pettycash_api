@@ -34,17 +34,16 @@ export class EmployeeDTO {
   name: string;
 
   @ApiProperty({
-    description: 'Employee Position ID',
+    description: 'Employee Role ID',
     example: 10,
   })
   @IsString()
-  positionId: Number;
+  employeeRoleId: Number;
 
   @ApiProperty({
-    description: 'Employee Position Name',
-    example: 'Backend Developer',
+    description: 'Employee Role Name',
+    example: 'Admin Asset',
   })
-  @IsOptional()
   @IsString()
   positionName: string;
 

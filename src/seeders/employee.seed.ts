@@ -10,8 +10,7 @@ const GenerateEmployeeRandom = (num: number = 10) => {
     e.nik = `${202011839 + i}`;
     e.employeeId = faker.random.number();
     e.name = `${faker.name.firstName()} ${faker.name.lastName()}`;
-    e.positionId = faker.random.number();
-    e.positionName = faker.name.jobTitle();
+    e.employeeRoleId = faker.random.number();
     e.branchId = faker.random.number();
     employees.push(e);
   }
