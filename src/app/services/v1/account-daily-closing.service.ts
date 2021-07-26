@@ -58,6 +58,7 @@ export class AccountDailyClosingService {
       ['adc.id', 'id'],
       ['adc.closing_date', 'closingDate'],
       ['adc.responsible_user_id', 'responsibleUserId'],
+      ['brc.branch_name', 'branchName'],
       ['usr.username', 'responsibleUserNik'],
       ['usr.first_name', 'responsibleUserFirstName'],
       ['usr.last_name', 'responsibleUserLastName'],
@@ -72,6 +73,7 @@ export class AccountDailyClosingService {
       ['adc.reason_bon', 'reasonBon'],
     );
     qb.leftJoin((e) => e.createUser, 'usr');
+    qb.leftJoin((e) => e.branch, 'brc');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),

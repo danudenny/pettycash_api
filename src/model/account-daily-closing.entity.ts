@@ -1,8 +1,9 @@
-import { Entity, Column, OneToMany, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column, OneToMany, ManyToMany, JoinTable, ManyToOne, JoinColumn } from 'typeorm';
 import { AccountCashboxItem } from './account-cashbox-item.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Attachment } from './attachment.entity';
 import { ColumnNumericTransformer } from './utils/transformer';
+import { Branch } from './branch.entity';
 
 @Entity('account_daily_closing')
 export class AccountDailyClosing extends PtcBaseEntity {
@@ -101,6 +102,10 @@ export class AccountDailyClosing extends PtcBaseEntity {
   })
   cashItems: AccountCashboxItem[];
 
+  @ManyToOne(() => Branch)
+  @JoinColumn({ name: 'branch_id' })
+  branch: Branch;
+
   @ManyToMany(() => Attachment)
   @JoinTable({
     name: 'account_daily_closing_attachment',
@@ -115,3 +120,4 @@ export class AccountDailyClosing extends PtcBaseEntity {
   })
   attachments: Attachment[];
 }
+

@@ -11,6 +11,12 @@ export class AccountDailyClosingDetailDTO {
   id: string;
 
   @ApiProperty({
+    description: 'Branch Name',
+    example: 'Jakut Ancol',
+  })
+  branchName: string;
+
+  @ApiProperty({
     description: 'Closing Date',
     example: '2021-04-05',
   })
