@@ -16,6 +16,12 @@ export class AccountDailyClosingDTO {
   closingDate: Date;
 
   @ApiProperty({
+    description: 'Branch Name',
+    example: 'Jakut Ancol',
+  })
+  branchName: string;
+
+  @ApiProperty({
     description: 'Responsible User ID',
     example: '8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd',
   })
