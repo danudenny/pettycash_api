@@ -81,6 +81,7 @@ export class AllocationBalanceService {
     const history = [].concat(allocation.allocationHistory, [
       newHistory,
     ]) as AccountStatementHistory[];
+    console.log(history);
     return history.filter((v) => v);
   }
 
@@ -303,6 +304,11 @@ export class AllocationBalanceService {
 
       // ! HINT: Approve by SS HO
       if (userRole === MASTER_ROLES.SS_HO) {
+        
+        if (dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')) {
+          state = CashBalanceAllocationState.EXPIRED
+        }
+
         if (currentState === CashBalanceAllocationState.REJECTED) {
           throw new BadRequestException(
             `Alokasi Saldo Kas sudah di tolak`,
@@ -372,10 +378,6 @@ export class AllocationBalanceService {
         }
       }
 
-      if (dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')) {
-        state = CashBalanceAllocationState.EXPIRED
-      }
-
       if (!state) {
         throw new BadRequestException(
           `Gagal approve Alokasi Saldo Kas karena User Role tidak diketahui!`,
@@ -412,15 +414,6 @@ export class AllocationBalanceService {
         });
         if (!allocation) {
           throw new NotFoundException(`Alokasi Saldo Kas ID ${id} tidak ditemukan!`);
-        }
-        
-        if (
-          dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')
-        ) {
-          allocation.state = CashBalanceAllocationState.EXPIRED
-          throw new BadRequestException(
-            `Form yang telah lewat batas tanggal transfer`,
-          );
         }
 
         if (allocation.state === CashBalanceAllocationState.RECEIVED) {
@@ -483,15 +476,6 @@ export class AllocationBalanceService {
         });
         if (!allocation) {
           throw new NotFoundException(`Alokasi Saldo Kas ID ${id} tidak ditemukan!`);
-        }
-        
-        if (
-          dayjs(allocation.transferDate).format('YYYY-MM-DD') < dayjs(new Date).format('YYYY-MM-DD')
-        ) {
-          allocation.state = CashBalanceAllocationState.EXPIRED
-          throw new BadRequestException(
-            `Form yang telah lewat batas tanggal transfer`,
-          );
         }
 
         if (allocation.state === CashBalanceAllocationState.RECEIVED) {
