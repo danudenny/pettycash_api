@@ -34,11 +34,12 @@ export class EmployeeService {
       ['emp.employee_id', 'employeeId'],
       ['emp.nik', 'nik'],
       ['emp.name', 'name'],
-      ['emp.position_id', 'positionId'],
-      ['emp.position_name', 'positionName'],
+      ['emp.employee_role_id', 'positionId'],
+      ['emp_role.employee_role_name', 'positionName'],
       ['emp.branch_id', 'branchId'],
-      ['emp.is_deleted', 'isDeleted']
+      ['emp.is_deleted', 'isDeleted'],
     );
+    qb.leftJoin((e) => e.employeeRole, 'emp_role');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),

@@ -1,4 +1,12 @@
-import { Column, Entity, PrimaryGeneratedColumn, BaseEntity } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  BaseEntity,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { EmployeeRole } from './employee-role.entity';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 // NOTE: source data separately from db master data
@@ -30,20 +38,11 @@ export class Employee extends BaseEntity {
   @Column({
     type: 'int8', // Legacy using `int8`
     nullable: true,
-    name: 'position_id',
+    name: 'employee_role_id',
     transformer: new ColumnNumericTransformer(),
     comment: 'Legacy field master data table `employee.employee_role_id`',
   })
-  positionId: number;
-
-  @Column({
-    type: 'varchar',
-    nullable: true,
-    name: 'position_name',
-    comment:
-      'Legacy field master data table `employee_role.employee_role_name`',
-  })
-  positionName: string;
+  employeeRoleId: number;
 
   @Column({
     type: 'bigint',
@@ -72,4 +71,11 @@ export class Employee extends BaseEntity {
     name: 'date_of_resign',
   })
   dateOfResign: Date;
+
+  @ManyToOne(() => EmployeeRole)
+  @JoinColumn({
+    name: 'employee_role_id',
+    referencedColumnName: 'employeeRoleId',
+  })
+  employeeRole: EmployeeRole;
 }
