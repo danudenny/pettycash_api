@@ -1,69 +1,21 @@
-image: docker:latest
-
-services:
-  - docker:dind
+include:
+  - project: platform/gitlab-ci
+    file: /apps/gitlab-ssh-keys.yml
+  - project: platform/gitlab-ci
+    file: /apps/gcr-push.yml
 
 stages:
-  - build
-  - deploy
-  - checking
-  - trigger-test
-  - notify-failure
+  - push
 
-variables:
-  URL_PIPELINE: $CI_PIPELINE_URL
-
-build:
-  stage: build
-  environment: staging
-  before_script:
-    - sudo apt install curl
-  script:
-    - make slack-notify-start
-    - make build-and-push
+push-gcr-stag:
+  stage: push
+  extends:
+    - .gcr-push
+  variables:
+    ENV_BUILD: staging
+    DOCKER_TAG: $CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID
+    DOCKERFILE_PATH: Dockerfile
+    APP_NAME: $CI_PROJECT_NAME
+    APP_PATH: '.'
   only:
-    - develop
-
-deploy:
-  stage: deploy
-  needs:
-    - job: build
-  environment: staging
-  script:
-    - make deploy
-  only:
-    - develop
-
-checking:
-  stage: checking
-  needs:
-    - job: deploy
-  environment: staging
-  script:
-    - make health-check
-  only:
-    - develop
-
-trigger-test:
-  stage: trigger-test
-  needs:
-    - job: checking
-  environment: staging
-  before_script:
-    - sudo apt install curl
-  script:
-    - 'curl -X PUT -H "Authorization: Basic ${KATALON_AUTH}" -H "Content-Type: application/json" https://testops.katalon.io/api/v1/run-configurations/33296/execute'
-    - make slack-notify-finish
-  only:
-    - develop
-
-notify-failure:
-  stage: notify-failure
-  environment: staging
-  before_script:
-    - sudo apt install curl
-  script:
-    - make slack-notify-failed
-  only:
-    - develop
-  when: on_failure
+    - migration
