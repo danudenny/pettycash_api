@@ -101,7 +101,7 @@ export class VoucherService {
       ['brc.branch_name', 'branchName'],
       ['emp.nik', 'employeeNik'],
       ['emp.name', 'employeeName'],
-      ['emp.position_name', 'employeePosition'],
+      ['emp_role.employeePosition', 'employeePosition'],
       ['vcr.number', 'number'],
       ['vcr.checkin_time', 'checkinTime'],
       ['vcr.checkout_time', 'checkoutTime'],
@@ -111,6 +111,7 @@ export class VoucherService {
     );
     qb.leftJoin((e) => e.branch, 'brc');
     qb.leftJoin((e) => e.employee, 'emp');
+    qb.leftJoin((e) => e.employee.employeeRole, 'emp_role');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
@@ -138,8 +139,10 @@ export class VoucherService {
 
     const voucher = await this.voucherRepo.findOne({
       where,
-      relations: ['branch', 'employee', 'items', 'items.products'],
+      relations: ['branch', 'employee', 'employee.employeeRole', 'items', 'items.products'],
     });
+
+    console.log(voucher);
     if (!voucher) {
       throw new NotFoundException(`Voucher ID ${id} tidak ditemukan!`);
     }
