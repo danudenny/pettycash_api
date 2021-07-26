@@ -44,7 +44,6 @@ import { AccountStatement } from '../../../model/account-statement.entity';
 import { BalanceService } from './balance.service';
 import { Journal } from '../../../model/journal.entity';
 import { Period } from '../../../model/period.entity';
-import { Branch } from '../../../model/branch.entity';
 import { JournalItem } from '../../../model/journal-item.entity';
 import { DownPayment } from '../../../model/down-payment.entity';
 
@@ -131,10 +130,12 @@ export class LoanService {
       ['b.branch_code', 'branchCode'],
       ['e.name', 'employeeName'],
       ['e.nik', 'employeeNik'],
+      ['er.employee_role_name', 'positionName'],
     );
     qb.leftJoin((e) => e.branch, 'b');
     qb.leftJoin((e) => e.period, 'p');
     qb.leftJoin((e) => e.employee, 'e');
+    qb.leftJoin((e) => e.employee.employeeRole, 'er');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
@@ -520,11 +521,6 @@ export class LoanService {
     loan: Loan,
     payment: AccountPayment,
   ): Promise<Journal> {
-    const branchRepo = manager.getRepository(Branch);
-    const branch = await branchRepo.findOne({
-      where: { id: payment?.branchId },
-      select: ['branchCode'],
-    });
     const dpRepo = manager.getRepository(DownPayment);
     const dp = await dpRepo.findOne({
       where: { id: loan?.downPaymentId },
