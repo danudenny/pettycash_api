@@ -76,7 +76,7 @@ export class Employee extends BaseEntity {
   @ManyToOne(() => Branch)
   @JoinColumn({
     name: 'branch_id',
-    referencedColumnName: 'id',
+    referencedColumnName: 'branchId',
   })
   branch: Branch;
 

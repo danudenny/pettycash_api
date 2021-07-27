@@ -94,6 +94,15 @@ export class PartnerController {
     return await this.svc.create(payload);
   }
 
+  @Get('/nonactive-partner')
+  @ApiOperation({ summary: 'Nonactive partner after 6mo' })
+  @ApiOkResponse({ description: 'Partner successfully inactivated' })
+  @ApiBadRequestResponse({ description: 'Failed inactivated partner' })
+  @ApiNoContentResponse({ description: 'All Partner has activity within 6mo' })
+  public async updatePartnerActive() {
+    return await this.svc.updatePartnerActive()
+  }
+
   @Get('/:id')
   @ApiOperation({ summary: 'Get partner detail' })
   @ApiOkResponse({
@@ -104,15 +113,6 @@ export class PartnerController {
   @ApiNotFoundResponse({ description: 'Partner not found' })
   public async get(@Param('id', new ParseUUIDPipe()) id: string) {
     return await this.svc.get(id);
-  }
-
-  @Put('/nonactive-partner')
-  @ApiOperation({ summary: 'Nonactive partner after 6mo' })
-  @ApiOkResponse({ description: 'Partner successfully inactivated' })
-  @ApiBadRequestResponse({ description: 'Failed inactivated partner' })
-  @ApiNoContentResponse({ description: 'All Partner has activity within 6mo' })
-  public async updatePartnerActive() {
-    return await this.svc.updatePartnerActive()
   }
 
   @Put('/:id')
