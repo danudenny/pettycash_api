@@ -389,7 +389,7 @@ export class VoucherService {
       payment_type: data.paymentType
     }
 
-    const dataJson = JSON.stringify(resultRedeem);
+    const dataJson = JSON.stringify(data);
 
     const options = {
       headers: VoucherService.headerWebhook
@@ -406,25 +406,31 @@ export class VoucherService {
 
       const resp = []
       webhookResp[0].forEach(async res => {
-        // console.log(res['voucher_id'])
         resp.push(res);
+        console.log(res['status'])
         if (res['status'] == 'FAILED') {
           await this.voucherRepo.update(
             { id: res['voucher_id'] },
             { paymentType: paymentTypeFromQuery[0] }
           )
+          throw new HttpException('FAILED', HttpStatus.BAD_REQUEST);
+        }
+        if (res['status'] == 'EXPENSE_ALREADY_CREATED') {
+          await this.voucherRepo.update(
+            { id: res['voucher_id'] },
+            { paymentType: paymentTypeFromQuery[0] }
+          )
+          throw new HttpException('EXPENSE_ALREADY_CREATED', HttpStatus.BAD_REQUEST);
         }
       });
-      console.log(JSON.parse(resp['voucher_id']))
     } catch (error) {
       await this.voucherRepo.update(
         { id: In(successIds) },
         { paymentType: paymentTypeFromQuery[0] }
       )
-      throw new HttpException('Gagal Terhubung dengan Webhook!', HttpStatus.GATEWAY_TIMEOUT);
     }
     const webHookResult = webhookResp[0]
-    return {resultRedeem, webHookResult};
+    return {webHookResult};
   }
 
 }
