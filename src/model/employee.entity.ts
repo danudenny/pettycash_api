@@ -1,3 +1,4 @@
+import { Branch } from './branch.entity';
 import {
   Column,
   Entity,
@@ -71,6 +72,13 @@ export class Employee extends BaseEntity {
     name: 'date_of_resign',
   })
   dateOfResign: Date;
+
+  @ManyToOne(() => Branch)
+  @JoinColumn({
+    name: 'branch_id',
+    referencedColumnName: 'id',
+  })
+  branch: Branch;
 
   @ManyToOne(() => EmployeeRole)
   @JoinColumn({

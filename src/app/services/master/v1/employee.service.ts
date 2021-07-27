@@ -37,9 +37,13 @@ export class EmployeeService {
       ['emp.employee_role_id', 'positionId'],
       ['emp_role.employee_role_name', 'positionName'],
       ['emp.branch_id', 'branchId'],
+      ['brc.branch_name', 'branchName'],
+      ['emp.date_of_entry', 'dateOfEntry'],
+      ['emp.date_of_resign', 'dateOfResign'],
       ['emp.is_deleted', 'isDeleted'],
     );
     qb.leftJoin((e) => e.employeeRole, 'emp_role');
+    qb.leftJoin((e) => e.branch, 'brc');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),

@@ -48,10 +48,28 @@ export class EmployeeDTO {
   positionName: string;
 
   @ApiProperty({
+    description: 'Branch Name',
+    example: 'Jakarta Pusat',
+  })
+  branchName: string;
+
+  @ApiProperty({
     description: 'Employee Branch ID',
     example: 1,
   })
   @IsOptional()
   branchId: Number;
+
+  @ApiProperty({
+    description: 'Entry Date',
+    example: '2019-08-19 00:00:00',
+  })
+  dateOfEntry: Date;
+
+  @ApiProperty({
+    description: 'Resgin Date',
+    example: '2019-08-19 00:00:00',
+  })
+  dateOfResign: Date;
 
 }
