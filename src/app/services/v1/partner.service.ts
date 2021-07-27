@@ -96,14 +96,13 @@ export class PartnerService {
       select: ['id'],
       where: {
         name: payload.name,
-        address: payload.address,
         isDeleted: false,
       },
     });
 
     if (!!existingPartner.length) {
       throw new BadRequestException(
-        `Nama partner dengan alamat yang sama sudah pernah dibuat`,
+        `Nama partner yang sama sudah pernah dibuat`,
       );
     }
 
