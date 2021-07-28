@@ -40,6 +40,12 @@ export enum AccountStatementMutationType {
   BON_TO_BANK = 'bon_to_bank',
 }
 
+export enum BalanceType {
+  CASH = 'cash',
+  BANK = 'bank',
+  BON = 'bon',
+}
+
 export enum AccountStatementType {
   CASH = 'cash',
   BANK = 'bank',

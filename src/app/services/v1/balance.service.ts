@@ -1,6 +1,10 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getConnection, Repository } from 'typeorm';
+import { getConnection, Repository, EntityManager, getManager } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Branch } from '../../../model/branch.entity';
 import { QueryBalanceDTO } from '../../domain/balance/balance.query.dto';
@@ -11,12 +15,16 @@ import { QuerySummaryBalanceDTO } from '../../domain/balance/summary-balance.que
 import { LoaderEnv } from '../../../config/loader';
 import { BalanceSummaryResponse } from '../../domain/balance/summary-response.dto';
 import { GlobalSetting } from '../../../model/global-setting.entity';
+import { BalanceType } from '../../../model/utils/enum';
+import { Balance } from '../../../model/balance.entity';
+import { CreateBalanceDTO } from '../../domain/balance/create.dto';
+import { TransferBalanceDTO } from '../../domain/balance/transfer.dto';
 
 @Injectable()
 export class BalanceService {
   constructor(
     @InjectRepository(GlobalSetting)
-    private readonly settingRepo: Repository<GlobalSetting>,
+    private readonly settingRepo?: Repository<GlobalSetting>,
   ) {}
 
   public async list(
@@ -414,5 +422,176 @@ export class BalanceService {
   public static async invalidateCache(branchId: string): Promise<void> {
     const cacheKey = `branch_balance_${branchId}`;
     await getConnection().queryResultCache?.remove([cacheKey]);
+  }
+
+  /**
+   * Transfer Balance
+   *
+   * @static
+   * @param {TransferBalanceDTO} data
+   * @return {*}  {Promise<void>}
+   * @memberof BalanceService
+   */
+  public static async transfer(data: TransferBalanceDTO): Promise<void> {
+    const { from, to, amount, branchId, manager: mngr } = data;
+    const manager = mngr ? mngr : getManager();
+
+    if (from === to) {
+      throw new BadRequestException(
+        `Source and Destination Balance should difference!`,
+      );
+    }
+
+    // Transfer amount should do in db transaction mode
+    // we asume if there is `manager` it's mean has transaction
+    // otherwise, should initialize db transaction.
+    // TODO: add Row Locking when updating data for data consistency.
+    const balance = new BalanceService();
+    if (manager) {
+      await balance.doTransfer(from, to, amount, branchId, manager);
+    } else {
+      await getManager().transaction(async (newManager) => {
+        await balance.doTransfer(from, to, amount, branchId, newManager);
+      });
+    }
+  }
+
+  /**
+   * Internal Helper to do transfer.
+   * Please use `BalanceService.transfer()` if calling from other service.
+   *
+   * @static
+   * @param {BalanceType} from Source Balance to decrease
+   * @param {BalanceType} to Destination Balance to increase
+   * @param {number} amount Total Amount to update
+   * @param {string} branchId Branch ID to update
+   * @param {EntityManager} manager TypeORM EntityManager
+   * @return {*}  {Promise<any>}
+   * @memberof BalanceService
+   */
+  private async doTransfer(
+    from: BalanceType,
+    to: BalanceType,
+    amount: number,
+    branchId: string,
+    manager: EntityManager,
+  ): Promise<any> {
+    if (from === to) {
+      throw new BadRequestException(
+        `Source and Destination Balance should difference!`,
+      );
+    }
+
+    const balanceRepo = manager.getRepository(Balance);
+    const balance = await balanceRepo.findOne({ where: { branchId } });
+
+    if (!balance) {
+      balance.branchId = branchId;
+      balance.bankAmount = 0;
+      balance.cashAmount = 0;
+      balance.bonAmount = 0;
+    }
+
+    // Add Amount
+    switch (to) {
+      case BalanceType.BANK:
+        balance.bankAmount = +balance.bankAmount + +amount;
+        break;
+      case BalanceType.CASH:
+        balance.cashAmount = +balance.cashAmount + +amount;
+        break;
+      case BalanceType.BON:
+        balance.bonAmount = +balance.bonAmount + +amount;
+        break;
+    }
+
+    // Reduce Amount
+    switch (from) {
+      case BalanceType.BANK:
+        balance.bankAmount = +balance.bankAmount - +amount;
+        break;
+      case BalanceType.CASH:
+        balance.cashAmount = +balance.cashAmount - +amount;
+        break;
+      case BalanceType.BON:
+        balance.bonAmount = +balance.bonAmount - +amount;
+        break;
+    }
+
+    return await balanceRepo.save(balance);
+  }
+
+  /**
+   * Increase Balance Amount
+   *
+   * @static
+   * @param {CreateBalanceDTO} data
+   * @return {*}  {Promise<Balance>}
+   * @memberof BalanceService
+   */
+  public static async increase(data: CreateBalanceDTO): Promise<Balance> {
+    const { type, amount, branchId, manager: mngr } = data;
+    const manager = mngr ? mngr : getManager();
+    const balanceRepo = manager.getRepository(Balance);
+    let balance = await balanceRepo.findOne({ where: { branchId } });
+
+    if (!balance) {
+      balance = new Balance();
+      balance.branchId = branchId;
+      balance.bankAmount = 0;
+      balance.cashAmount = 0;
+      balance.bonAmount = 0;
+    }
+
+    switch (type) {
+      case BalanceType.BANK:
+        balance.bankAmount = +balance.bankAmount + +amount;
+        break;
+      case BalanceType.CASH:
+        balance.cashAmount = +balance.cashAmount + +amount;
+        break;
+      case BalanceType.BON:
+        balance.bonAmount = +balance.bonAmount + +amount;
+        break;
+    }
+
+    return await balanceRepo.save(balance);
+  }
+
+  /**
+   * Decrease Balance Amount
+   *
+   * @static
+   * @param {CreateBalanceDTO} data
+   * @return {*}  {Promise<Balance>}
+   * @memberof BalanceService
+   */
+  public static async decrease(data: CreateBalanceDTO): Promise<Balance> {
+    const { type, amount, branchId, manager: mngr } = data;
+    const manager = mngr ? mngr : getManager();
+    const balanceRepo = manager.getRepository(Balance);
+    let balance = await balanceRepo.findOne({ where: { branchId } });
+
+    if (!balance) {
+      balance = new Balance();
+      balance.branchId = branchId;
+      balance.bankAmount = 0;
+      balance.cashAmount = 0;
+      balance.bonAmount = 0;
+    }
+
+    switch (type) {
+      case BalanceType.BANK:
+        balance.bankAmount = +balance.bankAmount - +amount;
+        break;
+      case BalanceType.CASH:
+        balance.cashAmount = +balance.cashAmount - +amount;
+        break;
+      case BalanceType.BON:
+        balance.bonAmount = +balance.bonAmount - +amount;
+        break;
+    }
+
+    return await balanceRepo.save(balance);
   }
 }
