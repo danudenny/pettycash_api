@@ -43,10 +43,9 @@ import { DownPayment } from '../../../model/down-payment.entity';
 import { DownPaymentHistory } from '../../../model/down-payment-history.entity';
 import { ExpenseHistory } from '../../../model/expense-history.entity';
 import { AccountPayment } from '../../../model/account-payment.entity';
-import { AccountStatement } from '../../../model/account-statement.entity';
-import { BalanceService } from './balance.service';
 import { Loan } from '../../../model/loan.entity';
 import { PinoLogger } from 'nestjs-pino';
+import { AccountStatementService } from './account-statement.service';
 
 @Injectable()
 export class JournalService {
@@ -664,23 +663,17 @@ export class JournalService {
     if (!payment) return;
 
     // Hard Delete AccountStatement (mutasi) from payment.
-    const stmt = await manager.find(AccountStatement, {
-      where: {
-        sourceType: AccountStatementSourceType.PAYMENT,
-        reference: payment?.number,
-        branchId: journal?.branchId,
+    await AccountStatementService.deleteAndUpdateBalance(
+      {
+        where: {
+          sourceType: AccountStatementSourceType.PAYMENT,
+          reference: payment?.number,
+          branchId: journal?.branchId,
+        },
       },
-      select: ['id'],
-    });
+      manager,
+    );
 
-    if (stmt) {
-      await manager.delete(AccountStatement, {
-        sourceType: AccountStatementSourceType.PAYMENT,
-        reference: payment?.number,
-        branchId: journal?.branchId,
-      });
-      await BalanceService.invalidateCache(journal?.branchId);
-    }
     // Update Loan
     const amount = payment?.amount || 0;
     const sqlUpdateLoan = `UPDATE loan

@@ -46,6 +46,7 @@ import { Journal } from '../../../model/journal.entity';
 import { Period } from '../../../model/period.entity';
 import { JournalItem } from '../../../model/journal-item.entity';
 import { DownPayment } from '../../../model/down-payment.entity';
+import { AccountStatementService } from './account-statement.service';
 
 @Injectable()
 export class LoanService {
@@ -460,11 +461,7 @@ export class LoanService {
     manager: EntityManager,
     stmt: AccountStatement,
   ): Promise<AccountStatement> {
-    const repo = manager.getRepository(AccountStatement);
-    const statement = await repo.save(stmt);
-    // Invalidate Cache Balance
-    await BalanceService.invalidateCache(stmt?.branchId);
-    return statement;
+    return await AccountStatementService.createAndUpdateBalance(stmt, manager);
   }
 
   private async buildStatement(

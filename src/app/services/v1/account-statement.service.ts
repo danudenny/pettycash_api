@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager, getManager } from 'typeorm';
+import { Repository, EntityManager, getManager, FindOneOptions } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
@@ -24,7 +24,7 @@ const { DEBIT, CREDIT } = AccountStatementAmountPosition;
 export class AccountStatementService {
   constructor(
     @InjectRepository(AccountStatement)
-    private readonly repo: Repository<AccountStatement>,
+    private readonly repo?: Repository<AccountStatement>,
   ) {}
 
   public async create(payload: CreateAccountStatementDTO): Promise<any> {
@@ -162,6 +162,34 @@ export class AccountStatementService {
     return new AccountStatementWithPaginationResponse(statements, params);
   }
 
+  private async updateBalance(
+    statement: AccountStatement,
+    manager: EntityManager,
+  ): Promise<void> {
+    if (!statement) return;
+
+    const branchId = statement.branchId;
+    const amount = statement.amount;
+    const balanceType = (statement.type as unknown) as BalanceType;
+    const isIncreaseAmount = statement.amountPosition === CREDIT;
+
+    if (isIncreaseAmount) {
+      await BalanceService.increase({
+        type: balanceType,
+        amount,
+        branchId,
+        manager,
+      });
+    } else {
+      await BalanceService.decrease({
+        type: balanceType,
+        amount,
+        branchId,
+        manager,
+      });
+    }
+  }
+
   public static async createAndUpdateBalance(
     data: AccountStatement,
     manager?: EntityManager,
@@ -176,28 +204,38 @@ export class AccountStatementService {
       );
 
     if (statement) {
-      const branchId = statement.branchId;
-      const amount = statement.amount;
-      const balanceType = (statement.type as unknown) as BalanceType;
-      const isIncreaseAmount = statement.amountPosition === CREDIT;
-
-      if (isIncreaseAmount) {
-        await BalanceService.increase({
-          type: balanceType,
-          amount,
-          branchId,
-          manager,
-        });
-      } else {
-        await BalanceService.decrease({
-          type: balanceType,
-          amount,
-          branchId,
-          manager,
-        });
-      }
+      const stmtSvc = new AccountStatementService();
+      await stmtSvc.updateBalance(statement, manager);
     }
 
     return statement;
+  }
+
+  public static async deleteAndUpdateBalance(
+    findOpt: FindOneOptions<AccountStatement>,
+    manager?: EntityManager,
+  ): Promise<void> {
+    const stmtSvc = new AccountStatementService();
+    if (manager) {
+      const stmtRepo = manager.getRepository(AccountStatement);
+      const stmt = await stmtRepo.findOne(findOpt);
+      if (stmt) {
+        // Decrease Balance
+        stmt.amountPosition = DEBIT;
+        await stmtSvc.updateBalance(stmt, manager);
+        await stmtRepo.delete({ id: stmt.id });
+      }
+    } else {
+      await getManager().transaction(async (newManager) => {
+        const stmtRepo = newManager.getRepository(AccountStatement);
+        const stmt = await stmtRepo.findOne(findOpt);
+        if (stmt) {
+          // Decrease Balance
+          stmt.amountPosition = DEBIT;
+          await stmtSvc.updateBalance(stmt, newManager);
+          await stmtRepo.delete({ id: stmt.id });
+        }
+      });
+    }
   }
 }

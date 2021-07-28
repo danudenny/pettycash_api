@@ -42,16 +42,15 @@ import { Period } from '../../../model/period.entity';
 import { Journal } from '../../../model/journal.entity';
 import { DownPayment } from '../../../model/down-payment.entity';
 import { JournalItem } from '../../../model/journal-item.entity';
-import { GlobalSetting } from '../../../model/global-setting.entity';
 import { DownPaymentHistory } from '../../../model/down-payment-history.entity';
 /** Services */
 import { AuthService } from './auth.service';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
-import { BalanceService } from './balance.service';
 import { Loan } from '../../../model/loan.entity';
 import { Product } from '../../../model/product.entity';
 import { BranchService } from '../master/v1/branch.service';
+import { AccountStatementService } from './account-statement.service';
 
 @Injectable()
 export class DownPaymentService {
@@ -640,25 +639,20 @@ export class DownPaymentService {
     manager: EntityManager,
     downPayment: DownPayment,
   ): Promise<AccountStatement> {
-    const accStmtRepo = manager.getRepository(AccountStatement);
-    const statement = await accStmtRepo.findOne({
-      where: {
-        reference: downPayment?.number,
-        branchId: downPayment?.branchId,
-        isDeleted: false,
+    // Delete existing statement if any
+    await AccountStatementService.deleteAndUpdateBalance(
+      {
+        where: {
+          reference: downPayment?.number,
+          branchId: downPayment?.branchId,
+          isDeleted: false,
+        },
       },
-    });
-
-    if (statement) {
-      // delete existing statement
-      await accStmtRepo.delete({ id: statement?.id });
-    }
+      manager,
+    );
 
     const stmt = await this.buildAccountStatement(downPayment);
-    const result = await accStmtRepo.save(stmt);
-    // Invalidate Cache Balance
-    await BalanceService.invalidateCache(downPayment?.branchId);
-    return result;
+    return await AccountStatementService.createAndUpdateBalance(stmt, manager);
   }
 
   private async buildAccountStatement(
@@ -690,13 +684,16 @@ export class DownPaymentService {
     manager: EntityManager,
     downPayment: DownPayment,
   ): Promise<void> {
-    await manager.getRepository(AccountStatement).delete({
-      reference: downPayment?.number,
-      branchId: downPayment?.branchId,
-      isDeleted: false,
-    });
-    // Invalidate Cache Balance
-    await BalanceService.invalidateCache(downPayment?.branchId);
+    await AccountStatementService.deleteAndUpdateBalance(
+      {
+        where: {
+          reference: downPayment?.number,
+          branchId: downPayment?.branchId,
+          isDeleted: false,
+        },
+      },
+      manager,
+    );
   }
 
   private async createLoan(
