@@ -180,44 +180,26 @@ export class BalanceService {
    * @memberof BalanceService
    */
   private async getBalanceWithoutBudget(query?: QueryBalanceDTO): Promise<any> {
-    const params = { limit: 10, ...query };
-    const qb = new QueryBuilder(Branch, 'b', params);
     const {
       userBranchIds,
       isSuperUser,
     } = await AuthService.getUserBranchAndRole();
-    // Hack branchIds for leftJoin query.
-    const branchIds =
-      userBranchIds?.length > 0 ? userBranchIds.toString().split(',') : null;
 
+    const params = { limit: 10, ...query };
+    const qb = new QueryBuilder(Branch, 'b', params);
     qb.fieldResolverMap['branchId'] = 'b.id';
 
     qb.applyFilterPagination();
     qb.selectRaw(
       ['b.id', 'branch_id'],
       ['b.branch_name', 'branch_name'],
-      ['COALESCE(act.balance, 0)', 'current_balance'],
+      [
+        `(COALESCE(bal.bank_amount, 0) + COALESCE(bal.cash_amount, 0) + COALESCE(bal.bon_amount, 0))`,
+        'current_balance',
+      ],
       ['now()', 'now'],
     );
-    qb.qb.leftJoin(
-      `(WITH acc_stt AS (
-          SELECT
-            as2.branch_id,
-            CASE WHEN as2.amount_position = 'debit' THEN COALESCE(SUM(amount), 0) END AS debit,
-            CASE WHEN as2.amount_position = 'credit' THEN COALESCE(SUM(amount), 0) END AS credit
-            FROM account_statement as2
-            WHERE as2.is_deleted IS FALSE AND as2.branch_id = ANY(:branchIds)
-            GROUP BY as2.branch_id, as2.amount_position
-      )
-      SELECT
-        branch_id,
-        (COALESCE(SUM(credit), 0) - COALESCE(SUM(debit), 0)) AS balance
-      FROM acc_stt
-      GROUP BY branch_id)`,
-      'act',
-      'act.branch_id = b.id',
-      { branchIds },
-    );
+    qb.qb.leftJoin('balance', 'bal', 'bal.branch_id = b.id');
 
     if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
@@ -230,7 +212,7 @@ export class BalanceService {
     return result;
   }
 
-  private async getSummaryBalances(
+  private async getSummaryBalancesFromAccountStatement(
     query?: QuerySummaryBalanceDTO,
   ): Promise<any> {
     const qb = new QueryBuilder(Branch, 'b', {});
@@ -400,6 +382,84 @@ export class BalanceService {
       cacheKey,
       LoaderEnv.envs.CACHE_BRANCH_BALANCE_DURATION_IN_MINUTES * 60000,
     );
+
+    const result = await qb.exec();
+    return result;
+  }
+
+  private async getSummaryBalances(
+    query?: QuerySummaryBalanceDTO,
+  ): Promise<any> {
+    const qb = new QueryBuilder(Branch, 'b', {});
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
+
+    if (!userBranchIds?.length) {
+      throw new UnprocessableEntityException(
+        `Current User request not assigned to a branch!`,
+      );
+    }
+
+    // Hack branchIds for leftJoin query.
+    const branchIds = userBranchIds.toString().split(',');
+
+    // TODO: Should be validate when release in production!
+    // if (userRoleName !== MASTER_ROLES.ADMIN_BRANCH) {
+    //   throw new UnprocessableEntityException(
+    //     `Only ADMIN BRANCH can access Summary Balances`,
+    //   );
+    // }
+
+    qb.selectRaw(
+      ['b.id', 'branchId'],
+      ['b.branch_name', 'branchName'],
+      ['COALESCE(bal.bank_amount, 0)', 'bankAmount'],
+      ['COALESCE(bal.cash_amount, 0)', 'cashAmount'],
+      ['COALESCE(bal.bon_amount, 0)', 'bonAmount'],
+      [
+        `(COALESCE(bal.bank_amount, 0) + COALESCE(bal.cash_amount, 0) + COALESCE(bal.bon_amount, 0))`,
+        'totalAmount',
+      ],
+      ['COALESCE(bgt.minimum_amount, 0)', 'minimumAmount'],
+      ['now()', 'retreiveAt'],
+    );
+    qb.qb.leftJoin('balance', 'bal', 'bal.branch_id = b.id');
+    qb.qb.leftJoin(
+      `(WITH x_budget_summary AS (
+        SELECT
+          b2.branch_id,
+          b2.start_date, b2.end_date,
+          b2.state,
+          ((b2.end_date - b2.start_date) + 1) AS total_day, b2.total_amount,
+          ((b2.total_amount / ((b2.end_date - b2.start_date) + 1) * 2)) AS minimum_amount
+        FROM budget b2
+        WHERE b2.state = 'approved_by_spv'
+          AND b2.is_deleted IS FALSE
+          AND (now()::date BETWEEN b2.start_date AND b2.end_date)
+          AND b2.branch_id = ANY(:branchIds)
+        ORDER BY b2.end_date DESC
+      )
+      SELECT
+        branch_id,
+        total_day,
+        minimum_amount,
+        start_date,
+        end_date,
+        state
+      FROM x_budget_summary)`,
+      'bgt',
+      'bgt.branch_id = b.id',
+      { branchIds },
+    );
+
+    if (userBranchIds?.length && !isSuperUser) {
+      qb.andWhere(
+        (e) => e.id,
+        (v) => v.in(userBranchIds),
+      );
+    }
 
     const result = await qb.exec();
     return result;
