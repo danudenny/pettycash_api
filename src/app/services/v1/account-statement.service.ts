@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager, getManager } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
@@ -9,6 +9,7 @@ import {
   AccountStatementMutationType,
   AccountStatementSourceType,
   AccountStatementType,
+  BalanceType,
 } from '../../../model/utils/enum';
 import { parseBool } from '../../../shared/utils';
 import { QueryAccountStatementDTO } from '../../domain/account-statement/account-statement.payload.dto';
@@ -16,6 +17,8 @@ import { CreateAccountStatementDTO } from '../../domain/account-statement/create
 import { AccountStatementWithPaginationResponse } from '../../domain/account-statement/response.dto';
 import { AuthService } from './auth.service';
 import { BalanceService } from './balance.service';
+
+const { DEBIT, CREDIT } = AccountStatementAmountPosition;
 
 @Injectable()
 export class AccountStatementService {
@@ -72,7 +75,7 @@ export class AccountStatementService {
     statementDebit.transactionDate = transactionDate;
     statementDebit.branch = userBranch;
     statementDebit.type = typeDebit;
-    statementDebit.amountPosition = AccountStatementAmountPosition.DEBIT;
+    statementDebit.amountPosition = DEBIT;
     statementDebit.createUser = user;
     statementDebit.updateUser = user;
 
@@ -83,13 +86,23 @@ export class AccountStatementService {
     statementCredit.transactionDate = transactionDate;
     statementCredit.branch = userBranch;
     statementCredit.type = typeCredit;
-    statementCredit.amountPosition = AccountStatementAmountPosition.CREDIT;
+    statementCredit.amountPosition = CREDIT;
     statementCredit.createUser = user;
     statementCredit.updateUser = user;
 
-    await this.repo.save([statementDebit, statementCredit]);
-    // remove cache Balance Summary after create statement
-    await BalanceService.invalidateCache(userBranch?.id);
+    await getManager().transaction(async (manager) => {
+      // Do Transfer Balance.
+      await BalanceService.transfer({
+        from: (typeDebit as unknown) as BalanceType,
+        to: (typeCredit as unknown) as BalanceType,
+        amount,
+        branchId: userBranch?.id,
+        manager,
+      });
+
+      // Insert AccountStatement record.
+      await manager.save([statementDebit, statementCredit]);
+    });
     return;
   }
 
@@ -147,5 +160,44 @@ export class AccountStatementService {
 
     const statements = await qb.exec();
     return new AccountStatementWithPaginationResponse(statements, params);
+  }
+
+  public static async createAndUpdateBalance(
+    data: AccountStatement,
+    manager?: EntityManager,
+  ): Promise<AccountStatement> {
+    manager = manager ? manager : getManager();
+    const stmtRepo = manager.getRepository(AccountStatement);
+    const statement = await stmtRepo.save(data);
+
+    if (!statement.branchId)
+      throw new UnprocessableEntityException(
+        `This user not assigned to a branch!`,
+      );
+
+    if (statement) {
+      const branchId = statement.branchId;
+      const amount = statement.amount;
+      const balanceType = (statement.type as unknown) as BalanceType;
+      const isIncreaseAmount = statement.amountPosition === CREDIT;
+
+      if (isIncreaseAmount) {
+        await BalanceService.increase({
+          type: balanceType,
+          amount,
+          branchId,
+          manager,
+        });
+      } else {
+        await BalanceService.decrease({
+          type: balanceType,
+          amount,
+          branchId,
+          manager,
+        });
+      }
+    }
+
+    return statement;
   }
 }
