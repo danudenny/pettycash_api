@@ -180,44 +180,26 @@ export class BalanceService {
    * @memberof BalanceService
    */
   private async getBalanceWithoutBudget(query?: QueryBalanceDTO): Promise<any> {
-    const params = { limit: 10, ...query };
-    const qb = new QueryBuilder(Branch, 'b', params);
     const {
       userBranchIds,
       isSuperUser,
     } = await AuthService.getUserBranchAndRole();
-    // Hack branchIds for leftJoin query.
-    const branchIds =
-      userBranchIds?.length > 0 ? userBranchIds.toString().split(',') : null;
 
+    const params = { limit: 10, ...query };
+    const qb = new QueryBuilder(Branch, 'b', params);
     qb.fieldResolverMap['branchId'] = 'b.id';
 
     qb.applyFilterPagination();
     qb.selectRaw(
       ['b.id', 'branch_id'],
       ['b.branch_name', 'branch_name'],
-      ['COALESCE(act.balance, 0)', 'current_balance'],
+      [
+        `(COALESCE(bal.bank_amount, 0) + COALESCE(bal.cash_amount, 0) + COALESCE(bal.bon_amount, 0))`,
+        'current_balance',
+      ],
       ['now()', 'now'],
     );
-    qb.qb.leftJoin(
-      `(WITH acc_stt AS (
-          SELECT
-            as2.branch_id,
-            CASE WHEN as2.amount_position = 'debit' THEN COALESCE(SUM(amount), 0) END AS debit,
-            CASE WHEN as2.amount_position = 'credit' THEN COALESCE(SUM(amount), 0) END AS credit
-            FROM account_statement as2
-            WHERE as2.is_deleted IS FALSE AND as2.branch_id = ANY(:branchIds)
-            GROUP BY as2.branch_id, as2.amount_position
-      )
-      SELECT
-        branch_id,
-        (COALESCE(SUM(credit), 0) - COALESCE(SUM(debit), 0)) AS balance
-      FROM acc_stt
-      GROUP BY branch_id)`,
-      'act',
-      'act.branch_id = b.id',
-      { branchIds },
-    );
+    qb.qb.leftJoin('balance', 'bal', 'bal.branch_id = b.id');
 
     if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
