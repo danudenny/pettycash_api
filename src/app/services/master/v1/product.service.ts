@@ -1,15 +1,25 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, getManager } from 'typeorm';
 import { Product } from '../../../../model/product.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { QueryProductDTO } from '../../../domain/product/product.payload.dto';
-import { ProductResponse, ProductWithPaginationResponse } from '../../../domain/product/response.dto';
+import {
+  ProductResponse,
+  ProductWithPaginationResponse,
+} from '../../../domain/product/response.dto';
 import { CreateProductDTO } from '../../../domain/product/create-product.dto';
 import UpdateProductDTO from '../../../domain/product/update-product.dto';
 import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../../shared/errors';
 import { GenerateCode } from '../../../../common/services/generate-code.service';
 import { AuthService } from '../../v1/auth.service';
+import { ExpenseItem } from '../../../../model/expense-item.entity';
+import { DownPayment } from '../../../../model/down-payment.entity';
 
 @Injectable()
 export class ProductService {
@@ -23,7 +33,9 @@ export class ProductService {
     return user.id;
   }
 
-  public async list(query?: QueryProductDTO): Promise<ProductWithPaginationResponse> {
+  public async list(
+    query?: QueryProductDTO,
+  ): Promise<ProductWithPaginationResponse> {
     const params = { order: '^code', limit: 10, ...query };
     const qb = new QueryBuilder(Product, 'prod', params);
 
@@ -47,12 +59,9 @@ export class ProductService {
       ['coa.code', 'coaCode'],
       ['coa.name', 'coaName'],
       ['prod.is_active', 'isActive'],
-      ['prod.tax_type', 'taxType']
+      ['prod.tax_type', 'taxType'],
     );
-    qb.leftJoin(
-      (e) => e.coaProduct,
-      'coa'
-    );
+    qb.leftJoin((e) => e.coaProduct, 'coa');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
@@ -64,18 +73,19 @@ export class ProductService {
 
   public async create(data: CreateProductDTO): Promise<ProductResponse> {
     const prodDto = await this.productRepo.create(data);
-    const prodExist = await this.productRepo.findOne({name: prodDto.name, isDeleted: false})
+    const prodExist = await this.productRepo.findOne({
+      name: prodDto.name,
+      isDeleted: false,
+    });
     prodDto.createUserId = await ProductService.getUserId();
     prodDto.updateUserId = await ProductService.getUserId();
     prodDto.code = GenerateCode.product();
 
-    if(!prodDto.name) {
-      throw new BadRequestException(
-        `Nama produk tidak boleh kosong!`,
-      );
+    if (!prodDto.name) {
+      throw new BadRequestException(`Nama produk tidak boleh kosong!`);
     }
 
-    if(prodExist) {
+    if (prodExist) {
       throw new BadRequestException(`Nama produk sudah terdaftar!`);
     }
 
@@ -88,15 +98,52 @@ export class ProductService {
       }
       throw err;
     }
-
   }
 
-  public async update(id: string, data: UpdateProductDTO): Promise<ProductResponse> {
+  public async update(
+    id: string,
+    data: UpdateProductDTO,
+  ): Promise<ProductResponse> {
     const product = await this.productRepo.findOne({
       where: { id, isDeleted: false },
     });
     if (!product) {
       throw new NotFoundException(`Produk ID ${id} not found!`);
+    }
+
+    const allowedFieldToUpdate = ['name'];
+    let isAllowUpdate = true;
+    for (const [k, v] of Object.entries(data)) {
+      if (!allowedFieldToUpdate.includes(k)) {
+        if (product[k] != v) {
+          isAllowUpdate = false;
+          break;
+        }
+      }
+    }
+
+    if (!isAllowUpdate) {
+      // Check if Product already used in ExpenseItem
+      const exp = await getManager().query(
+        `SELECT id FROM expense_item WHERE product_id = $1 AND is_deleted IS FALSE`,
+        [id],
+      );
+      if (exp?.length > 0) {
+        throw new UnprocessableEntityException(
+          `Product already used in ExpenseItem, only allow to update field: ${allowedFieldToUpdate.toString()}!`,
+        );
+      }
+
+      // Check if Product already used in DownPayment
+      const dp = await getManager().query(
+        `SELECT id FROM down_payment WHERE product_id = $1 AND is_deleted IS FALSE`,
+        [id],
+      );
+      if (dp?.length > 0) {
+        throw new UnprocessableEntityException(
+          `Product already used in DownPayment, only allow to update field: ${allowedFieldToUpdate.toString()}!`,
+        );
+      }
     }
 
     const updatedProduct = this.productRepo.create(data as Product);
@@ -107,14 +154,11 @@ export class ProductService {
       await this.productRepo.update(id, updatedProduct);
     } catch (err) {
       if (err && err.code === PG_UNIQUE_CONSTRAINT_VIOLATION) {
-        throw new BadRequestException(
-          `Nama product sudah pernah dibuat`,
-        );
+        throw new BadRequestException(`Nama product sudah pernah dibuat`);
       }
       throw err;
     }
     return new ProductResponse();
-
   }
 
   public async delete(id: string): Promise<any> {
@@ -148,7 +192,7 @@ export class ProductService {
       ['prod.type', 'type'],
       ['prod.coa_id', 'coaId'],
       ['prod.is_active', 'isActive'],
-      ['prod.tax_type', 'taxType']
+      ['prod.tax_type', 'taxType'],
     );
     qb.andWhere(
       (e) => e.code,
@@ -162,10 +206,7 @@ export class ProductService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    qb.qb.cache(
-      'pettycash:voucher:products',
-      1000 * 60 * 60,
-    );
+    qb.qb.cache('pettycash:voucher:products', 1000 * 60 * 60);
 
     const products = await qb.exec();
     return new ProductWithPaginationResponse(products, params);
