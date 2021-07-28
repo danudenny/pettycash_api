@@ -78,7 +78,7 @@ import { UpdateExpenseAttachmentDTO } from '../../domain/expense/update-attachme
 import { AttachmentType } from '../../../model/attachment-type.entity';
 import { Vehicle } from '../../../model/vehicle.entity';
 import { VehicleTemp } from '../../../model/vehicle-temp.entity';
-import { BalanceService } from './balance.service';
+import { AccountStatementService } from './account-statement.service';
 
 @Injectable()
 export class ExpenseService {
@@ -1733,29 +1733,28 @@ export class ExpenseService {
     manager: EntityManager,
     expense: Expense,
   ): Promise<AccountStatement> {
-    const accStmtRepo = manager.getRepository(AccountStatement);
-    const statement = await accStmtRepo.findOne({
-      where: {
-        reference: expense?.number,
-        branchId: expense?.branchId,
-        isDeleted: false,
+    // delete existing statement
+    await AccountStatementService.deleteAndUpdateBalance(
+      {
+        where: {
+          reference: expense?.number,
+          branchId: expense?.branchId,
+          isDeleted: false,
+        },
       },
-    });
-
-    if (statement) {
-      // delete existing statement
-      await accStmtRepo.delete({ id: statement?.id });
-    }
+      manager,
+    );
 
     // insert statement if Expense not from DownPayment
     let result: AccountStatement;
     if (!expense?.downPaymentId) {
       const stmt = await this.buildAccountStatement(expense);
-      result = await accStmtRepo.save(stmt);
+      result = await AccountStatementService.createAndUpdateBalance(
+        stmt,
+        manager,
+      );
     }
 
-    // Invalidate Cache Balance
-    await BalanceService.invalidateCache(expense?.branchId);
     return result;
   }
 
@@ -1787,13 +1786,16 @@ export class ExpenseService {
     manager: EntityManager,
     expense: Expense,
   ): Promise<void> {
-    await manager.getRepository(AccountStatement).delete({
-      reference: expense?.number,
-      branchId: expense?.branchId,
-      isDeleted: false,
-    });
-    // Invalidate Cache Balance
-    await BalanceService.invalidateCache(expense?.branchId);
+    await AccountStatementService.deleteAndUpdateBalance(
+      {
+        where: {
+          reference: expense?.number,
+          branchId: expense?.branchId,
+          isDeleted: false,
+        },
+      },
+      manager,
+    );
   }
 
   /**
