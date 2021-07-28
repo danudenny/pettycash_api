@@ -154,6 +154,7 @@ export class JournalService {
       // only show journals:
       //  - state: `draft`
       //  - state: `approved_by_ss_spv_ho`
+      //  - state: `sync_failed`
       if (SS_SPV_ROLES.includes(userRoleName)) {
         if (userBranchIds?.length) {
           qb.andWhere(
@@ -161,20 +162,23 @@ export class JournalService {
             (v) => v.in(userBranchIds),
           );
         }
-        qb.qb.andWhere(`(j.state IN ('draft', 'approved_by_ss_spv_ho'))`);
+        qb.qb.andWhere(
+          `(j.state IN ('draft', 'approved_by_ss_spv_ho', 'sync_failed'))`,
+        );
       }
 
       // if userRoleName is Tax
       // only show journal that contains tax and
       //  - state: `approved_by_tax`
       //  - state: `approved_by_ss_spv_ho`
+      //  - state: `sync_failed`
       if (userRoleName === MASTER_ROLES.TAX) {
         const journalTaxSql = `SELECT tji.journal_id
         FROM journal_item tji
         INNER JOIN account_coa tac ON tac.id = tji.coa_id
         INNER JOIN journal jl ON jl.id = tji.journal_id
         WHERE tac.id IN (SELECT coa_id FROM account_tax WHERE is_deleted = FALSE AND coa_id IS NOT NULL GROUP BY coa_id)
-          AND jl.state IN ('approved_by_tax', 'approved_by_ss_spv_ho')
+          AND jl.state IN ('approved_by_tax', 'approved_by_ss_spv_ho', 'sync_failed')
         GROUP BY tji.journal_id`;
 
         qb.qb.andWhere(`(j.id IN (${journalTaxSql}))`);
@@ -184,6 +188,7 @@ export class JournalService {
       // - journal no tax: state `approved_by_ss_spv_ho`
       // - journal has tax: state `approved_by_tax`
       // - journal with state `posted`
+      // - journal with state `sync_failed`
       if (userRoleName === MASTER_ROLES.ACCOUNTING) {
         const journalIdsAccounting = `(
           WITH journal_id_has_tax AS (
@@ -200,7 +205,7 @@ export class JournalService {
           UNION
           SELECT id FROM journal WHERE id IN (SELECT * FROM journal_id_no_tax) AND is_deleted = FALSE
           UNION
-          SELECT id FROM journal WHERE state = 'posted' AND is_deleted = FALSE
+          SELECT id FROM journal WHERE state IN ('posted', 'sync_failed') AND is_deleted = FALSE
         )`;
 
         qb.qb.andWhere(`(j.id IN (${journalIdsAccounting}))`);
