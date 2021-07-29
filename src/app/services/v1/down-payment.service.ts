@@ -281,6 +281,7 @@ export class DownPaymentService {
 
           state = DownPaymentState.APPROVED_BY_PIC_HO;
           isCreateJurnal = true;
+          shouldCreateStatement = true;
         } else if (
           userRole === MASTER_ROLES.SS_HO ||
           userRole === MASTER_ROLES.SPV_HO
