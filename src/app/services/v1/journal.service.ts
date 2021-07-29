@@ -800,6 +800,12 @@ export class JournalService {
     const journalTaxIds = await this.getJournalTaxIds(ids);
 
     for (const journal of journals) {
+      // Journal with state `sync_failed` automatically allow to be posted.
+      if (journal.state === JournalState.SYNC_FAILED) {
+        journalToUpdateIds.push(journal.id);
+        continue;
+      }
+
       // if journal has tax, must be approve by tax first.
       if (journalTaxIds.includes(journal.id)) {
         if (journal.state !== JournalState.APPROVED_BY_TAX) {
@@ -819,6 +825,7 @@ export class JournalService {
       { id: In(journalToUpdateIds) },
       {
         state: JournalState.POSTED,
+        syncFailReason: null,
         updateUser: user,
       },
     );
