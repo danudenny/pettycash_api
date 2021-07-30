@@ -35,6 +35,7 @@ export class UserService {
     if (params.name__icontains) {
       let firstName = params.name__icontains;
       let lastName = null;
+      let isNik = false;
       const names = params.name__icontains.split(' ');
       if (names.length > 1) {
         firstName = names[0];
@@ -42,10 +43,22 @@ export class UserService {
         lastName = names.join(' ');
       }
 
-      qb.andWhere(
-        (e) => e.firstName,
-        (v) => v.contains(firstName, true),
-      );
+      if (!lastName) {
+        firstName = firstName.trim();
+        isNik = /^\d+$/.test(firstName);
+      }
+
+      if (isNik) {
+        qb.andWhere(
+          (e) => e.username,
+          (v) => v.contains(firstName, true),
+        );
+      } else {
+        qb.andWhere(
+          (e) => e.firstName,
+          (v) => v.contains(firstName, true),
+        );
+      }
 
       if (lastName) {
         qb.andWhere(
