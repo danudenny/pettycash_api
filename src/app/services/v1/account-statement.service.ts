@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Balance } from './../../../model/balance.entity';
+import { BadRequestException, Injectable, UnprocessableEntityException, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, getManager, FindOneOptions } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -25,6 +26,8 @@ export class AccountStatementService {
   constructor(
     @InjectRepository(AccountStatement)
     private readonly repo?: Repository<AccountStatement>,
+    @InjectRepository(Balance)
+    private readonly balanceRepo?: Repository<Balance>,
   ) {}
 
   public async create(payload: CreateAccountStatementDTO): Promise<any> {
@@ -32,6 +35,9 @@ export class AccountStatementService {
     const reference = GenerateCode.accountStatement(transactionDate);
     const user = await AuthService.getUser({ relations: ['branches'] });
     const userBranch = user?.branches[0];
+    const branchBalance = await this.balanceRepo.findOne({
+      branchId: userBranch.id
+    })
 
     const {
       BANK_TO_CASH,
@@ -49,21 +55,39 @@ export class AccountStatementService {
     if (type === BANK_TO_CASH) {
       typeDebit = BANK;
       typeCredit = CASH;
+      if(amount > branchBalance.bankAmount) {
+        throw new HttpException('Tidak boleh melebihi akun Bank', HttpStatus.BAD_REQUEST)
+      }
     } else if (type === BANK_TO_BON) {
       typeDebit = BANK;
       typeCredit = BON;
+      if(amount > branchBalance.bankAmount) {
+        throw new HttpException('Tidak boleh melebihi akun Bank', HttpStatus.BAD_REQUEST)
+      }
     } else if (type === CASH_TO_BANK) {
       typeDebit = CASH;
       typeCredit = BANK;
+      if(amount > branchBalance.cashAmount) {
+        throw new HttpException('Tidak boleh melebihi akun Kas', HttpStatus.BAD_REQUEST)
+      }
     } else if (type === CASH_TO_BON) {
       typeDebit = CASH;
       typeCredit = BON;
+      if(amount > branchBalance.cashAmount) {
+        throw new HttpException('Tidak boleh melebihi akun Kas', HttpStatus.BAD_REQUEST)
+      }
     } else if (type === BON_TO_CASH) {
       typeDebit = BON;
       typeCredit = CASH;
+      if(amount > branchBalance.bonAmount) {
+        throw new HttpException('Tidak boleh melebihi akun Bon', HttpStatus.BAD_REQUEST)
+      }
     } else if (type === BON_TO_BANK) {
       typeDebit = BON;
       typeCredit = BANK;
+      if(amount > branchBalance.bonAmount) {
+        throw new HttpException('Tidak boleh melebihi akun Bon', HttpStatus.BAD_REQUEST)
+      }
     } else {
       throw new BadRequestException(`Transaction Type is required!`);
     }
