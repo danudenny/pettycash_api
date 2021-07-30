@@ -221,7 +221,7 @@ export class AccountStatementService {
       const stmt = await stmtRepo.findOne(findOpt);
       if (stmt) {
         // Decrease Balance
-        stmt.amountPosition = DEBIT;
+        stmt.amountPosition = stmt.amountPosition === DEBIT ? CREDIT : DEBIT;
         await stmtSvc.updateBalance(stmt, manager);
         await stmtRepo.delete({ id: stmt.id });
       }
@@ -231,7 +231,7 @@ export class AccountStatementService {
         const stmt = await stmtRepo.findOne(findOpt);
         if (stmt) {
           // Decrease Balance
-          stmt.amountPosition = DEBIT;
+          stmt.amountPosition = stmt.amountPosition === DEBIT ? CREDIT : DEBIT;
           await stmtSvc.updateBalance(stmt, newManager);
           await stmtRepo.delete({ id: stmt.id });
         }
