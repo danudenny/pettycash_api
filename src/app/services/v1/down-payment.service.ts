@@ -281,6 +281,7 @@ export class DownPaymentService {
 
           state = DownPaymentState.APPROVED_BY_PIC_HO;
           isCreateJurnal = true;
+          shouldCreateStatement = true;
         } else if (
           userRole === MASTER_ROLES.SS_HO ||
           userRole === MASTER_ROLES.SPV_HO
@@ -313,7 +314,7 @@ export class DownPaymentService {
           await BranchService.checkCashCoa(downPayment?.branchId);
 
           await this.removeJournal(manager, downPayment);
-          await this.createJournal(manager, downPaymentId);
+          await this.createJournal(manager, downPayment);
         }
 
         if (shouldCreateStatement) {
@@ -495,16 +496,12 @@ export class DownPaymentService {
 
   private async createJournal(
     manager: EntityManager,
-    downPayId: string,
+    downPayment: DownPayment,
   ): Promise<any> {
     try {
       const jurnalEntity = manager.getRepository<Journal>(Journal);
       const periodEntity = manager.getRepository<Period>(Period);
 
-      const downPayment = await manager.findOne(DownPayment, {
-        where: { id: downPayId, isDeleted: false },
-        relations: ['branch', 'employee'],
-      });
       const period = await periodEntity.findOne({
         id: downPayment.periodId,
         isDeleted: false,
