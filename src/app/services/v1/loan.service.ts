@@ -29,6 +29,7 @@ import {
   AccountStatementType,
   DownPaymentType,
   JournalSourceType,
+  LoanSourceType,
   LoanState,
   LoanType,
   PeriodState,
@@ -41,7 +42,6 @@ import { CreateLoanDTO } from '../../domain/loan/create.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { PeriodService } from './period.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
-import { BalanceService } from './balance.service';
 import { Journal } from '../../../model/journal.entity';
 import { Period } from '../../../model/period.entity';
 import { JournalItem } from '../../../model/journal-item.entity';
@@ -124,6 +124,7 @@ export class LoanService {
       ['l.paid_amount', 'paidAmount'],
       ['l.source_document', 'sourceDocument'],
       ['l.down_payment_id', 'downPaymentId'],
+      ['dp."number"', 'downPaymentNumber'],
       ['l.created_at', 'createdAt'],
       ['p.month', 'periodMonth'],
       ['p.year', 'periodYear'],
@@ -137,6 +138,7 @@ export class LoanService {
     qb.leftJoin((e) => e.period, 'p');
     qb.leftJoin((e) => e.employee, 'e');
     qb.leftJoin((e) => e.employee.employeeRole, 'er');
+    qb.leftJoin((e) => e.downPayment, 'dp');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
@@ -412,10 +414,12 @@ export class LoanService {
     const newLoan = new Loan();
     newLoan.branchId = loan.branchId;
     newLoan.employeeId = loan.employeeId;
+    newLoan.downPaymentId = loan.downPaymentId;
     newLoan.transactionDate = new Date();
     newLoan.period = await PeriodService.findByDate(newLoan.transactionDate);
     newLoan.number = GenerateCode.loan();
     newLoan.sourceDocument = loan.number;
+    newLoan.sourceType = LoanSourceType.LOAN;
     newLoan.amount = amount;
     newLoan.residualAmount = amount;
     newLoan.type = loanType;
@@ -581,6 +585,14 @@ export class LoanService {
    *  | Kas Cabang                           | 0        | 200000  |
    *  +--------------------------------------+----------+---------+
    *
+   *  ➡ If DownPayment Type `REIMBURSEMENT`
+   *  +--------------------------------------+----------+---------+
+   *  | Name                                 | debit   | credit   |
+   *  |--------------------------------------+----------+---------|
+   *  | Product (e.g: uang muka)             | 200000   | 0       |
+   *  | Kas Cabang                           | 0        | 200000  |
+   *  +--------------------------------------+----------+---------+
+   *
    * @private
    * @param {Loan} loan
    * @param {AccountPayment} payment
@@ -689,6 +701,8 @@ export class LoanService {
       if (isReceivable) {
         if (isPerdin) {
           coaId = coaProduct;
+        } else if (isReimbursement) {
+          coaId = coaProduct;
         }
       }
     }
@@ -704,6 +718,8 @@ export class LoanService {
 
       if (isReceivable) {
         if (isPerdin) {
+          coaId = coaCash;
+        } else if (isReimbursement) {
           coaId = coaCash;
         }
       }
@@ -737,7 +753,7 @@ export class LoanService {
     }
 
     if (isReceivable) {
-      if (isPerdin) {
+      if (isPerdin || isReimbursement) {
         canCreate = true;
       }
     }

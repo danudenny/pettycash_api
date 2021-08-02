@@ -151,7 +151,8 @@ export enum LoanState {
 export enum LoanSourceType {
   DP = 'down_payment',
   EXPENSE = 'expense',
-  MANUAL = 'manual'
+  MANUAL = 'manual',
+  LOAN = 'loan', // e.g: over payment use this type.
   // Add other type
 }
 
