@@ -53,6 +53,13 @@ export class BatchPayloadVoucherDataDTO {
 }
 
 export class BatchPayloadVoucherDTO {
+	@ApiProperty({
+    example: ['b7726b7b-6882-42ea-b623-d8f8a347ba0b', '35eefc37-3500-40b1-9d7e-d3352474958f'],
+  })
 	voucher_ids: string[];
-	paymentType: VoucherPaymentType
+
+	@ApiProperty({
+    example: 'bank',
+  })
+	payment_type: VoucherPaymentType
 }

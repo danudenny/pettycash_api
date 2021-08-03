@@ -378,7 +378,7 @@ export class VoucherService {
 
     await this.voucherRepo.update(
       { id: In(data.voucher_ids) },
-      { paymentType: data.paymentType, updateUser: user }
+      { paymentType: data.payment_type, updateUser: user }
     )
 
     const successIds = voucherToUpdateIds?.map((id) => {
@@ -386,7 +386,7 @@ export class VoucherService {
     });
     const resultRedeem = {
       voucher_ids: successIds,
-      payment_type: data.paymentType
+      payment_type: data.payment_type
     }
 
     const dataJson = JSON.stringify(data);
@@ -396,33 +396,29 @@ export class VoucherService {
     };
 
     const webhookResp = [];
+    let statusResp = []
 
     try {
       await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', dataJson, options).then((result) => {
         webhookResp.push(result.data)
+        const resp = []
+        webhookResp[0].forEach(async res => {
+          resp.push(res);
+          if (res['status'] == 'FAILED' || res['status'] == 'EXPENSE_ALREADY_CREATED' || res['status'] == 'VOUCHER_NOT_FOUND') {
+            await this.voucherRepo.update(
+              { id: res['voucher_id'] },
+              { paymentType: paymentTypeFromQuery[0] }
+            )
+          }
+          if (res['status'] == 'APPROVING_EXPENSE_FAILED') {
+            await this.voucherRepo.update(
+              { id: res['voucher_id'] },
+              { paymentType: data.payment_type }
+            )
+          }
+        });
       })
-
-      // FIXME: Refactoring this looping query
-
-      const resp = []
-      webhookResp[0].forEach(async res => {
-        resp.push(res);
-        console.log(res['status'])
-        if (res['status'] == 'FAILED') {
-          await this.voucherRepo.update(
-            { id: res['voucher_id'] },
-            { paymentType: paymentTypeFromQuery[0] }
-          )
-          throw new HttpException('FAILED', HttpStatus.BAD_REQUEST);
-        }
-        if (res['status'] == 'EXPENSE_ALREADY_CREATED') {
-          await this.voucherRepo.update(
-            { id: res['voucher_id'] },
-            { paymentType: paymentTypeFromQuery[0] }
-          )
-          throw new HttpException('EXPENSE_ALREADY_CREATED', HttpStatus.BAD_REQUEST);
-        }
-      });
+      
     } catch (error) {
       await this.voucherRepo.update(
         { id: In(successIds) },
@@ -430,7 +426,24 @@ export class VoucherService {
       )
     }
     const webHookResult = webhookResp[0]
-    return {webHookResult};
+    if (webHookResult[0].status == 'FAILED') {
+      throw new HttpException({
+        'status': HttpStatus.BAD_REQUEST, 'message' :'FAILED' }, HttpStatus.BAD_REQUEST);
+    }
+    if (webHookResult[0].status == 'EXPENSE_ALREADY_CREATED') {
+      throw new HttpException({
+        'status': HttpStatus.BAD_REQUEST, 'message' :'EXPENSE_ALREADY_CREATED' }, HttpStatus.BAD_REQUEST);
+    }
+    if (webHookResult[0].status == 'VOUCHER_NOT_FOUND') {
+      throw new HttpException({
+        'status': HttpStatus.BAD_REQUEST, 'message' :'VOUCHER_NOT_FOUND' }, HttpStatus.BAD_REQUEST);
+    }
+    if (webHookResult[0].status == 'APPROVING_EXPENSE_FAILED') {
+      throw new HttpException({'status': HttpStatus.PARTIAL_CONTENT, 'message' : 'APPROVING_EXPENSE_FAILED / FAILED_CREATE_JOURNAL'}, HttpStatus.PARTIAL_CONTENT);
+    }
+    if (webHookResult[0].status == 'SUCCESS') {
+      throw new HttpException({'status': HttpStatus.OK, 'message' : webHookResult[0]}, HttpStatus.OK);
+    }
   }
 
 }
