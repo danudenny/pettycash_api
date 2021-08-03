@@ -79,6 +79,7 @@ import { AttachmentType } from '../../../model/attachment-type.entity';
 import { Vehicle } from '../../../model/vehicle.entity';
 import { VehicleTemp } from '../../../model/vehicle-temp.entity';
 import { AccountStatementService } from './account-statement.service';
+import { BranchService } from '../master/v1/branch.service';
 
 @Injectable()
 export class ExpenseService {
@@ -1140,6 +1141,9 @@ export class ExpenseService {
         'downPayment',
       ],
     });
+
+    await BranchService.checkCashCoa(expense?.branchId);
+
     const j = new Journal();
     j.createUser = user;
     j.updateUser = user;
