@@ -31,9 +31,25 @@ export enum CashBalanceAllocationState {
   PAID = 'paid'
 }
 
+export enum AccountStatementMutationType {
+  BANK_TO_CASH = 'bank_to_cash',
+  BANK_TO_BON = 'bank_to_bon',
+  CASH_TO_BANK = 'cash_to_bank',
+  CASH_TO_BON = 'cash_to_bon',
+  BON_TO_CASH = 'bon_to_cash',
+  BON_TO_BANK = 'bon_to_bank',
+}
+
+export enum BalanceType {
+  CASH = 'cash',
+  BANK = 'bank',
+  BON = 'bon',
+}
+
 export enum AccountStatementType {
   CASH = 'cash',
   BANK = 'bank',
+  BON = 'bon',
   // VA = 'virtual_account',
 }
 
@@ -44,6 +60,7 @@ export enum AccountStatementAmountPosition {
 
 export enum AccountStatementSourceType {
   DP = 'down_payment',
+  PAYMENT = 'payment',
 }
 
 export enum PartnerState {
@@ -60,6 +77,11 @@ export enum PartnerType {
 export enum VoucherState {
   DRAFT = 'draft',
   APPROVED = 'approved',
+}
+
+export enum VoucherPaymentType {
+  CASH = 'cash',
+  BANK = 'bank',
 }
 
 export enum DownPaymentType {
@@ -126,6 +148,14 @@ export enum LoanState {
   UNPAID = 'unpaid',
 }
 
+export enum LoanSourceType {
+  DP = 'down_payment',
+  EXPENSE = 'expense',
+  MANUAL = 'manual',
+  LOAN = 'loan', // e.g: over payment use this type.
+  // Add other type
+}
+
 export enum AccountTaxPartnerType {
   PERSONAL = 'personal',
   COMPANY = 'company',
@@ -136,12 +166,14 @@ export enum JournalState {
   APPROVED_BY_SS_SPV_HO = 'approved_by_ss_spv_ho',
   APPROVED_BY_TAX = 'approved_by_tax',
   POSTED = 'posted',
+  SYNC_FAILED = 'sync_failed',
 }
 
 export enum JournalSourceType {
   DP = 'down_payment',
   EXPENSE = 'expense',
-  ALOKASI = 'alokasi_saldo'
+  ALOKASI = 'alokasi_saldo',
+  PAYMENT = 'payment',
   // Add other type
 }
 

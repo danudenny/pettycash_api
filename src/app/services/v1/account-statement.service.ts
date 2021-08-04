@@ -1,71 +1,132 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Balance } from './../../../model/balance.entity';
+import { BadRequestException, Injectable, UnprocessableEntityException, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getConnection } from 'typeorm';
+import { Repository, EntityManager, getManager, FindOneOptions } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import {
   AccountStatementAmountPosition,
+  AccountStatementMutationType,
   AccountStatementSourceType,
   AccountStatementType,
+  BalanceType,
 } from '../../../model/utils/enum';
 import { parseBool } from '../../../shared/utils';
 import { QueryAccountStatementDTO } from '../../domain/account-statement/account-statement.payload.dto';
 import { CreateAccountStatementDTO } from '../../domain/account-statement/create.dto';
 import { AccountStatementWithPaginationResponse } from '../../domain/account-statement/response.dto';
 import { AuthService } from './auth.service';
+import { BalanceService } from './balance.service';
+
+const { DEBIT, CREDIT } = AccountStatementAmountPosition;
 
 @Injectable()
 export class AccountStatementService {
   constructor(
     @InjectRepository(AccountStatement)
-    private readonly repo: Repository<AccountStatement>,
+    private readonly repo?: Repository<AccountStatement>,
+    @InjectRepository(Balance)
+    private readonly balanceRepo?: Repository<Balance>,
   ) {}
 
   public async create(payload: CreateAccountStatementDTO): Promise<any> {
-    const { amount, type, transactionDate } = payload;
+    const { amount, type, transactionDate, description } = payload;
     const reference = GenerateCode.accountStatement(transactionDate);
     const user = await AuthService.getUser({ relations: ['branches'] });
     const userBranch = user?.branches[0];
+    const branchBalance = await this.balanceRepo.findOne({
+      branchId: userBranch.id
+    })
+
+    const {
+      BANK_TO_CASH,
+      BANK_TO_BON,
+      CASH_TO_BANK,
+      CASH_TO_BON,
+      BON_TO_CASH,
+      BON_TO_BANK,
+    } = AccountStatementMutationType;
+    const { BANK, CASH, BON } = AccountStatementType;
 
     let typeDebit: AccountStatementType;
     let typeCredit: AccountStatementType;
 
-    // type `BANK`: Transfer from Bank to Cash
-    if (type === AccountStatementType.BANK) {
-      typeDebit = AccountStatementType.BANK;
-      typeCredit = AccountStatementType.CASH;
-      // type `CASH`: Transfer from Cash to Bank
-    } else if (type === AccountStatementType.CASH) {
-      typeDebit = AccountStatementType.CASH;
-      typeCredit = AccountStatementType.BANK;
+    if (type === BANK_TO_CASH) {
+      typeDebit = BANK;
+      typeCredit = CASH;
+      if(amount > branchBalance.bankAmount) {
+        throw new HttpException('Tidak boleh melebihi akun Bank', HttpStatus.BAD_REQUEST)
+      }
+    } else if (type === BANK_TO_BON) {
+      typeDebit = BANK;
+      typeCredit = BON;
+      if(amount > branchBalance.bankAmount) {
+        throw new HttpException('Tidak boleh melebihi akun Bank', HttpStatus.BAD_REQUEST)
+      }
+    } else if (type === CASH_TO_BANK) {
+      typeDebit = CASH;
+      typeCredit = BANK;
+      if(amount > branchBalance.cashAmount) {
+        throw new HttpException('Tidak boleh melebihi akun Kas', HttpStatus.BAD_REQUEST)
+      }
+    } else if (type === CASH_TO_BON) {
+      typeDebit = CASH;
+      typeCredit = BON;
+      if(amount > branchBalance.cashAmount) {
+        throw new HttpException('Tidak boleh melebihi akun Kas', HttpStatus.BAD_REQUEST)
+      }
+    } else if (type === BON_TO_CASH) {
+      typeDebit = BON;
+      typeCredit = CASH;
+      if(amount > branchBalance.bonAmount) {
+        throw new HttpException('Tidak boleh melebihi akun Bon', HttpStatus.BAD_REQUEST)
+      }
+    } else if (type === BON_TO_BANK) {
+      typeDebit = BON;
+      typeCredit = BANK;
+      if(amount > branchBalance.bonAmount) {
+        throw new HttpException('Tidak boleh melebihi akun Bon', HttpStatus.BAD_REQUEST)
+      }
     } else {
       throw new BadRequestException(`Transaction Type is required!`);
     }
 
     const statementDebit = new AccountStatement();
     statementDebit.reference = reference;
+    statementDebit.description = description;
     statementDebit.amount = amount;
     statementDebit.transactionDate = transactionDate;
     statementDebit.branch = userBranch;
     statementDebit.type = typeDebit;
-    statementDebit.amountPosition = AccountStatementAmountPosition.DEBIT;
+    statementDebit.amountPosition = DEBIT;
     statementDebit.createUser = user;
     statementDebit.updateUser = user;
 
     const statementCredit = new AccountStatement();
     statementCredit.reference = reference;
+    statementCredit.description = description;
     statementCredit.amount = amount;
     statementCredit.transactionDate = transactionDate;
     statementCredit.branch = userBranch;
     statementCredit.type = typeCredit;
-    statementCredit.amountPosition = AccountStatementAmountPosition.CREDIT;
+    statementCredit.amountPosition = CREDIT;
     statementCredit.createUser = user;
     statementCredit.updateUser = user;
 
-    await this.repo.save([statementDebit, statementCredit]);
-    // remove cache Balance Summary after create statement
-    await getConnection().queryResultCache?.remove([`branch_balance_${userBranch?.id}`]);
+    await getManager().transaction(async (manager) => {
+      // Do Transfer Balance.
+      await BalanceService.transfer({
+        from: (typeDebit as unknown) as BalanceType,
+        to: (typeCredit as unknown) as BalanceType,
+        amount,
+        branchId: userBranch?.id,
+        manager,
+      });
+
+      // Insert AccountStatement record.
+      await manager.save([statementDebit, statementCredit]);
+    });
     return;
   }
 
@@ -90,6 +151,7 @@ export class AccountStatementService {
       ['stmt.transaction_date', 'transactionDate'],
       ['stmt."type"', 'type'],
       ['stmt.reference', 'reference'],
+      ['stmt.description', 'description'],
       ['stmt.source_type', 'sourceType'],
       ['stmt.amount', 'amount'],
       ['stmt.amount_position', 'amountPosition'],
@@ -106,6 +168,7 @@ export class AccountStatementService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    qb.qb.addOrderBy('stmt.updated_at', 'DESC');
     if (userBranchIds?.length && !isSuperUser) {
       qb.andWhere(
         (e) => e.branchId,
@@ -121,5 +184,82 @@ export class AccountStatementService {
 
     const statements = await qb.exec();
     return new AccountStatementWithPaginationResponse(statements, params);
+  }
+
+  private async updateBalance(
+    statement: AccountStatement,
+    manager: EntityManager,
+  ): Promise<void> {
+    if (!statement) return;
+
+    const branchId = statement.branchId;
+    const amount = statement.amount;
+    const balanceType = (statement.type as unknown) as BalanceType;
+    const isIncreaseAmount = statement.amountPosition === CREDIT;
+
+    if (isIncreaseAmount) {
+      await BalanceService.increase({
+        type: balanceType,
+        amount,
+        branchId,
+        manager,
+      });
+    } else {
+      await BalanceService.decrease({
+        type: balanceType,
+        amount,
+        branchId,
+        manager,
+      });
+    }
+  }
+
+  public static async createAndUpdateBalance(
+    data: AccountStatement,
+    manager?: EntityManager,
+  ): Promise<AccountStatement> {
+    manager = manager ? manager : getManager();
+    const stmtRepo = manager.getRepository(AccountStatement);
+    const statement = await stmtRepo.save(data);
+
+    if (!statement.branchId)
+      throw new UnprocessableEntityException(
+        `This user not assigned to a branch!`,
+      );
+
+    if (statement) {
+      const stmtSvc = new AccountStatementService();
+      await stmtSvc.updateBalance(statement, manager);
+    }
+
+    return statement;
+  }
+
+  public static async deleteAndUpdateBalance(
+    findOpt: FindOneOptions<AccountStatement>,
+    manager?: EntityManager,
+  ): Promise<void> {
+    const stmtSvc = new AccountStatementService();
+    if (manager) {
+      const stmtRepo = manager.getRepository(AccountStatement);
+      const stmt = await stmtRepo.findOne(findOpt);
+      if (stmt) {
+        // Decrease Balance
+        stmt.amountPosition = stmt.amountPosition === DEBIT ? CREDIT : DEBIT;
+        await stmtSvc.updateBalance(stmt, manager);
+        await stmtRepo.delete({ id: stmt.id });
+      }
+    } else {
+      await getManager().transaction(async (newManager) => {
+        const stmtRepo = newManager.getRepository(AccountStatement);
+        const stmt = await stmtRepo.findOne(findOpt);
+        if (stmt) {
+          // Decrease Balance
+          stmt.amountPosition = stmt.amountPosition === DEBIT ? CREDIT : DEBIT;
+          await stmtSvc.updateBalance(stmt, newManager);
+          await stmtRepo.delete({ id: stmt.id });
+        }
+      });
+    }
   }
 }

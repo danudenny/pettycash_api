@@ -49,6 +49,12 @@ export class JournalDTO {
   reference: string;
 
   @ApiProperty({
+    description: 'Journal Sync Fail Reason',
+    example: 'Branch Not Found',
+  })
+  syncFailReason: string;
+
+  @ApiProperty({
     description: 'Partner Name',
     example: 'HR Sicepat',
   })

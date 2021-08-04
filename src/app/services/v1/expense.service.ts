@@ -29,6 +29,7 @@ import {
   ExpenseType,
   JournalSourceType,
   JournalState,
+  LoanSourceType,
   LoanState,
   LoanType,
   MASTER_ROLES,
@@ -77,6 +78,8 @@ import { UpdateExpenseAttachmentDTO } from '../../domain/expense/update-attachme
 import { AttachmentType } from '../../../model/attachment-type.entity';
 import { Vehicle } from '../../../model/vehicle.entity';
 import { VehicleTemp } from '../../../model/vehicle-temp.entity';
+import { AccountStatementService } from './account-statement.service';
+import { BranchService } from '../master/v1/branch.service';
 
 @Injectable()
 export class ExpenseService {
@@ -1138,11 +1141,13 @@ export class ExpenseService {
         'downPayment',
       ],
     });
+
+    await BranchService.checkCashCoa(expense?.branchId);
+
     const j = new Journal();
     j.createUser = user;
     j.updateUser = user;
     j.branchId = expense.branchId;
-    j.branchCode = expense?.branch?.branchCode ?? 'NO_BRANCH_CODE';
     j.transactionDate = expense.transactionDate;
     j.periodId = expense.periodId;
     j.number = GenerateCode.journal(expense.transactionDate);
@@ -1218,9 +1223,6 @@ export class ExpenseService {
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
     const items: JournalItem[] = [];
-    let itemCoaId: string;
-    let isLedger: boolean = false;
-    let isReimbursement: boolean = false;
     const partnerName = expense?.partner?.name || expense?.employee?.name;
     const partnerCode = expense?.partner?.code || expense?.employee?.nik;
 
@@ -1244,22 +1246,14 @@ export class ExpenseService {
         dpJournalItem.credit = downPayment?.amount;
         dpJournalItem.coaId = setting?.downPaymentPerdinCoaId;
         items.push(dpJournalItem);
-      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
-        itemCoaId = setting?.downPaymentReimbursementCoaId;
-        isLedger = true;
-        isReimbursement = true;
       }
     }
 
     for (const v of expense?.items) {
-      if (!isReimbursement) {
-        itemCoaId = expense?.branch?.cashCoaId;
-      }
-
       const i = new JournalItem();
       i.createUser = user;
       i.updateUser = user;
-      i.coaId = itemCoaId;
+      i.coaId = expense?.branch?.cashCoaId;
       i.branchId = expense.branchId;
       i.transactionDate = expense.transactionDate;
       i.periodId = expense.periodId;
@@ -1267,7 +1261,7 @@ export class ExpenseService {
       i.description = v?.description;
       i.partnerName = partnerName;
       i.partnerCode = partnerCode;
-      i.isLedger = isLedger;
+      i.isLedger = false;
       i.expenseItemId = v?.id;
       i.credit = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)
         ? v.ssHoAmount
@@ -1288,7 +1282,7 @@ export class ExpenseService {
         const jTax = new JournalItem();
         jTax.createUser = user;
         jTax.updateUser = user;
-        jTax.coaId = isReimbursement ? itemCoaId : tax?.coaId;
+        jTax.coaId = tax?.coaId;
         jTax.branchId = expense.branchId;
         jTax.transactionDate = expense.transactionDate;
         jTax.periodId = expense.periodId;
@@ -1297,7 +1291,7 @@ export class ExpenseService {
         jTax.partnerName = partnerName;
         jTax.partnerCode = partnerCode;
         jTax.credit = taxedAmount;
-        jTax.isLedger = isLedger;
+        jTax.isLedger = false;
         jTax.expenseItemId = v?.id;
         items.push(jTax);
       }
@@ -1321,9 +1315,6 @@ export class ExpenseService {
     userRole: MASTER_ROLES,
   ): Promise<JournalItem[]> {
     const items: JournalItem[] = [];
-    let itemCoaId: string;
-    let isLedger: boolean = true;
-    let isReimbursement: boolean = false;
     const partnerName = expense?.partner?.name || expense?.employee?.name;
     const partnerCode = expense?.partner?.code || expense?.employee?.nik;
 
@@ -1347,22 +1338,14 @@ export class ExpenseService {
         dpJournalItem.debit = downPayment?.amount;
         dpJournalItem.coaId = expense?.branch?.cashCoaId;
         items.push(dpJournalItem);
-      } else if (downPaymentType === DownPaymentType.REIMBURSEMENT) {
-        itemCoaId = expense?.branch?.cashCoaId;
-        isLedger = false;
-        isReimbursement = true;
       }
     }
 
     for (const v of expense?.items) {
-      if (!isReimbursement) {
-        itemCoaId = v?.product?.coaId;
-      }
-
       const i = new JournalItem();
       i.createUser = user;
       i.updateUser = user;
-      i.coaId = itemCoaId;
+      i.coaId = v?.product?.coaId;
       i.productId = v?.productId;
       i.branchId = expense.branchId;
       i.transactionDate = expense.transactionDate;
@@ -1371,7 +1354,7 @@ export class ExpenseService {
       i.description = v?.description;
       i.partnerName = partnerName;
       i.partnerCode = partnerCode;
-      i.isLedger = isLedger;
+      i.isLedger = true;
       i.expenseItemId = v?.id;
       i.debit = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO].includes(userRole)
         ? v.ssHoAmount
@@ -1392,7 +1375,7 @@ export class ExpenseService {
         const jTax = new JournalItem();
         jTax.createUser = user;
         jTax.updateUser = user;
-        jTax.coaId = itemCoaId;
+        jTax.coaId = v?.product?.coaId;
         jTax.productId = v?.productId;
         jTax.branchId = expense.branchId;
         jTax.transactionDate = expense.transactionDate;
@@ -1402,7 +1385,7 @@ export class ExpenseService {
         jTax.partnerName = partnerName;
         jTax.partnerCode = partnerCode;
         jTax.debit = taxedAmount;
-        jTax.isLedger = isLedger;
+        jTax.isLedger = true;
         jTax.expenseItemId = v?.id;
         items.push(jTax);
       }
@@ -1497,6 +1480,12 @@ export class ExpenseService {
 
     if (!downPayment) {
       throw new BadRequestException(`Down Payment with ID ${id} not found!`);
+    }
+
+    if (downPayment?.type !== DownPaymentType.PERDIN) {
+      throw new BadRequestException(
+        `Only DownPayment with type PERDIN can be realized!`,
+      );
     }
 
     if (checkRealization) {
@@ -1628,6 +1617,8 @@ export class ExpenseService {
     loan.transactionDate = new Date();
     loan.number = GenerateCode.loan(loan.transactionDate);
     loan.sourceDocument = expense.number;
+    loan.sourceType = LoanSourceType.EXPENSE;
+    loan.downPaymentId = downPayment?.id;
     loan.type = loanType;
     loan.amount = loanAmount;
     loan.residualAmount = loanAmount;
@@ -1746,25 +1737,29 @@ export class ExpenseService {
     manager: EntityManager,
     expense: Expense,
   ): Promise<AccountStatement> {
-    const accStmtRepo = manager.getRepository(AccountStatement);
-    const statement = await accStmtRepo.findOne({
-      where: {
-        reference: expense?.number,
-        branchId: expense?.branchId,
-        isDeleted: false,
+    // delete existing statement
+    await AccountStatementService.deleteAndUpdateBalance(
+      {
+        where: {
+          reference: expense?.number,
+          branchId: expense?.branchId,
+          isDeleted: false,
+        },
       },
-    });
-
-    if (statement) {
-      // delete existing statement
-      await accStmtRepo.delete({ id: statement?.id });
-    }
+      manager,
+    );
 
     // insert statement if Expense not from DownPayment
+    let result: AccountStatement;
     if (!expense?.downPaymentId) {
       const stmt = await this.buildAccountStatement(expense);
-      return await accStmtRepo.save(stmt);
+      result = await AccountStatementService.createAndUpdateBalance(
+        stmt,
+        manager,
+      );
     }
+
+    return result;
   }
 
   private async buildAccountStatement(
@@ -1795,11 +1790,16 @@ export class ExpenseService {
     manager: EntityManager,
     expense: Expense,
   ): Promise<void> {
-    await manager.getRepository(AccountStatement).delete({
-      reference: expense?.number,
-      branchId: expense?.branchId,
-      isDeleted: false,
-    });
+    await AccountStatementService.deleteAndUpdateBalance(
+      {
+        where: {
+          reference: expense?.number,
+          branchId: expense?.branchId,
+          isDeleted: false,
+        },
+      },
+      manager,
+    );
   }
 
   /**

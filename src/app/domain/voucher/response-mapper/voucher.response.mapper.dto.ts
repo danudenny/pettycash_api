@@ -18,6 +18,7 @@ export class VoucherResponseMapper {
 		it.totalAmount = dto.totalAmount;
 		it.isRealized = dto.isRealized;
 		it.state = dto.state;
+		it.paymentType = dto.paymentType;
 		return it;
 	}
 
@@ -31,12 +32,13 @@ export class VoucherResponseMapper {
 			employeeId: ety.employeeId,
 			employeeNik: ety.employee && ety.employee.nik,
 			employeeName: ety.employee && ety.employee.name,
-			employeePosition: ety.employee && ety.employee.positionName,
+			employeePosition: ety.employee && ety.employee.employeeRole.employeePosition,
 			checkinTime : ety.checkinTime,
 			checkoutTime : ety.checkoutTime,
 			totalAmount: ety.totalAmount,
 			isRealized: ety.isRealized,
 			state: ety.state,
+			paymentType: ety.paymentType
 		});
 	}
 

@@ -11,9 +11,10 @@ import { AccountPayment } from './account-payment.entity';
 import { Attachment } from './attachment.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
+import { DownPayment } from './down-payment.entity';
 import { Employee } from './employee.entity';
 import { Period } from './period.entity';
-import { LoanState, LoanType } from './utils/enum';
+import { LoanSourceType, LoanState, LoanType } from './utils/enum';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('loan')
@@ -33,6 +34,14 @@ export class Loan extends PtcBaseEntity {
   })
   sourceDocument?: string;
 
+  @Column({
+    type: 'enum',
+    enum: LoanSourceType,
+    name: 'source_type',
+    nullable: true,
+  })
+  sourceType?: LoanSourceType;
+
   @Column({ type: 'date', name: 'transaction_date' })
   transactionDate: Date;
 
@@ -41,6 +50,9 @@ export class Loan extends PtcBaseEntity {
 
   @Column({ type: 'uuid', name: 'employee_id' })
   employeeId: string;
+
+  @Column({ type: 'uuid', name: 'down_payment_id', nullable: true })
+  downPaymentId?: string;
 
   @Column({
     type: 'numeric',
@@ -121,4 +133,8 @@ export class Loan extends PtcBaseEntity {
   @ManyToOne(() => Employee)
   @JoinColumn({ name: 'employee_id' })
   employee: Employee;
+
+  @ManyToOne(() => DownPayment, { onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'down_payment_id' })
+  downPayment?: DownPayment;
 }

@@ -9,6 +9,7 @@ export class AccountDailyClosingMapper {
     const it = dto.map((accountDailyClosingDTO) => {
       const item = new AccountDailyClosingDTO();
       item.id = accountDailyClosingDTO.id;
+      item.branchName = accountDailyClosingDTO.branchName
       item.responsibleUserId = accountDailyClosingDTO.responsibleUserId;
       item.responsibleUserNik = accountDailyClosingDTO.responsibleUserNik;
       item.responsibleUserFirstName =
@@ -20,8 +21,26 @@ export class AccountDailyClosingMapper {
       item.closingBankAmount = +accountDailyClosingDTO.closingBankAmount;
       item.openingCashAmount = +accountDailyClosingDTO.openingCashAmount;
       item.closingCashAmount = +accountDailyClosingDTO.closingCashAmount;
-      item.reason = accountDailyClosingDTO.reason;
-
+      item.openingBonAmount = +accountDailyClosingDTO.openingBonAmount;
+      item.closingBonAmount = +accountDailyClosingDTO.closingBonAmount;
+      item.reasonBank = accountDailyClosingDTO.reasonBank;
+      item.reasonCash = accountDailyClosingDTO.reasonCash;
+      item.reasonBon = accountDailyClosingDTO.reasonBon;
+      item.bankDifference =
+        accountDailyClosingDTO.openingBankAmount -
+        accountDailyClosingDTO.closingBankAmount;
+      item.cashDifference =
+        accountDailyClosingDTO.openingCashAmount -
+        accountDailyClosingDTO.closingCashAmount;
+      item.bonDifference =
+        accountDailyClosingDTO.openingBonAmount -
+        accountDailyClosingDTO.closingBonAmount;
+      item.totalDifference =
+        item.bankDifference + item.cashDifference + item.bonDifference;
+      item.totalOpeningAmount =
+        item.openingBankAmount + item.openingCashAmount + item.openingBonAmount;
+      item.totalClosingAmount =
+        item.closingBankAmount + item.closingCashAmount + item.closingBonAmount;
       return item;
     });
 
@@ -31,6 +50,7 @@ export class AccountDailyClosingMapper {
   public static fromEntity(entity: Partial<AccountDailyClosing>) {
     const item = new AccountDailyClosingDetailDTO();
     item.id = entity.id;
+    item.branchName = entity.branch && entity.branch.branchName;
     item.closingDate = entity.closingDate;
     item.responsibleUserId = entity.responsibleUserId;
     item.responsibleUserNik = entity.createUser.username;
@@ -42,8 +62,12 @@ export class AccountDailyClosingMapper {
     item.closingBankAmount = entity.closingBankAmount;
     item.openingCashAmount = entity.openingCashAmount;
     item.closingCashAmount = entity.closingCashAmount;
+    item.openingBonAmount = entity.openingBonAmount;
+    item.closingBonAmount = entity.closingBonAmount;
+    item.reasonBank = entity.reasonBank;
+    item.reasonCash = entity.reasonCash;
+    item.reasonBon = entity.reasonBon;
     item.accountCashboxItems = this.toAccountCashboxItemsDTO(entity.cashItems);
-    item.reason = entity.reason;
 
     return item;
   }

@@ -38,7 +38,7 @@ export class AccountDailyClosingService {
     private readonly attachmentRepo: Repository<Attachment>,
     @InjectRepository(GlobalSetting)
     private readonly settingRepo: Repository<GlobalSetting>,
-  ) { }
+  ) {}
 
   public async list(
     query?: QueryAccountDailyClosingDTO,
@@ -58,6 +58,7 @@ export class AccountDailyClosingService {
       ['adc.id', 'id'],
       ['adc.closing_date', 'closingDate'],
       ['adc.responsible_user_id', 'responsibleUserId'],
+      ['brc.branch_name', 'branchName'],
       ['usr.username', 'responsibleUserNik'],
       ['usr.first_name', 'responsibleUserFirstName'],
       ['usr.last_name', 'responsibleUserLastName'],
@@ -65,9 +66,14 @@ export class AccountDailyClosingService {
       ['adc.closing_bank_amount', 'closingBankAmount'],
       ['adc.opening_cash_amount', 'openingCashAmount'],
       ['adc.closing_cash_amount', 'closingCashAmount'],
-      ['adc.reason', 'reason'],
+      ['adc.opening_bon_amount', 'openingBonAmount'],
+      ['adc.closing_bon_amount', 'closingBonAmount'],
+      ['adc.reason_bank', 'reasonBank'],
+      ['adc.reason_cash', 'reasonCash'],
+      ['adc.reason_bon', 'reasonBon'],
     );
     qb.leftJoin((e) => e.createUser, 'usr');
+    qb.leftJoin((e) => e.branch, 'brc');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
@@ -239,13 +245,17 @@ export class AccountDailyClosingService {
     accountDailyClosing.closingBankAmount = payload.closingBankAmount;
     accountDailyClosing.openingCashAmount = payload.openingCashAmount;
     accountDailyClosing.closingCashAmount = payload.closingCashAmount;
+    accountDailyClosing.openingBonAmount = payload.openingBonAmount;
+    accountDailyClosing.closingBonAmount = payload.closingBonAmount;
     accountDailyClosing.cashItems = this.getAccountCashboxItemsFromDTO(
       payload.accountCashboxItems,
       user,
     );
-    accountDailyClosing.reason = payload.reason;
-    accountDailyClosing.createUser = user;
-    accountDailyClosing.updateUser = user;
+    accountDailyClosing.reasonBank = payload.reasonBank;
+    accountDailyClosing.reasonCash = payload.reasonCash;
+    accountDailyClosing.reasonBon = payload.reasonBon;
+    accountDailyClosing.createUserId = user?.id;
+    accountDailyClosing.updateUserId = user?.id;
 
     return accountDailyClosing;
   }
@@ -273,7 +283,7 @@ export class AccountDailyClosingService {
     accountDailyClosingId: string,
     manager: EntityManager,
     files?: any,
-    attachmentType?: any
+    attachmentType?: any,
   ): Promise<Attachment[]> {
     let newAttachments: Attachment[] = [];
 

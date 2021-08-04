@@ -16,6 +16,12 @@ export class AccountDailyClosingDTO {
   closingDate: Date;
 
   @ApiProperty({
+    description: 'Branch Name',
+    example: 'Jakut Ancol',
+  })
+  branchName: string;
+
+  @ApiProperty({
     description: 'Responsible User ID',
     example: '8fed518e-aff2-4ef9-9d6e-562bdc2d8bdd',
   })
@@ -64,8 +70,71 @@ export class AccountDailyClosingDTO {
   closingCashAmount: number;
 
   @ApiProperty({
-    description: 'Reason for execute daily closing when deviation does not meets',
+    description: 'Opening Bon Amount (Bon Fisik)',
+    example: 2000000,
+  })
+  openingBonAmount: number;
+
+  @ApiProperty({
+    description: 'Closing Bon Amount (Saldo Bon Fisik)',
+    example: 500000,
+  })
+  closingBonAmount: number;
+
+  @ApiProperty({
+    description: 'Total Opening Amount (Total Saldo Fisik)',
+    example: 2000000,
+  })
+  totalOpeningAmount: number;
+
+  @ApiProperty({
+    description: 'Total Closing Amount (Total Saldo Aktual)',
+    example: 2000000,
+  })
+  totalClosingAmount: number;
+
+  @ApiProperty({
+    description: 'Closing Cash Amount Diff',
+    example: 500000,
+  })
+  cashDifference: number;
+
+  @ApiProperty({
+    description: 'Closing Bank Amount Diff',
+    example: 500000,
+  })
+  bankDifference: number;
+
+  @ApiProperty({
+    description: 'Closing Bon Amount Diff',
+    example: 500000,
+  })
+  bonDifference: number;
+
+  @ApiProperty({
+    description: 'Total Closing Amount Diff',
+    example: 500000,
+  })
+  totalDifference: number;
+
+  @ApiProperty({
+    description:
+      'Reason for execute daily closing when deviation does not meets',
     example: 'Pending',
   })
-  reason: string;
+  reasonBank: string;
+
+  @ApiProperty({
+    description:
+      'Reason for execute daily closing when deviation does not meets',
+    example: 'Pending',
+  })
+  reasonCash: string;
+
+  @ApiProperty({
+    description:
+      'Reason for execute daily closing when deviation does not meets',
+    example: 'Pending',
+  })
+  reasonBon: string;
 }

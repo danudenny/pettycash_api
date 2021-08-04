@@ -3,6 +3,7 @@ import {
   getManager,
   EntityManager,
   createQueryBuilder,
+  In,
 } from 'typeorm';
 import {
   BadRequestException,
@@ -24,9 +25,14 @@ import {
   AccountPaymentPayMethod,
   AccountPaymentType,
   AccountStatementAmountPosition,
+  AccountStatementSourceType,
   AccountStatementType,
+  DownPaymentType,
+  JournalSourceType,
+  LoanSourceType,
   LoanState,
   LoanType,
+  PeriodState,
 } from '../../../model/utils/enum';
 import { LoanAttachmentResponse } from '../../domain/loan/response-attachment.dto';
 import { Attachment } from '../../../model/attachment.entity';
@@ -36,6 +42,11 @@ import { CreateLoanDTO } from '../../domain/loan/create.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { PeriodService } from './period.service';
 import { AccountStatement } from '../../../model/account-statement.entity';
+import { Journal } from '../../../model/journal.entity';
+import { Period } from '../../../model/period.entity';
+import { JournalItem } from '../../../model/journal-item.entity';
+import { DownPayment } from '../../../model/down-payment.entity';
+import { AccountStatementService } from './account-statement.service';
 
 @Injectable()
 export class LoanService {
@@ -112,6 +123,8 @@ export class LoanService {
       ['l.residual_amount', 'residualAmount'],
       ['l.paid_amount', 'paidAmount'],
       ['l.source_document', 'sourceDocument'],
+      ['l.down_payment_id', 'downPaymentId'],
+      ['dp."number"', 'downPaymentNumber'],
       ['l.created_at', 'createdAt'],
       ['p.month', 'periodMonth'],
       ['p.year', 'periodYear'],
@@ -119,10 +132,13 @@ export class LoanService {
       ['b.branch_code', 'branchCode'],
       ['e.name', 'employeeName'],
       ['e.nik', 'employeeNik'],
+      ['er.employee_role_name', 'positionName'],
     );
     qb.leftJoin((e) => e.branch, 'b');
     qb.leftJoin((e) => e.period, 'p');
     qb.leftJoin((e) => e.employee, 'e');
+    qb.leftJoin((e) => e.employee.employeeRole, 'er');
+    qb.leftJoin((e) => e.downPayment, 'dp');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
@@ -138,10 +154,20 @@ export class LoanService {
     return new LoanWithPaginationResponse(loan, params);
   }
 
-  public async getById(id: string) {
+  public async getById(id: string): Promise<LoanDetailResponse> {
+    const {
+      isSuperUser,
+      userBranchIds,
+    } = await AuthService.getUserBranchAndRole();
+
+    const where = { id, isDeleted: false };
+    if (!isSuperUser) {
+      Object.assign(where, { branchId: In(userBranchIds) });
+    }
+
     const loan = await this.loanRepo.findOne({
-      where: { id, isDeleted: false },
-      relations: ['employee', 'payments'],
+      where,
+      relations: ['employee', 'downPayment', 'downPayment.product', 'payments'],
     });
 
     if (!loan) {
@@ -205,7 +231,7 @@ export class LoanService {
   public async createAttachment(
     loanId: string,
     files?: any,
-    attachmentType?: any
+    attachmentType?: any,
   ): Promise<LoanAttachmentResponse> {
     try {
       const createAttachment = await getManager().transaction(
@@ -300,9 +326,20 @@ export class LoanService {
   ): Promise<LoanDetailResponse> {
     try {
       const createPayment = await getManager().transaction(async (manager) => {
+        const {
+          user,
+          isSuperUser,
+          userBranchIds,
+        } = await AuthService.getUserBranchAndRole();
+
+        const where = { id, isDeleted: false };
+        if (!isSuperUser) {
+          Object.assign(where, { branchId: In(userBranchIds) });
+        }
+
         const loan = await manager.getRepository(Loan).findOne({
-          where: { id, isDeleted: false },
-          relations: ['employee', 'payments'],
+          where,
+          relations: ['branch', 'employee', 'payments'],
         });
 
         if (!loan) {
@@ -313,8 +350,8 @@ export class LoanService {
           throw new BadRequestException(`Loan already paid!`);
         }
 
-        const user = await AuthService.getUser();
-        loan.updateUser = user;
+        // Keep this here, all related action depends on this field.
+        loan.updateUserId = user?.id;
 
         // Create Payment
         const buildPayment = await this.buildPayment(loan, payload);
@@ -323,6 +360,12 @@ export class LoanService {
         // Create AccountStatement (Mutasi Saldo)
         const buildStmt = await this.buildStatement(loan, payment);
         await this.createStatement(manager, buildStmt);
+
+        // Create Journal if Loan has downPayment
+        if (loan?.downPaymentId) {
+          const journal = await this.buildJournal(manager, loan, payment);
+          if (journal) await this.createJournal(manager, journal);
+        }
 
         // Update Loan Payments
         const existingPayments = loan.payments || [];
@@ -371,10 +414,12 @@ export class LoanService {
     const newLoan = new Loan();
     newLoan.branchId = loan.branchId;
     newLoan.employeeId = loan.employeeId;
+    newLoan.downPaymentId = loan.downPaymentId;
     newLoan.transactionDate = new Date();
     newLoan.period = await PeriodService.findByDate(newLoan.transactionDate);
     newLoan.number = GenerateCode.loan();
     newLoan.sourceDocument = loan.number;
+    newLoan.sourceType = LoanSourceType.LOAN;
     newLoan.amount = amount;
     newLoan.residualAmount = amount;
     newLoan.type = loanType;
@@ -400,9 +445,10 @@ export class LoanService {
     const payment = new AccountPayment();
     payment.branchId = loan.branchId;
     payment.transactionDate = new Date();
+    payment.number = GenerateCode.payment(payment.transactionDate);
     payment.paymentMethod = payload.paymentMethod;
-    payment.createUser = loan.updateUser;
-    payment.updateUser = loan.updateUser;
+    payment.createUserId = loan.updateUserId;
+    payment.updateUserId = loan.updateUserId;
 
     if (payload.amount >= loan.residualAmount) {
       payment.type = AccountPaymentType.FULL;
@@ -419,9 +465,7 @@ export class LoanService {
     manager: EntityManager,
     stmt: AccountStatement,
   ): Promise<AccountStatement> {
-    const repo = manager.getRepository(AccountStatement);
-    const statement = await repo.save(stmt);
-    return statement;
+    return await AccountStatementService.createAndUpdateBalance(stmt, manager);
   }
 
   private async buildStatement(
@@ -429,7 +473,9 @@ export class LoanService {
     payment: AccountPayment,
   ): Promise<AccountStatement> {
     const stmt = new AccountStatement();
-    stmt.reference = loan.number;
+    stmt.description = loan.number;
+    stmt.reference = payment.number;
+    stmt.sourceType = AccountStatementSourceType.PAYMENT;
     stmt.amount = payment.amount;
     stmt.transactionDate = payment.transactionDate;
     stmt.branchId = payment.branchId;
@@ -449,5 +495,269 @@ export class LoanService {
     }
 
     return stmt;
+  }
+
+  private async createJournal(
+    manager: EntityManager,
+    journal: Journal,
+  ): Promise<Journal> {
+    const journalRepo = manager.getRepository<Journal>(Journal);
+    const periodRepo = manager.getRepository<Period>(Period);
+    const period = await periodRepo.findOne({
+      where: { id: journal.periodId, isDeleted: false },
+      select: ['state'],
+    });
+
+    if (!period || period?.state === PeriodState.CLOSE) {
+      throw new BadRequestException(
+        `Failed create journal due period already closed!`,
+      );
+    }
+
+    return await journalRepo.save(journal);
+  }
+
+  private async buildJournal(
+    manager: EntityManager,
+    loan: Loan,
+    payment: AccountPayment,
+  ): Promise<Journal> {
+    const dpRepo = manager.getRepository(DownPayment);
+    const dp = await dpRepo.findOne({
+      where: { id: loan?.downPaymentId },
+      select: ['id', 'type', 'productId', 'product'],
+      relations: ['product'],
+    });
+
+    if (!this.canCreateJournal(loan, dp)) return null;
+
+    const j = new Journal();
+    j.createUserId = loan?.updateUserId;
+    j.updateUserId = loan?.updateUserId;
+    j.branchId = payment.branchId;
+    j.transactionDate = payment.transactionDate;
+    j.periodId = loan.periodId;
+    j.number = GenerateCode.journal(payment.transactionDate);
+    j.reference = payment.number;
+    j.sourceType = JournalSourceType.PAYMENT;
+    j.partnerName = loan?.employee?.name;
+    j.partnerCode = loan?.employee?.nik;
+    j.items = await this.buildJournalItem(loan, payment, dp);
+    j.totalAmount = j.items
+      .map((m) => Number(m.debit))
+      .filter((i) => i)
+      .reduce((a, b) => a + b, 0);
+    return j;
+  }
+
+  /**
+   *
+   * Internal Helper for Build Journal Item Entity
+   * This is contains debit and credit item.
+   *
+   * receivable / Piutang = Hutang perusahaan terhadap karyawan.
+   * payable /  Hutang = Hutang karyawan terhadap perusahaan.
+   *
+   *  ====== PAYABLE / HUTANG ======
+   *  ➡ If DownPayment Type `REIMBURSEMENT`
+   *  +--------------------------------------+----------+---------+
+   *  | Name                                 | debit   | credit   |
+   *  |--------------------------------------+----------+---------|
+   *  | Kas Cabang                           | 200000   | 0       |
+   *  | Product (e.g: uang muka)             | 0        | 200000  |
+   *  +--------------------------------------+----------+---------+
+   *
+   *  ➡ If DownPayment Type `PERDIN`
+   *  +--------------------------------------+----------+---------+
+   *  | Name                                 | debit   | credit   |
+   *  |--------------------------------------+----------+---------|
+   *  | Product (e.g: uang muka)             | 200000   | 0       |
+   *  | Kas Cabang                           | 0        | 200000  |
+   *  +--------------------------------------+----------+---------+
+   *
+   *
+   *  ====== RECEIVABLE / PIUTANG ======
+   *  ➡ If DownPayment Type `PERDIN`
+   *  +--------------------------------------+----------+---------+
+   *  | Name                                 | debit   | credit   |
+   *  |--------------------------------------+----------+---------|
+   *  | Product (e.g: uang muka)             | 200000   | 0       |
+   *  | Kas Cabang                           | 0        | 200000  |
+   *  +--------------------------------------+----------+---------+
+   *
+   *  ➡ If DownPayment Type `REIMBURSEMENT`
+   *  +--------------------------------------+----------+---------+
+   *  | Name                                 | debit   | credit   |
+   *  |--------------------------------------+----------+---------|
+   *  | Product (e.g: uang muka)             | 200000   | 0       |
+   *  | Kas Cabang                           | 0        | 200000  |
+   *  +--------------------------------------+----------+---------+
+   *
+   * @private
+   * @param {Loan} loan
+   * @param {AccountPayment} payment
+   * @param {DownPayment} dp
+   * @return {*}  {Promise<JournalItem[]>}
+   * @memberof LoanService
+   */
+  private async buildJournalItem(
+    loan: Loan,
+    payment: AccountPayment,
+    dp: DownPayment,
+  ): Promise<JournalItem[]> {
+    const debit = await this.buildJournalItemDebit(loan, payment, dp);
+    const credit = await this.buildJournalItemCredit(loan, payment, dp);
+
+    const amountDebit = debit
+      .map((m) => Number(m.debit))
+      .filter((i) => i)
+      .reduce((a, b) => a + b, 0);
+    const amountCredit = credit
+      .map((m) => Number(m.credit))
+      .filter((i) => i)
+      .reduce((a, b) => a + b, 0);
+
+    if (amountDebit !== amountCredit) {
+      throw new Error(`Amount debit and credit should equal!`);
+    }
+
+    const items = [...new Set([...debit, ...credit])];
+    return items;
+  }
+
+  private async buildJournalItemDebit(
+    loan: Loan,
+    payment: AccountPayment,
+    dp: DownPayment,
+  ): Promise<JournalItem[]> {
+    const items: JournalItem[] = [];
+
+    const i = new JournalItem();
+    i.createUserId = loan?.updateUserId;
+    i.updateUserId = loan?.updateUserId;
+    i.coaId = this.getJournalCoa('debit', loan, dp);
+    i.productId = dp?.productId;
+    i.branchId = payment.branchId;
+    i.transactionDate = payment.transactionDate;
+    i.periodId = loan.periodId;
+    i.reference = payment.number;
+    i.partnerName = loan?.employee?.name;
+    i.partnerCode = loan?.employee?.nik;
+    i.isLedger = false;
+    i.debit = payment.amount;
+    items.push(i);
+
+    return items;
+  }
+
+  private async buildJournalItemCredit(
+    loan: Loan,
+    payment: AccountPayment,
+    dp: DownPayment,
+  ): Promise<JournalItem[]> {
+    const items: JournalItem[] = [];
+
+    const i = new JournalItem();
+    i.createUserId = loan?.updateUserId;
+    i.updateUserId = loan?.updateUserId;
+    i.coaId = this.getJournalCoa('credit', loan, dp);
+    i.productId = dp?.productId;
+    i.branchId = payment.branchId;
+    i.transactionDate = payment.transactionDate;
+    i.periodId = loan.periodId;
+    i.reference = payment.number;
+    i.partnerName = loan?.employee?.name;
+    i.partnerCode = loan?.employee?.nik;
+    i.isLedger = true;
+    i.credit = payment.amount;
+    items.push(i);
+
+    return items;
+  }
+
+  private getJournalCoa(
+    type: 'credit' | 'debit',
+    loan: Loan,
+    dp: DownPayment,
+  ): string {
+    const isReimbursement = dp?.type === DownPaymentType.REIMBURSEMENT;
+    const isPerdin = dp?.type === DownPaymentType.PERDIN;
+    const isPayable = loan?.type === LoanType.PAYABLE;
+    const isReceivable = loan?.type === LoanType.RECEIVABLE;
+    const coaCash = loan?.branch?.cashCoaId;
+    const coaProduct = dp?.product?.coaId;
+
+    let coaId: string;
+
+    if (type === 'debit') {
+      if (isPayable) {
+        if (isReimbursement) {
+          coaId = coaCash;
+        } else if (isPerdin) {
+          coaId = coaCash;
+        }
+      }
+
+      if (isReceivable) {
+        if (isPerdin) {
+          coaId = coaProduct;
+        } else if (isReimbursement) {
+          coaId = coaProduct;
+        }
+      }
+    }
+
+    if (type === 'credit') {
+      if (isPayable) {
+        if (isReimbursement) {
+          coaId = coaProduct;
+        } else if (isPerdin) {
+          coaId = coaProduct;
+        }
+      }
+
+      if (isReceivable) {
+        if (isPerdin) {
+          coaId = coaCash;
+        } else if (isReimbursement) {
+          coaId = coaCash;
+        }
+      }
+    }
+
+    if (!coaId) throw new NotFoundException(`CoA for ${type} not found!`);
+
+    return coaId;
+  }
+
+  /**
+   * Check wheter the Loan can create Journal or not.
+   *
+   * @private
+   * @param {Loan} loan
+   * @param {DownPayment} dp
+   * @return {*}  {boolean}
+   * @memberof LoanService
+   */
+  private canCreateJournal(loan: Loan, dp: DownPayment): boolean {
+    let canCreate = false;
+    const isReimbursement = dp?.type === DownPaymentType.REIMBURSEMENT;
+    const isPerdin = dp?.type === DownPaymentType.PERDIN;
+    const isPayable = loan?.type === LoanType.PAYABLE;
+    const isReceivable = loan?.type === LoanType.RECEIVABLE;
+
+    if (isPayable) {
+      if (isPerdin || isReimbursement) {
+        canCreate = true;
+      }
+    }
+
+    if (isReceivable) {
+      if (isPerdin || isReimbursement) {
+        canCreate = true;
+      }
+    }
+
+    return canCreate;
   }
 }

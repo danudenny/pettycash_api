@@ -5,6 +5,7 @@ import {
   DownPaymentPayType,
   DownPaymentState,
   DownPaymentType,
+  LoanState,
 } from '../../../model/utils/enum';
 
 export class DownPaymentDTO {
@@ -78,12 +79,15 @@ export class DownPaymentDTO {
   @ApiProperty({ description: 'Employee Nik', example: '998736762732172' })
   employeeNik: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Product ID',
     example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
   })
   @IsUUID()
-  productId?: string;
+  productId: string;
+
+  @ApiProperty({ description: 'Product Name', example: 'Uang Bensin' })
+  productName: string;
 
   @ApiProperty({
     description: 'Period ID',
@@ -113,6 +117,23 @@ export class DownPaymentDTO {
 
   @ApiProperty({ description: 'Date', example: '2021-01-29T09:00:29.803Z' })
   transactionDate: Date;
+
+  @ApiProperty({
+    description: 'Loan ID',
+    example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
+  })
+  @IsUUID()
+  loanId: string;
+
+  @ApiProperty({ description: 'Loan Number', example: 'LOAN202107ATY876' })
+  loanNumber: string;
+
+  @ApiProperty({
+    description: 'Loan State',
+    example: LoanState.UNPAID,
+    enum: LoanState,
+  })
+  loanState: LoanState;
 }
 
 export class ShowDownPaymentDTO {
@@ -217,6 +238,23 @@ export class ShowDownPaymentDTO {
 
   @ApiProperty({ description: 'Date', example: '2021-01-29T09:00:29.803Z' })
   transactionDate: Date;
+
+  @ApiProperty({
+    description: 'Loan ID',
+    example: 'd2613fdc-8b7c-486e-90e6-aba5d4a819cb',
+  })
+  @IsUUID()
+  loanId: string;
+
+  @ApiProperty({ description: 'Loan Number', example: 'LOAN202107ATY876' })
+  loanNumber: string;
+
+  @ApiProperty({
+    description: 'Loan State',
+    example: LoanState.UNPAID,
+    enum: LoanState,
+  })
+  loanState: LoanState;
 
   @ApiProperty({
     description: ' Down Payment Histories',

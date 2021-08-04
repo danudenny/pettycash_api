@@ -34,35 +34,24 @@ export class EmployeeDTO {
   name: string;
 
   @ApiProperty({
-    description: 'Employee NPWP Number',
-    example: '66330028436048',
-  })
-  @IsOptional()
-  @IsString()
-  npwpNumber: string;
-
-  @ApiProperty({
-    description: 'Employee ID Card Number',
-    example: '20090134',
-  })
-  @IsOptional()
-  @IsString()
-  idCardNumber: string;
-
-  @ApiProperty({
-    description: 'Employee Position ID',
+    description: 'Employee Role ID',
     example: 10,
   })
   @IsString()
-  positionId: Number;
+  employeeRoleId: Number;
 
   @ApiProperty({
-    description: 'Employee Position Name',
-    example: 'Backend Developer',
+    description: 'Employee Role Name',
+    example: 'Admin Asset',
   })
-  @IsOptional()
   @IsString()
   positionName: string;
+
+  @ApiProperty({
+    description: 'Branch Name',
+    example: 'Jakarta Pusat',
+  })
+  branchName: string;
 
   @ApiProperty({
     description: 'Employee Branch ID',
@@ -70,5 +59,17 @@ export class EmployeeDTO {
   })
   @IsOptional()
   branchId: Number;
+
+  @ApiProperty({
+    description: 'Entry Date',
+    example: '2019-08-19 00:00:00',
+  })
+  dateOfEntry: Date;
+
+  @ApiProperty({
+    description: 'Resgin Date',
+    example: '2019-08-19 00:00:00',
+  })
+  dateOfResign: Date;
 
 }

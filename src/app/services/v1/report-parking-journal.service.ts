@@ -40,8 +40,6 @@ export class ReportParkingJournalService {
       ['b."branch_name"', 'branchName'],
       ['ji.debit', 'debit'],
       ['ji.credit', 'credit'],
-      ['j.source_type', 'origin'],
-      ['null', 'destination'],
       [
         `CASE WHEN e.id IS NOT NULL THEN ji.partner_code ELSE NULL END`,
         'employeeNik',

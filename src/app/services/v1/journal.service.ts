@@ -5,6 +5,7 @@ import {
   getManager,
   EntityManager,
   In,
+  FindOneOptions,
 } from 'typeorm';
 import {
   BadRequestException,
@@ -17,10 +18,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Journal } from '../../../model/journal.entity';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
 import {
+  AccountStatementSourceType,
   DownPaymentState,
+  DownPaymentType,
   ExpenseState,
   JournalSourceType,
   JournalState,
+  LoanSourceType,
   MASTER_ROLES,
   PeriodState,
 } from '../../../model/utils/enum';
@@ -38,12 +42,17 @@ import { JournalBatchResponse } from '../../domain/journal/response-batch.dto';
 import { DownPayment } from '../../../model/down-payment.entity';
 import { DownPaymentHistory } from '../../../model/down-payment-history.entity';
 import { ExpenseHistory } from '../../../model/expense-history.entity';
+import { AccountPayment } from '../../../model/account-payment.entity';
+import { Loan } from '../../../model/loan.entity';
+import { PinoLogger } from 'nestjs-pino';
+import { AccountStatementService } from './account-statement.service';
 
 @Injectable()
 export class JournalService {
   constructor(
     @InjectRepository(Journal)
     private readonly journalRepo: Repository<Journal>,
+    private readonly logger: PinoLogger,
   ) {}
 
   public async list(
@@ -79,6 +88,7 @@ export class JournalService {
       ['j.partner_code', 'partnerCode'],
       ['j.partner_name', 'partnerName'],
       ['j.reference', 'reference'],
+      ['j.sync_fail_reason', 'syncFailReason'],
       ['j.state', 'state'],
       ['j.total_amount', 'totalAmount'],
       ['j.transaction_date', 'transactionDate'],
@@ -132,6 +142,7 @@ export class JournalService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    qb.qb.addOrderBy('j.updated_at', 'DESC');
 
     if (!isSuperUser) {
       // Throw error for some user role.
@@ -143,6 +154,7 @@ export class JournalService {
       // only show journals:
       //  - state: `draft`
       //  - state: `approved_by_ss_spv_ho`
+      //  - state: `sync_failed`
       if (SS_SPV_ROLES.includes(userRoleName)) {
         if (userBranchIds?.length) {
           qb.andWhere(
@@ -150,20 +162,23 @@ export class JournalService {
             (v) => v.in(userBranchIds),
           );
         }
-        qb.qb.andWhere(`(j.state IN ('draft', 'approved_by_ss_spv_ho'))`);
+        qb.qb.andWhere(
+          `(j.state IN ('draft', 'approved_by_ss_spv_ho', 'sync_failed'))`,
+        );
       }
 
       // if userRoleName is Tax
       // only show journal that contains tax and
       //  - state: `approved_by_tax`
       //  - state: `approved_by_ss_spv_ho`
+      //  - state: `sync_failed`
       if (userRoleName === MASTER_ROLES.TAX) {
         const journalTaxSql = `SELECT tji.journal_id
         FROM journal_item tji
         INNER JOIN account_coa tac ON tac.id = tji.coa_id
         INNER JOIN journal jl ON jl.id = tji.journal_id
         WHERE tac.id IN (SELECT coa_id FROM account_tax WHERE is_deleted = FALSE AND coa_id IS NOT NULL GROUP BY coa_id)
-          AND jl.state IN ('approved_by_tax', 'approved_by_ss_spv_ho')
+          AND jl.state IN ('approved_by_tax', 'approved_by_ss_spv_ho', 'sync_failed')
         GROUP BY tji.journal_id`;
 
         qb.qb.andWhere(`(j.id IN (${journalTaxSql}))`);
@@ -173,6 +188,7 @@ export class JournalService {
       // - journal no tax: state `approved_by_ss_spv_ho`
       // - journal has tax: state `approved_by_tax`
       // - journal with state `posted`
+      // - journal with state `sync_failed`
       if (userRoleName === MASTER_ROLES.ACCOUNTING) {
         const journalIdsAccounting = `(
           WITH journal_id_has_tax AS (
@@ -189,7 +205,7 @@ export class JournalService {
           UNION
           SELECT id FROM journal WHERE id IN (SELECT * FROM journal_id_no_tax) AND is_deleted = FALSE
           UNION
-          SELECT id FROM journal WHERE state = 'posted' AND is_deleted = FALSE
+          SELECT id FROM journal WHERE state IN ('posted', 'sync_failed') AND is_deleted = FALSE
         )`;
 
         qb.qb.andWhere(`(j.id IN (${journalIdsAccounting}))`);
@@ -254,6 +270,7 @@ export class JournalService {
           failedIds.push({ id: journalId });
         }
       } catch (error) {
+        this.logger.error(error);
         failedIds.push({ id: journalId });
         continue;
       }
@@ -304,9 +321,11 @@ export class JournalService {
         // Update Related Journal Source
         // e.g: Expense, DownPayment, etc
         if (sourceType === JournalSourceType.EXPENSE) {
-          await this.reverseExpense(manager, journal);
+          await this.reverseExpenseFromJournal(manager, journal);
         } else if (sourceType === JournalSourceType.DP) {
-          await this.reverseDownPayment(manager, journal);
+          await this.reverseDownPaymentFromJournal(manager, journal);
+        } else if (sourceType === JournalSourceType.PAYMENT) {
+          await this.removePaymentFromJournal(manager, journal);
         }
 
         // Clone Journal for Creating new Reversal Journal
@@ -354,15 +373,21 @@ export class JournalService {
       );
     }
 
+    const now = new Date();
+    const user = await AuthService.getUser();
+
     const rJournal = journal;
+    rJournal.createUser = user;
+    rJournal.updateUser = user;
+    rJournal.createdAt = now;
+    rJournal.updatedAt = now;
+    rJournal.transactionDate = now;
     rJournal.reference = `Reversal of: ${journal.number}`;
     rJournal.number = GenerateCode.journal(journal.transactionDate);
     rJournal.items = await this.buildReversalJournalItem(rJournal);
-    rJournal.createUser = journal.updateUser;
-    rJournal.createdAt = new Date();
-    rJournal.updatedAt = new Date();
     delete rJournal.id;
     delete rJournal.isSynced;
+    delete rJournal.syncFailReason;
 
     return await journalRepo.save(rJournal);
   }
@@ -419,7 +444,7 @@ export class JournalService {
     return items;
   }
 
-  private async reverseExpense(
+  private async reverseExpenseFromJournal(
     manager: EntityManager,
     journal: Journal,
   ): Promise<Expense> {
@@ -430,14 +455,30 @@ export class JournalService {
       },
     });
 
-    if (!expense) {
-      // FIXME: throw error?
-      return;
+    // FIXME: throw error?
+    if (!expense) return;
+
+    // Remove Expense Loan
+    await this.reverseExpenseLoan(manager, expense);
+
+    // Reverse DownPayment
+    const dp = await this.getDownPaymentById(manager, expense?.downPaymentId);
+    if (dp) {
+      await this.reverseDownPaymentJournal(manager, dp);
+      await this.reverseDownPayment(manager, dp);
     }
 
+    return await this.reverseExpense(manager, expense);
+  }
+
+  private async reverseExpense(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<Expense> {
+    const user = await AuthService.getUser();
     // Set Expense State as `reversed`
     expense.state = ExpenseState.REVERSED;
-    expense.updateUser = journal.updateUser;
+    expense.updateUser = user;
 
     // add history
     const history = new ExpenseHistory();
@@ -445,38 +486,220 @@ export class JournalService {
     history.state = expense.state;
     history.createUser = expense.updateUser;
     history.updateUser = expense.updateUser;
-    history.rejectedNote = `Journal reversed by ${journal?.updateUser?.firstName} ${journal?.updateUser?.lastName}`;
+    history.rejectedNote = `Journal reversed by ${user?.firstName} ${user?.lastName}`;
     await manager.save(history);
 
     return await manager.save(expense);
   }
 
-  private async reverseDownPayment(
+  private async reverseExpenseJournal(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<Journal> {
+    const user = await AuthService.getUser();
+    const journal = await manager.getRepository(Journal).findOne({
+      where: {
+        reference: expense?.number,
+        sourceType: JournalSourceType.EXPENSE,
+        branchId: expense?.branchId,
+      },
+      relations: ['items'],
+    });
+
+    if (!journal) return;
+
+    const cJournal = cloneDeep(journal);
+    const rJournal = await this.createReversalJournal(manager, cJournal);
+    journal.reverseJournal = rJournal;
+    journal.updateUser = user;
+
+    return await manager.save(journal);
+  }
+
+  private async reverseExpenseLoan(
+    manager: EntityManager,
+    expense: Expense,
+  ): Promise<void> {
+    const loanFindOptions: FindOneOptions<Loan> = {
+      where: {
+        sourceDocument: expense?.number,
+        sourceType: LoanSourceType.EXPENSE,
+        branchId: expense?.branchId,
+      },
+    };
+    await this.removeLoan(manager, loanFindOptions);
+  }
+
+  private async reverseDownPaymentFromJournal(
     manager: EntityManager,
     journal: Journal,
-  ): Promise<DownPayment> {
-    const downPayment = await manager.findOne(DownPayment, {
+  ): Promise<any> {
+    const dp = await manager.findOne(DownPayment, {
       where: { number: journal.reference, isDeleted: false },
     });
 
-    if (!downPayment) {
-      // FIXME: throw error?
-      return;
+    // FIXME: throw error?
+    if (!dp) return;
+
+    // Reverse or Remove Relation
+    if (dp?.type === DownPaymentType.REIMBURSEMENT) {
+      await this.reverseDownPaymentLoan(manager, dp);
+      dp.loanId = null;
+    } else if (dp?.type === DownPaymentType.PERDIN) {
+      const expense = await manager.getRepository(Expense).findOne({
+        where: { id: dp?.expenseId },
+      });
+      if (expense) {
+        await this.reverseExpenseLoan(manager, expense);
+        await this.reverseExpenseJournal(manager, expense);
+        await this.reverseExpense(manager, expense);
+      }
     }
 
+    // Reverse DownPayment
+    await this.reverseDownPayment(manager, dp);
+  }
+
+  private async reverseDownPayment(
+    manager: EntityManager,
+    downPayment: DownPayment,
+  ): Promise<DownPayment> {
+    const user = await AuthService.getUser();
+
     downPayment.state = DownPaymentState.REVERSED;
-    downPayment.updateUser = journal.updateUser;
+    downPayment.updateUser = user;
 
     // create history
     const history = new DownPaymentHistory();
     history.downPaymentId = downPayment.id;
     history.state = DownPaymentState.REVERSED;
-    history.rejectedNote = `Journal reversed by ${journal?.updateUser?.firstName} ${journal?.updateUser?.lastName}`;
-    history.createUser = journal.updateUser;
-    history.updateUser = journal.updateUser;
+    history.rejectedNote = `Journal reversed by ${user?.firstName} ${user?.lastName}`;
+    history.createUser = user;
+    history.updateUser = user;
     await manager.save(history);
 
     return await manager.save(downPayment);
+  }
+
+  private async reverseDownPaymentJournal(
+    manager: EntityManager,
+    dp: DownPayment,
+  ): Promise<Journal> {
+    const user = await AuthService.getUser();
+    const journal = await manager.getRepository(Journal).findOne({
+      where: {
+        reference: dp?.number,
+        sourceType: JournalSourceType.DP,
+        branchId: dp?.branchId,
+      },
+      relations: ['items'],
+    });
+
+    if (!journal) return;
+
+    const cJournal = cloneDeep(journal);
+    const rJournal = await this.createReversalJournal(manager, cJournal);
+    journal.reverseJournal = rJournal;
+    journal.updateUser = user;
+
+    return await manager.save(journal);
+  }
+
+  private async reverseDownPaymentLoan(
+    manager: EntityManager,
+    dp: DownPayment,
+  ): Promise<void> {
+    const loanFindOptions: FindOneOptions<Loan> = {
+      where: {
+        sourceDocument: dp?.number,
+        sourceType: LoanSourceType.DP,
+        branchId: dp?.branchId,
+      },
+    };
+    await this.removeLoan(manager, loanFindOptions);
+  }
+
+  private async getDownPaymentById(
+    manager: EntityManager,
+    id: string,
+  ): Promise<DownPayment> {
+    const dp = await manager.findOne(DownPayment, {
+      where: { id },
+    });
+    return dp;
+  }
+
+  private async removeLoan(
+    manager: EntityManager,
+    findOpts: FindOneOptions<Loan>,
+  ): Promise<void> {
+    const loanRepo = manager.getRepository(Loan);
+    const loan = await loanRepo.findOne({
+      where: findOpts?.where,
+      relations: ['payments'],
+    });
+
+    if (!loan) return;
+
+    // If Loan has Payments, need to reverse journal payments first.
+    if (loan.payments?.length > 0) {
+      throw new UnprocessableEntityException(
+        `Loan from this transaction has payments. ` +
+          `Please reverse the payments journal's before reversing this journal!`,
+      );
+    } else {
+      await loanRepo.delete({ id: loan.id });
+    }
+  }
+
+  private async removePaymentFromJournal(
+    manager: EntityManager,
+    journal: Journal,
+  ): Promise<void> {
+    const payment = await manager.findOne(AccountPayment, {
+      where: {
+        number: journal?.reference,
+        branchId: journal?.branchId,
+        isDeleted: false,
+      },
+      select: ['id', 'number', 'amount'],
+    });
+
+    if (!payment) return;
+
+    // Hard Delete AccountStatement (mutasi) from payment.
+    await AccountStatementService.deleteAndUpdateBalance(
+      {
+        where: {
+          sourceType: AccountStatementSourceType.PAYMENT,
+          reference: payment?.number,
+          branchId: journal?.branchId,
+        },
+      },
+      manager,
+    );
+
+    // Update Loan
+    const amount = payment?.amount || 0;
+    const sqlUpdateLoan = `UPDATE loan
+      SET paid_amount = paid_amount - ${amount},
+        residual_amount = residual_amount + ${amount},
+        state = 'unpaid',
+        updated_at = now(),
+        update_user_id = '${journal?.updateUser?.id}'
+      WHERE id IN (
+        SELECT loan_id FROM loan_payment WHERE payment_id IN (
+          SELECT id FROM account_payment WHERE number = '${journal?.reference}' AND branch_id = '${journal?.branchId}'
+        )
+      )`;
+    await manager.query(sqlUpdateLoan);
+
+    // Hard Delete Payments.
+    await manager.delete(AccountPayment, {
+      number: journal?.reference,
+      branchId: journal?.branchId,
+      isDeleted: false,
+    });
   }
 
   /**
@@ -577,6 +800,12 @@ export class JournalService {
     const journalTaxIds = await this.getJournalTaxIds(ids);
 
     for (const journal of journals) {
+      // Journal with state `sync_failed` automatically allow to be posted.
+      if (journal.state === JournalState.SYNC_FAILED) {
+        journalToUpdateIds.push(journal.id);
+        continue;
+      }
+
       // if journal has tax, must be approve by tax first.
       if (journalTaxIds.includes(journal.id)) {
         if (journal.state !== JournalState.APPROVED_BY_TAX) {
@@ -596,6 +825,7 @@ export class JournalService {
       { id: In(journalToUpdateIds) },
       {
         state: JournalState.POSTED,
+        syncFailReason: null,
         updateUser: user,
       },
     );

@@ -1,4 +1,13 @@
-import { Column, Entity, PrimaryGeneratedColumn, BaseEntity } from 'typeorm';
+import { Branch } from './branch.entity';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  BaseEntity,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { EmployeeRole } from './employee-role.entity';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 // NOTE: source data separately from db master data
@@ -28,38 +37,13 @@ export class Employee extends BaseEntity {
   name: string;
 
   @Column({
-    type: 'varchar',
-    length: 30,
-    nullable: true,
-    name: 'npwp_number',
-  })
-  npwpNumber: string;
-
-  @Column({
-    type: 'varchar',
-    length: 25,
-    nullable: true,
-    name: 'id_card_number',
-  })
-  idCardNumber: string;
-
-  @Column({
     type: 'int8', // Legacy using `int8`
     nullable: true,
-    name: 'position_id',
+    name: 'employee_role_id',
     transformer: new ColumnNumericTransformer(),
     comment: 'Legacy field master data table `employee.employee_role_id`',
   })
-  positionId: number;
-
-  @Column({
-    type: 'varchar',
-    nullable: true,
-    name: 'position_name',
-    comment:
-      'Legacy field master data table `employee_role.employee_role_name`',
-  })
-  positionName: string;
+  employeeRoleId: number;
 
   @Column({
     type: 'bigint',
@@ -88,4 +72,18 @@ export class Employee extends BaseEntity {
     name: 'date_of_resign',
   })
   dateOfResign: Date;
+
+  @ManyToOne(() => Branch)
+  @JoinColumn({
+    name: 'branch_id',
+    referencedColumnName: 'branchId',
+  })
+  branch: Branch;
+
+  @ManyToOne(() => EmployeeRole)
+  @JoinColumn({
+    name: 'employee_role_id',
+    referencedColumnName: 'employeeRoleId',
+  })
+  employeeRole: EmployeeRole;
 }

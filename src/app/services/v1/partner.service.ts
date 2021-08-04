@@ -1,3 +1,5 @@
+import { GlobalSetting } from './../../../model/global-setting.entity';
+import { PartnerState } from './../../../model/utils/enum';
 import { Expense } from '../../../model/expense.entity';
 import { BadRequestException, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,7 +9,6 @@ import { AttachmentService } from '../../../common/services/attachment.service';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { Attachment } from '../../../model/attachment.entity';
 import { Partner } from '../../../model/partner.entity';
-import { PartnerState } from '../../../model/utils/enum';
 import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../shared/errors';
 import { CreatePartnerDTO } from '../../domain/partner/create.dto';
 import { PartnerAttachmentDTO } from '../../domain/partner/partner-attahcment.dto';
@@ -95,19 +96,19 @@ export class PartnerService {
       select: ['id'],
       where: {
         name: payload.name,
-        address: payload.address,
         isDeleted: false,
       },
     });
 
     if (!!existingPartner.length) {
       throw new BadRequestException(
-        `Nama partner dengan alamat yang sama sudah pernah dibuat`,
+        `Nama partner yang sama sudah pernah dibuat`,
       );
     }
 
     const partner = this.partnerRepo.create(payload as Partner);
     const responsiblePartner = await this.getUser();
+    partner.state = PartnerState.APPROVED;
     partner.createUserId = responsiblePartner.id;
     partner.updateUserId = responsiblePartner.id;
     partner.isActive = true;
@@ -305,6 +306,8 @@ export class PartnerService {
   }
 
   public async updatePartnerActive() {
+    const getGlobalSetting = await GlobalSetting.find();
+
     const qb = new QueryBuilder(Expense, 'exp');
     qb.selectRaw(
       ['prt.id', 'id'],
@@ -318,6 +321,10 @@ export class PartnerService {
       (v) => v.isFalse(),
     );
     qb.andWhere(
+      (e) => e.partner.state,
+      (v) => v.equals(PartnerState.APPROVED),
+    );
+    qb.andWhere(
       (e) => e.partner.isActive,
       (v) => v.isTrue(),
     );
@@ -326,18 +333,26 @@ export class PartnerService {
 
     const update = await this.partnerRepo.create({
       isActive: false,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      updateUserId: '69b99e7c-d23a-4fb0-a3dc-ea5968306a41'
     });
 
-    getPartner.forEach(element => {
-      const dateNow = dayjs(new Date());
-      const trxDate = dayjs(element.transactionDate);
-      const diffDate = dateNow.diff(trxDate, 'days')
-      if (diffDate > 182.6) {
-        let nonActPartner =  this.partnerRepo.update(element.id, update);
-        return new HttpException(nonActPartner, HttpStatus.OK);
+    // 
+
+    getPartner.forEach(async element => {
+      const monthNow = dayjs(new Date()).month();
+      const trxDate = dayjs(element.transactionDate).month();
+      const diffMonth = monthNow - trxDate;
+      const globalSetExp = getGlobalSetting[0].partnerExpirationInMonth;
+      if (diffMonth > globalSetExp) {
+        this.partnerRepo.update(element.id, update)
+        const resp = {
+          id: element.id,
+          name: element.name,
+          status: 'success-inactivate'
+        }
+        return new HttpException(resp, HttpStatus.OK);
       }
-        
     });
   }
 

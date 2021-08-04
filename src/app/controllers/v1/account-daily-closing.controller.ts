@@ -19,6 +19,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiHeader,
   ApiInternalServerErrorResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -42,6 +43,7 @@ import FindIdParams, {
 @Controller('v1/account-daily-closing')
 @ApiTags('Account Daily Closing')
 @ApiInternalServerErrorResponse({ description: 'General Error' })
+@ApiHeader({ name: 'x-username', description: 'Custom User Request' })
 export class AccountDailyClosingController {
   constructor(private svc: AccountDailyClosingService) {}
 

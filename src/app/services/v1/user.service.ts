@@ -18,7 +18,6 @@ export class UserService {
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(User, 'u', params);
 
-    qb.fieldResolverMap['name__icontains'] = 'u.first_name';
     qb.fieldResolverMap['nik__icontains'] = 'u.username';
 
     qb.applyFilterPagination();
@@ -32,6 +31,42 @@ export class UserService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+
+    if (params.name__icontains) {
+      let firstName = params.name__icontains;
+      let lastName = null;
+      let isNik = false;
+      const names = params.name__icontains.split(' ');
+      if (names.length > 1) {
+        firstName = names[0];
+        names.shift();
+        lastName = names.join(' ');
+      }
+
+      if (!lastName) {
+        firstName = firstName.trim();
+        isNik = /^\d+$/.test(firstName);
+      }
+
+      if (isNik) {
+        qb.andWhere(
+          (e) => e.username,
+          (v) => v.contains(firstName, true),
+        );
+      } else {
+        qb.andWhere(
+          (e) => e.firstName,
+          (v) => v.contains(firstName, true),
+        );
+      }
+
+      if (lastName) {
+        qb.andWhere(
+          (e) => e.lastName,
+          (v) => v.contains(lastName, true),
+        );
+      }
+    }
 
     if (params.isHasRole) {
       const isHasRole = parseBool(params.isHasRole);

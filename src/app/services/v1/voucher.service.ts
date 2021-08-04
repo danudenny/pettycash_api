@@ -1,6 +1,6 @@
 import { VoucherResponse } from './../../domain/voucher/response/voucher.response.dto';
-import { VoucherCreateDTO } from './../../domain/voucher/dto/voucher-create.dto';
-import { BadRequestException, HttpService, Injectable, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
+import { BatchPayloadVoucherDTO, VoucherCreateDTO } from './../../domain/voucher/dto/voucher-create.dto';
+import { BadRequestException, Injectable, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository, getManager, EntityManager, createQueryBuilder } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -14,11 +14,11 @@ import { GenerateCode } from '../../../common/services/generate-code.service';
 import dayjs from 'dayjs';
 import { Attachment } from '../../../model/attachment.entity';
 import { AttachmentService } from '../../../common/services/attachment.service';
-import { randomStringGenerator, randomStringGenerator as uuid } from '@nestjs/common/utils/random-string-generator.util';
+import { randomStringGenerator} from '@nestjs/common/utils/random-string-generator.util';
 import { VoucherAttachmentResponse } from '../../domain/voucher/response/voucer-attachment.response.dto';
 import { VoucherAttachmentDTO } from '../../domain/voucher/dto/voucher-attachment.dto';
-import { Observable } from 'rxjs';
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios from 'axios';
+import { VoucherState } from '../../../model/utils/enum';
 
 
 @Injectable()
@@ -28,7 +28,6 @@ export class VoucherService {
     private readonly voucherRepo: Repository<Voucher>,
     @InjectRepository(Attachment)
     private readonly attachmentRepo: Repository<Attachment>,
-    private httpService: HttpService
   ) {}
 
   private static async getUserId() {
@@ -102,7 +101,7 @@ export class VoucherService {
       ['brc.branch_name', 'branchName'],
       ['emp.nik', 'employeeNik'],
       ['emp.name', 'employeeName'],
-      ['emp.position_name', 'employeePosition'],
+      ['emp_role.employeePosition', 'employeePosition'],
       ['vcr.number', 'number'],
       ['vcr.checkin_time', 'checkinTime'],
       ['vcr.checkout_time', 'checkoutTime'],
@@ -112,6 +111,7 @@ export class VoucherService {
     );
     qb.leftJoin((e) => e.branch, 'brc');
     qb.leftJoin((e) => e.employee, 'emp');
+    qb.leftJoin((e) => e.employee.employeeRole, 'emp_role');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
@@ -139,8 +139,10 @@ export class VoucherService {
 
     const voucher = await this.voucherRepo.findOne({
       where,
-      relations: ['branch', 'employee', 'items', 'items.products'],
+      relations: ['branch', 'employee', 'employee.employeeRole', 'items', 'items.products'],
     });
+
+    console.log(voucher);
     if (!voucher) {
       throw new NotFoundException(`Voucher ID ${id} tidak ditemukan!`);
     }
@@ -163,16 +165,17 @@ export class VoucherService {
         const checkEmployee = await this.voucherRepo.findOne({
           where: {
             employeeId: payload.employeeId,
-            transactionDate: dayjs(new Date).format('YYYY-MM-DD')
+            transactionDate: dayjs(new Date).format('YYYY-MM-DD'),
+            isDeleted: false
           }
         })
-
+  
         if (checkEmployee) {
           throw new BadRequestException(
             `'Employee Hanya diperbolehkan melakukan transaksi 1 kali / hari.`,
           );
         }
-
+        
         // Build Voucher Item
         const items: VoucherItem[] = [];
         for (const v of payload.items) {
@@ -197,6 +200,8 @@ export class VoucherService {
         voucher.employeeId = payload?.employeeId;
         voucher.items = items;
         voucher.totalAmount = payload?.totalAmount;
+        voucher.paymentType = payload.paymentType;
+        voucher.state = VoucherState.APPROVED;
         voucher.createUserId = await VoucherService.getUserId();
         voucher.updateUserId = await VoucherService.getUserId();
 
@@ -206,16 +211,29 @@ export class VoucherService {
 
       const resultVoucher = new VoucherResponse(createVoucher);
       const data = JSON.stringify({
-        'voucher_id':resultVoucher.data['id']
+        "voucher_ids": [
+          resultVoucher.data['id']
+        ],
+        "payment_type": resultVoucher.data['paymentType']
       });
       const options = {
         headers: VoucherService.headerWebhook
       };
 
-      await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', data, options)
+      try {
+        await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', data, options)
+      } catch (error) {
+        const checkId = await this.voucherRepo.findByIds(resultVoucher.data['id'])
+        if (checkId) {
+          await this.voucherRepo.delete({id: resultVoucher.data['id']})
+        }
+        throw new HttpException('Gagal Menyambungkan ke Webhook', HttpStatus.GATEWAY_TIMEOUT);
+      }
+      
       return resultVoucher
     } catch (err) {
-      throw err.message;
+      console.log(err)
+      throw err;
     }
   }
 
@@ -337,4 +355,95 @@ export class VoucherService {
       throw new BadRequestException('Failed to delete attachment!');
     }
   }
+
+  public async redeem(
+    data: BatchPayloadVoucherDTO,
+  ): Promise<any> {
+    const user = await AuthService.getUser({ relations: ['role'] });
+
+    const voucherToUpdateIds: string[] = [];
+    const vouchers = await this.voucherRepo.find({
+      where: {
+        id: In(data.voucher_ids),
+        isDeleted: false,
+      },
+    });
+
+    const paymentTypeFromQuery = [];
+
+    for (const voucher of vouchers) {
+      paymentTypeFromQuery.push(voucher.paymentType)
+      voucherToUpdateIds.push(voucher.id);
+    }
+
+    await this.voucherRepo.update(
+      { id: In(data.voucher_ids) },
+      { paymentType: data.payment_type, updateUser: user }
+    )
+
+    const successIds = voucherToUpdateIds?.map((id) => {
+      return id;
+    });
+    const resultRedeem = {
+      voucher_ids: successIds,
+      payment_type: data.payment_type
+    }
+
+    const dataJson = JSON.stringify(data);
+
+    const options = {
+      headers: VoucherService.headerWebhook
+    };
+
+    const webhookResp = [];
+    let statusResp = []
+
+    try {
+      await axios.post('http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher', dataJson, options).then((result) => {
+        webhookResp.push(result.data)
+        const resp = []
+        webhookResp[0].forEach(async res => {
+          resp.push(res);
+          if (res['status'] == 'FAILED' || res['status'] == 'EXPENSE_ALREADY_CREATED' || res['status'] == 'VOUCHER_NOT_FOUND') {
+            await this.voucherRepo.update(
+              { id: res['voucher_id'] },
+              { paymentType: paymentTypeFromQuery[0] }
+            )
+          }
+          if (res['status'] == 'APPROVING_EXPENSE_FAILED') {
+            await this.voucherRepo.update(
+              { id: res['voucher_id'] },
+              { paymentType: data.payment_type }
+            )
+          }
+        });
+      })
+      
+    } catch (error) {
+      await this.voucherRepo.update(
+        { id: In(successIds) },
+        { paymentType: paymentTypeFromQuery[0] }
+      )
+    }
+    const webHookResult = webhookResp[0]
+    if (webHookResult[0].status == 'FAILED') {
+      throw new HttpException({
+        'status': HttpStatus.BAD_REQUEST, 'message' :'FAILED' }, HttpStatus.BAD_REQUEST);
+    }
+    if (webHookResult[0].status == 'EXPENSE_ALREADY_CREATED') {
+      throw new HttpException({
+        'status': HttpStatus.BAD_REQUEST, 'message' :'EXPENSE_ALREADY_CREATED' }, HttpStatus.BAD_REQUEST);
+    }
+    if (webHookResult[0].status == 'VOUCHER_NOT_FOUND') {
+      throw new HttpException({
+        'status': HttpStatus.BAD_REQUEST, 'message' :'VOUCHER_NOT_FOUND' }, HttpStatus.BAD_REQUEST);
+    }
+    if (webHookResult[0].status == 'APPROVING_EXPENSE_FAILED') {
+      throw new HttpException({'status': HttpStatus.PARTIAL_CONTENT, 'message' : 'APPROVING_EXPENSE_FAILED / FAILED_CREATE_JOURNAL'}, HttpStatus.PARTIAL_CONTENT);
+    }
+    if (webHookResult[0].status == 'SUCCESS') {
+      throw new HttpException({'status': HttpStatus.OK, 'message' : webHookResult[0]}, HttpStatus.OK);
+    }
+  }
+
 }

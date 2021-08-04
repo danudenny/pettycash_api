@@ -11,6 +11,12 @@ export class AccountDailyClosingDetailDTO {
   id: string;
 
   @ApiProperty({
+    description: 'Branch Name',
+    example: 'Jakut Ancol',
+  })
+  branchName: string;
+
+  @ApiProperty({
     description: 'Closing Date',
     example: '2021-04-05',
   })
@@ -65,14 +71,41 @@ export class AccountDailyClosingDetailDTO {
   closingCashAmount: number;
 
   @ApiProperty({
+    description: 'Opening Bon Amount (Bon Fisik)',
+    example: 2000000,
+  })
+  openingBonAmount: number;
+
+  @ApiProperty({
+    description: 'Closing Bon Amount (Saldo Bon Fisik)',
+    example: 500000,
+  })
+  closingBonAmount: number;
+
+  @ApiProperty({
     description: 'Account Cashbox Items',
     type: [AccountCashboxItemsDTO],
   })
   accountCashboxItems: AccountCashboxItemsDTO[];
 
   @ApiProperty({
-    description: 'Reason for execute daily closing when deviation does not meets',
+    description:
+      'Reason for execute daily closing when deviation does not meets',
     example: 'Pending',
   })
-  reason: string;
+  reasonBank: string;
+
+  @ApiProperty({
+    description:
+      'Reason for execute daily closing when deviation does not meets',
+    example: 'Pending',
+  })
+  reasonCash: string;
+
+  @ApiProperty({
+    description:
+      'Reason for execute daily closing when deviation does not meets',
+    example: 'Pending',
+  })
+  reasonBon: string;
 }

@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { LoanState, LoanType } from '../../../model/utils/enum';
 
@@ -53,6 +53,19 @@ export class LoanDTO {
   sourceDocument: string;
 
   @ApiProperty({
+    description: 'DownPayment ID',
+    example: 'd659d65c-fcf3-45c8-956e-5baf9dee2522',
+  })
+  @IsUUID()
+  downPaymentId: string;
+
+  @ApiPropertyOptional({
+    description: 'DownPayment Number',
+    example: 'PNG20210701123AAA',
+  })
+  downPaymentNumber?: string;
+
+  @ApiProperty({
     description: 'Employee Name',
     example: 'Arianty Silvia',
   })
@@ -63,6 +76,12 @@ export class LoanDTO {
     example: '2020081991',
   })
   employeeNik: string;
+
+  @ApiProperty({
+    description: 'Position Name (Jabatan)',
+    example: 'Admin Purchasing',
+  })
+  positionName: string;
 
   @ApiProperty({
     description: 'Loan Type: `payable` = `hutang`. `receivable` = `piutang`',

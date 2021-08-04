@@ -1,6 +1,7 @@
 import { CreateVoucherItemDTO } from './voucher-item.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID, IsArray } from 'class-validator';
+import { VoucherPaymentType } from '../../../../model/utils/enum';
 
 export class VoucherCreateDTO {
 	@ApiProperty( {
@@ -23,6 +24,12 @@ export class VoucherCreateDTO {
 	checkinTime: Date;
 
 	@ApiProperty( {
+    description: 'Voucher Payment Type',
+    example: VoucherPaymentType.CASH,
+  })
+  paymentType: VoucherPaymentType;
+
+	@ApiProperty( {
 		description: 'Total Amount',
 		example: 100000
 	})
@@ -34,4 +41,25 @@ export class VoucherCreateDTO {
 	})
 	@IsArray()
 	items: CreateVoucherItemDTO[]
+}
+
+export class BatchPayloadVoucherDataDTO {
+  @ApiProperty({
+    description: 'Voucher ID',
+    example: 'b7726b7b-6882-42ea-b623-d8f8a347ba0b',
+  })
+  @IsUUID()
+  voucher_ids: string;
+}
+
+export class BatchPayloadVoucherDTO {
+	@ApiProperty({
+    example: ['b7726b7b-6882-42ea-b623-d8f8a347ba0b', '35eefc37-3500-40b1-9d7e-d3352474958f'],
+  })
+	voucher_ids: string[];
+
+	@ApiProperty({
+    example: 'bank',
+  })
+	payment_type: VoucherPaymentType
 }

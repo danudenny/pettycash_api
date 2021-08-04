@@ -8,6 +8,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   Query,
   Response,
   UploadedFiles,
@@ -34,7 +35,7 @@ import {
 import { VoucherDetailResponse } from '../../domain/voucher/response/voucher-detail.response.dto';
 import { PrintService } from '../../services/v1/print.service';
 import express = require('express');
-import { VoucherCreateDTO } from '../../domain/voucher/dto/voucher-create.dto';
+import { BatchPayloadVoucherDTO, VoucherCreateDTO } from '../../domain/voucher/dto/voucher-create.dto';
 import { ProductService } from '../../services/master/v1/product.service';
 import { ProductWithPaginationResponse } from '../../domain/product/response.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -113,6 +114,16 @@ export class VoucherController {
   @ApiBody({ type: VoucherCreateDTO })
   public async create(@Body() payload: VoucherCreateDTO) {
     return await this.vcrService.create(payload);
+  }
+
+  @Put('/redeem')
+  @ApiOperation({ summary: 'Batch Redeem Voucher' })
+  @ApiOkResponse({description: 'Successfully approve voucher'})
+  @ApiBadRequestResponse({ description: 'Failed to batch approve voucher' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
+  @ApiBody({ type: BatchPayloadVoucherDTO })
+  public async redeem(@Body() data: BatchPayloadVoucherDTO) {
+    return await this.vcrService.redeem(data);
   }
 
   @Post('/:id/attachments')

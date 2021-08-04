@@ -28,6 +28,12 @@ export class BalanceSummaryDTO {
   cashAmount: number;
 
   @ApiProperty({
+    description: 'Bon Amount',
+    example: 100000,
+  })
+  bonAmount: number;
+
+  @ApiProperty({
     description: 'Total Amount (cash + bank)',
     example: 2100000,
   })

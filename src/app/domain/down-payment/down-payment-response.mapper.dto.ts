@@ -21,11 +21,16 @@ export class DownPaymentResponseMapper {
     dp.employeeNik = dto.employeeNik;
     dp.periodId = dto.periodId;
     dp.periodName = dto.periodName;
+    dp.productId = dto.productId;
+    dp.productName = dto.productName;
     dp.destinationPlace = dto.destinationPlace;
     dp.description = dto.description;
     dp.state = dto.state;
     (dp.isRealized = dto.expenseId ? true : false),
       (dp.transactionDate = dto.transactionDate);
+    dp.loanId = dto.loanId;
+    dp.loanNumber = dto.loanNumber;
+    dp.loanState = dto.loanState;
     return dp;
   }
 
@@ -45,11 +50,16 @@ export class DownPaymentResponseMapper {
       employeeNik: ety.employee.nik,
       periodId: ety.periodId,
       periodName: ety.period.name,
+      productId: ety.productId,
+      productName: ety.product?.name || null,
       destinationPlace: ety.destinationPlace,
       description: ety.description,
       state: ety.state,
       isRealized: ety.expenseId ? true : false,
       transactionDate: ety.transactionDate,
+      loanId: ety.loanId,
+      loanNumber: ety.loan?.number || null,
+      loanState: ety.loan?.state || null,
     });
   }
 
