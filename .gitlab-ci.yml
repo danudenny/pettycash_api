@@ -18,4 +18,4 @@ push-gcr-stag:
     APP_NAME: $CI_PROJECT_NAME
     APP_PATH: '.'
   only:
-    - migration
+    - staging
