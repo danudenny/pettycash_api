@@ -73,6 +73,13 @@ export class Employee extends BaseEntity {
   })
   dateOfResign: Date;
 
+  @Column({
+    type: 'boolean',
+    nullable: true,
+    name: 'employee_status',
+  })
+  employeeStatus: boolean;
+
   @ManyToOne(() => Branch)
   @JoinColumn({
     name: 'branch_id',
