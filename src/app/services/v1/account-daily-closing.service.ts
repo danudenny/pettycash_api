@@ -52,6 +52,7 @@ export class AccountDailyClosingService {
 
     qb.fieldResolverMap['startDate__gte'] = 'adc.closing_date';
     qb.fieldResolverMap['endDate__lte'] = 'adc.closing_date';
+    qb.fieldResolverMap['branchId'] = 'adc.branch_id';
 
     qb.applyFilterPagination();
     qb.selectRaw(
