@@ -1230,7 +1230,12 @@ export class ExpenseService {
     if (expense?.downPayment) {
       const downPayment = expense?.downPayment;
       const downPaymentType = downPayment?.type;
-      const setting = await getManager().getRepository(GlobalSetting).findOne();
+      const dpProduct = await getManager()
+        .getRepository(Product)
+        .findOne({
+          where: { id: downPayment?.productId },
+          select: ['id', 'coaId'],
+        });
 
       if (downPaymentType === DownPaymentType.PERDIN) {
         const dpJournalItem = new JournalItem();
@@ -1244,7 +1249,7 @@ export class ExpenseService {
         dpJournalItem.partnerName = partnerName;
         dpJournalItem.partnerCode = partnerCode;
         dpJournalItem.credit = downPayment?.amount;
-        dpJournalItem.coaId = setting?.downPaymentPerdinCoaId;
+        dpJournalItem.coaId = dpProduct?.coaId;
         items.push(dpJournalItem);
       }
     }
@@ -1336,7 +1341,6 @@ export class ExpenseService {
         dpJournalItem.partnerCode = partnerCode;
         dpJournalItem.coaId = expense?.branch?.cashCoaId;
         dpJournalItem.debit = downPayment?.amount;
-        dpJournalItem.coaId = expense?.branch?.cashCoaId;
         items.push(dpJournalItem);
       }
     }
