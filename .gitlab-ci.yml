@@ -7,7 +7,7 @@ stages:
   - build
   - deploy
   - checking
-  - trigger-test
+  # - trigger-test
   - notify-failure
 
 variables:
@@ -44,18 +44,18 @@ checking:
   only:
     - develop
 
-trigger-test:
-  stage: trigger-test
-  needs:
-    - job: checking
-  environment: staging
-  before_script:
-    - sudo apt install curl
-  script:
-    - 'curl -X PUT -H "Authorization: Basic ${KATALON_AUTH}" -H "Content-Type: application/json" https://testops.katalon.io/api/v1/run-configurations/33296/execute'
-    - make slack-notify-finish
-  only:
-    - develop
+# trigger-test:
+#   stage: trigger-test
+#   needs:
+#     - job: checking
+#   environment: staging
+#   before_script:
+#     - sudo apt install curl
+#   script:
+#     - 'curl -X PUT -H "Authorization: Basic ${KATALON_AUTH}" -H "Content-Type: application/json" https://testops.katalon.io/api/v1/run-configurations/33296/execute'
+#     - make slack-notify-finish
+#   only:
+#     - develop
 
 notify-failure:
   stage: notify-failure
