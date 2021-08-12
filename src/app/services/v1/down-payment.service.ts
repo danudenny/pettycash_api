@@ -4,6 +4,7 @@ import {
   getManager,
   EntityManager,
   createQueryBuilder,
+  In,
 } from 'typeorm';
 import {
   BadRequestException,
@@ -11,6 +12,7 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 /** interfaces */
@@ -51,6 +53,7 @@ import { Loan } from '../../../model/loan.entity';
 import { Product } from '../../../model/product.entity';
 import { BranchService } from '../master/v1/branch.service';
 import { AccountStatementService } from './account-statement.service';
+import { UpdateDownPaymentDTO } from '../../domain/down-payment/down-payment-update.dto';
 
 @Injectable()
 export class DownPaymentService {
@@ -235,6 +238,48 @@ export class DownPaymentService {
         err.message,
         err.status || HttpStatus.BAD_REQUEST,
       );
+    }
+  }
+
+  public async updateDownPayment(
+    id: string,
+    payload?: UpdateDownPaymentDTO,
+  ): Promise<void> {
+    try {
+      await getManager().transaction(async (manager) => {
+        const {
+          userBranchIds,
+          isSuperUser,
+          user,
+        } = await AuthService.getUserBranchAndRole();
+
+        const where = { id, isDeleted: false };
+        if (!isSuperUser) {
+          Object.assign(where, { branchId: In(userBranchIds) });
+        }
+
+        const dpRepo = manager.getRepository(DownPayment);
+        const dp = await dpRepo.findOne({ where, select: ['id', 'state'] });
+
+        if (!dp) {
+          throw new NotFoundException(`DownPayment with ID ${id} not found!`);
+        }
+
+        if (dp.state !== DownPaymentState.DRAFT) {
+          throw new UnprocessableEntityException(
+            `Only Draft DownPayment can be updated!`,
+          );
+        }
+
+        const updateData = dpRepo.create(payload);
+        updateData.updateUserId = user?.id;
+        delete updateData.state;
+        delete updateData.branchId;
+
+        await dpRepo.update(id, updateData);
+      });
+    } catch (error) {
+      throw error;
     }
   }
 
