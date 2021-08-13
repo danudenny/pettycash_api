@@ -694,13 +694,13 @@ export class LoanService {
         if (isReimbursement) {
           coaId = coaCash;
         } else if (isPerdin) {
-          coaId = coaCash;
+          // coaId = coaCash;
         }
       }
 
       if (isReceivable) {
         if (isPerdin) {
-          coaId = coaProduct;
+          // coaId = coaProduct;
         } else if (isReimbursement) {
           coaId = coaProduct;
         }
@@ -712,13 +712,13 @@ export class LoanService {
         if (isReimbursement) {
           coaId = coaProduct;
         } else if (isPerdin) {
-          coaId = coaProduct;
+          // coaId = coaProduct;
         }
       }
 
       if (isReceivable) {
         if (isPerdin) {
-          coaId = coaCash;
+          // coaId = coaCash;
         } else if (isReimbursement) {
           coaId = coaCash;
         }
@@ -747,13 +747,13 @@ export class LoanService {
     const isReceivable = loan?.type === LoanType.RECEIVABLE;
 
     if (isPayable) {
-      if (isPerdin || isReimbursement) {
+      if (isReimbursement) {
         canCreate = true;
       }
     }
 
     if (isReceivable) {
-      if (isPerdin || isReimbursement) {
+      if (isReimbursement) {
         canCreate = true;
       }
     }
