@@ -335,11 +335,11 @@ export class AllocationBalanceService {
 
       // ! HINT: Approve by SPV HO
       if (userRole === MASTER_ROLES.SPV_HO) {
-        if (currentState === CashBalanceAllocationState.DRAFT) {
-          throw new BadRequestException(
-            `Alokasi Saldo Kas belum dikonfirmasi oleh SS HO`,
-          );
-        }
+        // if (currentState === CashBalanceAllocationState.DRAFT) {
+        //   throw new BadRequestException(
+        //     `Alokasi Saldo Kas belum dikonfirmasi oleh SS HO`,
+        //   );
+        // }
         if (currentState === CashBalanceAllocationState.REJECTED) {
           throw new BadRequestException(
             `Alokasi Saldo Kas sudah di tolak`,
@@ -730,26 +730,16 @@ export class AllocationBalanceService {
     const items: JournalItem[] = [];
     const isLedger: boolean = true;
 
-    const { userBranchIds } = await AuthService.getUserBranchAndRole();
-
     const getPeriod = await this.periodRepo.findOne({
       where: {
         name: dayjs(new Date()).format('MM-YYYY')
       }
     })
 
-    const getbranchCoa = await Branch.findOne({
-      id: userBranchIds[0]
-    })
-
-    const getCoa = await AccountCoa.findOne({
-      id: getbranchCoa.cashCoaId
-    })
-
     const i = new JournalItem();
     i.createUser = user;
     i.updateUser = user;
-    i.coaId = getCoa.id;
+    i.coaId = alokasi?.branch?.cashCoaId;
     i.branchId = alokasi.branchId;
     i.transactionDate = alokasi.receivedDate;
     i.periodId = getPeriod.id;
