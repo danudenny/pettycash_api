@@ -1,3 +1,5 @@
+import { Employee } from './../../../model/employee.entity';
+import { Branch } from './../../../model/branch.entity';
 import { VoucherResponse } from './../../domain/voucher/response/voucher.response.dto';
 import { BatchPayloadVoucherDTO, VoucherCreateDTO } from './../../domain/voucher/dto/voucher-create.dto';
 import { BadRequestException, Injectable, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
@@ -189,6 +191,17 @@ export class VoucherService {
 
         const user = await this.getUser(true);
         const branchId = user && user.branches && user.branches[0].id;
+        const employeeId: string = payload.employeeId
+        const brcCoaExist = await createQueryBuilder('employee', 'emp')
+                              .select('brc.cash_coa_id')
+                              .leftJoin('branch', 'brc', 'emp.branch_id = brc.branch_id')
+                              .where(`emp.id = '${employeeId}'`)
+                              .andWhere('emp.isDeleted = false')
+                              .getOne();
+        
+        if(!brcCoaExist) {
+          throw new HttpException("Cash Coa tidak ditemukan", HttpStatus.BAD_REQUEST)
+        }
 
         // Build VOucher
         const voucher = new Voucher();
@@ -447,3 +460,7 @@ export class VoucherService {
   }
 
 }
+function getConnection() {
+  throw new Error('Function not implemented.');
+}
+
