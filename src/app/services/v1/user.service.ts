@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from '../../../model/user.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -6,6 +6,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { QueryUserDTO } from '../../domain/user/user.payload.dto';
 import { UserWithPaginationResponse } from '../../domain/user/response.dto';
 import { parseBool } from '../../../shared/utils';
+import { UserResetPasswordeDTO } from '../../domain/user/user-reset-password.dto';
+import { LoaderEnv } from '../../../config/loader';
+import axios from 'axios';
 
 @Injectable()
 export class UserService {
@@ -13,6 +16,14 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
   ) {}
+
+  private static get headerWebhook() {
+    return {
+      'api-key': LoaderEnv.envs.USER_HELPER_KEY,
+      'Content-Type': 'application/json',
+      Connection: 'keep-alive',
+    };
+  }
 
   async list(query: QueryUserDTO): Promise<UserWithPaginationResponse> {
     const params = { limit: 10, ...query };
@@ -85,5 +96,29 @@ export class UserService {
 
     const users = await qb.exec();
     return new UserWithPaginationResponse(users, params);
+  }
+
+  // integration master data api for reset password user
+  async resetPassword(payload: UserResetPasswordeDTO): Promise<any> {
+    const url = LoaderEnv.envs.USER_HELPER_URL;
+    const options = {
+      headers: UserService.headerWebhook,
+    };
+
+    const user = await User.findOne({ where: {username: payload.username, isDeleted: false} });
+    if (!user) {
+      throw new HttpException(
+        'User tidak valid, hubungi admin!',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    try {
+      return await axios.post(url, payload, options);
+    } catch (error) {
+      throw new HttpException(
+        'Gagal Menyambungkan ke Service master, hubungi admin!',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

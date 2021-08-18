@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import {
   ApiInternalServerErrorResponse,
   ApiOkResponse,
@@ -6,6 +6,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { UserWithPaginationResponse } from '../../domain/user/response.dto';
+import { UserResetPasswordeDTO } from '../../domain/user/user-reset-password.dto';
 import { QueryUserDTO } from '../../domain/user/user.payload.dto';
 import { UserService } from '../../services/v1/user.service';
 
@@ -20,5 +21,12 @@ export class UserController {
   @ApiOkResponse({ type: UserWithPaginationResponse })
   public async list(@Query() query: QueryUserDTO) {
     return await this.svc.list(query);
+  }
+
+  // TODO: handle with care
+  @Post('resetPassword')
+  @ApiOperation({ summary: 'integration reset password master data' })
+  public async resetPassword(@Body() payload: UserResetPasswordeDTO) {
+    return await this.svc.resetPassword(payload);
   }
 }
