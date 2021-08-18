@@ -8,6 +8,7 @@ stages:
   - deploy
   - checking
   # - trigger-test
+  - notify-success
   - notify-failure
 
 variables:
@@ -56,6 +57,18 @@ checking:
 #     - make slack-notify-finish
 #   only:
 #     - develop
+
+notify-success:
+  stage: notify-success
+  needs:
+    - job: checking
+  environment: staging
+  before_script:
+    - sudo apt install curl
+  script:
+    - make slack-notify-finish
+  only:
+    - develop
 
 notify-failure:
   stage: notify-failure
