@@ -1,11 +1,32 @@
 import { ReceivedAllocationBalanceDTO } from './../../domain/allocation-balance/dto/allocation-received.dto';
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBody, ApiHeader, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiHeader,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
 import { AllocationBalanceService } from '../../services/v1/allocation-balance.service';
 import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import FindIdParams from '../../domain/common/findId-param.dto';
-import { PaidAllocationDTO, RejectAllocationDTO } from '../../domain/allocation-balance/dto/allocation-balance.dto';
+import {
+  PaidAllocationDTO,
+  RejectAllocationDTO,
+} from '../../domain/allocation-balance/dto/allocation-balance.dto';
 import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
 import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/dto/allocation-balance-detail.dto';
 import { RevisionAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-balance-revision.dto';
@@ -14,8 +35,7 @@ import { CreateAllocationBalanceDto } from '../../domain/allocation-balance/dto/
 @Controller('v1/allocation-balance')
 @ApiTags('Cash Allocation Balance')
 export class AllocationBalanceController {
-  constructor(private allocBallanceService: AllocationBalanceService) {
-  }
+  constructor(private allocBallanceService: AllocationBalanceService) {}
 
   @Get('')
   @ApiOperation({ summary: 'List all Allocation Balance' })
@@ -50,30 +70,30 @@ export class AllocationBalanceController {
 
   @Patch('/:id/approve')
   @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
-  @ApiParam({name: 'id'})
+  @ApiParam({ name: 'id' })
   @ApiOperation({ summary: 'Approve Cash Allocation Balance' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async approve(@Param() {id}: FindIdParams) {
+  public async approve(@Param() { id }: FindIdParams) {
     return await this.allocBallanceService.approve(id);
   }
 
   @Patch('/:id/cancel')
   @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
-  @ApiParam({name: 'id'})
+  @ApiParam({ name: 'id' })
   @ApiOperation({ summary: 'Cancel Cash Allocation Balance' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async cancel(@Param() {id}: FindIdParams) {
+  public async cancel(@Param() { id }: FindIdParams) {
     return await this.allocBallanceService.cancel(id);
   }
 
   @Patch('/:id/reject')
   @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
-  @ApiParam({name: 'id'})
+  @ApiParam({ name: 'id' })
   @ApiBody({ type: RejectAllocationDTO })
   @ApiOperation({ summary: 'Reject Cash Allocation Balance' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async reject(
-    @Param() {id}: FindIdParams,
+    @Param() { id }: FindIdParams,
     @Body() payload: RejectAllocationDTO,
   ) {
     return await this.allocBallanceService.reject(id, payload);
@@ -81,37 +101,34 @@ export class AllocationBalanceController {
 
   @Patch('/:id/received')
   @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
-  @ApiParam({name: 'id'})
+  @ApiParam({ name: 'id' })
   @ApiBody({ type: ReceivedAllocationBalanceDTO })
   @ApiOperation({ summary: 'Received Cash Allocation Balance' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async received(
-    @Param() {id}: FindIdParams,
-    @Body() payload: ReceivedAllocationBalanceDTO
+    @Param() { id }: FindIdParams,
+    @Body() payload: ReceivedAllocationBalanceDTO,
   ) {
     return await this.allocBallanceService.received(id, payload);
   }
 
   @Put('/:id/revision')
   @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
-  @ApiParam({name: 'id'})
+  @ApiParam({ name: 'id' })
   @ApiOperation({ summary: 'Revision Cash Allocation Balance' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
   public async revision(
-    @Param() {id}: FindIdParams,
-    @Body() data: RevisionAllocationBalanceDTO
+    @Param() { id }: FindIdParams,
+    @Body() data: RevisionAllocationBalanceDTO,
   ) {
     return await this.allocBallanceService.revision(id, data);
   }
 
-  @Patch('/:number/paid')
-  @ApiParam({name: 'number'})
+  @Patch('/paid/:number')
+  @ApiParam({ name: 'number' })
   @ApiOperation({ summary: 'Change status paid from odoo' })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async paid(
-    @Param('number') number,
-    payload: PaidAllocationDTO,
-  ) {
+  public async paid(@Param('number') number, payload: PaidAllocationDTO) {
     return await this.allocBallanceService.isPaid(number, payload);
   }
 }
