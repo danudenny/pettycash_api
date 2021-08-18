@@ -18,6 +18,7 @@ const RoleAdminBranch = [
   'menu.expense:read',
   'down.payment:read',
   'down.payment:create',
+  'down.payment:update',
   'expense:read',
   'expense:create',
   'expense:update',
