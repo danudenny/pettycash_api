@@ -18,6 +18,7 @@ import {
   AccountStatementType,
   CashBalanceAllocationState,
   JournalSourceType,
+  JournalState,
   MASTER_ROLES,
   PeriodState,
 } from '../../../model/utils/enum';
@@ -780,6 +781,10 @@ export class AllocationBalanceService {
     i.debit = alokasi.amount;
     items.push(i);
 
+    if (!alokasi.branch.cashCoaId) {
+      throw new HttpException('Coa Cabang tidak ada', HttpStatus.BAD_REQUEST);
+    }
+
     return items;
   }
 
@@ -833,6 +838,7 @@ export class AllocationBalanceService {
     j.sourceType = JournalSourceType.ALOKASI;
     j.items = await this.buildJournalItem(alokasi, userRole);
     j.totalAmount = alokasi.amount;
+    j.state = JournalState.APPROVED_BY_SS_SPV_HO;
 
     return j;
   }
