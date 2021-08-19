@@ -21,7 +21,8 @@ export class UserService {
     return {
       'api-key': LoaderEnv.envs.USER_HELPER_KEY,
       'Content-Type': 'application/json',
-      Connection: 'keep-alive',
+      'Connection': 'keep-alive',
+      'User-Agent': 'PETTYCASH-API',
     };
   }
 
