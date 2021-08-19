@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, Not, IsNull } from 'typeorm';
 import { User } from '../../../model/user.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -104,17 +104,31 @@ export class UserService {
     const options = {
       headers: UserService.headerWebhook,
     };
-
-    const user = await User.findOne({ where: {username: payload.username, isDeleted: false} });
-    if (!user) {
+    const skip = ['superadmin', 'superuser'];
+    if (skip.includes(payload.username)) {
       throw new HttpException(
         'User tidak valid, hubungi admin!',
         HttpStatus.BAD_REQUEST,
       );
+    } else {
+      const user = await User.findOne({
+        where: {
+          username: payload.username,
+          roleId: Not(IsNull()),
+          isDeleted: false,
+        },
+      });
+      if (!user) {
+        throw new HttpException(
+          'User tidak valid, hubungi admin!',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
     try {
       return await axios.post(url, payload, options);
     } catch (error) {
+      console.error(error);
       throw new HttpException(
         'Gagal Menyambungkan ke Service master, hubungi admin!',
         HttpStatus.BAD_REQUEST,
