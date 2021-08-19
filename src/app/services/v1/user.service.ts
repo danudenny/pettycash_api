@@ -9,7 +9,7 @@ import { parseBool } from '../../../shared/utils';
 import { UserResetPasswordeDTO } from '../../domain/user/user-reset-password.dto';
 import { LoaderEnv } from '../../../config/loader';
 import axios from 'axios';
-
+import https from 'https';
 @Injectable()
 export class UserService {
   constructor(
@@ -21,7 +21,6 @@ export class UserService {
     return {
       'api-key': LoaderEnv.envs.USER_HELPER_KEY,
       'Content-Type': 'application/json',
-      'Connection': 'keep-alive',
       'User-Agent': 'PETTYCASH-API',
     };
   }
@@ -101,9 +100,14 @@ export class UserService {
 
   // integration master data api for reset password user
   async resetPassword(payload: UserResetPasswordeDTO): Promise<any> {
-    const url = LoaderEnv.envs.USER_HELPER_URL;
+    const url = encodeURI(LoaderEnv.envs.USER_HELPER_URL);
+    // PATCH: At request level
+    const agent = new https.Agent({
+      rejectUnauthorized: false,
+    });
     const options = {
       headers: UserService.headerWebhook,
+      httpsAgent: agent,
     };
     const skip = ['superadmin', 'superuser'];
     if (skip.includes(payload.username)) {
@@ -126,8 +130,13 @@ export class UserService {
         );
       }
     }
+    const data = {
+      username: payload.username,
+      password: payload.password,
+    };
     try {
-      return await axios.post(url, payload, options);
+      const res = await axios.post(url, data, options);
+      return { status: res.status, data: res.data };
     } catch (error) {
       console.error(error);
       throw new HttpException(
