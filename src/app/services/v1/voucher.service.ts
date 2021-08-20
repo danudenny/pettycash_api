@@ -214,9 +214,9 @@ export class VoucherService {
           .leftJoin('branch', 'brc', 'emp.branch_id = brc.branch_id')
           .where(`emp.id = '${employeeId}'`)
           .andWhere('emp.isDeleted = false')
-          .getOne();
+          .getCount();
 
-        if (!brcCoaExist) {
+        if (brcCoaExist == 0) {
           throw new HttpException(
             'Cash Coa tidak ditemukan',
             HttpStatus.BAD_REQUEST,
