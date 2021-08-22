@@ -47,6 +47,8 @@ import { Period } from '../../../model/period.entity';
 import { JournalItem } from '../../../model/journal-item.entity';
 import { DownPayment } from '../../../model/down-payment.entity';
 import { AccountStatementService } from './account-statement.service';
+import { LoaderEnv } from '../../../config/loader';
+import { AwsS3Service } from '../../../common/services/aws-s3.service';
 
 @Injectable()
 export class LoanService {
@@ -193,6 +195,9 @@ export class LoanService {
       ['att.filename', 'fileName'],
       ['att.file_mime', 'fileMime'],
       ['att.url', 'url'],
+      ['att.s3_acl', 'S3ACL'],
+      ['att."path"', 'S3Key'],
+      ['att.bucket_name', 'S3BucketName'],
     );
     qb.innerJoin(
       (e) => e.attachments,
@@ -212,12 +217,31 @@ export class LoanService {
       (v) => v.equals(loanId),
     );
 
+    const { CACHE_ATTACHMENT_DURATION_IN_MINUTES } = LoaderEnv.envs;
+    const cacheDuration = (CACHE_ATTACHMENT_DURATION_IN_MINUTES || 5) * 60; // in seconds
+
+    qb.qb.cache(`loan:${loanId}:attachments`, 1000 * (cacheDuration - 5));
     const attachments = await qb.exec();
     if (!attachments) {
       throw new NotFoundException(`Attachments not found!`);
     }
 
-    return new LoanAttachmentResponse(attachments);
+    const signedAttachments = [];
+    for (const att of attachments) {
+      if (att.S3ACL === 'private') {
+        att.url = await AwsS3Service.getSignedUrl(
+          att.S3BucketName,
+          att.S3Key,
+          cacheDuration,
+        );
+      }
+      delete att.S3ACL;
+      delete att.S3Key;
+      delete att.S3BucketName;
+      signedAttachments.push(att);
+    }
+
+    return new LoanAttachmentResponse(signedAttachments);
   }
 
   /**
@@ -267,6 +291,10 @@ export class LoanService {
           loan.updateUser = await AuthService.getUser();
 
           await manager.save(loan);
+          await manager.connection?.queryResultCache?.remove([
+            `loan:${loanId}:attachments`,
+          ]);
+
           return newAttachments;
         },
       );
@@ -310,6 +338,10 @@ export class LoanService {
     if (!deleteAttachment) {
       throw new BadRequestException('Failed to delete attachment!');
     }
+
+    await getManager().connection?.queryResultCache?.remove([
+      `loan:${loanId}:attachments`,
+    ]);
   }
 
   /**
