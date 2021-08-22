@@ -66,7 +66,6 @@ import { getPercentage } from '../../../shared/utils';
 import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 import { Period } from '../../../model/period.entity';
 import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
-import { GlobalSetting } from '../../../model/global-setting.entity';
 import { DownPayment } from '../../../model/down-payment.entity';
 import { Loan } from '../../../model/loan.entity';
 import { UpdateExpenseDTO } from '../../domain/expense/update.dto';
@@ -80,6 +79,7 @@ import { Vehicle } from '../../../model/vehicle.entity';
 import { VehicleTemp } from '../../../model/vehicle-temp.entity';
 import { AccountStatementService } from './account-statement.service';
 import { BranchService } from '../master/v1/branch.service';
+import { AwsS3Service } from '../../../common/services/aws-s3.service';
 
 @Injectable()
 export class ExpenseService {
@@ -647,6 +647,9 @@ export class ExpenseService {
       ['att.filename', 'fileName'],
       ['att.file_mime', 'fileMime'],
       ['att.url', 'url'],
+      ['att.s3_acl', 'S3ACL'],
+      ['att."path"', 'S3Key'],
+      ['att.bucket_name', 'S3BucketName'],
       ['att.type_id', 'typeId'],
       ['typ.code', 'typeCode'],
       ['typ."name"', 'typeName'],
@@ -673,14 +676,31 @@ export class ExpenseService {
     );
     qb.qb.orderBy('att.updated_at', 'DESC');
 
-    // TODO: add caching.
+    const { CACHE_ATTACHMENT_DURATION_IN_MINUTES } = LoaderEnv.envs;
+    const cacheDuration = (CACHE_ATTACHMENT_DURATION_IN_MINUTES || 5) * 60; // in seconds
 
+    qb.qb.cache(`expense:${expenseId}:attachments`, 1000 * (cacheDuration - 5));
     const attachments = await qb.exec();
     if (!attachments) {
       throw new NotFoundException(`Attachments not found!`);
     }
 
-    return new ExpenseAttachmentResponse(attachments);
+    const signedAttachments = [];
+    for (const att of attachments) {
+      if (att.S3ACL === 'private') {
+        att.url = await AwsS3Service.getSignedUrl(
+          att.S3BucketName,
+          att.S3Key,
+          cacheDuration,
+        );
+      }
+      delete att.S3ACL;
+      delete att.S3Key;
+      delete att.S3BucketName;
+      signedAttachments.push(att);
+    }
+
+    return new ExpenseAttachmentResponse(signedAttachments);
   }
 
   /**
@@ -780,6 +800,9 @@ export class ExpenseService {
             { id: expenseId },
             { updateUser: await this.getUser(), updatedAt: new Date() },
           );
+          await manager.connection?.queryResultCache?.remove([
+            `expense:${expenseId}:attachments`,
+          ]);
           return newAttachments;
         },
       );
@@ -827,6 +850,9 @@ export class ExpenseService {
     if (!updateAttachment) {
       throw new BadRequestException('Failed to update attachment!');
     }
+    await getManager().connection?.queryResultCache?.remove([
+      `expense:${expenseId}:attachments`,
+    ]);
   }
 
   public async deleteAttachment(
@@ -851,6 +877,9 @@ export class ExpenseService {
     if (!deleteAttachment) {
       throw new BadRequestException('Failed to delete attachment!');
     }
+    await getManager().connection?.queryResultCache?.remove([
+      `expense:${expenseId}:attachments`,
+    ]);
   }
 
   private async getTax(

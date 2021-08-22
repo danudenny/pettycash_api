@@ -51,6 +51,14 @@ export class Attachment extends PtcBaseEntity {
   @Column({
     type: 'varchar',
     nullable: true,
+    length: 100,
+    name: 's3_acl',
+  })
+  s3acl?: string;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
     length: 255,
     name: 'bucket_name',
   })

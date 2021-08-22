@@ -35,6 +35,7 @@ import { VoucherAttachmentDTO } from '../../domain/voucher/dto/voucher-attachmen
 import axios from 'axios';
 import { VoucherState } from '../../../model/utils/enum';
 import { LoaderEnv } from '../../../config/loader';
+import { AwsS3Service } from '../../../common/services/aws-s3.service';
 
 @Injectable()
 export class VoucherService {
@@ -163,7 +164,6 @@ export class VoucherService {
       ],
     });
 
-    console.log(voucher);
     if (!voucher) {
       throw new NotFoundException(`Voucher ID ${id} tidak ditemukan!`);
     }
@@ -268,7 +268,6 @@ export class VoucherService {
 
       return resultVoucher;
     } catch (err) {
-      console.log(err);
       throw err;
     }
   }
@@ -300,6 +299,9 @@ export class VoucherService {
           voucher.updateUser = await AuthService.getUser();
 
           await manager.save(voucher);
+          await manager.connection?.queryResultCache?.remove([
+            `voucher:${voucherId}:attachments`,
+          ]);
 
           return newAttachments;
         },
@@ -325,6 +327,9 @@ export class VoucherService {
       ['att.filename', 'fileName'],
       ['att.file_mime', 'fileMime'],
       ['att.url', 'url'],
+      ['att.s3_acl', 'S3ACL'],
+      ['att."path"', 'S3Key'],
+      ['att.bucket_name', 'S3BucketName'],
       ['att.type_id', 'typeId'],
       ['typ.code', 'typeCode'],
       ['typ."name"', 'typeName'],
@@ -351,14 +356,31 @@ export class VoucherService {
     );
     qb.qb.orderBy('att.updated_at', 'DESC');
 
-    // TODO: add caching.
+    const { CACHE_ATTACHMENT_DURATION_IN_MINUTES } = LoaderEnv.envs;
+    const cacheDuration = (CACHE_ATTACHMENT_DURATION_IN_MINUTES || 5) * 60; // in seconds
 
+    qb.qb.cache(`voucher:${voucherId}:attachments`, 1000 * (cacheDuration - 5));
     const attachments = await qb.exec();
     if (!attachments) {
       throw new NotFoundException(`Attachments not found!`);
     }
 
-    return new VoucherAttachmentResponse(attachments);
+    const signedAttachments = [];
+    for (const att of attachments) {
+      if (att.S3ACL === 'private') {
+        att.url = await AwsS3Service.getSignedUrl(
+          att.S3BucketName,
+          att.S3Key,
+          cacheDuration,
+        );
+      }
+      delete att.S3ACL;
+      delete att.S3Key;
+      delete att.S3BucketName;
+      signedAttachments.push(att);
+    }
+
+    return new VoucherAttachmentResponse(signedAttachments);
   }
 
   public async deleteAttachment(
@@ -382,6 +404,10 @@ export class VoucherService {
     if (!deleteAttachment) {
       throw new BadRequestException('Failed to delete attachment!');
     }
+
+    await getManager().connection?.queryResultCache?.remove([
+      `voucher:${voucherId}:attachments`,
+    ]);
   }
 
   public async redeem(data: BatchPayloadVoucherDTO): Promise<any> {
@@ -422,7 +448,7 @@ export class VoucherService {
     };
 
     const webhookResp = [];
-    let statusResp = [];
+    const statusResp = [];
 
     try {
       await axios

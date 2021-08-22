@@ -16,7 +16,7 @@ export class AwsS3Service {
     fileMime: string,
     pathId?: string,
     bucketName?: string,
-    acl:string = 'public-read'
+    acl: 'private' | 'public-read' = 'private',
   ) {
     if (!bucketName) {
       bucketName = this.defaultBucketName;
@@ -43,6 +43,7 @@ export class AwsS3Service {
       .then(() => {
         return {
           awsKey,
+          acl,
         };
       });
   }
@@ -177,7 +178,7 @@ export class AwsS3Service {
     }).promise();
   }
 
-  public static async getSignedUrlForDownload(
+  public static async getSignedUrl(
     bucketName: string,
     key: string,
     expires: number = 60,
@@ -188,12 +189,12 @@ export class AwsS3Service {
       Expires: expires, // time in seconds: e.g. 60 * 5 = 5 mins
     };
 
-    const url = await new Promise((resolve, reject) => {
+    const signedUrl = await new Promise((resolve, reject) => {
       AWS_S3.getSignedUrl('getObject', params, (err, url) => {
         if (err) reject(err);
         resolve(url);
       });
     });
-    return url;
+    return signedUrl;
   }
 }

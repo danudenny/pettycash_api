@@ -21,6 +21,8 @@ import dayjs from 'dayjs';
 import { AttachmentType } from '../../../model/attachment-type.entity';
 import * as XLSX from 'xlsx';
 import { Response } from 'express';
+import { LoaderEnv } from '../../../config/loader';
+import { AwsS3Service } from '../../../common/services/aws-s3.service';
 
 export class PartnerService {
   constructor(
@@ -281,6 +283,9 @@ export class PartnerService {
           partner.updateUser = await this.getUser();
 
           await manager.save(partner);
+          await manager.connection?.queryResultCache?.remove([
+            `partner:${partnerId}:attachments`,
+          ]);
           return newAttachments;
         },
       );
@@ -314,6 +319,10 @@ export class PartnerService {
     if (!deleteAttachment) {
       throw new BadRequestException('Failed to delete attachment!');
     }
+
+    await getManager().connection?.queryResultCache?.remove([
+      `partner:${partnerId}:attachments`,
+    ]);
 
     throw new HttpException('Berhasil menghapus attachment', HttpStatus.OK)
   }
@@ -379,6 +388,9 @@ export class PartnerService {
       ['att.filename', 'fileName'],
       ['att.file_mime', 'fileMime'],
       ['att.url', 'url'],
+      ['att.s3_acl', 'S3ACL'],
+      ['att."path"', 'S3Key'],
+      ['att.bucket_name', 'S3BucketName'],
     );
     qb.innerJoin(
       (e) => e.attachments,
@@ -398,9 +410,28 @@ export class PartnerService {
       (v) => v.equals(partnerId),
     );
 
+    const { CACHE_ATTACHMENT_DURATION_IN_MINUTES } = LoaderEnv.envs;
+    const cacheDuration = (CACHE_ATTACHMENT_DURATION_IN_MINUTES || 5) * 60; // in seconds
+
+    qb.qb.cache(`partner:${partnerId}:attachments`, 1000 * (cacheDuration - 5));
     const attachments = await qb.exec();
     if (!attachments) {
       throw new NotFoundException(`Attachments not found!`);
+    }
+
+    const signedAttachments = [];
+    for (const att of attachments) {
+      if (att.S3ACL === 'private') {
+        att.url = await AwsS3Service.getSignedUrl(
+          att.S3BucketName,
+          att.S3Key,
+          cacheDuration,
+        );
+      }
+      delete att.S3ACL;
+      delete att.S3Key;
+      delete att.S3BucketName;
+      signedAttachments.push(att);
     }
 
     return new PartnerAttachmentResponse(attachments);

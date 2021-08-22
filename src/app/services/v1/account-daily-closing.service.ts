@@ -28,6 +28,8 @@ import { AccountDailyClosingWithPaginationResponse } from '../../domain/account-
 import { QueryAccountDailyClosingDTO } from '../../domain/account-daily-closing/dto/query-account-daily-closing.payload.dto';
 import { AuthService } from './auth.service';
 import { GlobalSetting } from '../../../model/global-setting.entity';
+import { LoaderEnv } from '../../../config/loader';
+import { AwsS3Service } from '../../../common/services/aws-s3.service';
 
 @Injectable()
 export class AccountDailyClosingService {
@@ -129,6 +131,9 @@ export class AccountDailyClosingService {
       ['att.filename', 'fileName'],
       ['att.file_mime', 'fileMime'],
       ['att.url', 'url'],
+      ['att.s3_acl', 'S3ACL'],
+      ['att."path"', 'S3Key'],
+      ['att.bucket_name', 'S3BucketName'],
     );
     qb.innerJoin(
       (e) => e.attachments,
@@ -148,12 +153,31 @@ export class AccountDailyClosingService {
       (v) => v.equals(accountDailyClosingId),
     );
 
+    const { CACHE_ATTACHMENT_DURATION_IN_MINUTES } = LoaderEnv.envs;
+    const cacheDuration = (CACHE_ATTACHMENT_DURATION_IN_MINUTES || 5) * 60; // in seconds
+
+    qb.qb.cache(`accountdailyclosing:${accountDailyClosingId}:attachments`, 1000 * (cacheDuration - 5));
     const attachments = await qb.exec();
     if (!attachments) {
       throw new NotFoundException(`Attachments not found!`);
     }
 
-    return new AccountDailyClosingAttachmentResponse(attachments);
+    const signedAttachments = [];
+    for (const att of attachments) {
+      if (att.S3ACL === 'private') {
+        att.url = await AwsS3Service.getSignedUrl(
+          att.S3BucketName,
+          att.S3Key,
+          cacheDuration,
+        );
+      }
+      delete att.S3ACL;
+      delete att.S3Key;
+      delete att.S3BucketName;
+      signedAttachments.push(att);
+    }
+
+    return new AccountDailyClosingAttachmentResponse(signedAttachments);
   }
 
   public async createAttachment(
@@ -191,6 +215,9 @@ export class AccountDailyClosingService {
           accountDailyClosing.updateUser = await AuthService.getUser();
 
           await manager.save(accountDailyClosing);
+          await manager.connection?.queryResultCache?.remove([
+            `accountdailyclosing:${accountDailyClosingId}:attachments`,
+          ]);
 
           return newAttachments;
         },
@@ -230,6 +257,10 @@ export class AccountDailyClosingService {
     if (!deleteAttachment) {
       throw new BadRequestException('Gagal menghapus attachment!');
     }
+
+    await getManager().connection?.queryResultCache?.remove([
+      `accountdailyclosing:${id}:attachments`,
+    ]);
   }
 
   private async getAccountDailyClosingFromDTO(
