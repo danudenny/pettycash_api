@@ -47,10 +47,11 @@ export class AttachmentService {
       fileMime,
       fileProvider: FILE_PROVIDER.AWS_S3,
       path: uploadResponse.awsKey,
+      s3acl: uploadResponse.acl,
       name: attachmentName,
       fileName: fileOriginalName,
       url,
-      typeId: typeId,
+      typeId,
       createUserId: userId,
       updateUserId: userId,
     });
