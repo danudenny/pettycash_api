@@ -1,6 +1,12 @@
+import { Branch } from './../../../model/branch.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.entity';
-import { EntityManager, getManager, Repository } from 'typeorm';
+import {
+  EntityManager,
+  getManager,
+  Repository,
+  createQueryBuilder,
+} from 'typeorm';
 import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -543,6 +549,17 @@ export class AllocationBalanceService {
           throw new NotFoundException(`Cabang Tidak Ditemukan.`);
         }
 
+        const getBranchID = await Branch.findOne({
+          where: {
+            id: allocation.branchId,
+          },
+          select: ['id', 'cashCoaId'],
+        });
+
+        if (getBranchID.cashCoaId == null) {
+          throw new NotFoundException(`Cash Coa Cabang Tidak Ditemukan.`);
+        }
+
         const user = await AuthService.getUser({ relations: ['role'] });
         const userRole = user?.role?.name as MASTER_ROLES;
 
@@ -780,10 +797,6 @@ export class AllocationBalanceService {
     i.isLedger = isLedger;
     i.debit = alokasi.amount;
     items.push(i);
-
-    if (!alokasi.branch.cashCoaId) {
-      throw new HttpException('Coa Cabang tidak ada', HttpStatus.BAD_REQUEST);
-    }
 
     return items;
   }
