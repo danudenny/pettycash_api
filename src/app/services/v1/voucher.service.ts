@@ -436,10 +436,6 @@ export class VoucherService {
     const successIds = voucherToUpdateIds?.map((id) => {
       return id;
     });
-    const resultRedeem = {
-      voucher_ids: successIds,
-      payment_type: data.payment_type,
-    };
 
     const dataJson = JSON.stringify(data);
 
@@ -448,15 +444,9 @@ export class VoucherService {
     };
 
     const webhookResp = [];
-    const statusResp = [];
-
     try {
       await axios
-        .post(
-          'http://pettycashstaging.sicepat.com:8889/webhook/pettycash/manual-voucher',
-          dataJson,
-          options,
-        )
+        .post(LoaderEnv.envs.VOUCHER_HELPER_URL, dataJson, options)
         .then((result) => {
           webhookResp.push(result.data);
           const resp = [];
@@ -481,6 +471,7 @@ export class VoucherService {
           });
         });
     } catch (error) {
+      console.log(error);
       await this.voucherRepo.update(
         { id: In(successIds) },
         { paymentType: paymentTypeFromQuery[0] },
