@@ -567,7 +567,6 @@ export class AllocationBalanceService {
         let state: CashBalanceAllocationState;
         const currentState = allocation.state;
         if (
-          userRole === MASTER_ROLES.ADMIN_BRANCH ||
           userRole === MASTER_ROLES.PIC_HO ||
           userRole === MASTER_ROLES.SUPERUSER
         ) {
