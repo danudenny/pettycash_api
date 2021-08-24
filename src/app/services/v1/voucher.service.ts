@@ -478,6 +478,7 @@ export class VoucherService {
       );
     }
     const webHookResult = webhookResp[0];
+    console.log(webhookResp);
     if (webHookResult[0].status == 'FAILED') {
       throw new HttpException(
         {
@@ -514,6 +515,12 @@ export class VoucherService {
         HttpStatus.PARTIAL_CONTENT,
       );
     }
+    if (webHookResult[0].status == 'COA_NOT_EXIST') {
+      throw new HttpException(
+        { status: HttpStatus.BAD_REQUEST, message: webHookResult[0] },
+        HttpStatus.OK,
+      );
+    }
     if (webHookResult[0].status == 'SUCCESS') {
       throw new HttpException(
         { status: HttpStatus.OK, message: webHookResult[0] },
@@ -521,7 +528,4 @@ export class VoucherService {
       );
     }
   }
-}
-function getConnection() {
-  throw new Error('Function not implemented.');
 }
