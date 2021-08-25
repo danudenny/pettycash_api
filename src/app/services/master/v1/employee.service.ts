@@ -10,7 +10,9 @@ import { Response } from 'express';
 export class EmployeeService {
   constructor() {}
 
-  public async list(query?: QueryEmployeeDTO): Promise<EmployeeWithPaginationResponse> {
+  public async list(
+    query?: QueryEmployeeDTO,
+  ): Promise<EmployeeWithPaginationResponse> {
     const params = { order: '^name', limit: 10, ...query };
     const qb = new QueryBuilder(Employee, 'emp', params);
 
@@ -53,6 +55,7 @@ export class EmployeeService {
       qb.fieldResolverMap['name__icontains'] = 'emp.name';
       qb.fieldResolverMap['employeeStatus'] = 'emp.employee_status';
 
+      qb.applyFilterQueries();
       qb.selectRaw(
         ['emp.id', 'id'],
         ['emp.employee_id', 'employeeId'],
@@ -72,12 +75,14 @@ export class EmployeeService {
         (e) => e.isDeleted,
         (v) => v.isFalse(),
       );
+      console.log(qb.getQuery());
 
       const emp = await qb.exec();
       const heading = [
-        ["PT. SiCepat Express Indonesia"],
-        ["Data Employee PT. Sicepat Express Indonesia"], [],
-        ["NIK", "Nama", "Posisi", "Cabang", "Tanggal Masuk", "Tanggal Keluar"],
+        ['PT. SiCepat Express Indonesia'],
+        ['Data Employee PT. Sicepat Express Indonesia'],
+        [],
+        ['NIK', 'Nama', 'Posisi', 'Cabang', 'Tanggal Masuk', 'Tanggal Keluar'],
       ];
 
       const dtSheet = emp.map((emp) => {
@@ -88,27 +93,30 @@ export class EmployeeService {
           branchName: emp.branchName,
           dateOfEntry: emp.dateOfEntry,
           dateOfResign: emp.dateOfResign,
-        }
-      })
+        };
+      });
 
       const wb = utils.book_new();
       const ws = utils.aoa_to_sheet(heading);
 
-      dtSheet['!autofilter'] = { ref: "B4" };
-      utils.sheet_add_json(ws, dtSheet, { origin : 4, skipHeader: true})
-      utils.book_append_sheet(wb, ws, "Report Employee");
+      dtSheet['!autofilter'] = { ref: 'B4' };
+      utils.sheet_add_json(ws, dtSheet, { origin: 4, skipHeader: true });
+      utils.book_append_sheet(wb, ws, 'Report Employee');
 
-      let buff = write(wb,{ type: 'buffer' });
+      let buff = write(wb, { type: 'buffer' });
 
       const fileName = `employee-report-${new Date()}.xlsx`;
 
-      res.setHeader('Content-Disposition',`attachment;filename=${fileName}`)
-      res.setHeader('Content-type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      res.setHeader('Content-Disposition', `attachment;filename=${fileName}`);
+      res.setHeader(
+        'Content-type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
       res.status(200).send(buff);
 
-      return
+      return;
     } catch (err) {
-      throw new HttpException(err, HttpStatus.BAD_REQUEST)
+      throw new HttpException(err, HttpStatus.BAD_REQUEST);
     }
   }
 }
