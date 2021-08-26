@@ -22,7 +22,10 @@ async function bootstrap() {
   // https://github.com/expressjs/body-parser/blob/0632e2f378d53579b6b2e4402258f4406e62ac6f/lib/types/json.js#L53-L55
   // app.use(json({ limit: '10mb' }));
   // app.use(urlencoded({ extended: true, limit: '10mb' }));
-  app.enableCors();
+
+  if (LoaderEnv.isCORS) {
+    app.enableCors();
+  }
   app.useGlobalPipes(new ValidationPipe());
 
   // RequestContext
