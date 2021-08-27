@@ -43,10 +43,6 @@ export class LoaderEnv {
     return envs.DEBUG === true;
   }
 
-  public static isCORS() {
-    return envs.CORS === true;
-  }
-
   public static getTypeOrmConfig(useReplication = false): TypeOrmModuleOptions {
     let config: PostgresConnectionOptions = {
       type: 'postgres',
