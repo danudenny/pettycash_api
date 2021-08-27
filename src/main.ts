@@ -23,9 +23,11 @@ async function bootstrap() {
   // app.use(json({ limit: '10mb' }));
   // app.use(urlencoded({ extended: true, limit: '10mb' }));
 
-  if (LoaderEnv.isCORS) {
+  if (LoaderEnv.envs.CORS) {
     app.enableCors();
   }
+  logger.info(`Enable Cors APP  :: ${LoaderEnv.envs.CORS}`);
+
   app.useGlobalPipes(new ValidationPipe());
 
   // RequestContext
