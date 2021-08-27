@@ -1,10 +1,18 @@
-import { Column, Entity, JoinColumn, OneToMany, ManyToOne, ManyToMany, JoinTable, Index, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToMany,
+  ManyToOne,
+  ManyToMany,
+  JoinTable,
+  Index,
+} from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { Employee } from './employee.entity';
 import { VoucherState, VoucherPaymentType } from './utils/enum';
 import { VoucherItem } from './voucher-item.entity';
-import { IsUUID } from 'class-validator';
 import { Attachment } from './attachment.entity';
 
 @Entity('voucher')
@@ -23,7 +31,7 @@ export class Voucher extends PtcBaseEntity {
     length: 25,
     unique: true,
   })
-  @Index({unique: true})
+  @Index({ unique: true })
   number: string;
 
   @Column({
@@ -51,14 +59,14 @@ export class Voucher extends PtcBaseEntity {
   @Column({
     type: 'timestamp',
     name: 'checkin_time',
-    nullable: false,
+    nullable: true,
   })
   checkinTime: Date;
 
   @Column({
     type: 'timestamp',
     name: 'checkout_time',
-    nullable: false,
+    nullable: true,
   })
   checkoutTime: Date;
 
@@ -90,7 +98,7 @@ export class Voucher extends PtcBaseEntity {
     enum: VoucherPaymentType,
     default: VoucherPaymentType.CASH,
     nullable: true,
-    name: 'payment_type'
+    name: 'payment_type',
   })
   paymentType: VoucherPaymentType;
 
@@ -108,7 +116,9 @@ export class Voucher extends PtcBaseEntity {
   })
   attachments: Attachment[];
 
-  @OneToMany(() => VoucherItem, (voucherItem) => voucherItem.voucher, { cascade: true })
+  @OneToMany(() => VoucherItem, (voucherItem) => voucherItem.voucher, {
+    cascade: true,
+  })
   items: VoucherItem[];
 
   @ManyToOne(() => Branch)
