@@ -16,6 +16,7 @@ export class AwsS3Service {
     fileMime: string,
     pathId?: string,
     bucketName?: string,
+    acl: 'private' | 'public-read' = 'private',
   ) {
     if (!bucketName) {
       bucketName = this.defaultBucketName;
@@ -30,8 +31,9 @@ export class AwsS3Service {
 
     // NOTE: The optional contentType option can be used to set Content/mime type of the file.
     // By default the content type is set to application/octet-stream.
+    // ACL: "private"|"public-read"|"public-read-write"|"authenticated-read"|"aws-exec-read"|"bucket-owner-read"|"bucket-owner-full-control"|string
     return AWS_S3.putObject({
-      ACL: 'public-read',
+      ACL: acl,
       ContentType: fileMime,
       Body: fileBuffer,
       Bucket: bucketName,
@@ -41,6 +43,7 @@ export class AwsS3Service {
       .then(() => {
         return {
           awsKey,
+          acl,
         };
       });
   }
@@ -173,5 +176,25 @@ export class AwsS3Service {
       Bucket: bucketName,
       Key: key,
     }).promise();
+  }
+
+  public static async getSignedUrl(
+    bucketName: string,
+    key: string,
+    expires: number = 60,
+  ) {
+    const params = {
+      Bucket: bucketName,
+      Key: key,
+      Expires: expires, // time in seconds: e.g. 60 * 5 = 5 mins
+    };
+
+    const signedUrl = await new Promise((resolve, reject) => {
+      AWS_S3.getSignedUrl('getObject', params, (err, url) => {
+        if (err) reject(err);
+        resolve(url);
+      });
+    });
+    return signedUrl;
   }
 }

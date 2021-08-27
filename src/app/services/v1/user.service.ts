@@ -1,18 +1,29 @@
-import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Repository, Not, IsNull } from 'typeorm';
 import { User } from '../../../model/user.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryUserDTO } from '../../domain/user/user.payload.dto';
 import { UserWithPaginationResponse } from '../../domain/user/response.dto';
 import { parseBool } from '../../../shared/utils';
-
+import { UserResetPasswordeDTO } from '../../domain/user/user-reset-password.dto';
+import { LoaderEnv } from '../../../config/loader';
+import axios from 'axios';
+import https from 'https';
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
   ) {}
+
+  private static get headerWebhook() {
+    return {
+      'api-key': LoaderEnv.envs.USER_HELPER_KEY,
+      'Content-Type': 'application/json',
+      'User-Agent': 'PETTYCASH-API',
+    };
+  }
 
   async list(query: QueryUserDTO): Promise<UserWithPaginationResponse> {
     const params = { limit: 10, ...query };
@@ -85,5 +96,53 @@ export class UserService {
 
     const users = await qb.exec();
     return new UserWithPaginationResponse(users, params);
+  }
+
+  // integration master data api for reset password user
+  async resetPassword(payload: UserResetPasswordeDTO): Promise<any> {
+    const url = encodeURI(LoaderEnv.envs.USER_HELPER_URL);
+    // PATCH: At request level
+    const agent = new https.Agent({
+      rejectUnauthorized: false,
+    });
+    const options = {
+      headers: UserService.headerWebhook,
+      httpsAgent: agent,
+    };
+    const skip = ['superadmin', 'superuser'];
+    if (skip.includes(payload.username)) {
+      throw new HttpException(
+        'User tidak valid, hubungi admin!',
+        HttpStatus.BAD_REQUEST,
+      );
+    } else {
+      const user = await User.findOne({
+        where: {
+          username: payload.username,
+          roleId: Not(IsNull()),
+          isDeleted: false,
+        },
+      });
+      if (!user) {
+        throw new HttpException(
+          'User tidak valid, hubungi admin!',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+    const data = {
+      username: payload.username,
+      password: payload.password,
+    };
+    try {
+      const res = await axios.post(url, data, options);
+      return { status: res.status, data: res.data };
+    } catch (error) {
+      console.error(error);
+      throw new HttpException(
+        'Gagal Menyambungkan ke Service master, hubungi admin!',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

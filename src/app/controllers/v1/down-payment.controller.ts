@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import {
@@ -34,6 +35,7 @@ import {
 } from '../../domain/down-payment/down-payment-response.dto';
 /** Services */
 import { DownPaymentService } from '../../services/v1/down-payment.service';
+import { UpdateDownPaymentDTO } from '../../domain/down-payment/down-payment-update.dto';
 
 @ApiTags('Down Payments')
 @ApiInternalServerErrorResponse({ description: 'General Error' })
@@ -102,6 +104,18 @@ export class DownPaymentController {
         err.status || HttpStatus.BAD_REQUEST,
       );
     }
+  }
+
+  @Put('/:id')
+  @ApiOperation({ summary: 'Update Down Payment' })
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
+  @ApiOkResponse({ description: 'Successfully update data' })
+  @ApiNotFoundResponse({ description: 'DownPayment not found' })
+  public async update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() payload: UpdateDownPaymentDTO,
+  ) {
+    return await this.downPaymentService.updateDownPayment(id, payload);
   }
 
   @Patch('/:id/approve')

@@ -3,7 +3,7 @@ import { PartnerState } from './../../../model/utils/enum';
 import { Expense } from '../../../model/expense.entity';
 import { BadRequestException, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { createQueryBuilder, getManager, Repository } from 'typeorm';
+import { createQueryBuilder, getManager, Repository, Raw } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { AttachmentService } from '../../../common/services/attachment.service';
 import { GenerateCode } from '../../../common/services/generate-code.service';
@@ -21,6 +21,8 @@ import dayjs from 'dayjs';
 import { AttachmentType } from '../../../model/attachment-type.entity';
 import * as XLSX from 'xlsx';
 import { Response } from 'express';
+import { LoaderEnv } from '../../../config/loader';
+import { AwsS3Service } from '../../../common/services/aws-s3.service';
 
 export class PartnerService {
   constructor(
@@ -95,14 +97,14 @@ export class PartnerService {
     const existingPartner = await this.partnerRepo.find({
       select: ['id'],
       where: {
-        name: payload.name,
+        name: Raw((alias) => `${alias} ILIKE '${payload.name?.trim()}'`),
         isDeleted: false,
       },
     });
 
-    if (!!existingPartner.length) {
+    if (existingPartner.length > 0) {
       throw new BadRequestException(
-        `Nama partner yang sama sudah pernah dibuat`,
+        `Nama partner yang sama sudah pernah dibuat!`,
       );
     }
 
@@ -120,14 +122,27 @@ export class PartnerService {
   public async update(id: string, payload: UpdatePartnerDTO) {
     const partner = await this.partnerRepo.findOne({
       where: { id, isDeleted: false },
+      select: ['id'],
     });
     if (!partner) {
       throw new NotFoundException(`Partner ID ${id} not found!`);
     }
 
+    let { name } = payload;
+    name = name?.trim();
+    if (name) {
+      const existPartner = await getManager().query(
+        `SELECT id FROM partner WHERE id != $1 AND is_deleted IS FALSE AND "name" ILIKE $2`,
+        [id, name],
+      );
+      if (existPartner?.length > 0) {
+        throw new BadRequestException(`Nama partner sudah pernah dibuat!`);
+      }
+    }
+
     const updatedPartner = this.partnerRepo.create(payload as Partner);
     const responsiblePartner = await this.getUser();
-    partner.updateUserId = responsiblePartner?.id;
+    updatedPartner.updateUserId = responsiblePartner?.id;
 
     try {
       await this.partnerRepo.update(id, updatedPartner);
@@ -198,7 +213,7 @@ export class PartnerService {
             where: { id: partnerId, isDeleted: false },
             relations: ['attachments'],
           });
-          
+
           if (!partner) {
             throw new NotFoundException(
               `Expense with ID ${partnerId} not found!`,
@@ -268,6 +283,9 @@ export class PartnerService {
           partner.updateUser = await this.getUser();
 
           await manager.save(partner);
+          await manager.connection?.queryResultCache?.remove([
+            `partner:${partnerId}:attachments`,
+          ]);
           return newAttachments;
         },
       );
@@ -301,6 +319,10 @@ export class PartnerService {
     if (!deleteAttachment) {
       throw new BadRequestException('Failed to delete attachment!');
     }
+
+    await getManager().connection?.queryResultCache?.remove([
+      `partner:${partnerId}:attachments`,
+    ]);
 
     throw new HttpException('Berhasil menghapus attachment', HttpStatus.OK)
   }
@@ -337,8 +359,6 @@ export class PartnerService {
       updateUserId: '69b99e7c-d23a-4fb0-a3dc-ea5968306a41'
     });
 
-    // 
-
     getPartner.forEach(async element => {
       const monthNow = dayjs(new Date()).month();
       const trxDate = dayjs(element.transactionDate).month();
@@ -368,6 +388,9 @@ export class PartnerService {
       ['att.filename', 'fileName'],
       ['att.file_mime', 'fileMime'],
       ['att.url', 'url'],
+      ['att.s3_acl', 'S3ACL'],
+      ['att."path"', 'S3Key'],
+      ['att.bucket_name', 'S3BucketName'],
     );
     qb.innerJoin(
       (e) => e.attachments,
@@ -387,9 +410,28 @@ export class PartnerService {
       (v) => v.equals(partnerId),
     );
 
+    const { CACHE_ATTACHMENT_DURATION_IN_MINUTES } = LoaderEnv.envs;
+    const cacheDuration = (CACHE_ATTACHMENT_DURATION_IN_MINUTES || 5) * 60; // in seconds
+
+    qb.qb.cache(`partner:${partnerId}:attachments`, 1000 * (cacheDuration - 5));
     const attachments = await qb.exec();
     if (!attachments) {
       throw new NotFoundException(`Attachments not found!`);
+    }
+
+    const signedAttachments = [];
+    for (const att of attachments) {
+      if (att.S3ACL === 'private') {
+        att.url = await AwsS3Service.getSignedUrl(
+          att.S3BucketName,
+          att.S3Key,
+          cacheDuration,
+        );
+      }
+      delete att.S3ACL;
+      delete att.S3Key;
+      delete att.S3BucketName;
+      signedAttachments.push(att);
     }
 
     return new PartnerAttachmentResponse(attachments);
@@ -429,9 +471,9 @@ export class PartnerService {
 
       const partners = await qb.exec();
       const heading = [
-        ["PT. SiCepat Express Indonesia"],
-        ["Data Partner PT. Sicepat Express Indonesia"], [],
-        ["Kode Partner", "Nama Partner", "Alamat", "Tipe Partner", "NPWP", "KTP", "Status"],
+        ['PT. SiCepat Express Indonesia'],
+        ['Data Partner PT. Sicepat Express Indonesia'], [],
+        ['Kode Partner', 'Nama Partner', 'Alamat', 'Tipe Partner', 'NPWP', 'KTP', 'Status'],
       ];
 
       const dtSheet = partners.map((prt) => {
@@ -450,9 +492,9 @@ export class PartnerService {
       const ws = utils.aoa_to_sheet(heading);
 
       utils.sheet_add_json(ws, dtSheet, { origin : 5, skipHeader: true})
-      utils.book_append_sheet(wb, ws, "Report Partner");
+      utils.book_append_sheet(wb, ws, 'Report Partner');
 
-      let buff = write(wb,{ type: 'buffer' });
+      const buff = write(wb,{ type: 'buffer' });
 
       const fileName = `partners-report-${new Date()}.xlsx`;
 

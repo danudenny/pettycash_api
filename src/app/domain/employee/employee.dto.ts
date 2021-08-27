@@ -72,4 +72,10 @@ export class EmployeeDTO {
   })
   dateOfResign: Date;
 
+  @ApiProperty({
+    description: 'Employee Status',
+    example: true,
+  })
+  employeeStatus: boolean;
+
 }

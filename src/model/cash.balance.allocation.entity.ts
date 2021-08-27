@@ -1,4 +1,11 @@
-import { Entity, Column, JoinColumn, ManyToOne, Index, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  JoinColumn,
+  ManyToOne,
+  Index,
+  OneToMany,
+} from 'typeorm';
 import { BankBranch } from './bank-branch.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
@@ -52,7 +59,7 @@ export class CashBalanceAllocation extends PtcBaseEntity {
   @Column({
     type: 'boolean',
     default: false,
-    name: 'is_paid'
+    name: 'is_paid',
   })
   isPaid: boolean;
 

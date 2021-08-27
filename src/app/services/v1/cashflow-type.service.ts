@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CashflowType } from '../../../model/cashflow-type.entity';
-import { Repository } from 'typeorm';
+import { getManager, Repository, Raw } from 'typeorm';
 import { QueryCashFlowTypeDTO } from '../../domain/cashflow-type/cashflow-type-query.dto';
 import { CashflowTypeWithPaginationResponse } from '../../domain/cashflow-type/cashflow-type-response.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -61,7 +61,7 @@ export class CashflowTypeService {
   public async create(payload: CreateCashflowTypeDto): Promise<any> {
     const cashflowDto = await this.cashflowRepo.create(payload);
     const cashflowExist = await this.cashflowRepo.findOne({
-      name: cashflowDto.name,
+      name: Raw((alias) => `${alias} ILIKE '${payload.name?.trim()}'`),
       isDeleted: false,
     });
     const checkCoaId = await this.coaRepo.findOne({
@@ -100,11 +100,24 @@ export class CashflowTypeService {
   public async update(id: string, data: CreateCashflowTypeDto): Promise<any> {
     const getcashFlow = await this.cashflowRepo.findOne({
       where: { id, isDeleted: false },
+      select: ['id'],
     });
     if (!getcashFlow) {
       throw new NotFoundException(
         `Kas Masuk dengan ID : ${id} tidak ditemukan!`,
       );
+    }
+
+    let { name } = data;
+    name = name?.trim();
+    if (name) {
+      const existCashflow = await getManager().query(
+        `SELECT id FROM cashflow_type WHERE id != $1 AND is_deleted IS FALSE AND "name" ILIKE $2`,
+        [id, name],
+      );
+      if (existCashflow?.length > 0) {
+        throw new BadRequestException(`Nama jenis kas masuk sudah pernah dibuat!`);
+      }
     }
 
     const updatedCashFlow = this.cashflowRepo.create(data as CashflowType);
