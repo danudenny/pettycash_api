@@ -3,7 +3,7 @@ import { ColumnNumericTransformer } from './utils/transformer';
 
 // NOTE: source data from db master data
 @Entity('brand_vehicle')
-export class Brand extends BaseEntity {
+export class BrandVehicle extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

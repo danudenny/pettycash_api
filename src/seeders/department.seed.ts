@@ -7,7 +7,7 @@ export const DepartmentSeed = [
     name: 'Accounting',
   },
   {
-    id: '89629ab8-8157-11eb-8dcd-0242ac130003',
+    id: '10520f57-45a1-4480-8ac5-662a8f468b7a',
     departmentId: 2,
     departmentParentId: 1,
     code: 'DP001',
