@@ -1,4 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn, BaseEntity } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  BaseEntity,
+  UpdateDateColumn,
+} from 'typeorm';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 // NOTE: source data separately from db master data
@@ -63,4 +69,10 @@ export class EmployeeRole extends BaseEntity {
     name: 'is_deleted',
   })
   isDeleted: boolean;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    name: 'updated_at',
+  })
+  updatedAt?: Date;
 }

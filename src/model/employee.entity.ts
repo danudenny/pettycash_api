@@ -6,6 +6,7 @@ import {
   BaseEntity,
   ManyToOne,
   JoinColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { EmployeeRole } from './employee-role.entity';
 import { ColumnNumericTransformer } from './utils/transformer';
@@ -93,4 +94,10 @@ export class Employee extends BaseEntity {
     referencedColumnName: 'employeeRoleId',
   })
   employeeRole: EmployeeRole;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    name: 'updated_at',
+  })
+  updatedAt?: Date;
 }

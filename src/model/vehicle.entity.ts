@@ -1,4 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn, BaseEntity } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  BaseEntity,
+  UpdateDateColumn,
+} from 'typeorm';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 // NOTE: source data from db master data
@@ -91,4 +97,10 @@ export class Vehicle extends BaseEntity {
     name: 'rent_duration_end_date',
   })
   rentDurationEndDate: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    name: 'updated_at',
+  })
+  updatedAt?: Date;
 }
