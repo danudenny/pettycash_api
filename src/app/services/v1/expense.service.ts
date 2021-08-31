@@ -22,9 +22,11 @@ import {
   AccountStatementType,
   AccountTaxGroup,
   AccountTaxPartnerType,
+  BalanceType,
   DownPaymentState,
   DownPaymentType,
   ExpenseAssociationType,
+  ExpensePaymentType,
   ExpenseState,
   ExpenseType,
   JournalSourceType,
@@ -80,6 +82,7 @@ import { VehicleTemp } from '../../../model/vehicle-temp.entity';
 import { AccountStatementService } from './account-statement.service';
 import { BranchService } from '../master/v1/branch.service';
 import { AwsS3Service } from '../../../common/services/aws-s3.service';
+import { BalanceService } from './balance.service';
 
 @Injectable()
 export class ExpenseService {
@@ -258,6 +261,14 @@ export class ExpenseService {
           items.push(item);
         }
 
+        const totalAmount = items
+          .map((m) => Number(m.amount))
+          .filter((i) => i)
+          .reduce((a, b) => a + b, 0);
+
+        // Check balance if Sufficient or not
+        await this.checkBalance(branchId, totalAmount, payload?.paymentType);
+
         // Build Expense
         const expense = new Expense();
         expense.branchId = branchId;
@@ -271,12 +282,7 @@ export class ExpenseService {
         expense.paymentType = payload.paymentType;
         expense.state = ExpenseState.DRAFT;
         expense.items = items;
-        expense.totalAmount =
-          items &&
-          items
-            .map((m) => Number(m.amount))
-            .filter((i) => i)
-            .reduce((a, b) => a + b, 0);
+        expense.totalAmount = totalAmount;
         expense.histories = await this.buildHistory(expense, {
           state: ExpenseState.DRAFT,
         });
@@ -408,6 +414,9 @@ export class ExpenseService {
           }
         }
 
+        // Check balance if Sufficient or not
+        await this.checkBalance(exp.branchId, exp.totalAmount, exp.paymentType);
+
         // Update ExpenseItem tax if partner or employee changed and items not updated.
         if ((payload?.partnerId || payload?.employeeId) && !payload?.items) {
           // re-fetch expense with items
@@ -516,6 +525,13 @@ export class ExpenseService {
               .filter((i) => i)
               .reduce((a, b) => a + b, 0);
           }
+
+          // Check balance if Sufficient or not
+          await this.checkBalance(
+            expense.branchId,
+            expense.totalAmount,
+            expense.paymentType,
+          );
 
           // Update or Insert Loan from Expense.
           await this.upsertLoanFromExpense(manager, expense);
@@ -1896,5 +1912,24 @@ export class ExpenseService {
     vTemp.vehicleNumber = vehicle?.vehicleNumber;
     vTemp.vehicleKilometer = kmEnd;
     return await manager.save(vTemp);
+  }
+
+  private async checkBalance(
+    branchId: string,
+    amount: number,
+    paymentType: ExpensePaymentType,
+  ): Promise<void> {
+    const isBalanceSufficient = await BalanceService.isSufficient({
+      branchId,
+      amount,
+      type: (paymentType as unknown) as BalanceType,
+    });
+
+    if (!isBalanceSufficient) {
+      const ttype =
+        paymentType === ExpensePaymentType.BANK ? 'Bank' : 'Uang Fisik';
+      const errMsg = `Jumlah tidak boleh lebih dari pada Saldo ${ttype} Sistem`;
+      throw new UnprocessableEntityException(errMsg);
+    }
   }
 }
