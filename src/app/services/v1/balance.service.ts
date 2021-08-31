@@ -654,4 +654,39 @@ export class BalanceService {
 
     return await balanceRepo.save(balance);
   }
+
+  /**
+   * Helper to check if balance is sufficient or not
+   *
+   * @static
+   * @param {{
+   *     branchId: string;
+   *     amount: number;
+   *     type: BalanceType;
+   *   }} data
+   * @return {*}  {Promise<boolean>}
+   * @memberof BalanceService
+   */
+  public static async isSufficient(data: {
+    branchId: string;
+    amount: number;
+    type: BalanceType;
+  }): Promise<boolean> {
+    const { branchId, amount, type } = data;
+    const balanceRepo = getManager().getRepository(Balance);
+    const balance = await balanceRepo.findOne({ where: { branchId } });
+
+    if (!balance) return false;
+
+    switch (type) {
+      case BalanceType.BANK:
+        return amount <= balance.bankAmount;
+      case BalanceType.CASH:
+        return amount <= balance.cashAmount;
+      case BalanceType.BON:
+        return amount <= balance.bonAmount;
+      default:
+        return false;
+    }
+  }
 }
