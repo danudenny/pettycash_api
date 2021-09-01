@@ -479,53 +479,28 @@ export class VoucherService {
     }
     const webHookResult = webhookResp[0];
     console.log(webhookResp);
-    if (webHookResult[0].status == 'FAILED') {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          message: 'FAILED',
-        },
-        HttpStatus.BAD_REQUEST,
-      );
+
+    let ids = [];
+    let statuses = [];
+    webHookResult.forEach((element) => {
+      ids.push(element.voucher_id);
+      statuses.push(element.status);
+    });
+
+    const getVoucherNumber = await this.voucherRepo.find({
+      where: {
+        id: In(ids),
+      },
+    });
+
+    let numbersVcr = [];
+    for (let i = 0; i < getVoucherNumber.length; i++) {
+      numbersVcr.push({
+        number: getVoucherNumber[i].number,
+        status: webHookResult[i].status,
+      });
     }
-    if (webHookResult[0].status == 'EXPENSE_ALREADY_CREATED') {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          message: 'EXPENSE_ALREADY_CREATED',
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    if (webHookResult[0].status == 'VOUCHER_NOT_FOUND') {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          message: 'VOUCHER_NOT_FOUND',
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    if (webHookResult[0].status == 'APPROVING_EXPENSE_FAILED') {
-      throw new HttpException(
-        {
-          status: HttpStatus.PARTIAL_CONTENT,
-          message: 'APPROVING_EXPENSE_FAILED / FAILED_CREATE_JOURNAL',
-        },
-        HttpStatus.PARTIAL_CONTENT,
-      );
-    }
-    if (webHookResult[0].status == 'COA_NOT_EXIST') {
-      throw new HttpException(
-        { status: HttpStatus.BAD_REQUEST, message: webHookResult[0] },
-        HttpStatus.OK,
-      );
-    }
-    if (webHookResult[0].status == 'SUCCESS') {
-      throw new HttpException(
-        { status: HttpStatus.OK, message: webHookResult[0] },
-        HttpStatus.OK,
-      );
-    }
+
+    return numbersVcr;
   }
 }
