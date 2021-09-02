@@ -328,7 +328,23 @@ export class AllocationBalanceService {
               `Alokasi Saldo Kas sudah diapprove oleh ${currentState}, dan ${CashBalanceAllocationState.CONFIRMED_BY_SS} tidak bisa melakukan konfirmasi.`,
             );
           }
+
+          const createOdoo = this.odooRepo.create(payload);
+          const userResponsible = await this.getUser();
+          createOdoo.createUserId = userResponsible.id;
+          createOdoo.updateUserId = userResponsible.id;
+          createOdoo.accountNumber = null;
+          createOdoo.amount = allocation.amount;
+          createOdoo.number = allocation.number;
+          createOdoo.branchName = allocation.branch.branchName;
+          createOdoo.description = allocation.description;
+          createOdoo.authKey = '2ee2cec3302e26b8030b233d614c4f4e';
+          createOdoo.analyticAccount = allocation.branch.branchCode;
+
           state = CashBalanceAllocationState.CONFIRMED_BY_SS;
+          if (state === CashBalanceAllocationState.CONFIRMED_BY_SS) {
+            await this.odooRepo.save(createOdoo);
+          }
         }
 
         // ! HINT: Approve by SPV HO
@@ -352,22 +368,22 @@ export class AllocationBalanceService {
             );
           }
 
-          const createOdoo = this.odooRepo.create(payload);
-          const userResponsible = await this.getUser();
-          createOdoo.createUserId = userResponsible.id;
-          createOdoo.updateUserId = userResponsible.id;
-          createOdoo.accountNumber = null;
-          createOdoo.amount = allocation.amount;
-          createOdoo.number = allocation.number;
-          createOdoo.branchName = allocation.branch.branchName;
-          createOdoo.description = allocation.description;
-          createOdoo.authKey = '2ee2cec3302e26b8030b233d614c4f4e';
-          createOdoo.analyticAccount = allocation.branch.branchCode;
+          // const createOdoo = this.odooRepo.create(payload);
+          // const userResponsible = await this.getUser();
+          // createOdoo.createUserId = userResponsible.id;
+          // createOdoo.updateUserId = userResponsible.id;
+          // createOdoo.accountNumber = null;
+          // createOdoo.amount = allocation.amount;
+          // createOdoo.number = allocation.number;
+          // createOdoo.branchName = allocation.branch.branchName;
+          // createOdoo.description = allocation.description;
+          // createOdoo.authKey = '2ee2cec3302e26b8030b233d614c4f4e';
+          // createOdoo.analyticAccount = allocation.branch.branchCode;
 
           state = CashBalanceAllocationState.APPROVED_BY_SPV;
-          if (state === CashBalanceAllocationState.APPROVED_BY_SPV) {
-            await this.odooRepo.save(createOdoo);
-          }
+          // if (state === CashBalanceAllocationState.APPROVED_BY_SPV) {
+          //   await this.odooRepo.save(createOdoo);
+          // }
         }
 
         if (!state) {

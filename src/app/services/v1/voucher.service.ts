@@ -63,7 +63,6 @@ export class VoucherService {
     return {
       'API-Key': LoaderEnv.envs.VOUCHER_HELPER_KEY,
       'Content-Type': 'application/json',
-      Connection: 'keep-alive',
     };
   }
 
@@ -453,9 +452,8 @@ export class VoucherService {
           webhookResp[0].forEach(async (res) => {
             resp.push(res);
             if (
-              res['status'] == 'FAILED' ||
-              res['status'] == 'EXPENSE_ALREADY_CREATED' ||
-              res['status'] == 'VOUCHER_NOT_FOUND'
+              res['status'] != 'SUCCESS' ||
+              res['status'] != 'APPROVING_EXPENSE_FAILED'
             ) {
               await this.voucherRepo.update(
                 { id: res['voucher_id'] },
