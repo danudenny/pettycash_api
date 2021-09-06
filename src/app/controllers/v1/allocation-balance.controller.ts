@@ -62,6 +62,7 @@ export class AllocationBalanceController {
   }
 
   @Post('/create')
+  @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiOperation({ summary: 'Create Cash Balance Allocation' })
   @ApiBadRequestResponse({ description: 'Bad request' })
   async create(@Body() data: CreateAllocationBalanceDto) {

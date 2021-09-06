@@ -714,6 +714,16 @@ export class AllocationBalanceService {
       throw new BadRequestException(`Nominal tidak boleh kosong!`);
     }
 
+    const user = await AuthService.getUser({ relations: ['role'] });
+    const userRole = user?.role?.name;
+
+    if (userRole === MASTER_ROLES.ADMIN_BRANCH) {
+      throw new HttpException(
+        'Role ADMIN, tidak dapat membuat Alokasi Saldo',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     state = createDto.state;
 
     try {
