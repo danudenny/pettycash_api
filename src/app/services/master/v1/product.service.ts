@@ -189,11 +189,9 @@ export class ProductService {
     return new ProductResponse();
   }
 
-  public async voucher(): Promise<ProductWithPaginationResponse> {
-    const params = { order: '^code', limit: 10 };
-    const qb = new QueryBuilder(Product, 'prod', params);
+  public async voucher(): Promise<ProductResponse> {
+    const qb = new QueryBuilder(Product, 'prod');
 
-    qb.applyFilterPagination();
     qb.selectRaw(
       ['prod.id', 'id'],
       ['prod.code', 'code'],
@@ -219,9 +217,8 @@ export class ProductService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    qb.qb.cache('pettycash:voucher:products', 1000 * 60 * 60);
 
     const products = await qb.exec();
-    return new ProductWithPaginationResponse(products, params);
+    return new ProductResponse(products);
   }
 }
