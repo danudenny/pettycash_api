@@ -18,10 +18,6 @@ export class GlobalSettingService {
         'downPaymentPerdinCoa',
         'downPaymentReimbursementCoa',
       ],
-      cache: {
-        id: 'global_settings',
-        milliseconds: 1440 * 60000, // 1 day
-      },
     });
     return new GlobalSettingResponse(setting);
   }
