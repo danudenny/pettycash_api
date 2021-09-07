@@ -349,11 +349,6 @@ export class AllocationBalanceService {
 
         // ! HINT: Approve by SPV HO
         if (userRole === MASTER_ROLES.SPV_HO) {
-          // if (currentState === CashBalanceAllocationState.DRAFT) {
-          //   throw new BadRequestException(
-          //     `Alokasi Saldo Kas belum dikonfirmasi oleh SS HO`,
-          //   );
-          // }
           if (currentState === CashBalanceAllocationState.REJECTED) {
             throw new BadRequestException(`Alokasi Saldo Kas sudah di tolak`);
           }
@@ -362,28 +357,11 @@ export class AllocationBalanceService {
               `Alokasi Saldo Kas sudah di batalkan`,
             );
           }
-          if (currentState === CashBalanceAllocationState.APPROVED_BY_SPV) {
+          if (currentState === CashBalanceAllocationState.CONFIRMED_BY_SS) {
             throw new BadRequestException(
-              `Tidak bisa approve Alokasi Saldo Kas dengan status ${currentState}`,
+              `SPV HO tidak bisa approve Alokasi Saldo`,
             );
           }
-
-          // const createOdoo = this.odooRepo.create(payload);
-          // const userResponsible = await this.getUser();
-          // createOdoo.createUserId = userResponsible.id;
-          // createOdoo.updateUserId = userResponsible.id;
-          // createOdoo.accountNumber = null;
-          // createOdoo.amount = allocation.amount;
-          // createOdoo.number = allocation.number;
-          // createOdoo.branchName = allocation.branch.branchName;
-          // createOdoo.description = allocation.description;
-          // createOdoo.authKey = '2ee2cec3302e26b8030b233d614c4f4e';
-          // createOdoo.analyticAccount = allocation.branch.branchCode;
-
-          state = CashBalanceAllocationState.APPROVED_BY_SPV;
-          // if (state === CashBalanceAllocationState.APPROVED_BY_SPV) {
-          //   await this.odooRepo.save(createOdoo);
-          // }
         }
 
         if (!state) {
@@ -410,7 +388,10 @@ export class AllocationBalanceService {
       );
     }
     if (approveAllocation['state'] === 'approved_by_spv_ho') {
-      throw new HttpException(`Approval setuju dari SPV HO`, HttpStatus.OK);
+      throw new HttpException(
+        `Gagal Approve oleh SPV HO`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 
