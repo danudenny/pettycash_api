@@ -11,12 +11,13 @@ export class PaginationBuilder {
     let nextPage = null;
     const page = params && params.page ? Number(params.page) : 1;
     const limit = params && params.limit ? Number(params.limit) : null;
+    console.log(data.length < limit);
 
     if (page && page > 1) {
       prevPage = page - 1;
     }
 
-    if (data.length < limit) {
+    if (data.length <= limit) {
       nextPage = null;
     } else {
       nextPage = page + 1;
