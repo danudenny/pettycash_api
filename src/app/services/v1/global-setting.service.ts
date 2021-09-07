@@ -1,3 +1,4 @@
+import { HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GlobalSetting } from '../../../model/global-setting.entity';
 import { Repository, getConnection } from 'typeorm';
@@ -25,6 +26,6 @@ export class GlobalSettingService {
   async update(payload: UpdateGlobalSettingDTO): Promise<any> {
     await this.settingRepo.update({}, payload);
     await getConnection().queryResultCache?.remove(['global_settings']);
-    return;
+    return { status: HttpStatus.OK, message: 'Success Update Global Setting' };
   }
 }
