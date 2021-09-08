@@ -220,7 +220,7 @@ export class VoucherService {
           .andWhere('emp.isDeleted = false')
           .getCount();
 
-        if (brcCoaExist == 0) {
+        if (brcCoaExist == 1) {
           throw new HttpException(
             'Cash Coa tidak ditemukan',
             HttpStatus.BAD_REQUEST,
