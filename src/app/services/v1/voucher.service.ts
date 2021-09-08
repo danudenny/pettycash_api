@@ -269,7 +269,7 @@ export class VoucherService {
         );
       }
 
-      return createVoucher;
+      return new VoucherResponse(createVoucher);
     } catch (err) {
       throw err;
     }
