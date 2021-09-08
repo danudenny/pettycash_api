@@ -218,6 +218,7 @@ export class VoucherService {
           .leftJoin('branch', 'brc', 'emp.branch_id = brc.branch_id')
           .where(`emp.id = '${employeeId}'`)
           .andWhere('emp.isDeleted = false')
+          .andWhere('brc.cash_coa_id IsNull')
           .getCount();
 
         if (brcCoaExist == 1) {
