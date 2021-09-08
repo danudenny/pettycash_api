@@ -237,7 +237,7 @@ export class VoucherService {
         voucher.employeeId = payload?.employeeId;
         voucher.items = items;
         voucher.totalAmount = payload?.totalAmount;
-        voucher.paymentType = payload.paymentType;
+        voucher.paymentType = payload.payment_type;
         voucher.state = VoucherState.APPROVED;
         voucher.createUserId = await VoucherService.getUserId();
         voucher.updateUserId = await VoucherService.getUserId();
@@ -249,7 +249,7 @@ export class VoucherService {
       const resultVoucher = new VoucherResponse(createVoucher);
       const data = JSON.stringify({
         voucher_ids: [resultVoucher.data['id']],
-        payment_type: resultVoucher.data['paymentType'],
+        payment_type: resultVoucher.data['payment_type'],
       });
       const options = {
         headers: VoucherService.headerWebhook,
