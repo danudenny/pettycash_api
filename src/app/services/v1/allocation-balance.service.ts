@@ -585,11 +585,6 @@ export class AllocationBalanceService {
             );
           }
 
-          if (currentState === CashBalanceAllocationState.CONFIRMED_BY_SS) {
-            throw new BadRequestException(
-              `Tidak bisa terima Alokasi Saldo Kas dengan status ${currentState}, Alokasi saldo harus diapprove oleh spv HO`,
-            );
-          }
           state = CashBalanceAllocationState.RECEIVED;
           await this.upsertAccountStatementFromExpense(manager, allocation);
         }
