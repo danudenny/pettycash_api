@@ -13,88 +13,87 @@ export class VoucherDTO {
 
   @ApiProperty({
     description: 'Branch ID',
-    example: '28786cd1-bb9e-4926-a332-3a2e1c302e68' //Medan
+    example: '28786cd1-bb9e-4926-a332-3a2e1c302e68', //Medan
   })
   @IsUUID()
   branchId: string;
 
   @ApiProperty({
     description: 'Branch Name',
-    example: 'Medan' //Medan
+    example: 'Medan', //Medan
   })
   @IsUUID()
   branchName: string;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Voucher Number',
-    example: 'VCR202102ABC123'
+    example: 'VCR202102ABC123',
   })
   number: string;
 
   @ApiProperty({
     description: 'Transaction Date',
-    example: '2021-04-01'
+    example: '2021-04-01',
   })
   transactionDate: Date;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Employee ID',
-    example: '7278125a-b229-4b08-a5a6-17b829c45cb3'
+    example: '7278125a-b229-4b08-a5a6-17b829c45cb3',
   })
-  employeeId: string
+  employeeId: string;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Employee NIK',
-    example: '202011839'
+    example: '202011839',
   })
-  employeeNik: string
+  employeeNik: string;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Employee Name',
-    example: 'Kendall Puspita'
+    example: 'Kendall Puspita',
   })
-  employeeName: string
+  employeeName: string;
 
   @ApiProperty({
     description: 'Employee Position',
-    example: 'Driver'
+    example: 'Driver',
   })
-  employeePosition: string
+  employeePosition: string;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Check In Time',
-    example: '2021-04-01T22:00:19Z'
+    example: '2021-04-01T22:00:19Z',
   })
   checkinTime: Date;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Check Out Time',
-    example: '2021-04-01T22:00:19Z'
+    example: '2021-04-01T22:00:19Z',
   })
   checkoutTime: Date;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Total Amount',
-    example: 100000
+    example: 100000,
   })
   totalAmount: number;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Is Realized',
-    example: false
+    example: false,
   })
   isRealized: boolean;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Voucher State',
     example: VoucherState.DRAFT,
   })
   state: VoucherState;
 
-  @ApiProperty( {
+  @ApiProperty({
     description: 'Voucher Payment Type',
     example: VoucherPaymentType.CASH,
   })
   paymentType: VoucherPaymentType;
-
 }
