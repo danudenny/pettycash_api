@@ -458,18 +458,28 @@ export class VoucherService {
             resp.push(res);
             if (
               res['status'] != 'SUCCESS' ||
-              res['status'] != 'APPROVING_EXPENSE_FAILED'
+              res['status'] != 'APPROVING_EXPENSE_FAILED' ||
+              res['status'] != 'GENERATE_JOURNAL_FAILED'
             ) {
               await this.voucherRepo.update(
                 { id: res['voucher_id'] },
                 { paymentType: paymentTypeFromQuery[0] },
               );
+              console.log('query : ' + paymentTypeFromQuery);
+            }
+            if (res['status'] == 'GENERATE_JOURNAL_FAILED') {
+              await this.voucherRepo.update(
+                { id: res['voucher_id'] },
+                { paymentType: data.payment_type },
+              );
+              console.log('query : ' + paymentTypeFromQuery);
             }
             if (res['status'] == 'APPROVING_EXPENSE_FAILED') {
               await this.voucherRepo.update(
                 { id: res['voucher_id'] },
                 { paymentType: data.payment_type },
               );
+              console.log('payload: ' + data.payment_type);
             }
           });
         });
