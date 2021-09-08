@@ -243,13 +243,13 @@ export class VoucherService {
         voucher.updateUserId = await VoucherService.getUserId();
 
         const result = await manager.save(voucher);
+
         return result;
       });
 
-      const resultVoucher = new VoucherResponse(createVoucher);
       const data = JSON.stringify({
-        voucher_ids: [resultVoucher.data['id']],
-        payment_type: resultVoucher.data['payment_type'],
+        voucher_ids: [createVoucher.id],
+        payment_type: createVoucher.paymentType,
       });
       const options = {
         headers: VoucherService.headerWebhook,
@@ -258,11 +258,9 @@ export class VoucherService {
       try {
         await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
       } catch (error) {
-        const checkId = await this.voucherRepo.findByIds(
-          resultVoucher.data['id'],
-        );
+        const checkId = await this.voucherRepo.findByIds([createVoucher.id]);
         if (checkId) {
-          await this.voucherRepo.delete({ id: resultVoucher.data['id'] });
+          await this.voucherRepo.delete({ id: createVoucher.id });
         }
         throw new HttpException(
           'Gagal Menyambungkan ke Webhook',
@@ -270,7 +268,7 @@ export class VoucherService {
         );
       }
 
-      return resultVoucher;
+      return createVoucher;
     } catch (err) {
       throw err;
     }

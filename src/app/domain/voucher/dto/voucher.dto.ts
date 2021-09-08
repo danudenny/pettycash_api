@@ -95,5 +95,5 @@ export class VoucherDTO {
     description: 'Voucher Payment Type',
     example: VoucherPaymentType.CASH,
   })
-  paymentType: VoucherPaymentType;
+  payment_type: VoucherPaymentType;
 }
