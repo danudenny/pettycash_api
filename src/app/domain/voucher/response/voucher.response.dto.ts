@@ -6,31 +6,29 @@ import { BasePaginationResponse } from '../../common/base-pagination-response.dt
 import { VoucherResponseMapper } from '../response-mapper/voucher.response.mapper.dto';
 
 export class VoucherResponse extends BaseResponse {
-	constructor(data?: Partial<VoucherDTO | VoucherDTO[]>) {
-		super();
-		if (data) {
-			this.data = VoucherResponseMapper.fromDTO(data);
-		}
-	}
+  constructor(data?: Partial<VoucherDTO | VoucherDTO[]>) {
+    super();
+    if (data) {
+      this.data = VoucherResponseMapper.fromDTO(data);
+    }
+  }
 
-	@ApiPropertyOptional({ type: () => VoucherDTO })
-	data?: VoucherDTO | VoucherDTO[] = null;
+  @ApiPropertyOptional({ type: () => VoucherDTO })
+  data?: VoucherDTO | VoucherDTO[] = null;
 }
 
 export class VoucherWithPaginationResponse extends BaseResponse {
-	constructor(data?: Partial<VoucherDTO | VoucherDTO[]>, params?: any) {
-		super();
-		if (data) {
-			this.data = VoucherResponseMapper.fromDTO(data);
-			this.meta = PaginationBuilder.build(data, params);
-		}
-	}
+  constructor(data?: Partial<VoucherDTO | VoucherDTO[]>, params?: any) {
+    super();
+    if (data) {
+      this.data = VoucherResponseMapper.fromDTO(data);
+      this.meta = PaginationBuilder.build(data, params);
+    }
+  }
 
-	@ApiPropertyOptional({ type: () => [VoucherDTO] })
-	data?: VoucherDTO | VoucherDTO[] = null;
+  @ApiPropertyOptional({ type: () => [VoucherDTO] })
+  data?: VoucherDTO | VoucherDTO[] = null;
 
-	@ApiPropertyOptional({ type: () => BasePaginationResponse })
-	meta?: BasePaginationResponse;
-
+  @ApiPropertyOptional({ type: () => BasePaginationResponse })
+  meta?: BasePaginationResponse;
 }
-

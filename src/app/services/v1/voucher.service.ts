@@ -95,7 +95,13 @@ export class VoucherService {
   public async list(
     query?: QueryVoucherDTO,
   ): Promise<VoucherWithPaginationResponse> {
-    const params = { order: '^created_at', limit: 10, ...query };
+    const countVoucher = await this.voucherRepo.count();
+    const params = {
+      order: '^created_at',
+      limit: 10,
+      total: countVoucher,
+      ...query,
+    };
     const qb = new QueryBuilder(Voucher, 'vcr', params);
     const {
       userBranchIds,
@@ -137,7 +143,6 @@ export class VoucherService {
         (v) => v.in(userBranchIds),
       );
     }
-
     const vouchers = await qb.exec();
     return new VoucherWithPaginationResponse(vouchers, params);
   }
