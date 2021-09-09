@@ -480,6 +480,13 @@ export class VoucherService {
               );
               console.log('payload: ' + data.payment_type);
             }
+            if (res['status'] == 'SUCCESS') {
+              await this.voucherRepo.update(
+                { id: res['voucher_id'] },
+                { paymentType: data.payment_type },
+              );
+              console.log('query : ' + paymentTypeFromQuery);
+            }
           });
         });
     } catch (error) {
