@@ -689,4 +689,48 @@ export class BalanceService {
         return false;
     }
   }
+
+  /**
+   * Check if can Do Transaction or not based on available Balance
+   *
+   * throw error if balance is not sufficient
+   *
+   * @static
+   * @param {{
+   *     branchId: string;
+   *     amount: number;
+   *     type: BalanceType;
+   *   }} data
+   * @return {*}  {Promise<void>}
+   * @memberof BalanceService
+   */
+  public static async canDoTransaction(data: {
+    branchId: string;
+    amount: number;
+    type: BalanceType;
+  }): Promise<void> {
+    const { branchId, amount, type } = data;
+    const isSufficient = await this.isSufficient({ branchId, amount, type });
+    if (!isSufficient) {
+      let ttype: string;
+
+      switch (type) {
+        case BalanceType.BANK:
+          ttype = 'Bank';
+          break;
+        case BalanceType.CASH:
+          ttype = 'Uang Fisik';
+          break;
+        case BalanceType.BON:
+          ttype = 'Bon';
+          break;
+        default:
+          ttype = undefined;
+          break;
+      }
+
+      const errMsg = `Jumlah tidak boleh lebih dari pada Saldo ${ttype} Sistem`;
+      throw new UnprocessableEntityException(errMsg);
+    }
+  }
 }
