@@ -3,12 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AllocationBalanceController } from '../controllers/v1/allocation-balance.controller';
 import { AllocationBalanceService } from '../services/v1/allocation-balance.service';
 import { CashBalanceAllocation } from '../../model/cash.balance.allocation.entity';
-import { AccountStatementHistory } from '../../model/account-statement-history.entity';
 import { CashBalanceAllocationOdoo } from '../../model/cash.balance.allocation-odoo.entity';
 import { Period } from '../../model/period.entity';
+import { CashBalanceAllocationHistory } from '../../model/cash.balance.allocation-history.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CashBalanceAllocation, AccountStatementHistory, CashBalanceAllocationOdoo, Period])],
+  imports: [TypeOrmModule.forFeature([CashBalanceAllocation, CashBalanceAllocationHistory, CashBalanceAllocationOdoo, Period])],
   providers: [AllocationBalanceService],
   controllers: [AllocationBalanceController],
   exports: [],

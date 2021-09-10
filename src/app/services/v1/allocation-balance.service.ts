@@ -4,8 +4,7 @@ import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.en
 import {
   EntityManager,
   getManager,
-  Repository,
-  createQueryBuilder,
+  Repository
 } from 'typeorm';
 import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
@@ -28,7 +27,6 @@ import {
   MASTER_ROLES,
   PeriodState,
 } from '../../../model/utils/enum';
-import { AccountStatementHistory } from '../../../model/account-statement-history.entity';
 import {
   PaidAllocationDTO,
   RejectAllocationDTO,
@@ -48,14 +46,15 @@ import { JournalItem } from '../../../model/journal-item.entity';
 import { User } from '../../../model/user.entity';
 import { ReceivedAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-received.dto';
 import { AccountStatementService } from './account-statement.service';
+import { CashBalanceAllocationHistory } from '../../../model/cash.balance.allocation-history.entity';
 
 @Injectable()
 export class AllocationBalanceService {
   constructor(
     @InjectRepository(CashBalanceAllocation)
     private readonly cashbalRepo: Repository<CashBalanceAllocation>,
-    @InjectRepository(AccountStatementHistory)
-    private readonly accHistoryRepo: Repository<AccountStatementHistory>,
+    @InjectRepository(CashBalanceAllocationHistory)
+    private readonly accHistoryRepo: Repository<CashBalanceAllocationHistory>,
     @InjectRepository(CashBalanceAllocationOdoo)
     private readonly odooRepo: Repository<CashBalanceAllocationOdoo>,
     @InjectRepository(Period)
@@ -76,8 +75,8 @@ export class AllocationBalanceService {
       state: CashBalanceAllocationState;
       rejectedNote?: string;
     },
-  ): Promise<AccountStatementHistory[]> {
-    const newHistory = new AccountStatementHistory();
+  ): Promise<CashBalanceAllocationHistory[]> {
+    const newHistory = new CashBalanceAllocationHistory();
     const userResponsible = await this.getUser();
     newHistory.state = data.state;
     newHistory.rejectedNote = data.rejectedNote;
@@ -87,7 +86,7 @@ export class AllocationBalanceService {
 
     const history = [].concat(allocation.allocationHistory, [
       newHistory,
-    ]) as AccountStatementHistory[];
+    ]) as CashBalanceAllocationHistory[];
     return history.filter((v) => v);
   }
 
