@@ -136,7 +136,14 @@ export class UserService {
     };
     try {
       const res = await axios.post(url, data, options);
-      return { status: res.status, data: res.data };
+      if (res.data.code == HttpStatus.UNPROCESSABLE_ENTITY) {
+        throw new HttpException(
+          res.data.message,
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      } else {
+        return { status: res.status, data: res.data };
+      }
     } catch (error) {
       console.error(error);
       throw new HttpException(
