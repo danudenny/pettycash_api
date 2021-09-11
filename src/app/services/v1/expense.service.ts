@@ -542,6 +542,10 @@ export class ExpenseService {
           // (Re)Create Journal for SS/SPV HO
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
+          if (isSystemUser) {
+            journal.state = JournalState.POSTED;
+            journal.updateUser = user;
+          }
           await this.createJournal(manager, journal);
 
           // Update Vehicle Kilometer if any.
