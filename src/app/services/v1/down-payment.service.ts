@@ -352,17 +352,7 @@ export class DownPaymentService {
           );
         }
 
-        if (userRole === MASTER_ROLES.PIC_HO) {
-          if (currentState === DownPaymentState.APPROVED_BY_PIC_HO) {
-            throw new BadRequestException(
-              `Can't approve down payment with current state ${currentState}`,
-            );
-          }
-
-          state = DownPaymentState.APPROVED_BY_PIC_HO;
-          isCreateJurnal = true;
-          shouldCreateStatement = true;
-        } else if (
+        if (
           userRole === MASTER_ROLES.SS_HO ||
           userRole === MASTER_ROLES.SPV_HO
         ) {
@@ -378,10 +368,11 @@ export class DownPaymentService {
           shouldCreateLoan = TYPES_SHOULD_CREATE_LOAN.includes(downPaymentType);
         }
 
-        if (!state)
+        if (!state) {
           throw new BadRequestException(
             `Failed to approve down payment due unknown user role!`,
           );
+        }
 
         downPayment.state = state;
         downPayment.amount = payload?.amount || downPayment?.amount;

@@ -1543,12 +1543,7 @@ export class ExpenseService {
       }
     }
 
-    if (
-      ![
-        DownPaymentState.APPROVED_BY_PIC_HO,
-        DownPaymentState.APPROVED_BY_SS_SPV,
-      ].includes(downPayment.state)
-    ) {
+    if (![DownPaymentState.APPROVED_BY_SS_SPV].includes(downPayment.state)) {
       throw new BadRequestException(`Down Payment not approved!`);
     }
 

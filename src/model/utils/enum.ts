@@ -96,7 +96,6 @@ export enum DownPaymentPayType {
 
 export enum DownPaymentState {
   DRAFT = 'draft',
-  APPROVED_BY_PIC_HO = 'approved_by_pic_ho',
   APPROVED_BY_SS_SPV = 'approved_by_ss_spv_ho',
   REVERSED = 'reversed',
   REJECTED = 'rejected',
