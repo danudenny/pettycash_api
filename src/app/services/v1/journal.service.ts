@@ -578,6 +578,19 @@ export class JournalService {
     history.updateUser = user;
     await manager.save(history);
 
+    // Delete existing statement if any
+    await AccountStatementService.deleteAndUpdateBalance(
+      {
+        where: {
+          sourceType: AccountStatementSourceType.DP,
+          reference: downPayment?.number,
+          branchId: downPayment?.branchId,
+          isDeleted: false,
+        },
+      },
+      manager,
+    );
+
     return await manager.save(downPayment);
   }
 
