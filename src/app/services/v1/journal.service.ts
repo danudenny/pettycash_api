@@ -90,6 +90,7 @@ export class JournalService {
       ['j.partner_code', 'partnerCode'],
       ['j.partner_name', 'partnerName'],
       ['j.reference', 'reference'],
+      ['j.down_payment_number', 'downPaymentNumber'],
       ['j.sync_fail_reason', 'syncFailReason'],
       ['j.state', 'state'],
       ['j.total_amount', 'totalAmount'],

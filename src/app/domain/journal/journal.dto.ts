@@ -62,6 +62,12 @@ export class JournalDTO {
   reference: string;
 
   @ApiProperty({
+    description: 'DownPayment Number',
+    example: 'UM/2020/12/XYZA1234',
+  })
+  downPaymentNumber: string;
+
+  @ApiProperty({
     description: 'Journal Sync Fail Reason',
     example: 'Branch Not Found',
   })

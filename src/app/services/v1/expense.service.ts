@@ -1197,6 +1197,7 @@ export class ExpenseService {
     j.periodId = expense.periodId;
     j.number = GenerateCode.journal(expense.transactionDate);
     j.reference = expense.number;
+    j.downPaymentNumber = expense?.downPayment?.number;
     j.sourceType = JournalSourceType.EXPENSE;
     j.partnerName = expense?.partner?.name ?? expense?.employee?.name;
     j.partnerCode = expense?.partner?.code ?? expense?.employee?.nik;
