@@ -150,12 +150,12 @@ export class AllocationBalanceService {
       ['br.branch_name', 'branchName'],
       ['cba.number', 'number'],
       ['cba.amount', 'amount'],
-      ["us.first_name || ' ' || us.last_name", 'picName'],
+      ['us.first_name || \' \' || us.last_name', 'picName'],
       ['us.username', 'nik'],
       ['cba.state', 'state'],
       ['cba.received_date', 'receivedDate'],
       ['cba.is_paid', 'isPaid'],
-      ["ru.first_name || ' ' || ru.last_name", 'receivedUserName'],
+      ['ru.first_name || \' \' || ru.last_name', 'receivedUserName'],
     );
     qb.leftJoin((e) => e.branch, 'br');
     qb.leftJoin((e) => e.responsibleUser, 'us');
@@ -851,7 +851,7 @@ export class AllocationBalanceService {
     j.sourceType = JournalSourceType.ALOKASI;
     j.items = await this.buildJournalItem(alokasi, userRole);
     j.totalAmount = alokasi.amount;
-    j.state = JournalState.APPROVED_BY_SS_SPV_HO;
+    j.state = JournalState.DRAFT;
 
     return j;
   }

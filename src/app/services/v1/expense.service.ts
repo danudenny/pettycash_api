@@ -542,6 +542,10 @@ export class ExpenseService {
           // (Re)Create Journal for SS/SPV HO
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
+          if (isSystemUser) {
+            journal.state = JournalState.POSTED;
+            journal.updateUser = user;
+          }
           await this.createJournal(manager, journal);
 
           // Update Vehicle Kilometer if any.
@@ -1197,6 +1201,7 @@ export class ExpenseService {
     j.periodId = expense.periodId;
     j.number = GenerateCode.journal(expense.transactionDate);
     j.reference = expense.number;
+    j.downPaymentNumber = expense?.downPayment?.number;
     j.sourceType = JournalSourceType.EXPENSE;
     j.partnerName = expense?.partner?.name ?? expense?.employee?.name;
     j.partnerCode = expense?.partner?.code ?? expense?.employee?.nik;
@@ -1543,12 +1548,7 @@ export class ExpenseService {
       }
     }
 
-    if (
-      ![
-        DownPaymentState.APPROVED_BY_PIC_HO,
-        DownPaymentState.APPROVED_BY_SS_SPV,
-      ].includes(downPayment.state)
-    ) {
+    if (![DownPaymentState.APPROVED_BY_SS_SPV].includes(downPayment.state)) {
       throw new BadRequestException(`Down Payment not approved!`);
     }
 

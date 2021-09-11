@@ -30,6 +30,9 @@ export class DownPaymentResponseMapper {
       (dp.transactionDate = dto.transactionDate);
     dp.loanId = dto.loanId;
     dp.loanNumber = dto.loanNumber;
+    dp.loanType = dto.loanType;
+    dp.loanPaidAmount = +dto.loanPaidAmount;
+    dp.loanResidualAmount = +dto.loanResidualAmount;
     dp.loanState = dto.loanState;
     return dp;
   }
@@ -59,6 +62,9 @@ export class DownPaymentResponseMapper {
       transactionDate: ety.transactionDate,
       loanId: ety.loanId,
       loanNumber: ety.loan?.number || null,
+      loanType: ety.loan?.type || null,
+      loanPaidAmount: +ety.loan?.paidAmount || null,
+      loanResidualAmount: +ety.loan?.residualAmount || null,
       loanState: ety.loan?.state || null,
     });
   }

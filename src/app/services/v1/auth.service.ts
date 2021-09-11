@@ -38,6 +38,7 @@ export class AuthService {
   public static async getUser(
     options?: FindOneOptions<User>,
     retry: number = 0,
+    strict: boolean = true,
   ): Promise<User> {
     const MAX_RETRY = 1;
     let username = await AuthService.getUsernameFromHeader();
@@ -62,7 +63,16 @@ export class AuthService {
         if (user) {
           await getConnection().queryResultCache?.clear();
         }
+
+        if (strict && !user) {
+          throw new BadRequestException(`User for ${username} not found!`);
+        }
+
         return user;
+      }
+
+      if (strict && !user) {
+        throw new BadRequestException(`User for ${username} not found!`);
       }
 
       return user;

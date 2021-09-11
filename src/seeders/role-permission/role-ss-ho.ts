@@ -29,7 +29,6 @@ const RoleSSHO = [
 
   'menu.journal:read',
   'journal:read',
-  'journal:approve',
 
   'setting.partner:read',
   'setting.employee:read',

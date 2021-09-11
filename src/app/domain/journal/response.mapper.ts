@@ -8,11 +8,14 @@ export class JournalResponseMapper {
     const j = new JournalDTO();
     j.id = ety.id;
     j.reverseJournalId = ety.reverseJournalId;
+    j.branchId = ety.branch?.id;
+    j.branchName = ety.branch?.branchName;
     j.transactionDate = ety.transactionDate;
     j.periodMonth = ety?.period?.month;
     j.periodYear = ety?.period?.year;
     j.number = ety.number;
     j.reference = ety.reference;
+    j.downPaymentNumber = ety.downPaymentNumber;
     j.syncFailReason = ety.syncFailReason;
     j.partnerName = ety.partnerName;
     j.partnerCode = ety.partnerCode;

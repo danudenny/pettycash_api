@@ -12,6 +12,7 @@ Get list all Journal.
 + Parameters
     + startDate__gte: `2021-01-01` (date, optional) - Start Date to filter.
     + endDate__lte: `2021-12-31` (date, optional) - End Date to filter.
+    + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string, optional) - Branch to filter.
     + state: `draft` (enum[string], optional) - Journal Status.
         + draft
         + approved_by_ss_ho
@@ -36,11 +37,14 @@ Get list all Journal.
             {
               "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
               "reverseJournalId": "45e5bbb9-636f-4a17-8037-953f626fdcbc",
+              "branchId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+              "branchName": "Kebon Jeruk",
               "transactionDate": "2021-01-27",
               "periodMonth": 1,
               "periodYear": 2021,
               "number": "JRNL20200201AAA123",
               "reference": "REF DOC 001",
+              "downPaymentNumber": "UM/2020/12/XYZA1234",
               "partnerName": "PT. ABC DEF",
               "partnerCode": "PRTN001",
               "totalAmount": 900000,
@@ -84,11 +88,15 @@ Get list all Journal.
             },
             {
               "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+              "reverseJournalId": null,
+              "branchId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+              "branchName": "Kebon Jeruk",
               "transactionDate": "2021-01-27",
               "periodMonth": 1,
               "periodYear": 2021,
               "number": "JRNL20200201AAA123",
               "reference": "REF DOC 002",
+              "downPaymentNumber": null,
               "partnerName": "PT. HIJ DEF",
               "partnerCode": "PRTN001",
               "totalAmount": 700000,
@@ -146,113 +154,6 @@ Get list all Journal.
             "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
         }
 
-
-## Approve Journal [PATCH /v1/journals/{id}/approve]
-
-Approve Journal
-
-+ Parameters
-    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Journal ID.
-
-+ Request (application/json)
-    + Header
-
-            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
-
-+ Response 200 (application/json)
-    + Body
-
-+ Response 400 (application/json)
-    + Body
-
-            {
-                "status": "fail",
-                "code": "JOURNAL_APPROVE_FAILED",
-                "message": "failed to approve journal",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-+ Response 404 (application/json)
-    + Body
-
-            {
-                "status": "fail",
-                "code": "JOURNAL_NOT_FOUND",
-                "message": "journal not found",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-+ Response 500 (application/json)
-    + Body
-
-            {
-                "status": "error",
-                "code": "GENERAL_ERROR",
-                "message": "Internal Server Error",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-## Batch Approve Journal [PUT /v1/journals/batch-approve]
-
-Approve Journal in Batch
-
-+ Request (application/json)
-    + Header
-
-            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
-
-    + Attributes (object)
-        + datas: (array)
-            + item:
-                + id: `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string, required) - Journal ID to approve
-
-+ Response 200 (application/json)
-    + Body
-
-        {
-          "status": "success",
-          "data": {
-            "success": [
-              {
-                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
-              },
-              {
-                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
-              }
-            ],
-            "fail": [
-              {
-                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
-              },
-              {
-                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
-              },
-              {
-                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
-              }
-            ]
-          }
-        }
-
-+ Response 400 (application/json)
-    + Body
-
-            {
-                "status": "fail",
-                "code": "JOURNAL_BATCH_APPROVE_FAILED",
-                "message": "failed to batch approve journal",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-+ Response 500 (application/json)
-    + Body
-
-            {
-                "status": "error",
-                "code": "GENERAL_ERROR",
-                "message": "Internal Server Error",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
 
 ## Batch Post Journal [PUT /v1/journals/batch-post]
 
