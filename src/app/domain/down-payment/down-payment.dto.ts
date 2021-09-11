@@ -6,6 +6,7 @@ import {
   DownPaymentState,
   DownPaymentType,
   LoanState,
+  LoanType,
 } from '../../../model/utils/enum';
 
 export class DownPaymentDTO {
@@ -129,6 +130,25 @@ export class DownPaymentDTO {
   loanNumber: string;
 
   @ApiProperty({
+    description: 'Loan Type: `payable` = `hutang`. `receivable` = `piutang`',
+    example: LoanType.PAYABLE,
+    enum: LoanType,
+  })
+  loanType: LoanType;
+
+  @ApiProperty({
+    description: 'Paid Amount (pinjam dibayar)',
+    example: 10000,
+  })
+  loanPaidAmount: number;
+
+  @ApiProperty({
+    description: 'Residual Amount (sisa pinjaman)',
+    example: 40000,
+  })
+  loanResidualAmount: number;
+
+  @ApiProperty({
     description: 'Loan State',
     example: LoanState.UNPAID,
     enum: LoanState,
@@ -248,6 +268,25 @@ export class ShowDownPaymentDTO {
 
   @ApiProperty({ description: 'Loan Number', example: 'LOAN202107ATY876' })
   loanNumber: string;
+
+  @ApiProperty({
+    description: 'Loan Type: `payable` = `hutang`. `receivable` = `piutang`',
+    example: LoanType.PAYABLE,
+    enum: LoanType,
+  })
+  loanType: LoanType;
+
+  @ApiProperty({
+    description: 'Paid Amount (pinjam dibayar)',
+    example: 10000,
+  })
+  loanPaidAmount: number;
+
+  @ApiProperty({
+    description: 'Residual Amount (sisa pinjaman)',
+    example: 40000,
+  })
+  loanResidualAmount: number;
 
   @ApiProperty({
     description: 'Loan State',

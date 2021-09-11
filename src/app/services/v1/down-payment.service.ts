@@ -126,6 +126,9 @@ export class DownPaymentService {
         ['prd.name', 'productName'],
         ['lo.id', 'loanId'],
         ['lo."number"', 'loanNumber'],
+        ['lo.type', 'loanType'],
+        ['lo.paid_amount', 'loanPaidAmount'],
+        ['lo.residual_amount', 'loanResidualAmount'],
         ['lo.state', 'loanState'],
       );
       qb.leftJoin((e) => e.branch, 'brc');
