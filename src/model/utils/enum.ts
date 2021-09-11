@@ -162,8 +162,6 @@ export enum AccountTaxPartnerType {
 
 export enum JournalState {
   DRAFT = 'draft',
-  APPROVED_BY_SS_SPV_HO = 'approved_by_ss_spv_ho',
-  APPROVED_BY_TAX = 'approved_by_tax',
   POSTED = 'posted',
   SYNC_FAILED = 'sync_failed',
 }

@@ -1,6 +1,5 @@
 import { cloneDeep } from 'lodash';
 import {
-  getConnection,
   Repository,
   getManager,
   EntityManager,
@@ -35,7 +34,7 @@ import { JournalItem } from '../../../model/journal-item.entity';
 import { Period } from '../../../model/period.entity';
 import { User } from '../../../model/user.entity';
 import { ReverseJournalDTO } from '../../domain/journal/reverse.dto';
-import { BatchPayloadJournalDTO } from '../../domain/journal/approve.dto';
+import { BatchPayloadJournalDTO } from '../../domain/journal/batch-payload.dto';
 import { QueryJournalDTO } from '../../domain/journal/journal.payload.dto';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { JournalBatchResponse } from '../../domain/journal/response-batch.dto';
@@ -58,17 +57,19 @@ export class JournalService {
   public async list(
     query: QueryJournalDTO,
   ): Promise<JournalWithPaginationResponse> {
-    const {
-      userBranchIds,
-      userRoleName,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
-    const SS_SPV_ROLES = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO];
+    const { userRoleName } = await AuthService.getUserBranchAndRole();
     const NOT_ALLOWED_ROLES = [
       MASTER_ROLES.ADMIN_BRANCH,
       MASTER_ROLES.OPS,
       MASTER_ROLES.PIC_HO,
     ];
+
+    // Throw error for some user role.
+    if (NOT_ALLOWED_ROLES.includes(userRoleName)) {
+      throw new UnprocessableEntityException(
+        `You're not allowed to access this menu`,
+      );
+    }
 
     const params = { order: '-transactionDate', ...query };
     const qb = new QueryBuilder(Journal, 'j', params);
@@ -144,92 +145,14 @@ export class JournalService {
     );
     qb.qb.addOrderBy('j.updated_at', 'DESC');
 
-    if (!isSuperUser) {
-      // Throw error for some user role.
-      if (NOT_ALLOWED_ROLES.includes(userRoleName)) {
-        throw new UnprocessableEntityException();
-      }
-
-      // filter by assigned branch if userRoleName SS/SPV HO.
-      // only show journals:
-      //  - state: `draft`
-      //  - state: `approved_by_ss_spv_ho`
-      //  - state: `sync_failed`
-      if (SS_SPV_ROLES.includes(userRoleName)) {
-        if (userBranchIds?.length) {
-          qb.andWhere(
-            (e) => e.branchId,
-            (v) => v.in(userBranchIds),
-          );
-        }
-        qb.qb.andWhere(
-          `(j.state IN ('draft', 'approved_by_ss_spv_ho', 'sync_failed'))`,
-        );
-      }
-
-      // if userRoleName is Tax
-      // only show journal that contains tax and
-      //  - state: `approved_by_tax`
-      //  - state: `approved_by_ss_spv_ho`
-      //  - state: `sync_failed`
-      if (userRoleName === MASTER_ROLES.TAX) {
-        const journalTaxSql = `SELECT tji.journal_id
-        FROM journal_item tji
-        INNER JOIN account_coa tac ON tac.id = tji.coa_id
-        INNER JOIN journal jl ON jl.id = tji.journal_id
-        WHERE tac.id IN (SELECT coa_id FROM account_tax WHERE is_deleted = FALSE AND coa_id IS NOT NULL GROUP BY coa_id)
-          AND jl.state IN ('approved_by_tax', 'approved_by_ss_spv_ho', 'sync_failed')
-        GROUP BY tji.journal_id`;
-
-        qb.qb.andWhere(`(j.id IN (${journalTaxSql}))`);
-      }
-
-      // if role accounting then only show for
-      // - journal no tax: state `approved_by_ss_spv_ho`
-      // - journal has tax: state `approved_by_tax`
-      // - journal with state `posted`
-      // - journal with state `sync_failed`
-      if (userRoleName === MASTER_ROLES.ACCOUNTING) {
-        const journalIdsAccounting = `(
-          WITH journal_id_has_tax AS (
-            SELECT tji.journal_id
-            FROM journal_item tji
-            INNER JOIN account_coa tac ON tac.id = tji.coa_id
-            WHERE tac.id IN (SELECT coa_id FROM account_tax WHERE is_deleted = FALSE AND coa_id IS NOT NULL GROUP BY coa_id) AND tji.is_deleted = FALSE
-            GROUP BY tji.journal_id
-          ),
-          journal_id_no_tax AS (
-            SELECT id FROM journal WHERE state = 'approved_by_ss_spv_ho' AND id NOT IN (SELECT * FROM journal_id_has_tax) AND is_deleted = FALSE
-          )
-          SELECT id FROM journal WHERE id IN (SELECT * FROM journal_id_has_tax) AND state = 'approved_by_tax' AND is_deleted = FALSE
-          UNION
-          SELECT id FROM journal WHERE id IN (SELECT * FROM journal_id_no_tax) AND is_deleted = FALSE
-          UNION
-          SELECT id FROM journal WHERE state IN ('posted', 'sync_failed') AND is_deleted = FALSE
-        )`;
-
-        qb.qb.andWhere(`(j.id IN (${journalIdsAccounting}))`);
-      }
+    // Throw error for some user role.
+    if (NOT_ALLOWED_ROLES.includes(userRoleName)) {
+      throw new UnprocessableEntityException();
     }
 
     const journals = await qb.exec();
 
     return new JournalWithPaginationResponse(journals, params);
-  }
-
-  /**
-   * Approve journal in Batch
-   *
-   * @param {BatchPayloadJournalDTO} payload Array of Journal ID
-   * @return {*}  {Promise<JournalBatchResponse>}
-   * @memberof JournalService
-   */
-  public async batchApprove(
-    payload: BatchPayloadJournalDTO,
-  ): Promise<JournalBatchResponse> {
-    const journalIds = payload?.datas?.map((data) => data.id);
-    const result = await this.approveJournal(journalIds);
-    return new JournalBatchResponse(result);
   }
 
   /**
@@ -716,71 +639,6 @@ export class JournalService {
   }
 
   /**
-   * Internal helper to approve journal in batch.
-   *
-   * @private
-   * @param {string[]} ids Array of Journal ID
-   * @return {*}  {Promise<{ success: object[], fail: object[] }>}
-   * @memberof JournalService
-   */
-  private async approveJournal(
-    ids: string[],
-  ): Promise<{ success: object[]; fail: object[] }> {
-    const { APPROVED_BY_SS_SPV_HO, APPROVED_BY_TAX, POSTED } = JournalState;
-    const user = await AuthService.getUser({ relations: ['role'] });
-    const userRole = user?.role?.name as MASTER_ROLES;
-    const SS_SPV_ROLES = [MASTER_ROLES.SS_HO, MASTER_ROLES.SPV_HO];
-
-    let state: JournalState;
-    if (SS_SPV_ROLES.includes(userRole)) {
-      state = APPROVED_BY_SS_SPV_HO;
-    } else if (userRole === MASTER_ROLES.TAX) {
-      state = APPROVED_BY_TAX;
-    }
-
-    const journalToUpdateIds: string[] = [];
-    const failedIds: object[] = [];
-    const journals = await this.journalRepo.find({
-      where: {
-        id: In(ids),
-        isDeleted: false,
-      },
-    });
-
-    for (const journal of journals) {
-      if ([state, POSTED].includes(journal.state)) {
-        failedIds.push({ id: journal.id });
-        continue;
-      }
-      // journal appproved by tax can't be approve (again) by ss/spv ho.
-      if (SS_SPV_ROLES.includes(userRole)) {
-        if (journal.state === APPROVED_BY_TAX) {
-          failedIds.push({ id: journal.id });
-          continue;
-        }
-      }
-      journalToUpdateIds.push(journal.id);
-    }
-
-    if (!state) {
-      throw new UnprocessableEntityException(
-        `Failed to approve journals due unknown state!`,
-      );
-    }
-
-    await this.journalRepo.update(
-      { id: In(journalToUpdateIds) },
-      { state, updateUser: user },
-    );
-
-    const successIds = journalToUpdateIds?.map((id) => {
-      return { id };
-    });
-    const result = { success: successIds, fail: failedIds };
-    return result;
-  }
-
-  /**
    * Internal helper to post journal in batch.
    *
    * @private
@@ -793,7 +651,7 @@ export class JournalService {
   ): Promise<{ success: object[]; fail: object[] }> {
     const user = await AuthService.getUser({ relations: ['role'] });
     const userRole = user?.role?.name as MASTER_ROLES;
-    const NOT_ALLOWED_STATE = [JournalState.POSTED, JournalState.DRAFT];
+    const NOT_ALLOWED_STATE = [JournalState.POSTED];
 
     if (userRole !== MASTER_ROLES.ACCOUNTING) {
       throw new BadRequestException(
@@ -810,7 +668,6 @@ export class JournalService {
       },
       select: ['id', 'state'],
     });
-    const journalTaxIds = await this.getJournalTaxIds(ids);
 
     for (const journal of journals) {
       // Journal with state `sync_failed` automatically allow to be posted.
@@ -819,18 +676,11 @@ export class JournalService {
         continue;
       }
 
-      // if journal has tax, must be approve by tax first.
-      if (journalTaxIds.includes(journal.id)) {
-        if (journal.state !== JournalState.APPROVED_BY_TAX) {
-          failedIds.push({ id: journal.id });
-          continue;
-        }
-      } else {
-        if (NOT_ALLOWED_STATE.includes(journal.state)) {
-          failedIds.push({ id: journal.id });
-          continue;
-        }
+      if (NOT_ALLOWED_STATE.includes(journal.state)) {
+        failedIds.push({ id: journal.id });
+        continue;
       }
+
       journalToUpdateIds.push(journal.id);
     }
 
@@ -843,33 +693,10 @@ export class JournalService {
       },
     );
 
-    // TODO: publish message to kafka?
-
     const successIds = journalToUpdateIds?.map((id) => {
       return { id };
     });
     const result = { success: successIds, fail: failedIds };
     return result;
-  }
-
-  /**
-   * Internal helper for get journal that has tax.
-   *
-   * @static
-   * @param {string[]} ids Array of Journal ID.
-   * @return {*}  {Promise<any[]>}
-   * @memberof JournalService
-   */
-  private async getJournalTaxIds(ids: string[]): Promise<string[]> {
-    const journalTaxSql = `SELECT tji.journal_id
-    FROM journal_item tji
-    INNER JOIN account_coa tac ON tac.id = tji.coa_id
-    WHERE tac.id IN (SELECT coa_id FROM account_tax WHERE is_deleted = FALSE AND coa_id IS NOT NULL GROUP BY coa_id)
-      AND tji.journal_id = ANY($1)
-    GROUP BY tji.journal_id`;
-    const journals = await getConnection().query(journalTaxSql, [ids]);
-    return journals?.map((j: any) => {
-      return j.journal_id;
-    });
   }
 }
