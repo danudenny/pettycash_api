@@ -76,6 +76,7 @@ export class JournalService {
 
     qb.fieldResolverMap['startDate__gte'] = 'j.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'j.transaction_date';
+    qb.fieldResolverMap['branchId'] = 'j.branch_id';
     qb.fieldResolverMap['state'] = 'j.state';
     qb.fieldResolverMap['partner__icontains'] = 'j.partner_name';
     qb.fieldResolverMap['number__icontains'] = 'j.number';
@@ -94,6 +95,7 @@ export class JournalService {
       ['j.total_amount', 'totalAmount'],
       ['j.transaction_date', 'transactionDate'],
       ['j.created_at', 'createdAt'],
+      ['(array_agg(brc.branch))[1]', 'branch'],
       ['(array_agg(p.periods))[1]', 'period'],
       ['(array_agg(jitem.items))[1]', 'items'],
     );
@@ -137,6 +139,18 @@ export class JournalService {
       GROUP BY p2.id)`,
       'p',
       'p.id = j.period_id',
+    );
+    qb.qb.leftJoin(
+      `(SELECT
+        b.id,
+        json_build_object(
+          'id', b.id,
+          'branchName', b.branch_name
+        ) AS branch
+      FROM branch b
+      GROUP BY b.id)`,
+      'brc',
+      'brc.id = j.branch_id',
     );
     qb.qb.groupBy('j.id');
     qb.andWhere(

@@ -19,6 +19,19 @@ export class JournalDTO {
   reverseJournalId: string;
 
   @ApiProperty({
+    description: 'Branch ID',
+    example: 'eaaf465b-65bc-4784-909e-8d0180c6eb4c',
+  })
+  @IsUUID()
+  branchId: string;
+
+  @ApiProperty({
+    description: 'Branch Name',
+    example: 'Kebon Jeruk',
+  })
+  branchName: string;
+
+  @ApiProperty({
     description: 'Transaction Date',
     example: '2021-01-27',
   })
