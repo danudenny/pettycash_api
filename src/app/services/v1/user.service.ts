@@ -147,7 +147,7 @@ export class UserService {
     } catch (error) {
       console.error(error);
       throw new HttpException(
-        'Gagal Menyambungkan ke Service master, hubungi admin!',
+        error.message,
         HttpStatus.BAD_REQUEST,
       );
     }
