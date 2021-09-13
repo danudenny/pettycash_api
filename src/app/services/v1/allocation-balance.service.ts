@@ -35,7 +35,6 @@ import dayjs from 'dayjs';
 import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/dto/allocation-balance-detail.dto';
-import { CreateAllocationBalanceOdooDTO } from '../../domain/allocation-balance/dto/allocation-balance-odoo-create.dto';
 import { CashBalanceAllocationOdoo } from '../../../model/cash.balance.allocation-odoo.entity';
 import { RevisionAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-balance-revision.dto';
 import { AccountStatement } from '../../../model/account-statement.entity';
@@ -275,8 +274,7 @@ export class AllocationBalanceService {
   }
 
   public async approve(
-    id: string,
-    payload?: CreateAllocationBalanceOdooDTO,
+    id: string
   ): Promise<any> {
     const approveAllocation = await getManager().transaction(
       async (manager) => {
@@ -317,50 +315,13 @@ export class AllocationBalanceService {
               `Alokasi Saldo Kas sudah di batalkan`,
             );
           }
-          if (currentState === CashBalanceAllocationState.CONFIRMED_BY_SS) {
+          if (currentState === CashBalanceAllocationState.APPROVED_BY_SS) {
             throw new BadRequestException(
               `Tidak bisa konfirmasi Alokasi Saldo Kas dengan status ${currentState}`,
             );
           }
-          if (currentState === CashBalanceAllocationState.APPROVED_BY_SPV) {
-            throw new BadRequestException(
-              `Alokasi Saldo Kas sudah diapprove oleh ${currentState}, dan ${CashBalanceAllocationState.CONFIRMED_BY_SS} tidak bisa melakukan konfirmasi.`,
-            );
-          }
 
-          const createOdoo = this.odooRepo.create(payload);
-          const userResponsible = await this.getUser();
-          createOdoo.createUserId = userResponsible.id;
-          createOdoo.updateUserId = userResponsible.id;
-          createOdoo.accountNumber = null;
-          createOdoo.amount = allocation.amount;
-          createOdoo.number = allocation.number;
-          createOdoo.branchName = allocation.branch.branchName;
-          createOdoo.description = allocation.description;
-          createOdoo.authKey = '2ee2cec3302e26b8030b233d614c4f4e';
-          createOdoo.analyticAccount = allocation.branch.branchCode;
-
-          state = CashBalanceAllocationState.CONFIRMED_BY_SS;
-          if (state === CashBalanceAllocationState.CONFIRMED_BY_SS) {
-            await this.odooRepo.save(createOdoo);
-          }
-        }
-
-        // ! HINT: Approve by SPV HO
-        if (userRole === MASTER_ROLES.SPV_HO) {
-          if (currentState === CashBalanceAllocationState.REJECTED) {
-            throw new BadRequestException(`Alokasi Saldo Kas sudah di tolak`);
-          }
-          if (currentState === CashBalanceAllocationState.CANCELED) {
-            throw new BadRequestException(
-              `Alokasi Saldo Kas sudah di batalkan`,
-            );
-          }
-          if (currentState === CashBalanceAllocationState.CONFIRMED_BY_SS) {
-            throw new BadRequestException(
-              `SPV HO tidak bisa approve Alokasi Saldo`,
-            );
-          }
+          state = CashBalanceAllocationState.APPROVED_BY_SS;
         }
 
         if (!state) {
@@ -377,19 +338,13 @@ export class AllocationBalanceService {
         return await manager.save(allocation);
       },
     );
-    if (approveAllocation['state'] === 'confirmed_by_ss_ho') {
-      throw new HttpException(`Konfirmasi setuju dari SS HO`, HttpStatus.OK);
+    if (approveAllocation['state'] === 'approved_by_ss_ho') {
+      throw new HttpException(`Approve dari SS HO`, HttpStatus.OK);
     }
     if (approveAllocation['state'] === CashBalanceAllocationState.EXPIRED) {
       throw new HttpException(
         `Form yang telah lewat batas tanggal transfer`,
         HttpStatus.NOT_IMPLEMENTED,
-      );
-    }
-    if (approveAllocation['state'] === 'approved_by_spv_ho') {
-      throw new HttpException(
-        `Gagal Approve oleh SPV HO`,
-        HttpStatus.BAD_REQUEST,
       );
     }
   }
@@ -436,12 +391,11 @@ export class AllocationBalanceService {
             ![
               MASTER_ROLES.PIC_HO,
               MASTER_ROLES.SS_HO,
-              MASTER_ROLES.SPV_HO,
               MASTER_ROLES.SUPERUSER,
             ].includes(userRole)
           ) {
             throw new BadRequestException(
-              `Hanya PIC/SS/SPV HO yang dapat menolak Alokasi Saldo Kas!`,
+              `Hanya PIC/SS yang dapat menolak Alokasi Saldo Kas!`,
             );
           }
 
