@@ -1676,7 +1676,13 @@ export class ExpenseService {
     loan.createUserId = expense.createUserId;
     loan.updateUserId = expense.updateUserId;
 
-    return await manager.save(loan);
+    const newLoan = await manager.save(loan);
+
+    // Update DownPayment to add link to this newLoan
+    downPayment.loanId = newLoan?.id;
+    await manager.save(downPayment);
+
+    return newLoan;
   }
 
   /**
