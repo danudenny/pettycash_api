@@ -228,6 +228,27 @@ export class VoucherService {
           );
         }
 
+        const checkBranchBalance = await createQueryBuilder('balance', 'blc')
+          .select('blc.*')
+          .leftJoin('voucher', 'vcr', 'blc.branch_id = vcr.branch_id')
+          .where(`blc.branch_id = '${branchId}'`)
+          .groupBy('blc.branch_id')
+          .getRawOne();
+
+        if(payload.payment_type == 'cash' && payload.totalAmount >= checkBranchBalance.cash_amount ) {
+          throw new HttpException(
+            'Tidak dapat melebihi saldo kas cabang',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+
+        if(payload.payment_type == 'bank' && payload.totalAmount >= checkBranchBalance.bank_amount ) {
+          throw new HttpException(
+            'Tidak dapat melebihi saldo bank cabang',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+
         // Build VOucher
         const voucher = new Voucher();
         voucher.branchId = branchId;
