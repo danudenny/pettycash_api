@@ -427,6 +427,18 @@ export class JournalService {
     history.rejectedNote = `Journal reversed by ${user?.firstName} ${user?.lastName}`;
     await manager.save(history);
 
+    // Hard Delete AccountStatement (mutasi) from expense.
+    await AccountStatementService.deleteAndUpdateBalance(
+      {
+        where: {
+          sourceType: AccountStatementSourceType.EXPENSE,
+          reference: expense?.number,
+          branchId: expense?.branchId,
+        },
+      },
+      manager,
+    );
+
     return await manager.save(expense);
   }
 

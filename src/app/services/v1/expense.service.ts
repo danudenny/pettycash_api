@@ -19,6 +19,7 @@ import { ExpenseItem } from '../../../model/expense-item.entity';
 import { Expense } from '../../../model/expense.entity';
 import {
   AccountStatementAmountPosition,
+  AccountStatementSourceType,
   AccountStatementType,
   AccountTaxGroup,
   AccountTaxPartnerType,
@@ -1790,6 +1791,7 @@ export class ExpenseService {
     await AccountStatementService.deleteAndUpdateBalance(
       {
         where: {
+          sourceType: AccountStatementSourceType.EXPENSE,
           reference: expense?.number,
           branchId: expense?.branchId,
           isDeleted: false,
@@ -1818,6 +1820,7 @@ export class ExpenseService {
     stmt.branchId = expense.branchId;
     stmt.createUser = expense.updateUser;
     stmt.updateUser = expense.updateUser;
+    stmt.sourceType = AccountStatementSourceType.EXPENSE;
     stmt.reference = expense.number;
     stmt.amount = expense.totalAmount;
     stmt.transactionDate = expense.transactionDate;
