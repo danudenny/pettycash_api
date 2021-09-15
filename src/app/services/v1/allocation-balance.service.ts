@@ -35,7 +35,6 @@ import dayjs from 'dayjs';
 import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/dto/allocation-balance-detail.dto';
-import { CashBalanceAllocationOdoo } from '../../../model/cash.balance.allocation-odoo.entity';
 import { RevisionAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-balance-revision.dto';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import { CreateAllocationBalanceDto } from '../../domain/allocation-balance/dto/create-allocation-balance.dto';
@@ -54,8 +53,6 @@ export class AllocationBalanceService {
     private readonly cashbalRepo: Repository<CashBalanceAllocation>,
     @InjectRepository(CashBalanceAllocationHistory)
     private readonly accHistoryRepo: Repository<CashBalanceAllocationHistory>,
-    @InjectRepository(CashBalanceAllocationOdoo)
-    private readonly odooRepo: Repository<CashBalanceAllocationOdoo>,
     @InjectRepository(Period)
     private readonly periodRepo: Repository<Period>,
   ) {}
