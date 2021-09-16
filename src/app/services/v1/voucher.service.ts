@@ -235,16 +235,9 @@ export class VoucherService {
           .groupBy('blc.branch_id')
           .getRawOne();
 
-        if(payload.payment_type == 'cash' && payload.totalAmount >= checkBranchBalance.cash_amount ) {
+        if(payload.payment_type == 'cash' && payload.totalAmount >= checkBranchBalance.cash_amount || payload.payment_type == 'bank' && payload.totalAmount >= checkBranchBalance.bank_amount ) {
           throw new HttpException(
-            'Tidak dapat melebihi saldo kas cabang',
-            HttpStatus.BAD_REQUEST,
-          );
-        }
-
-        if(payload.payment_type == 'bank' && payload.totalAmount >= checkBranchBalance.bank_amount ) {
-          throw new HttpException(
-            'Tidak dapat melebihi saldo bank cabang',
+            'Saldo cabang tidak cukup',
             HttpStatus.BAD_REQUEST,
           );
         }

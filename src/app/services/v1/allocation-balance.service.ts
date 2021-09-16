@@ -4,7 +4,8 @@ import { CashBalanceAllocation } from '../../../model/cash.balance.allocation.en
 import {
   EntityManager,
   getManager,
-  Repository
+  Repository,
+  createQueryBuilder
 } from 'typeorm';
 import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
@@ -570,8 +571,7 @@ export class AllocationBalanceService {
             return AllocationBalanceService.createJournal(manager, journal);
           }
         } catch (error) {
-          console.log(error);
-          throw new Error(error);
+          throw new HttpException(error.response, error.status);
         }
       },
     );
@@ -735,6 +735,20 @@ export class AllocationBalanceService {
         name: dayjs(new Date()).format('MM-YYYY'),
       },
     });
+
+    const checkCoa = await createQueryBuilder('account_coa', 'coa')
+        .select('coa.id')
+        .where(`coa.id = '${alokasi?.branch?.cashCoaId}'`)
+        .andWhere('coa.isDeleted = false')
+        .andWhere('coa.isActive = true')
+        .getOne();
+
+    if(checkCoa == null) {
+      throw new HttpException(
+        'Akun Coa Tidak Ditemukan',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
     const i = new JournalItem();
     i.createUser = user;
