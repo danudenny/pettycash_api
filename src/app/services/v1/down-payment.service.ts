@@ -273,7 +273,10 @@ export class DownPaymentService {
         }
 
         const dpRepo = manager.getRepository(DownPayment);
-        const dp = await dpRepo.findOne({ where, select: ['id', 'state'] });
+        const dp = await dpRepo.findOne({
+          where,
+          select: ['id', 'state', 'branchId', 'paymentType', 'amount'],
+        });
 
         if (!dp) {
           throw new NotFoundException(`DownPayment with ID ${id} not found!`);
