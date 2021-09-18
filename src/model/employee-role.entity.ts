@@ -42,19 +42,22 @@ export class EmployeeRole extends BaseEntity {
   @Column('character varying', {
     name: 'employee_level',
     length: 50,
+    nullable: true,
   })
-  employeeLevel: string;
+  employeeLevel?: string;
 
   @Column('character varying', {
     name: 'employee_position',
     length: 50,
+    nullable: true,
   })
-  employeePosition: string;
+  employeePosition?: string;
 
   @Column('text', {
     name: 'description',
+    nullable: true,
   })
-  description: string;
+  description?: string;
 
   @Column('boolean', {
     nullable: false,

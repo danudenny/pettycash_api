@@ -70,6 +70,7 @@
     "tofo": "^1.4.4",
     "ts-simple-ast": "^21.0.4",
     "tsconfig-extends": "^1.0.1",
+    "typeorm": "0.2.32",
     "typeorm-query-builder-wrapper": "^1.0.22",
     "xlsx": "^0.16.9"
   },
