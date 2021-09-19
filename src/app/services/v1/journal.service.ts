@@ -17,6 +17,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Journal } from '../../../model/journal.entity';
 import { JournalWithPaginationResponse } from '../../domain/journal/response.dto';
 import {
+  AccountPaymentState,
   AccountStatementSourceType,
   DownPaymentState,
   DownPaymentType,
@@ -263,7 +264,7 @@ export class JournalService {
         } else if (sourceType === JournalSourceType.DP) {
           await this.reverseDownPaymentFromJournal(manager, journal);
         } else if (sourceType === JournalSourceType.PAYMENT) {
-          await this.removePaymentFromJournal(manager, journal);
+          await this.reversePaymentFromJournal(manager, journal);
         }
 
         // Clone Journal for Creating new Reversal Journal
@@ -605,7 +606,10 @@ export class JournalService {
     if (!loan) return;
 
     // If Loan has Payments, need to reverse journal payments first.
-    if (loan.payments?.length > 0) {
+    const activePayments = loan.payments?.filter(
+      (p) => p.state !== AccountPaymentState.REVERSED,
+    );
+    if (activePayments?.length > 0) {
       throw new UnprocessableEntityException(
         `Loan from this transaction has payments. ` +
           `Please reverse the payments journal's before reversing this journal!`,
@@ -615,11 +619,12 @@ export class JournalService {
     }
   }
 
-  private async removePaymentFromJournal(
+  private async reversePaymentFromJournal(
     manager: EntityManager,
     journal: Journal,
   ): Promise<void> {
-    const payment = await manager.findOne(AccountPayment, {
+    const paymentRepo = manager.getRepository(AccountPayment);
+    const payment = await paymentRepo.findOne({
       where: {
         number: journal?.reference,
         branchId: journal?.branchId,
@@ -642,7 +647,7 @@ export class JournalService {
       manager,
     );
 
-    // Update Loan
+    // Update Loan state
     const amount = payment?.amount || 0;
     const sqlUpdateLoan = `UPDATE loan
       SET paid_amount = paid_amount - ${amount},
@@ -651,17 +656,14 @@ export class JournalService {
         updated_at = now(),
         update_user_id = '${journal?.updateUser?.id}'
       WHERE id IN (
-        SELECT loan_id FROM loan_payment WHERE payment_id IN (
-          SELECT id FROM account_payment WHERE number = '${journal?.reference}' AND branch_id = '${journal?.branchId}'
-        )
+        SELECT loan_id FROM loan_payment WHERE payment_id = '${payment?.id}'
       )`;
     await manager.query(sqlUpdateLoan);
 
-    // Hard Delete Payments.
-    await manager.delete(AccountPayment, {
-      number: journal?.reference,
-      branchId: journal?.branchId,
-      isDeleted: false,
+    // Update Payment state
+    await paymentRepo.update(payment?.id, {
+      state: AccountPaymentState.REVERSED,
+      updateUserId: journal?.updateUser?.id,
     });
   }
 
