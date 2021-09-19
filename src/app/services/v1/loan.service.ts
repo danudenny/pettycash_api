@@ -560,7 +560,7 @@ export class LoanService {
     const dpRepo = manager.getRepository(DownPayment);
     const dp = await dpRepo.findOne({
       where: { id: loan?.downPaymentId },
-      select: ['id', 'type', 'productId', 'product'],
+      select: ['id', 'type', 'productId', 'product', 'number'],
       relations: ['product'],
     });
 
@@ -574,6 +574,7 @@ export class LoanService {
     j.periodId = loan.periodId;
     j.number = GenerateCode.journal(payment.transactionDate);
     j.reference = payment.number;
+    j.downPaymentNumber = dp?.number;
     j.sourceType = JournalSourceType.PAYMENT;
     j.partnerName = loan?.employee?.name;
     j.partnerCode = loan?.employee?.nik;
