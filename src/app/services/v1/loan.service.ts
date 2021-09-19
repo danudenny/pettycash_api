@@ -23,6 +23,7 @@ import { AccountPayment } from '../../../model/account-payment.entity';
 import { AuthService } from './auth.service';
 import {
   AccountPaymentPayMethod,
+  AccountPaymentState,
   AccountPaymentType,
   AccountStatementAmountPosition,
   AccountStatementSourceType,
@@ -403,6 +404,7 @@ export class LoanService {
         const existingPayments = loan.payments || [];
         loan.payments = existingPayments.concat([payment]);
         loan.paidAmount = loan?.payments
+          .filter((p) => p.state !== AccountPaymentState.REVERSED)
           .map((m) => Number(m.amount))
           .filter((i) => i)
           .reduce((a, b) => a + b, 0);
@@ -479,6 +481,7 @@ export class LoanService {
     payment.transactionDate = new Date();
     payment.number = GenerateCode.payment(payment.transactionDate);
     payment.paymentMethod = payload.paymentMethod;
+    payment.state = AccountPaymentState.PAID;
     payment.createUserId = loan.updateUserId;
     payment.updateUserId = loan.updateUserId;
 

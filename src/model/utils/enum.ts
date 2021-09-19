@@ -134,6 +134,11 @@ export enum AccountPaymentType {
   FULL = 'full',
 }
 
+export enum AccountPaymentState {
+  PAID = 'paid',
+  REVERSED = 'reversed',
+}
+
 /**
  * receivable -> Piutang = Hutang perusahaan terhadap karyawan.
  * payable ->  Hutang = Hutang karyawan terhadap perusahaan.

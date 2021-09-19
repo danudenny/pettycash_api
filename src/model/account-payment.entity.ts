@@ -1,7 +1,11 @@
 import { Entity, Column, JoinColumn, ManyToOne, Index } from 'typeorm';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
-import { AccountPaymentPayMethod, AccountPaymentType } from './utils/enum';
+import {
+  AccountPaymentPayMethod,
+  AccountPaymentState,
+  AccountPaymentType,
+} from './utils/enum';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 @Entity('account_payment')
@@ -39,6 +43,15 @@ export class AccountPayment extends PtcBaseEntity {
     comment: 'Payment Method either cash or bank',
   })
   paymentMethod: AccountPaymentPayMethod;
+
+  @Column({
+    type: 'enum',
+    enum: AccountPaymentState,
+    name: 'state',
+    default: AccountPaymentState.PAID,
+    comment: 'Payment State either paid or reversed',
+  })
+  state: AccountPaymentState;
 
   @ManyToOne(() => Branch)
   @JoinColumn({ name: 'branch_id' })
