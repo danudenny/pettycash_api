@@ -46,7 +46,7 @@
     "@nestjs/core": "^7.6.5",
     "@nestjs/platform-express": "^7.6.4",
     "@nestjs/swagger": "^4.7.11",
-    "@nestjs/typeorm": "^7.1.5",
+    "@nestjs/typeorm": "7.1.5",
     "@types/node": "^14.14.25",
     "@types/request": "^2.48.5",
     "aws-sdk": "^2.856.0",
@@ -70,7 +70,6 @@
     "tofo": "^1.4.4",
     "ts-simple-ast": "^21.0.4",
     "tsconfig-extends": "^1.0.1",
-    "typeorm": "0.2.32",
     "typeorm-query-builder-wrapper": "^1.0.22",
     "xlsx": "^0.16.9"
   },

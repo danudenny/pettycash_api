@@ -42,7 +42,7 @@ export class AuthorizationDTO {
 
   @ApiProperty({
     description: 'Permissions',
-    examples: ['period:read', 'period:close'],
+    example: ['period:read', 'period:close'],
   })
   permissions: string[];
 }
