@@ -73,100 +73,57 @@ export class JournalService {
     }
 
     const params = { order: '-transactionDate', ...query };
-    const qb = new QueryBuilder(Journal, 'j', params);
+    const qb = new QueryBuilder(JournalItem, 'ji', params);
 
-    qb.fieldResolverMap['startDate__gte'] = 'j.transaction_date';
-    qb.fieldResolverMap['endDate__lte'] = 'j.transaction_date';
-    qb.fieldResolverMap['branchId'] = 'j.branch_id';
+    qb.fieldResolverMap['startDate__gte'] = 'ji.transaction_date';
+    qb.fieldResolverMap['endDate__lte'] = 'ji.transaction_date';
+    qb.fieldResolverMap['branchId'] = 'b.branch_id';
     qb.fieldResolverMap['state'] = 'j.state';
-    qb.fieldResolverMap['partner__icontains'] = 'j.partner_name';
+    qb.fieldResolverMap['partner__icontains'] = 'ji.partner_name';
     qb.fieldResolverMap['number__icontains'] = 'j.number';
-    qb.fieldResolverMap['reference__icontains'] = 'j.reference';
+    qb.fieldResolverMap['reference__icontains'] = 'ji.reference';
 
     qb.applyFilterPagination();
     qb.selectRaw(
-      ['j.id', 'id'],
+      ['ji.id', 'itemId'],
+      ['j.id', 'journalId'],
       ['j.reverse_journal_id', 'reverseJournalId'],
+      ['ji.transaction_date', 'transactionDate'],
+      ['p."month"', 'periodMonth'],
+      ['p."year"', 'periodYear'],
+      ['ji.branch_id', 'branchId'],
+      ['b.branch_name', 'branchName'],
       ['j."number"', 'number'],
-      ['j.partner_code', 'partnerCode'],
-      ['j.partner_name', 'partnerName'],
-      ['j.reference', 'reference'],
+      ['ji.reference', 'reference'],
       ['j.down_payment_number', 'downPaymentNumber'],
       ['j.sync_fail_reason', 'syncFailReason'],
+      ['ji.partner_name', 'partnerName'],
+      ['ji.partner_code', 'partnerCode'],
+      ['ji.description', 'description'],
+      ['coa.id', 'coaId'],
+      ['coa.code', 'coaCode'],
+      ['coa."name"', 'coaName'],
+      ['ji.debit', 'debit'],
+      ['ji.credit', 'credit'],
       ['j.state', 'state'],
-      ['j.total_amount', 'totalAmount'],
-      ['j.transaction_date', 'transactionDate'],
-      ['j.created_at', 'createdAt'],
-      ['(array_agg(brc.branch))[1]', 'branch'],
-      ['(array_agg(p.periods))[1]', 'period'],
-      ['(array_agg(jitem.items))[1]', 'items'],
+      ['ji.is_ledger', 'isLedger'],
+      ['ji.created_at', 'createdAt'],
     );
-    qb.qb.leftJoin(
-      `(SELECT
-        ji.journal_id,
-        jsonb_agg(
-          json_build_object(
-            'id', ji.id,
-            'journal_id', ji.journal_id,
-            'coaId', ac2.id,
-            'coa', json_build_object(
-              'name', ac2.name,
-              'code', ac2.code
-            ),
-            'debit', ji.debit ,
-            'credit', ji.credit,
-            'partnerCode', ji.partner_code,
-            'partnerName', ji.partner_name,
-            'reference', ji.reference,
-            'description', ji.description,
-            'isLedger', ji.is_ledger,
-            'transactionDate', ji.transaction_date
-            )
-        ) AS items
-      FROM journal_item ji
-      LEFT JOIN account_coa ac2 ON ac2.id = ji.coa_id
-      GROUP BY ji.journal_id)`,
-      'jitem',
-      'jitem.journal_id = j.id',
-    );
-    qb.qb.leftJoin(
-      `(SELECT
-        p2.id,
-        json_build_object(
-          'id', p2.id,
-          'month', p2.month,
-          'year', p2.year
-        ) AS periods
-      FROM "period" p2
-      GROUP BY p2.id)`,
-      'p',
-      'p.id = j.period_id',
-    );
-    qb.qb.leftJoin(
-      `(SELECT
-        b.id,
-        json_build_object(
-          'id', b.id,
-          'branchName', b.branch_name
-        ) AS branch
-      FROM branch b
-      GROUP BY b.id)`,
-      'brc',
-      'brc.id = j.branch_id',
-    );
-    qb.qb.groupBy('j.id');
+    qb.innerJoin((e) => e.journal, 'j');
+    qb.innerJoin((e) => e.period, 'p');
+    qb.innerJoin((e) => e.branch, 'b');
+    qb.innerJoin((e) => e.coa, 'coa');
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    qb.qb.addOrderBy('j.updated_at', 'DESC');
+    qb.qb.addOrderBy('ji.updated_at', 'DESC');
 
-    // Throw error for some user role.
-    if (NOT_ALLOWED_ROLES.includes(userRoleName)) {
-      throw new UnprocessableEntityException();
-    }
-
-    const journals = await qb.exec();
+    let journals = await qb.exec();
+    journals = journals.map((item) => {
+      delete item.createdAt;
+      return item;
+    });
 
     return new JournalWithPaginationResponse(journals, params);
   }
