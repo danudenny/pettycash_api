@@ -19,6 +19,7 @@
     "drakov:start": "drakov -f 'contracts/*.apib' -p 3100 --public --autoOptions --watch",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -f src/config/typeorm.config.cli",
     "db:seed:dev": "ts-node -r tsconfig-paths/register src/scripts/seeder.ts",
+    "db:seed:base": "ts-node -r tsconfig-paths/register src/scripts/seeder-base.ts",
     "transform": "ts-node src/scripts/transform"
   },
   "author": "sicepat-dev",
