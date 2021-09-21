@@ -1,15 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsUUID } from 'class-validator';
+import { IsUUID } from 'class-validator';
 import { JournalState } from '../../../model/utils/enum';
-import { JournalItemDTO } from './journal-item.dto';
 
 export class JournalDTO {
   @ApiProperty({
-    description: 'Journal ID',
+    description: 'Item ID',
     example: 'd659d65c-fcf3-45c8-956e-5baf9dee2522',
   })
   @IsUUID()
-  id: string;
+  itemId: string;
+
+  @ApiProperty({
+    description: 'Journal ID',
+    example: '007b2cae-fc1a-4385-a7be-768e6e607265',
+  })
+  @IsUUID()
+  journalId: string;
 
   @ApiProperty({
     description: 'Reversal Journal ID',
@@ -17,19 +23,6 @@ export class JournalDTO {
   })
   @IsUUID()
   reverseJournalId: string;
-
-  @ApiProperty({
-    description: 'Branch ID',
-    example: 'eaaf465b-65bc-4784-909e-8d0180c6eb4c',
-  })
-  @IsUUID()
-  branchId: string;
-
-  @ApiProperty({
-    description: 'Branch Name',
-    example: 'Kebon Jeruk',
-  })
-  branchName: string;
 
   @ApiProperty({
     description: 'Transaction Date',
@@ -48,6 +41,19 @@ export class JournalDTO {
     example: 2021,
   })
   periodYear: number;
+
+  @ApiProperty({
+    description: 'Branch ID',
+    example: 'eaaf465b-65bc-4784-909e-8d0180c6eb4c',
+  })
+  @IsUUID()
+  branchId: string;
+
+  @ApiProperty({
+    description: 'Branch Name',
+    example: 'Kebon Jeruk',
+  })
+  branchName: string;
 
   @ApiProperty({
     description: 'Journal Number',
@@ -86,10 +92,47 @@ export class JournalDTO {
   partnerCode: string;
 
   @ApiProperty({
-    description: 'Total Amount',
+    description: 'Journal Reference',
+    example: 'REF DOC 001',
+  })
+  description: string;
+
+  @ApiProperty({
+    description: 'CoA ID',
+    example: 'd659d65c-fcf3-45c8-956e-5baf9dee2522',
+  })
+  @IsUUID()
+  coaId: string;
+
+  @ApiProperty({
+    description: 'CoA Code',
+    example: '500.001.009',
+  })
+  coaCode: string;
+
+  @ApiProperty({
+    description: 'CoA Name',
+    example: 'Piutang Karyawan',
+  })
+  coaName: string;
+
+  @ApiProperty({
+    description: 'Debit',
     example: 900000,
   })
-  totalAmount: number;
+  debit: number;
+
+  @ApiProperty({
+    description: 'Credit',
+    example: 900000,
+  })
+  credit: number;
+
+  @ApiProperty({
+    description: 'Is this item Ledger?',
+    example: true,
+  })
+  isLedger: boolean;
 
   @ApiProperty({
     description: 'Journal State',
@@ -97,11 +140,4 @@ export class JournalDTO {
     enum: JournalState,
   })
   state: JournalState;
-
-  @ApiProperty({
-    description: 'Journal Items',
-    type: [JournalItemDTO],
-  })
-  @IsArray()
-  items: JournalItemDTO[];
 }

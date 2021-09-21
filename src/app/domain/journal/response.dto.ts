@@ -7,10 +7,10 @@ import { JournalDTO } from './journal.dto';
 import { JournalResponseMapper } from './response.mapper';
 
 export class JournalWithPaginationResponse extends BaseResponse {
-  constructor(data?: Journal[], params?: any) {
+  constructor(data?: JournalDTO[], params?: any) {
     super();
     if (data) {
-      this.data = JournalResponseMapper.fromEntity(data);
+      this.data = JournalResponseMapper.fromQueryBuilder(data);
       this.meta = PaginationBuilder.build(data, params);
     }
   }

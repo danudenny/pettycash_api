@@ -22,8 +22,8 @@ Get list all Journal.
     + partner__icontains: `HR Sicepat` (string, optional) - Partner Name to Search.
     + number__icontains: `JRNL20200201AAA123` (string, optional) - Journal Number to Search.
     + reference__icontains: `Sicepat` (string, optional) - Journal Reference to Search.
-    + order: `^createdAt` (string, optional) - Sorting by field, use prefix `^` for ASC, `-` for DESC.
-        + Default: `-createdAt`
+    + order: `^transactionDate` (string, optional) - Sorting by field, use prefix `^` for ASC, `-` for DESC.
+        + Default: `-transactionDate`
 
 + Request (application/json)
     + Header
@@ -34,106 +34,54 @@ Get list all Journal.
     + Body
         {
           "data": [
-            {
-              "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-              "reverseJournalId": "45e5bbb9-636f-4a17-8037-953f626fdcbc",
-              "branchId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-              "branchName": "Kebon Jeruk",
-              "transactionDate": "2021-01-27",
-              "periodMonth": 1,
-              "periodYear": 2021,
-              "number": "JRNL20200201AAA123",
-              "reference": "REF DOC 001",
-              "downPaymentNumber": "UM/2020/12/XYZA1234",
-              "partnerName": "PT. ABC DEF",
-              "partnerCode": "PRTN001",
-              "totalAmount": 900000,
-              "state": "draft",
-              "items": [
-                {
-                  "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "transactionDate": "2021-01-27",
-                  "periodMonth": 1,
-                  "periodYear": 2021,
-                  "number": "JRNL20200201AAA123",
-                  "reference": "REF DOC 001",
-                  "description": "CATATAN",
-                  "partnerName": "PT. ABC DEF",
-                  "partnerCode": "PRTN001",
-                  "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "coaCode": "500.001.009",
-                  "coaName": "Piutang Karyawan",
-                  "debit": 900000,
-                  "credit": 0,
-                  "isLedger": true,
-                },
-                {
-                  "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "transactionDate": "2021-01-27",
-                  "periodMonth": 1,
-                  "periodYear": 2021,
-                  "number": "JRNL20200201AAA123",
-                  "reference": "REF DOC 001",
-                  "description": "CATATAN",
-                  "partnerName": "PT. ABC DEF",
-                  "partnerCode": "PRTN001",
-                  "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "coaCode": "200.001.009",
-                  "coaName": "Kas Cabang Jeruk",
-                  "debit": 0,
-                  "credit": 900000,
-                  "isLedger": false,
-                }
-              ]
-            },
-            {
-              "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-              "reverseJournalId": null,
-              "branchId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-              "branchName": "Kebon Jeruk",
-              "transactionDate": "2021-01-27",
-              "periodMonth": 1,
-              "periodYear": 2021,
-              "number": "JRNL20200201AAA123",
-              "reference": "REF DOC 002",
-              "downPaymentNumber": null,
-              "partnerName": "PT. HIJ DEF",
-              "partnerCode": "PRTN001",
-              "totalAmount": 700000,
-              "state": "posted",
-              "items": [
-                {
-                  "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "transactionDate": "2021-01-27",
-                  "periodMonth": 1,
-                  "periodYear": 2021,
-                  "number": "JRNL20200201AAA123",
-                  "reference": "REF DOC 001",
-                  "partnerName": "PT. HIJ DEF",
-                  "partnerCode": "PRTN001",
-                  "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "coaCode": "500.001.009",
-                  "coaName": "Piutang Karyawan",
-                  "debit": 700000,
-                  "credit": 0
-                },
-                {
-                  "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "transactionDate": "2021-01-27",
-                  "periodMonth": 1,
-                  "periodYear": 2021,
-                  "number": "JRNL20200201AAA123",
-                  "reference": "REF DOC 001",
-                  "partnerName": "PT. HIJ DEF",
-                  "partnerCode": "PRTN001",
-                  "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "coaCode": "200.001.009",
-                  "coaName": "Kas Cabang Jeruk",
-                  "debit": 0,
-                  "credit": 700000
-                }
-              ]
-            }
+                    {
+                        "branchId": "090a0e27-9c32-43e2-b78a-b8d39dce771b",
+                        "branchName": "Jakpus Tanah Abang",
+                        "coaCode": "111.001.0010",
+                        "coaId": "36d2b72d-b1bb-4eed-8763-cd3378143353",
+                        "coaName": "Kas Kantor Pusat",
+                        "credit": 0,
+                        "debit": 5000,
+                        "description": null,
+                        "downPaymentNumber": null,
+                        "isLedger": false,
+                        "itemId": "e104fd82-4299-4320-ba73-bf4180a46840",
+                        "journalId": "a8735560-3448-4f5c-a637-49c8eb1c047b",
+                        "number": "JRNL/2021/09/JTVR8254",
+                        "partnerCode": "202011844",
+                        "partnerName": "Eryn Utami",
+                        "periodMonth": 9,
+                        "periodYear": 2021,
+                        "reference": "PAY202109XKU297",
+                        "reverseJournalId": "007b2cae-fc1a-4385-a7be-768e6e607265",
+                        "state": "draft",
+                        "syncFailReason": null,
+                        "transactionDate": "2021-09-19T17:00:00.000Z"
+                    },
+                    {
+                        "branchId": "090a0e27-9c32-43e2-b78a-b8d39dce771b",
+                        "branchName": "Jakpus Tanah Abang",
+                        "coaCode": "500.40.48",
+                        "coaId": "3ab76b02-0489-4f65-981a-5ac91ad2b03b",
+                        "coaName": "Down Payment Reimbursement Coa Pengganti",
+                        "credit": 5000,
+                        "debit": 0,
+                        "description": null,
+                        "downPaymentNumber": null,
+                        "isLedger": true,
+                        "itemId": "f820f15e-b7e9-4848-8ade-f315edd072d2",
+                        "journalId": "a8735560-3448-4f5c-a637-49c8eb1c047b",
+                        "number": "JRNL/2021/09/JTVR8254",
+                        "partnerCode": "202011844",
+                        "partnerName": "Eryn Utami",
+                        "periodMonth": 9,
+                        "periodYear": 2021,
+                        "reference": "PAY202109XKU297",
+                        "reverseJournalId": "007b2cae-fc1a-4385-a7be-768e6e607265",
+                        "state": "draft",
+                        "syncFailReason": null,
+                        "transactionDate": "2021-09-19T17:00:00.000Z"
+                    }
           ],
           "meta": {
             "page": 2,
