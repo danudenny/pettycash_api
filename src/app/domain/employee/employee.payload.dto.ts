@@ -19,3 +19,18 @@ export class QueryEmployeeDTO {
   })
   employeeStatus: boolean;
 }
+
+
+export class QueryVoucherEmployeeDTO {
+  @ApiPropertyOptional({
+    description: 'Employee NIK',
+    example: '20090134',
+  })
+  nik__icontains: string;
+
+  @ApiPropertyOptional({
+    description: 'Employee Name',
+    example: 'Denny Danuwijaya',
+  })
+  name__icontains: string;
+}

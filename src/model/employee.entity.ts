@@ -81,19 +81,26 @@ export class Employee extends BaseEntity {
   })
   employeeStatus: boolean;
 
-  @ManyToOne(() => Branch, { createForeignKeyConstraints: false })
+  @ManyToOne(() => Branch)
   @JoinColumn({
     name: 'branch_id',
     referencedColumnName: 'branchId',
   })
   branch: Branch;
 
-  @ManyToOne(() => EmployeeRole, { createForeignKeyConstraints: false })
+  @ManyToOne(() => EmployeeRole)
   @JoinColumn({
     name: 'employee_role_id',
     referencedColumnName: 'employeeRoleId',
   })
   employeeRole: EmployeeRole;
+
+  @Column('boolean', {
+    nullable: false,
+    default: () => 'false',
+    name: 'is_has_voucher',
+  })
+  isHasVoucher: boolean;
 
   @UpdateDateColumn({
     type: 'timestamp',

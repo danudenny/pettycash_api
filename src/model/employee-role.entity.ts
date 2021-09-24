@@ -62,13 +62,6 @@ export class EmployeeRole extends BaseEntity {
   @Column('boolean', {
     nullable: false,
     default: () => 'false',
-    name: 'is_has_voucher',
-  })
-  isHasVoucher: boolean;
-
-  @Column('boolean', {
-    nullable: false,
-    default: () => 'false',
     name: 'is_deleted',
   })
   isDeleted: boolean;

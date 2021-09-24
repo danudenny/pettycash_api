@@ -1,3 +1,5 @@
+import { EmployeeVoucherItem } from './../../../model/employee-voucer-item.entity';
+import { Employee } from './../../../model/employee.entity';
 import { VoucherResponse } from './../../domain/voucher/response/voucher.response.dto';
 import {
   BatchPayloadVoucherDTO,
@@ -36,6 +38,9 @@ import axios from 'axios';
 import { VoucherState } from '../../../model/utils/enum';
 import { LoaderEnv } from '../../../config/loader';
 import { AwsS3Service } from '../../../common/services/aws-s3.service';
+import { QueryVoucherEmployeeDTO } from '../../domain/employee/employee.payload.dto';
+import { EmployeeWithPaginationResponse } from '../../domain/employee/employee-response.dto';
+import { EmployeeProductResponse } from '../../domain/employee/employee-product-response.dto';
 
 @Injectable()
 export class VoucherService {
@@ -90,6 +95,54 @@ export class VoucherService {
     }
 
     return newAttachments;
+  }
+
+  public async getEmployee(
+    query?: QueryVoucherEmployeeDTO,
+  ): Promise<EmployeeWithPaginationResponse> {
+    const params = { order: '^name', limit: 10, ...query };
+    const qb = new QueryBuilder(Employee, 'emp', params);
+
+    qb.fieldResolverMap['nik__icontains'] = 'emp.nik';
+    qb.fieldResolverMap['name__icontains'] = 'emp.name';
+
+    qb.applyFilterPagination();
+    qb.selectRaw(
+      ['emp.id', 'id'],
+      ['emp.nik', 'nik'],
+      ['emp.name', 'name'],
+    );
+    qb.andWhere(
+      (e) => e.isHasVoucher,
+      (v) => v.isTrue(),
+    );
+    qb.andWhere(
+      (e) => e.employeeStatus,
+      (v) => v.isTrue(),
+    );
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+
+    const emp = await qb.exec();
+    return new EmployeeWithPaginationResponse(emp, params);
+  }
+
+  public async getProductByEmployeeId(
+    id: string
+  ): Promise<EmployeeProductResponse> {
+    const getProduct = await EmployeeVoucherItem.findOne({
+      where: {
+        employeeId: id
+      }
+    })
+
+    if(!getProduct) {
+      throw new HttpException('Employee tidak mempunyai Voucher Item', HttpStatus.BAD_REQUEST)
+    }
+
+    return new EmployeeProductResponse(getProduct)
   }
 
   public async list(
@@ -478,33 +531,29 @@ export class VoucherService {
                 { id: res['voucher_id'] },
                 { paymentType: paymentTypeFromQuery[0] },
               );
-              console.log('query : ' + paymentTypeFromQuery);
             }
             if (res['status'] == 'GENERATE_JOURNAL_FAILED') {
               await this.voucherRepo.update(
                 { id: res['voucher_id'] },
                 { paymentType: data.payment_type },
               );
-              console.log('query : ' + paymentTypeFromQuery);
             }
             if (res['status'] == 'APPROVING_EXPENSE_FAILED') {
               await this.voucherRepo.update(
                 { id: res['voucher_id'] },
                 { paymentType: data.payment_type },
               );
-              console.log('payload: ' + data.payment_type);
             }
             if (res['status'] == 'SUCCESS') {
               await this.voucherRepo.update(
                 { id: res['voucher_id'] },
                 { paymentType: data.payment_type },
               );
-              console.log('query : ' + paymentTypeFromQuery);
             }
           });
         });
     } catch (error) {
-      console.log(error);
+      console.log("error: " + error);
       await this.voucherRepo.update(
         { id: In(successIds) },
         { paymentType: paymentTypeFromQuery[0] },
@@ -527,7 +576,20 @@ export class VoucherService {
     });
 
     let numbersVcr = [];
+    
+    if(getVoucherNumber.length == 0) {
+      numbersVcr.push({
+        number: '-',
+        status: webHookResult[0].status,
+      });
+    }
     for (let i = 0; i < getVoucherNumber.length; i++) {
+      if(!getVoucherNumber) {
+        numbersVcr.push({
+          number: '-',
+          status: webHookResult[i].status,
+        });
+      }
       numbersVcr.push({
         number: getVoucherNumber[i].number,
         status: webHookResult[i].status,
