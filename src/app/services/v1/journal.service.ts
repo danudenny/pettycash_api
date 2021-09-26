@@ -72,18 +72,25 @@ export class JournalService {
       );
     }
 
-    const params = { order: '-transactionDate', ...query };
+    const params = {
+      order: '-transactionDate',
+      page: 1,
+      limit: 200,
+      isLedger: true,
+      ...query,
+    };
     const qb = new QueryBuilder(JournalItem, 'ji', params);
 
     qb.fieldResolverMap['startDate__gte'] = 'ji.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'ji.transaction_date';
     qb.fieldResolverMap['branchId'] = 'b.branch_id';
     qb.fieldResolverMap['state'] = 'j.state';
+    qb.fieldResolverMap['isLedger'] = 'ji.is_ledger';
     qb.fieldResolverMap['partner__icontains'] = 'ji.partner_name';
     qb.fieldResolverMap['number__icontains'] = 'j.number';
     qb.fieldResolverMap['reference__icontains'] = 'ji.reference';
 
-    qb.applyFilterPagination();
+    qb.applyFilterQueries();
     qb.selectRaw(
       ['ji.id', 'itemId'],
       ['j.id', 'journalId'],
@@ -117,7 +124,15 @@ export class JournalService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
+    qb.qb.addOrderBy('ji.transaction_date', 'DESC');
     qb.qb.addOrderBy('ji.updated_at', 'DESC');
+
+    // CR 5.8 limit based on Journal not JournalItem
+    const page = params?.page ? Number(params.page) : 1;
+    const limit = params?.limit ? Number(params.limit) : 200;
+    const offset = page > 1 ? page * limit : 0;
+    const fSql = `(j.id IN (SELECT id FROM journal ORDER BY transaction_date DESC, updated_at DESC OFFSET :offset LIMIT :limit))`;
+    qb.qb.andWhere(fSql, { limit, offset });
 
     let journals = await qb.exec();
     journals = journals.map((item) => {
