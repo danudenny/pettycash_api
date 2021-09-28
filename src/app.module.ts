@@ -37,6 +37,7 @@ import { OtherModule } from './app/modules/other.module';
 import { AttachmentTypeModule } from './app/modules/attachment-type.module';
 import { CashflowTypeModule } from './app/modules/cashflow-type.module';
 import { ReportParkingJournalModule } from './app/modules/report-parking-journal.module';
+import { UserBranchModule } from './app/modules/user-branch.module';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { ReportParkingJournalModule } from './app/modules/report-parking-journal
     ReportParkingJournalModule,
     CashflowTypeModule,
     OtherModule,
+    UserBranchModule,
   ],
   controllers: [],
   providers: [],
