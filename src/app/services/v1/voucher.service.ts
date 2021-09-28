@@ -107,11 +107,7 @@ export class VoucherService {
     qb.fieldResolverMap['name__icontains'] = 'emp.name';
 
     qb.applyFilterPagination();
-    qb.selectRaw(
-      ['emp.id', 'id'],
-      ['emp.nik', 'nik'],
-      ['emp.name', 'name'],
-    );
+    qb.selectRaw(['emp.id', 'id'], ['emp.nik', 'nik'], ['emp.name', 'name']);
     qb.andWhere(
       (e) => e.isHasVoucher,
       (v) => v.isTrue(),
@@ -130,19 +126,22 @@ export class VoucherService {
   }
 
   public async getProductByEmployeeId(
-    id: string
+    id: string,
   ): Promise<EmployeeProductResponse> {
     const getProduct = await EmployeeVoucherItem.findOne({
       where: {
-        employeeId: id
-      }
-    })
+        employeeId: id,
+      },
+    });
 
-    if(!getProduct) {
-      throw new HttpException('Employee tidak mempunyai Voucher Item', HttpStatus.BAD_REQUEST)
+    if (!getProduct) {
+      throw new HttpException(
+        'Employee tidak mempunyai Voucher Item',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    return new EmployeeProductResponse(getProduct)
+    return new EmployeeProductResponse(getProduct);
   }
 
   public async list(
@@ -288,7 +287,12 @@ export class VoucherService {
           .groupBy('blc.branch_id')
           .getRawOne();
 
-        if(payload.payment_type == 'cash' && payload.totalAmount > checkBranchBalance.cash_amount || payload.payment_type == 'bank' && payload.totalAmount > checkBranchBalance.bank_amount ) {
+        if (
+          (payload.payment_type == 'cash' &&
+            payload.totalAmount > checkBranchBalance.cash_amount) ||
+          (payload.payment_type == 'bank' &&
+            payload.totalAmount > checkBranchBalance.bank_amount)
+        ) {
           throw new HttpException(
             'Saldo cabang tidak cukup',
             HttpStatus.BAD_REQUEST,
@@ -553,7 +557,7 @@ export class VoucherService {
           });
         });
     } catch (error) {
-      console.log("error: " + error);
+      console.log('error: ' + error);
       await this.voucherRepo.update(
         { id: In(successIds) },
         { paymentType: paymentTypeFromQuery[0] },
@@ -576,15 +580,15 @@ export class VoucherService {
     });
 
     let numbersVcr = [];
-    
-    if(getVoucherNumber.length == 0) {
+
+    if (getVoucherNumber.length == 0) {
       numbersVcr.push({
         number: '-',
         status: webHookResult[0].status,
       });
     }
     for (let i = 0; i < getVoucherNumber.length; i++) {
-      if(!getVoucherNumber) {
+      if (!getVoucherNumber) {
         numbersVcr.push({
           number: '-',
           status: webHookResult[i].status,

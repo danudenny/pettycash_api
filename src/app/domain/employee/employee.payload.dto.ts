@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { BasePayload } from '../common/base-payload.dto';
 
-export class QueryEmployeeDTO {
+export class QueryEmployeeDTO extends BasePayload {
   @ApiPropertyOptional({
     description: 'Employee NIK',
     example: '20090134',
@@ -20,8 +21,7 @@ export class QueryEmployeeDTO {
   employeeStatus: boolean;
 }
 
-
-export class QueryVoucherEmployeeDTO {
+export class QueryVoucherEmployeeDTO extends BasePayload {
   @ApiPropertyOptional({
     description: 'Employee NIK',
     example: '20090134',
