@@ -128,7 +128,7 @@ export class VoucherService {
   public async getProductByEmployeeId(
     id: string,
   ): Promise<EmployeeProductResponse> {
-    const getProduct = await EmployeeVoucherItem.findOne({
+    const getProduct = await EmployeeVoucherItem.find({
       where: {
         employeeId: id,
       },
