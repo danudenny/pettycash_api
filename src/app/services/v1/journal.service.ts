@@ -72,58 +72,83 @@ export class JournalService {
       );
     }
 
-    const params = { order: '-transactionDate', ...query };
-    const qb = new QueryBuilder(JournalItem, 'ji', params);
+    const params = {
+      order: '-transactionDate',
+      page: 1,
+      limit: 200,
+      ...query,
+    };
+    const qb = new QueryBuilder(Journal, 'j', params);
 
-    qb.fieldResolverMap['startDate__gte'] = 'ji.transaction_date';
-    qb.fieldResolverMap['endDate__lte'] = 'ji.transaction_date';
-    qb.fieldResolverMap['branchId'] = 'b.branch_id';
+    qb.fieldResolverMap['startDate__gte'] = 'j.transaction_date';
+    qb.fieldResolverMap['endDate__lte'] = 'j.transaction_date';
+    qb.fieldResolverMap['branchId'] = 'j.branch_id';
     qb.fieldResolverMap['state'] = 'j.state';
-    qb.fieldResolverMap['partner__icontains'] = 'ji.partner_name';
+    qb.fieldResolverMap['partner__icontains'] = 'j.partner_name';
     qb.fieldResolverMap['number__icontains'] = 'j.number';
-    qb.fieldResolverMap['reference__icontains'] = 'ji.reference';
+    qb.fieldResolverMap['reference__icontains'] = 'j.reference';
 
     qb.applyFilterPagination();
     qb.selectRaw(
-      ['ji.id', 'itemId'],
       ['j.id', 'journalId'],
-      ['j.reverse_journal_id', 'reverseJournalId'],
-      ['ji.transaction_date', 'transactionDate'],
-      ['p."month"', 'periodMonth'],
-      ['p."year"', 'periodYear'],
-      ['ji.branch_id', 'branchId'],
-      ['b.branch_name', 'branchName'],
-      ['j."number"', 'number'],
-      ['ji.reference', 'reference'],
-      ['j.down_payment_number', 'downPaymentNumber'],
-      ['j.sync_fail_reason', 'syncFailReason'],
-      ['ji.partner_name', 'partnerName'],
-      ['ji.partner_code', 'partnerCode'],
-      ['ji.description', 'description'],
-      ['coa.id', 'coaId'],
-      ['coa.code', 'coaCode'],
-      ['coa."name"', 'coaName'],
-      ['ji.debit', 'debit'],
-      ['ji.credit', 'credit'],
-      ['j.state', 'state'],
-      ['ji.is_ledger', 'isLedger'],
-      ['ji.created_at', 'createdAt'],
+      ['(array_agg(jitem.items))[1]', 'items'],
     );
-    qb.innerJoin((e) => e.journal, 'j');
-    qb.innerJoin((e) => e.period, 'p');
-    qb.innerJoin((e) => e.branch, 'b');
-    qb.innerJoin((e) => e.coa, 'coa');
+    qb.qb.leftJoin(
+      `(SELECT
+        ji.journal_id,
+        jsonb_agg(
+          json_build_object(
+            'itemId', ji.id,
+            'journalId', ji.journal_id,
+            'reverseJournalId', jrnl.reverse_journal_id,
+            'transactionDate', ji.transaction_date,
+            'periodMonth', p."month",
+            'periodYear', p."year",
+            'branchId', ji.branch_id,
+            'branchName', b.branch_name,
+            'number', jrnl."number",
+            'reference', ji.reference,
+            'downPaymentNumber', jrnl.down_payment_number,
+            'syncFailReason', jrnl.sync_fail_reason,
+            'partnerName', ji.partner_name,
+            'partnerCode', ji.partner_code,
+            'description', ji.description,
+            'coaId', coa.id,
+            'coaCode', coa.code,
+            'coaName', coa."name",
+            'debit', ji.debit,
+            'credit', ji.credit,
+            'state', jrnl.state,
+            'isLedger', ji.is_ledger
+            )
+        ) AS items
+      FROM journal_item ji
+      JOIN journal jrnl ON jrnl.id = ji.journal_id
+      JOIN period p ON p.id = ji.period_id
+      JOIN branch b ON b.id = ji.branch_id
+      JOIN account_coa coa ON coa.id = ji.coa_id
+      WHERE ji.is_ledger = TRUE
+      GROUP BY ji.journal_id)`,
+      'jitem',
+      'jitem.journal_id = j.id',
+    );
     qb.andWhere(
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    qb.qb.addOrderBy('ji.updated_at', 'DESC');
+    qb.qb.groupBy('j.id');
+    qb.qb.addOrderBy('j.updated_at', 'DESC');
 
-    let journals = await qb.exec();
-    journals = journals.map((item) => {
-      delete item.createdAt;
-      return item;
-    });
+    // get result from databases
+    const dbResults = await qb.exec();
+
+    // remap db results
+    const journals = [];
+    for (const journal of dbResults) {
+      for (const item of journal?.items) {
+        journals.push(item);
+      }
+    }
 
     return new JournalWithPaginationResponse(journals, params);
   }
