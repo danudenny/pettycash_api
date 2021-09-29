@@ -37,6 +37,7 @@ import { OtherModule } from './app/modules/other.module';
 import { AttachmentTypeModule } from './app/modules/attachment-type.module';
 import { CashflowTypeModule } from './app/modules/cashflow-type.module';
 import { ReportParkingJournalModule } from './app/modules/report-parking-journal.module';
+import { ReportPenggunaanKendaraanModule } from './app/modules/report-penggunaan-kendaraan.module';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { ReportParkingJournalModule } from './app/modules/report-parking-journal
     ReportParkingJournalModule,
     CashflowTypeModule,
     OtherModule,
+    ReportPenggunaanKendaraanModule,
   ],
   controllers: [],
   providers: [],
