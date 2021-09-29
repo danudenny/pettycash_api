@@ -1,17 +1,17 @@
 import { UserBranchDTO } from './user-branch.dto';
 
 export class UserBranchResponseMapper {
-  public static toDTO(dto: UserBranchDTO) {
+  public static toDTO(obj: {
+    userid: string;
+    firstname: string;
+    lastname: string;
+    branchids: string[];
+  }) {
     const it = new UserBranchDTO();
-    it.id = dto.id;
-    it.username = dto.username;
-    it.firstName = dto.firstName;
-    it.lastName = dto.lastName;
-    it.branch_ids = dto.branch_ids;
+    it.userId = obj.userid;
+    it.firstName = obj.firstname;
+    it.lastName = obj.lastname;
+    it.branchIds = obj.branchids;
     return it;
-  }
-
-  public static fromDTO(data: UserBranchDTO): UserBranchDTO {
-    return this.toDTO(data);
   }
 }

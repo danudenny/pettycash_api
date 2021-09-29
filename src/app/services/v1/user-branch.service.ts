@@ -10,13 +10,14 @@ export class UserBranchService {
       await getManager().query(
         `SELECT 
           users.id AS userId, 
-          first_name AS fistName, 
+          first_name AS firstName, 
           last_name AS lastName,
-          (SELECT ARRAY(SELECT branch_id FROM user_branch WHERE user_id = id)) AS branch_ids
+          (SELECT ARRAY(SELECT branch_id FROM user_branch WHERE user_id = id)) AS branchIds
         FROM users 
         WHERE username = '${xUsername}'`,
       )
-    )[0] as UserBranchDTO;
+    )[0];
+    console.log(userBranch);
     return new UserBranchResponse(userBranch);
   }
 }

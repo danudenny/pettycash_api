@@ -4,10 +4,10 @@ import { UserBranchResponseMapper } from './response.mapper';
 import { UserBranchDTO } from './user-branch.dto';
 
 export class UserBranchResponse extends BaseResponse {
-  constructor(data?: UserBranchDTO) {
+  constructor(data?: any) {
     super();
     if (data) {
-      this.data = UserBranchResponseMapper.fromDTO(data);
+      this.data = UserBranchResponseMapper.toDTO(data);
     }
   }
 
