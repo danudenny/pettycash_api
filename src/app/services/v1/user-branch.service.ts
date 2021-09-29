@@ -9,12 +9,12 @@ export class UserBranchService {
     let userBranch = (
       await getManager().query(
         `SELECT 
-        users.id AS userId, 
-        first_name AS fistName, 
-        last_name AS lastName,
-        (SELECT ARRAY(SELECT branch_id FROM user_branch WHERE user_id = id)) AS branch_ids
-      FROM users 
-      WHERE username = '${xUsername}'`,
+          users.id AS userId, 
+          first_name AS fistName, 
+          last_name AS lastName,
+          (SELECT ARRAY(SELECT branch_id FROM user_branch WHERE user_id = id)) AS branch_ids
+        FROM users 
+        WHERE username = '${xUsername}'`,
       )
     )[0] as UserBranchDTO;
     return new UserBranchResponse(userBranch);
