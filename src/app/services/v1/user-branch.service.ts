@@ -5,7 +5,7 @@ import { UserBranchResponse } from '../../domain/user-branch/response.dto';
 @Injectable()
 export class UserBranchService {
   async get(xUsername: string): Promise<UserBranchResponse> {
-    let userBranch = (await getManager().query(
+    let userBranch = await getManager().query(
       `SELECT 
         users.id AS userId, 
         first_name AS fistName, 
@@ -13,8 +13,11 @@ export class UserBranchService {
         (SELECT ARRAY(SELECT branch_id FROM user_branch WHERE user_id = id)) AS branch_ids
       FROM users 
       WHERE username = '${xUsername}'`,
-    )) as UserBranchResponse;
-
-    return userBranch;
+    );
+    let response: UserBranchResponse = {
+      status: 'success',
+      data: userBranch,
+    };
+    return response;
   }
 }
