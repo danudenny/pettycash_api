@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as XLSX from 'xlsx';
 import { Response } from 'express';
 import axios from 'axios';
+import { QueryPenggunaanKendaraanDTO } from '../../domain/report-penggunaan-kendaraan/report-penggunaan-kendaraan.dto';
 
 @Injectable()
 export class ReportPenggunaanKendaraanService {
@@ -9,19 +10,21 @@ export class ReportPenggunaanKendaraanService {
 
   public async excel(
     res: Response,
-    page?: number,
-    limit?: number,
-    start_date?: any,
-    end_date?: any,
-    branch_id?: string,
+    query?: QueryPenggunaanKendaraanDTO,
   ): Promise<Buffer> {
     try {
       const { write, utils } = XLSX;
 
       const emp = await axios.get(
-        `http://apibutler.sicepat.com/pettycash/laporan-penggunaan-kendaraan?page=${page}&limit=${limit}&start_date=${start_date}&end_date=${end_date}&branch_id=${branch_id}`,
+        `http://apibutler.sicepat.com/pettycash/laporan-penggunaan-kendaraan?page=${
+          query.page != undefined ? query.page : ''
+        }&limit=${query.limit != undefined ? query.limit : ''}&start_date=${
+          query.start_date != undefined ? query.start_date : ''
+        }&end_date=${
+          query.end_date != undefined ? query.end_date : ''
+        }&branch_id=${query.branch_id != undefined ? query.branch_id : ''}`,
       );
-      console.log(emp.data.data);
+      console.log(query.page);
       const heading = [
         ['PT. SiCepat Express Indonesia'],
         ['Data Laporan Penggunaan Kendaraan'],
