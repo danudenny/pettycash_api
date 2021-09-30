@@ -19,12 +19,12 @@ export class ReportPenggunaanKendaraanService {
       const { write, utils } = XLSX;
 
       const emp = await axios.get(
-        `http://apipettycashstaging.sicepat.com:7000/pettycash/laporan-penggunaan-kendaraan?page=${page}&limit=${limit}&start_date=${start_date}&end_date=${end_date}&branch_id=${branch_id}`,
+        `http://apibutler.sicepat.com/pettycash/laporan-penggunaan-kendaraan?page=${page}&limit=${limit}&start_date=${start_date}&end_date=${end_date}&branch_id=${branch_id}`,
       );
       console.log(emp.data.data);
       const heading = [
         ['PT. SiCepat Express Indonesia'],
-        ['Data Laporan Penggunaan Kendaraan PT. Sicepat Express Indonesia'],
+        ['Data Laporan Penggunaan Kendaraan'],
         [],
         [
           'TGL PENGISIAN',
