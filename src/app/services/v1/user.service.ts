@@ -45,19 +45,18 @@ export class UserService {
 
     if (params.name__icontains) {
       let firstName = params.name__icontains;
-      let lastName = null;
+      let lastName = params.name__icontains;
       let isNik = false;
       const names = params.name__icontains.split(' ');
       if (names.length > 1) {
-        firstName = names[0];
         names.shift();
         lastName = names.join(' ');
       }
 
-      if (!lastName) {
-        firstName = firstName.trim();
-        isNik = /^\d+$/.test(firstName);
-      }
+      // if (!lastName) {
+      //   firstName = firstName.trim();
+      //   isNik = /^\d+$/.test(firstName);
+      // }
 
       if (isNik) {
         qb.andWhere(
@@ -71,8 +70,10 @@ export class UserService {
         );
       }
 
+      console.log(lastName);
+
       if (lastName) {
-        qb.andWhere(
+        qb.orWhere(
           (e) => e.lastName,
           (v) => v.contains(lastName, true),
         );
@@ -136,11 +137,18 @@ export class UserService {
     };
     try {
       const res = await axios.post(url, data, options);
-      return { status: res.status, data: res.data };
+      if (res.data.code == HttpStatus.UNPROCESSABLE_ENTITY) {
+        throw new HttpException(
+          res.data.message,
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      } else {
+        return { status: res.status, data: res.data };
+      }
     } catch (error) {
       console.error(error);
       throw new HttpException(
-        'Gagal Menyambungkan ke Service master, hubungi admin!',
+        error.message,
         HttpStatus.BAD_REQUEST,
       );
     }

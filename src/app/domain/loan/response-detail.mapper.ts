@@ -29,6 +29,7 @@ export class LoanDetailResponseMapper {
       payment.amount = v.amount;
       payment.type = v.type;
       payment.paymentMethod = v.paymentMethod;
+      payment.state = v.state;
       payment.receiverName = name;
       payment.receiverNik = nik;
       return payment;

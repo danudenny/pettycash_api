@@ -9,7 +9,7 @@ import {
 import { PingResponse } from '../../domain/other/ping-response.dto';
 import { OtherService } from '../../services/v1/other.service';
 
-@Controller('ping')
+@Controller('health')
 @ApiTags('Ping')
 @ApiInternalServerErrorResponse({ description: 'General Error' })
 export class PingController {

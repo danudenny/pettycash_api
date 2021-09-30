@@ -23,8 +23,6 @@ const RolePICHO = [
   'menu.expense:read',
   'down.payment:read',
   'down.payment:update',
-  'down.payment:approve',
-  'down.payment:reject',
 
   'expense:read',
   'expense:update',

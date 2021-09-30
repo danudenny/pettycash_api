@@ -12,6 +12,7 @@ Get list all Journal.
 + Parameters
     + startDate__gte: `2021-01-01` (date, optional) - Start Date to filter.
     + endDate__lte: `2021-12-31` (date, optional) - End Date to filter.
+    + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string, optional) - Branch to filter.
     + state: `draft` (enum[string], optional) - Journal Status.
         + draft
         + approved_by_ss_ho
@@ -21,8 +22,8 @@ Get list all Journal.
     + partner__icontains: `HR Sicepat` (string, optional) - Partner Name to Search.
     + number__icontains: `JRNL20200201AAA123` (string, optional) - Journal Number to Search.
     + reference__icontains: `Sicepat` (string, optional) - Journal Reference to Search.
-    + order: `^createdAt` (string, optional) - Sorting by field, use prefix `^` for ASC, `-` for DESC.
-        + Default: `-createdAt`
+    + order: `^transactionDate` (string, optional) - Sorting by field, use prefix `^` for ASC, `-` for DESC.
+        + Default: `-transactionDate`
 
 + Request (application/json)
     + Header
@@ -33,99 +34,54 @@ Get list all Journal.
     + Body
         {
           "data": [
-            {
-              "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-              "reverseJournalId": "45e5bbb9-636f-4a17-8037-953f626fdcbc",
-              "transactionDate": "2021-01-27",
-              "periodMonth": 1,
-              "periodYear": 2021,
-              "number": "JRNL20200201AAA123",
-              "reference": "REF DOC 001",
-              "partnerName": "PT. ABC DEF",
-              "partnerCode": "PRTN001",
-              "totalAmount": 900000,
-              "state": "draft",
-              "items": [
-                {
-                  "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "transactionDate": "2021-01-27",
-                  "periodMonth": 1,
-                  "periodYear": 2021,
-                  "number": "JRNL20200201AAA123",
-                  "reference": "REF DOC 001",
-                  "description": "CATATAN",
-                  "partnerName": "PT. ABC DEF",
-                  "partnerCode": "PRTN001",
-                  "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "coaCode": "500.001.009",
-                  "coaName": "Piutang Karyawan",
-                  "debit": 900000,
-                  "credit": 0,
-                  "isLedger": true,
-                },
-                {
-                  "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "transactionDate": "2021-01-27",
-                  "periodMonth": 1,
-                  "periodYear": 2021,
-                  "number": "JRNL20200201AAA123",
-                  "reference": "REF DOC 001",
-                  "description": "CATATAN",
-                  "partnerName": "PT. ABC DEF",
-                  "partnerCode": "PRTN001",
-                  "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "coaCode": "200.001.009",
-                  "coaName": "Kas Cabang Jeruk",
-                  "debit": 0,
-                  "credit": 900000,
-                  "isLedger": false,
-                }
-              ]
-            },
-            {
-              "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-              "transactionDate": "2021-01-27",
-              "periodMonth": 1,
-              "periodYear": 2021,
-              "number": "JRNL20200201AAA123",
-              "reference": "REF DOC 002",
-              "partnerName": "PT. HIJ DEF",
-              "partnerCode": "PRTN001",
-              "totalAmount": 700000,
-              "state": "posted",
-              "items": [
-                {
-                  "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "transactionDate": "2021-01-27",
-                  "periodMonth": 1,
-                  "periodYear": 2021,
-                  "number": "JRNL20200201AAA123",
-                  "reference": "REF DOC 001",
-                  "partnerName": "PT. HIJ DEF",
-                  "partnerCode": "PRTN001",
-                  "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "coaCode": "500.001.009",
-                  "coaName": "Piutang Karyawan",
-                  "debit": 700000,
-                  "credit": 0
-                },
-                {
-                  "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "transactionDate": "2021-01-27",
-                  "periodMonth": 1,
-                  "periodYear": 2021,
-                  "number": "JRNL20200201AAA123",
-                  "reference": "REF DOC 001",
-                  "partnerName": "PT. HIJ DEF",
-                  "partnerCode": "PRTN001",
-                  "coaId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
-                  "coaCode": "200.001.009",
-                  "coaName": "Kas Cabang Jeruk",
-                  "debit": 0,
-                  "credit": 700000
-                }
-              ]
-            }
+                    {
+                        "branchId": "090a0e27-9c32-43e2-b78a-b8d39dce771b",
+                        "branchName": "Jakpus Tanah Abang",
+                        "coaCode": "111.001.0010",
+                        "coaId": "36d2b72d-b1bb-4eed-8763-cd3378143353",
+                        "coaName": "Kas Kantor Pusat",
+                        "credit": 0,
+                        "debit": 5000,
+                        "description": null,
+                        "downPaymentNumber": null,
+                        "isLedger": false,
+                        "itemId": "e104fd82-4299-4320-ba73-bf4180a46840",
+                        "journalId": "a8735560-3448-4f5c-a637-49c8eb1c047b",
+                        "number": "JRNL/2021/09/JTVR8254",
+                        "partnerCode": "202011844",
+                        "partnerName": "Eryn Utami",
+                        "periodMonth": 9,
+                        "periodYear": 2021,
+                        "reference": "PAY202109XKU297",
+                        "reverseJournalId": "007b2cae-fc1a-4385-a7be-768e6e607265",
+                        "state": "draft",
+                        "syncFailReason": null,
+                        "transactionDate": "2021-09-19T17:00:00.000Z"
+                    },
+                    {
+                        "branchId": "090a0e27-9c32-43e2-b78a-b8d39dce771b",
+                        "branchName": "Jakpus Tanah Abang",
+                        "coaCode": "500.40.48",
+                        "coaId": "3ab76b02-0489-4f65-981a-5ac91ad2b03b",
+                        "coaName": "Down Payment Reimbursement Coa Pengganti",
+                        "credit": 5000,
+                        "debit": 0,
+                        "description": null,
+                        "downPaymentNumber": null,
+                        "isLedger": true,
+                        "itemId": "f820f15e-b7e9-4848-8ade-f315edd072d2",
+                        "journalId": "a8735560-3448-4f5c-a637-49c8eb1c047b",
+                        "number": "JRNL/2021/09/JTVR8254",
+                        "partnerCode": "202011844",
+                        "partnerName": "Eryn Utami",
+                        "periodMonth": 9,
+                        "periodYear": 2021,
+                        "reference": "PAY202109XKU297",
+                        "reverseJournalId": "007b2cae-fc1a-4385-a7be-768e6e607265",
+                        "state": "draft",
+                        "syncFailReason": null,
+                        "transactionDate": "2021-09-19T17:00:00.000Z"
+                    }
           ],
           "meta": {
             "page": 2,
@@ -146,113 +102,6 @@ Get list all Journal.
             "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
         }
 
-
-## Approve Journal [PATCH /v1/journals/{id}/approve]
-
-Approve Journal
-
-+ Parameters
-    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Journal ID.
-
-+ Request (application/json)
-    + Header
-
-            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
-
-+ Response 200 (application/json)
-    + Body
-
-+ Response 400 (application/json)
-    + Body
-
-            {
-                "status": "fail",
-                "code": "JOURNAL_APPROVE_FAILED",
-                "message": "failed to approve journal",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-+ Response 404 (application/json)
-    + Body
-
-            {
-                "status": "fail",
-                "code": "JOURNAL_NOT_FOUND",
-                "message": "journal not found",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-+ Response 500 (application/json)
-    + Body
-
-            {
-                "status": "error",
-                "code": "GENERAL_ERROR",
-                "message": "Internal Server Error",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-## Batch Approve Journal [PUT /v1/journals/batch-approve]
-
-Approve Journal in Batch
-
-+ Request (application/json)
-    + Header
-
-            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
-
-    + Attributes (object)
-        + datas: (array)
-            + item:
-                + id: `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string, required) - Journal ID to approve
-
-+ Response 200 (application/json)
-    + Body
-
-        {
-          "status": "success",
-          "data": {
-            "success": [
-              {
-                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
-              },
-              {
-                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
-              }
-            ],
-            "fail": [
-              {
-                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
-              },
-              {
-                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
-              },
-              {
-                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
-              }
-            ]
-          }
-        }
-
-+ Response 400 (application/json)
-    + Body
-
-            {
-                "status": "fail",
-                "code": "JOURNAL_BATCH_APPROVE_FAILED",
-                "message": "failed to batch approve journal",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
-
-+ Response 500 (application/json)
-    + Body
-
-            {
-                "status": "error",
-                "code": "GENERAL_ERROR",
-                "message": "Internal Server Error",
-                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
-            }
 
 ## Batch Post Journal [PUT /v1/journals/batch-post]
 

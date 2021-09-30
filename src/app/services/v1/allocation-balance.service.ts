@@ -5,7 +5,7 @@ import {
   EntityManager,
   getManager,
   Repository,
-  createQueryBuilder,
+  createQueryBuilder
 } from 'typeorm';
 import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
@@ -28,7 +28,6 @@ import {
   MASTER_ROLES,
   PeriodState,
 } from '../../../model/utils/enum';
-import { AccountStatementHistory } from '../../../model/account-statement-history.entity';
 import {
   PaidAllocationDTO,
   RejectAllocationDTO,
@@ -37,8 +36,6 @@ import dayjs from 'dayjs';
 import { TransferBalanceDTO } from '../../domain/balance/transfer-balance.dto';
 import { GenerateCode } from '../../../common/services/generate-code.service';
 import { AllocationBalanceDetailResponse } from '../../domain/allocation-balance/dto/allocation-balance-detail.dto';
-import { CreateAllocationBalanceOdooDTO } from '../../domain/allocation-balance/dto/allocation-balance-odoo-create.dto';
-import { CashBalanceAllocationOdoo } from '../../../model/cash.balance.allocation-odoo.entity';
 import { RevisionAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-balance-revision.dto';
 import { AccountStatement } from '../../../model/account-statement.entity';
 import { CreateAllocationBalanceDto } from '../../domain/allocation-balance/dto/create-allocation-balance.dto';
@@ -48,16 +45,15 @@ import { JournalItem } from '../../../model/journal-item.entity';
 import { User } from '../../../model/user.entity';
 import { ReceivedAllocationBalanceDTO } from '../../domain/allocation-balance/dto/allocation-received.dto';
 import { AccountStatementService } from './account-statement.service';
+import { CashBalanceAllocationHistory } from '../../../model/cash.balance.allocation-history.entity';
 
 @Injectable()
 export class AllocationBalanceService {
   constructor(
     @InjectRepository(CashBalanceAllocation)
     private readonly cashbalRepo: Repository<CashBalanceAllocation>,
-    @InjectRepository(AccountStatementHistory)
-    private readonly accHistoryRepo: Repository<AccountStatementHistory>,
-    @InjectRepository(CashBalanceAllocationOdoo)
-    private readonly odooRepo: Repository<CashBalanceAllocationOdoo>,
+    @InjectRepository(CashBalanceAllocationHistory)
+    private readonly accHistoryRepo: Repository<CashBalanceAllocationHistory>,
     @InjectRepository(Period)
     private readonly periodRepo: Repository<Period>,
   ) {}
@@ -76,8 +72,8 @@ export class AllocationBalanceService {
       state: CashBalanceAllocationState;
       rejectedNote?: string;
     },
-  ): Promise<AccountStatementHistory[]> {
-    const newHistory = new AccountStatementHistory();
+  ): Promise<CashBalanceAllocationHistory[]> {
+    const newHistory = new CashBalanceAllocationHistory();
     const userResponsible = await this.getUser();
     newHistory.state = data.state;
     newHistory.rejectedNote = data.rejectedNote;
@@ -87,7 +83,7 @@ export class AllocationBalanceService {
 
     const history = [].concat(allocation.allocationHistory, [
       newHistory,
-    ]) as AccountStatementHistory[];
+    ]) as CashBalanceAllocationHistory[];
     return history.filter((v) => v);
   }
 
@@ -151,12 +147,12 @@ export class AllocationBalanceService {
       ['br.branch_name', 'branchName'],
       ['cba.number', 'number'],
       ['cba.amount', 'amount'],
-      ["us.first_name || ' ' || us.last_name", 'picName'],
+      ['us.first_name || \' \' || us.last_name', 'picName'],
       ['us.username', 'nik'],
       ['cba.state', 'state'],
       ['cba.received_date', 'receivedDate'],
       ['cba.is_paid', 'isPaid'],
-      ["ru.first_name || ' ' || ru.last_name", 'receivedUserName'],
+      ['ru.first_name || \' \' || ru.last_name', 'receivedUserName'],
     );
     qb.leftJoin((e) => e.branch, 'br');
     qb.leftJoin((e) => e.responsibleUser, 'us');
@@ -276,8 +272,7 @@ export class AllocationBalanceService {
   }
 
   public async approve(
-    id: string,
-    payload?: CreateAllocationBalanceOdooDTO,
+    id: string
   ): Promise<any> {
     const approveAllocation = await getManager().transaction(
       async (manager) => {
@@ -318,56 +313,13 @@ export class AllocationBalanceService {
               `Alokasi Saldo Kas sudah di batalkan`,
             );
           }
-          if (currentState === CashBalanceAllocationState.CONFIRMED_BY_SS) {
+          if (currentState === CashBalanceAllocationState.APPROVED_BY_SS) {
             throw new BadRequestException(
               `Tidak bisa konfirmasi Alokasi Saldo Kas dengan status ${currentState}`,
             );
           }
-          if (currentState === CashBalanceAllocationState.APPROVED_BY_SPV) {
-            throw new BadRequestException(
-              `Alokasi Saldo Kas sudah diapprove oleh ${currentState}, dan ${CashBalanceAllocationState.CONFIRMED_BY_SS} tidak bisa melakukan konfirmasi.`,
-            );
-          }
-          state = CashBalanceAllocationState.CONFIRMED_BY_SS;
-        }
 
-        // ! HINT: Approve by SPV HO
-        if (userRole === MASTER_ROLES.SPV_HO) {
-          // if (currentState === CashBalanceAllocationState.DRAFT) {
-          //   throw new BadRequestException(
-          //     `Alokasi Saldo Kas belum dikonfirmasi oleh SS HO`,
-          //   );
-          // }
-          if (currentState === CashBalanceAllocationState.REJECTED) {
-            throw new BadRequestException(`Alokasi Saldo Kas sudah di tolak`);
-          }
-          if (currentState === CashBalanceAllocationState.CANCELED) {
-            throw new BadRequestException(
-              `Alokasi Saldo Kas sudah di batalkan`,
-            );
-          }
-          if (currentState === CashBalanceAllocationState.APPROVED_BY_SPV) {
-            throw new BadRequestException(
-              `Tidak bisa approve Alokasi Saldo Kas dengan status ${currentState}`,
-            );
-          }
-
-          const createOdoo = this.odooRepo.create(payload);
-          const userResponsible = await this.getUser();
-          createOdoo.createUserId = userResponsible.id;
-          createOdoo.updateUserId = userResponsible.id;
-          createOdoo.accountNumber = null;
-          createOdoo.amount = allocation.amount;
-          createOdoo.number = allocation.number;
-          createOdoo.branchName = allocation.branch.branchName;
-          createOdoo.description = allocation.description;
-          createOdoo.authKey = '2ee2cec3302e26b8030b233d614c4f4e';
-          createOdoo.analyticAccount = allocation.branch.branchCode;
-
-          state = CashBalanceAllocationState.APPROVED_BY_SPV;
-          if (state === CashBalanceAllocationState.APPROVED_BY_SPV) {
-            await this.odooRepo.save(createOdoo);
-          }
+          state = CashBalanceAllocationState.APPROVED_BY_SS;
         }
 
         if (!state) {
@@ -384,17 +336,14 @@ export class AllocationBalanceService {
         return await manager.save(allocation);
       },
     );
-    if (approveAllocation['state'] === 'confirmed_by_ss_ho') {
-      throw new HttpException(`Konfirmasi setuju dari SS HO`, HttpStatus.OK);
+    if (approveAllocation['state'] === 'approved_by_ss_ho') {
+      throw new HttpException(`Approve dari SS HO`, HttpStatus.OK);
     }
     if (approveAllocation['state'] === CashBalanceAllocationState.EXPIRED) {
       throw new HttpException(
         `Form yang telah lewat batas tanggal transfer`,
         HttpStatus.NOT_IMPLEMENTED,
       );
-    }
-    if (approveAllocation['state'] === 'approved_by_spv_ho') {
-      throw new HttpException(`Approval setuju dari SPV HO`, HttpStatus.OK);
     }
   }
 
@@ -440,12 +389,11 @@ export class AllocationBalanceService {
             ![
               MASTER_ROLES.PIC_HO,
               MASTER_ROLES.SS_HO,
-              MASTER_ROLES.SPV_HO,
               MASTER_ROLES.SUPERUSER,
             ].includes(userRole)
           ) {
             throw new BadRequestException(
-              `Hanya PIC/SS/SPV HO yang dapat menolak Alokasi Saldo Kas!`,
+              `Hanya PIC/SS yang dapat menolak Alokasi Saldo Kas!`,
             );
           }
 
@@ -588,11 +536,6 @@ export class AllocationBalanceService {
             );
           }
 
-          if (currentState === CashBalanceAllocationState.CONFIRMED_BY_SS) {
-            throw new BadRequestException(
-              `Tidak bisa terima Alokasi Saldo Kas dengan status ${currentState}, Alokasi saldo harus diapprove oleh spv HO`,
-            );
-          }
           state = CashBalanceAllocationState.RECEIVED;
           await this.upsertAccountStatementFromExpense(manager, allocation);
         }
@@ -628,8 +571,7 @@ export class AllocationBalanceService {
             return AllocationBalanceService.createJournal(manager, journal);
           }
         } catch (error) {
-          console.log(error);
-          throw new Error(error);
+          throw new HttpException(error.response, error.status);
         }
       },
     );
@@ -696,6 +638,16 @@ export class AllocationBalanceService {
 
     if (!createDto.amount) {
       throw new BadRequestException(`Nominal tidak boleh kosong!`);
+    }
+
+    const user = await AuthService.getUser({ relations: ['role'] });
+    const userRole = user?.role?.name;
+
+    if (userRole === MASTER_ROLES.ADMIN_BRANCH) {
+      throw new HttpException(
+        'Role ADMIN, tidak dapat membuat Alokasi Saldo',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     state = createDto.state;
@@ -784,6 +736,20 @@ export class AllocationBalanceService {
       },
     });
 
+    const checkCoa = await createQueryBuilder('account_coa', 'coa')
+        .select('coa.id')
+        .where(`coa.id = '${alokasi?.branch?.cashCoaId}'`)
+        .andWhere('coa.isDeleted = false')
+        .andWhere('coa.isActive = true')
+        .getOne();
+
+    if(checkCoa == null) {
+      throw new HttpException(
+        'Akun Coa Tidak Ditemukan',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
     const i = new JournalItem();
     i.createUser = user;
     i.updateUser = user;
@@ -850,7 +816,7 @@ export class AllocationBalanceService {
     j.sourceType = JournalSourceType.ALOKASI;
     j.items = await this.buildJournalItem(alokasi, userRole);
     j.totalAmount = alokasi.amount;
-    j.state = JournalState.APPROVED_BY_SS_SPV_HO;
+    j.state = JournalState.DRAFT;
 
     return j;
   }

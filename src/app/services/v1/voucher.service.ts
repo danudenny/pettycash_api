@@ -1,3 +1,5 @@
+import { EmployeeVoucherItem } from './../../../model/employee-voucer-item.entity';
+import { Employee } from './../../../model/employee.entity';
 import { VoucherResponse } from './../../domain/voucher/response/voucher.response.dto';
 import {
   BatchPayloadVoucherDTO,
@@ -36,6 +38,9 @@ import axios from 'axios';
 import { VoucherState } from '../../../model/utils/enum';
 import { LoaderEnv } from '../../../config/loader';
 import { AwsS3Service } from '../../../common/services/aws-s3.service';
+import { QueryVoucherEmployeeDTO } from '../../domain/employee/employee.payload.dto';
+import { EmployeeWithPaginationResponse } from '../../domain/employee/employee-response.dto';
+import { EmployeeProductResponse } from '../../domain/employee/employee-product-response.dto';
 
 @Injectable()
 export class VoucherService {
@@ -63,7 +68,6 @@ export class VoucherService {
     return {
       'API-Key': LoaderEnv.envs.VOUCHER_HELPER_KEY,
       'Content-Type': 'application/json',
-      Connection: 'keep-alive',
     };
   }
 
@@ -93,10 +97,63 @@ export class VoucherService {
     return newAttachments;
   }
 
+  public async getEmployee(
+    query?: QueryVoucherEmployeeDTO,
+  ): Promise<EmployeeWithPaginationResponse> {
+    const params = { order: '^name', limit: 10, ...query };
+    const qb = new QueryBuilder(Employee, 'emp', params);
+
+    qb.fieldResolverMap['nik__icontains'] = 'emp.nik';
+    qb.fieldResolverMap['name__icontains'] = 'emp.name';
+
+    qb.applyFilterPagination();
+    qb.selectRaw(['emp.id', 'id'], ['emp.nik', 'nik'], ['emp.name', 'name']);
+    qb.andWhere(
+      (e) => e.isHasVoucher,
+      (v) => v.isTrue(),
+    );
+    qb.andWhere(
+      (e) => e.employeeStatus,
+      (v) => v.isTrue(),
+    );
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+
+    const emp = await qb.exec();
+    return new EmployeeWithPaginationResponse(emp, params);
+  }
+
+  public async getProductByEmployeeId(
+    id: string,
+  ): Promise<EmployeeProductResponse> {
+    const getProduct = await EmployeeVoucherItem.find({
+      where: {
+        employeeId: id,
+      },
+    });
+
+    if (!getProduct) {
+      throw new HttpException(
+        'Employee tidak mempunyai Voucher Item',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    return new EmployeeProductResponse(getProduct);
+  }
+
   public async list(
     query?: QueryVoucherDTO,
   ): Promise<VoucherWithPaginationResponse> {
-    const params = { order: '^created_at', limit: 10, ...query };
+    const countVoucher = await this.voucherRepo.count();
+    const params = {
+      order: '^created_at',
+      limit: 10,
+      total: countVoucher,
+      ...query,
+    };
     const qb = new QueryBuilder(Voucher, 'vcr', params);
     const {
       userBranchIds,
@@ -138,7 +195,6 @@ export class VoucherService {
         (v) => v.in(userBranchIds),
       );
     }
-
     const vouchers = await qb.exec();
     return new VoucherWithPaginationResponse(vouchers, params);
   }
@@ -214,11 +270,31 @@ export class VoucherService {
           .leftJoin('branch', 'brc', 'emp.branch_id = brc.branch_id')
           .where(`emp.id = '${employeeId}'`)
           .andWhere('emp.isDeleted = false')
+          .andWhere('brc.cash_coa_id IsNull')
           .getCount();
 
-        if (brcCoaExist == 0) {
+        if (brcCoaExist == 1) {
           throw new HttpException(
             'Cash Coa tidak ditemukan',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+
+        const checkBranchBalance = await createQueryBuilder('balance', 'blc')
+          .select('blc.*')
+          .leftJoin('voucher', 'vcr', 'blc.branch_id = vcr.branch_id')
+          .where(`blc.branch_id = '${branchId}'`)
+          .groupBy('blc.branch_id')
+          .getRawOne();
+
+        if (
+          (payload.payment_type == 'cash' &&
+            payload.totalAmount > checkBranchBalance.cash_amount) ||
+          (payload.payment_type == 'bank' &&
+            payload.totalAmount > checkBranchBalance.bank_amount)
+        ) {
+          throw new HttpException(
+            'Saldo cabang tidak cukup',
             HttpStatus.BAD_REQUEST,
           );
         }
@@ -233,19 +309,19 @@ export class VoucherService {
         voucher.employeeId = payload?.employeeId;
         voucher.items = items;
         voucher.totalAmount = payload?.totalAmount;
-        voucher.paymentType = payload.paymentType;
+        voucher.paymentType = payload.payment_type;
         voucher.state = VoucherState.APPROVED;
         voucher.createUserId = await VoucherService.getUserId();
         voucher.updateUserId = await VoucherService.getUserId();
 
         const result = await manager.save(voucher);
+
         return result;
       });
 
-      const resultVoucher = new VoucherResponse(createVoucher);
       const data = JSON.stringify({
-        voucher_ids: [resultVoucher.data['id']],
-        payment_type: resultVoucher.data['paymentType'],
+        voucher_ids: [createVoucher.id],
+        payment_type: createVoucher.paymentType,
       });
       const options = {
         headers: VoucherService.headerWebhook,
@@ -254,11 +330,9 @@ export class VoucherService {
       try {
         await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
       } catch (error) {
-        const checkId = await this.voucherRepo.findByIds(
-          resultVoucher.data['id'],
-        );
+        const checkId = await this.voucherRepo.findByIds([createVoucher.id]);
         if (checkId) {
-          await this.voucherRepo.delete({ id: resultVoucher.data['id'] });
+          await this.voucherRepo.delete({ id: createVoucher.id });
         }
         throw new HttpException(
           'Gagal Menyambungkan ke Webhook',
@@ -266,7 +340,7 @@ export class VoucherService {
         );
       }
 
-      return resultVoucher;
+      return new VoucherResponse(createVoucher);
     } catch (err) {
       throw err;
     }
@@ -453,13 +527,19 @@ export class VoucherService {
           webhookResp[0].forEach(async (res) => {
             resp.push(res);
             if (
-              res['status'] == 'FAILED' ||
-              res['status'] == 'EXPENSE_ALREADY_CREATED' ||
-              res['status'] == 'VOUCHER_NOT_FOUND'
+              res['status'] != 'SUCCESS' ||
+              res['status'] != 'APPROVING_EXPENSE_FAILED' ||
+              res['status'] != 'GENERATE_JOURNAL_FAILED'
             ) {
               await this.voucherRepo.update(
                 { id: res['voucher_id'] },
                 { paymentType: paymentTypeFromQuery[0] },
+              );
+            }
+            if (res['status'] == 'GENERATE_JOURNAL_FAILED') {
+              await this.voucherRepo.update(
+                { id: res['voucher_id'] },
+                { paymentType: data.payment_type },
               );
             }
             if (res['status'] == 'APPROVING_EXPENSE_FAILED') {
@@ -468,10 +548,16 @@ export class VoucherService {
                 { paymentType: data.payment_type },
               );
             }
+            if (res['status'] == 'SUCCESS') {
+              await this.voucherRepo.update(
+                { id: res['voucher_id'] },
+                { paymentType: data.payment_type },
+              );
+            }
           });
         });
     } catch (error) {
-      console.log(error);
+      console.log('error: ' + error);
       await this.voucherRepo.update(
         { id: In(successIds) },
         { paymentType: paymentTypeFromQuery[0] },
@@ -479,53 +565,41 @@ export class VoucherService {
     }
     const webHookResult = webhookResp[0];
     console.log(webhookResp);
-    if (webHookResult[0].status == 'FAILED') {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          message: 'FAILED',
-        },
-        HttpStatus.BAD_REQUEST,
-      );
+
+    let ids = [];
+    let statuses = [];
+    webHookResult.forEach((element) => {
+      ids.push(element.voucher_id);
+      statuses.push(element.status);
+    });
+
+    const getVoucherNumber = await this.voucherRepo.find({
+      where: {
+        id: In(ids),
+      },
+    });
+
+    let numbersVcr = [];
+
+    if (getVoucherNumber.length == 0) {
+      numbersVcr.push({
+        number: '-',
+        status: webHookResult[0].status,
+      });
     }
-    if (webHookResult[0].status == 'EXPENSE_ALREADY_CREATED') {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          message: 'EXPENSE_ALREADY_CREATED',
-        },
-        HttpStatus.BAD_REQUEST,
-      );
+    for (let i = 0; i < getVoucherNumber.length; i++) {
+      if (!getVoucherNumber) {
+        numbersVcr.push({
+          number: '-',
+          status: webHookResult[i].status,
+        });
+      }
+      numbersVcr.push({
+        number: getVoucherNumber[i].number,
+        status: webHookResult[i].status,
+      });
     }
-    if (webHookResult[0].status == 'VOUCHER_NOT_FOUND') {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          message: 'VOUCHER_NOT_FOUND',
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    if (webHookResult[0].status == 'APPROVING_EXPENSE_FAILED') {
-      throw new HttpException(
-        {
-          status: HttpStatus.PARTIAL_CONTENT,
-          message: 'APPROVING_EXPENSE_FAILED / FAILED_CREATE_JOURNAL',
-        },
-        HttpStatus.PARTIAL_CONTENT,
-      );
-    }
-    if (webHookResult[0].status == 'COA_NOT_EXIST') {
-      throw new HttpException(
-        { status: HttpStatus.BAD_REQUEST, message: webHookResult[0] },
-        HttpStatus.OK,
-      );
-    }
-    if (webHookResult[0].status == 'SUCCESS') {
-      throw new HttpException(
-        { status: HttpStatus.OK, message: webHookResult[0] },
-        HttpStatus.OK,
-      );
-    }
+
+    return numbersVcr;
   }
 }

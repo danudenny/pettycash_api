@@ -11,6 +11,7 @@ export class PaginationBuilder {
     let nextPage = null;
     const page = params && params.page ? Number(params.page) : 1;
     const limit = params && params.limit ? Number(params.limit) : null;
+    const total = params && Number(params.total);
 
     if (page && page > 1) {
       prevPage = page - 1;
@@ -20,6 +21,10 @@ export class PaginationBuilder {
       nextPage = null;
     } else {
       nextPage = page + 1;
+    }
+
+    if (page >= total / limit) {
+      nextPage = null;
     }
 
     const meta = new BasePaginationResponse();

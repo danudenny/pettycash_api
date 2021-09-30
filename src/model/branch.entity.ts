@@ -5,6 +5,7 @@ import {
   BaseEntity,
   ManyToOne,
   JoinColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { AccountCoa } from './account-coa.entity';
 import { ColumnNumericTransformer } from './utils/transformer';
@@ -92,4 +93,10 @@ export class Branch extends BaseEntity {
   @ManyToOne(() => AccountCoa, { cascade: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'cash_coa_id', referencedColumnName: 'id' })
   cashCoa?: AccountCoa;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    name: 'updated_at',
+  })
+  updatedAt?: Date;
 }

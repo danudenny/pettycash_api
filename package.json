@@ -19,6 +19,7 @@
     "drakov:start": "drakov -f 'contracts/*.apib' -p 3100 --public --autoOptions --watch",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -f src/config/typeorm.config.cli",
     "db:seed:dev": "ts-node -r tsconfig-paths/register src/scripts/seeder.ts",
+    "db:seed:base": "ts-node -r tsconfig-paths/register src/scripts/seeder-base.ts",
     "transform": "ts-node src/scripts/transform"
   },
   "author": "sicepat-dev",
@@ -46,7 +47,7 @@
     "@nestjs/core": "^7.6.5",
     "@nestjs/platform-express": "^7.6.4",
     "@nestjs/swagger": "^4.7.11",
-    "@nestjs/typeorm": "^7.1.5",
+    "@nestjs/typeorm": "7.1.5",
     "@types/node": "^14.14.25",
     "@types/request": "^2.48.5",
     "aws-sdk": "^2.856.0",

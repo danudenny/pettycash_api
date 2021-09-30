@@ -30,6 +30,8 @@ import { AuthService } from './auth.service';
 import { GlobalSetting } from '../../../model/global-setting.entity';
 import { LoaderEnv } from '../../../config/loader';
 import { AwsS3Service } from '../../../common/services/aws-s3.service';
+import { ReportAccountDailyClosingSummaryResponse } from '../../domain/report-account-daily-closing/summary-response.dto';
+import { QueryReportAccountDailyClosingDTO } from '../../domain/report-account-daily-closing/summary-query.dto';
 
 @Injectable()
 export class AccountDailyClosingService {
@@ -108,6 +110,46 @@ export class AccountDailyClosingService {
     return new AccountDailyClosingDetailResponse(accountDailyClosing);
   }
 
+  public async getSummary(
+    params?: QueryReportAccountDailyClosingDTO,
+  ): Promise<ReportAccountDailyClosingSummaryResponse> {
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
+
+    if (!userBranchIds?.length) {
+      throw new UnprocessableEntityException(
+        `Current User request not assigned to a branch!`,
+      );
+    }
+
+    const qb = new QueryBuilder(AccountDailyClosing, 'adc', params);
+
+    qb.fieldResolverMap['startDate__gte'] = 'adc.closing_date';
+    qb.fieldResolverMap['endDate__lte'] = 'adc.closing_date';
+    qb.fieldResolverMap['branchId'] = 'adc.branch_id';
+
+    qb.applyFilterQueries();
+    qb.selectRaw(
+      ['SUM(COALESCE(adc.opening_bank_amount, 0))', 'openingBankAmount'],
+      ['SUM(COALESCE(adc.closing_bank_amount, 0))', 'closingBankAmount'],
+      ['SUM(COALESCE(adc.opening_cash_amount, 0))', 'openingCashAmount'],
+      ['SUM(COALESCE(adc.closing_cash_amount, 0))', 'closingCashAmount'],
+      ['SUM(COALESCE(adc.opening_bon_amount, 0))', 'openingBonAmount'],
+      ['SUM(COALESCE(adc.closing_bon_amount, 0))', 'closingBonAmount'],
+    );
+    if (userBranchIds?.length && !isSuperUser) {
+      qb.andWhere(
+        (e) => e.branchId,
+        (v) => v.in(userBranchIds),
+      );
+    }
+
+    const results = await qb.exec();
+    return new ReportAccountDailyClosingSummaryResponse(results);
+  }
+
   public async create(
     payload: CreateAccountDailyClosingDTO,
   ): Promise<CreateAccountDailyClosingResponse> {
@@ -156,7 +198,10 @@ export class AccountDailyClosingService {
     const { CACHE_ATTACHMENT_DURATION_IN_MINUTES } = LoaderEnv.envs;
     const cacheDuration = (CACHE_ATTACHMENT_DURATION_IN_MINUTES || 5) * 60; // in seconds
 
-    qb.qb.cache(`accountdailyclosing:${accountDailyClosingId}:attachments`, 1000 * (cacheDuration - 5));
+    qb.qb.cache(
+      `accountdailyclosing:${accountDailyClosingId}:attachments`,
+      1000 * (cacheDuration - 5),
+    );
     const attachments = await qb.exec();
     if (!attachments) {
       throw new NotFoundException(`Attachments not found!`);

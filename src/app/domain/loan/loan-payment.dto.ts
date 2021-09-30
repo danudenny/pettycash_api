@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import {
   AccountPaymentPayMethod,
+  AccountPaymentState,
   AccountPaymentType,
 } from '../../../model/utils/enum';
 
@@ -50,4 +51,11 @@ export class LoanPaymentDTO {
     enum: AccountPaymentPayMethod,
   })
   paymentMethod: AccountPaymentPayMethod;
+
+  @ApiProperty({
+    description: 'Payment State: `paid` or `reversed`',
+    example: AccountPaymentState.PAID,
+    enum: AccountPaymentState,
+  })
+  state: AccountPaymentState;
 }

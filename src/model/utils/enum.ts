@@ -21,7 +21,7 @@ export enum BudgetRequestState {
 
 export enum CashBalanceAllocationState {
   DRAFT = 'draft',
-  CONFIRMED_BY_SS = 'confirmed_by_ss_ho',
+  APPROVED_BY_SS = 'approved_by_ss_ho',
   APPROVED_BY_SPV = 'approved_by_spv_ho',
   REJECTED = 'rejected',
   RECEIVED = 'received',
@@ -60,6 +60,7 @@ export enum AccountStatementAmountPosition {
 
 export enum AccountStatementSourceType {
   DP = 'down_payment',
+  EXPENSE = 'expense',
   PAYMENT = 'payment',
 }
 
@@ -96,7 +97,6 @@ export enum DownPaymentPayType {
 
 export enum DownPaymentState {
   DRAFT = 'draft',
-  APPROVED_BY_PIC_HO = 'approved_by_pic_ho',
   APPROVED_BY_SS_SPV = 'approved_by_ss_spv_ho',
   REVERSED = 'reversed',
   REJECTED = 'rejected',
@@ -134,6 +134,11 @@ export enum AccountPaymentType {
   FULL = 'full',
 }
 
+export enum AccountPaymentState {
+  PAID = 'paid',
+  REVERSED = 'reversed',
+}
+
 /**
  * receivable -> Piutang = Hutang perusahaan terhadap karyawan.
  * payable ->  Hutang = Hutang karyawan terhadap perusahaan.
@@ -163,8 +168,6 @@ export enum AccountTaxPartnerType {
 
 export enum JournalState {
   DRAFT = 'draft',
-  APPROVED_BY_SS_SPV_HO = 'approved_by_ss_spv_ho',
-  APPROVED_BY_TAX = 'approved_by_tax',
   POSTED = 'posted',
   SYNC_FAILED = 'sync_failed',
 }

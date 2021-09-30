@@ -49,6 +49,16 @@ export class Journal extends PtcBaseEntity {
   })
   reference?: string;
 
+  // Special column for DownPayment Number
+  // this column only set when journal created from Expense that's has DownPayment
+  @Column({
+    type: 'varchar',
+    name: 'down_payment_number',
+    length: 25,
+    nullable: true,
+  })
+  downPaymentNumber?: string;
+
   // FIXME: use ENUM `JournalSourceType`?
   @Column({
     type: 'varchar',

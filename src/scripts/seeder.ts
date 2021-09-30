@@ -33,6 +33,16 @@ import { Product } from '../model/product.entity';
 import { ProductSeed } from '../seeders/product.seed';
 import { AttachmentType } from '../model/attachment-type.entity';
 import AttachmentTypeSeed from '../seeders/attachment-type.seed';
+import { EmployeeRole } from '../model/employee-role.entity';
+import { EmployeeRoleSeed } from '../seeders/employee-role.seed';
+import { Brand } from '../model/brand.entity';
+import { BrandSeed } from '../seeders/brand.seed';
+import { BrandVehicle } from '../model/brand-vehicle.entity';
+import { BrandVehicleSeed } from '../seeders/brand-vehicle.seed';
+import { Vehicle } from '../model/vehicle.entity';
+import { VehicleSeed } from '../seeders/vehicle.seed';
+import { CashflowType } from '../model/cashflow-type.entity';
+import { CashFlowTypeSeed } from '../seeders/cashflow-type.seed';
 
 async function run() {
   // init connection
@@ -46,8 +56,11 @@ async function run() {
   // seed data bank branch
   await connection.getRepository(BankBranch).save(BankBranchSeed);
 
+  // seed data employeeRole
+  await connection.getRepository(EmployeeRole).insert(EmployeeRoleSeed);
+
   // seed data employee
-  const employes = GenerateEmployeeRandom(15);
+  const employes = GenerateEmployeeRandom(25);
   await connection.getRepository(Employee).insert(employes);
 
   // seed data department
@@ -97,6 +110,18 @@ async function run() {
   // assign random user to role
   await AssignRandomUserToRole(connection);
   // --- End Role and Permissions --- //
+
+  // seed data cashflow type
+  await connection.getRepository(CashflowType).save(CashFlowTypeSeed);
+
+  // seed data brand
+  await connection.getRepository(Brand).insert(BrandSeed);
+
+  // seed data brand vehicle
+  await connection.getRepository(BrandVehicle).insert(BrandVehicleSeed);
+
+  // seed data vehicle
+  await connection.getRepository(Vehicle).insert(VehicleSeed);
 
   // Close connection after running seeder.
   await connection.close();

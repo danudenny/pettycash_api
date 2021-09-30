@@ -1,17 +1,17 @@
 import { MASTER_ROLES } from '../../../../model/utils/enum';
 import { Branch } from '../../../../model/branch.entity';
 import { AllocationBalanceDetailDTO } from '../dto/allocation-balance.dto';
-import { AccountStatementHistory } from '../../../../model/account-statement-history.entity';
 import { CashBalanceAllocation } from '../../../../model/cash.balance.allocation.entity';
 import { AlocationBalanceHistoryDTO } from '../dto/allocation-balance-history.dto';
+import { CashBalanceAllocationHistory } from '../../../../model/cash.balance.allocation-history.entity';
 
 export class AllocationDetailResponseMapper {
   public static toDTO(dto: AllocationBalanceDetailDTO): AllocationBalanceDetailDTO {
     return dto;
   }
 
-  private static toAccountStatementHistoryDTO(
-    data: AccountStatementHistory[],
+  private static toCashBalanceAllocationHistoryDTO(
+    data: CashBalanceAllocationHistory[],
     branch: Branch,
   ): AlocationBalanceHistoryDTO[] {
     const histories = data.map((v) => {
@@ -56,7 +56,7 @@ export class AllocationDetailResponseMapper {
       bankName: ety.destinationBank && ety.destinationBank.bankName,
       accountNumber: ety.destinationBank && ety.destinationBank.accountNumber,
       isPaid: ety.isPaid,
-      histories: this.toAccountStatementHistoryDTO(ety.allocationHistory, ety.branch),
+      histories: this.toCashBalanceAllocationHistoryDTO(ety.allocationHistory, ety.branch),
     });
   }
 

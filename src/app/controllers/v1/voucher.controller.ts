@@ -1,3 +1,4 @@
+import { QueryVoucherEmployeeDTO } from './../../domain/employee/employee.payload.dto';
 import { VoucherResponse } from './../../domain/voucher/response/voucher.response.dto';
 import {
   Body,
@@ -24,24 +25,30 @@ import {
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
-  ApiOperation, ApiParam,
+  ApiOperation,
+  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { VoucherService } from '../../services/v1/voucher.service';
 import { VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
-import {
-  QueryVoucherDTO,
-} from '../../domain/voucher/voucher-query.payload';
+import { QueryVoucherDTO } from '../../domain/voucher/voucher-query.payload';
 import { VoucherDetailResponse } from '../../domain/voucher/response/voucher-detail.response.dto';
 import { PrintService } from '../../services/v1/print.service';
 import express = require('express');
-import { BatchPayloadVoucherDTO, VoucherCreateDTO } from '../../domain/voucher/dto/voucher-create.dto';
+import {
+  BatchPayloadVoucherDTO,
+  VoucherCreateDTO,
+} from '../../domain/voucher/dto/voucher-create.dto';
 import { ProductService } from '../../services/master/v1/product.service';
-import { ProductWithPaginationResponse } from '../../domain/product/response.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { VoucherAttachmentResponse } from '../../domain/voucher/response/voucer-attachment.response.dto';
 import { CreateVoucherAttachmentDTO } from '../../domain/voucher/dto/create-attachment.dto';
-import { FindAttachmentIdParams, FindVoucherIdParams } from '../../domain/common/findId-param.dto';
+import {
+  FindAttachmentIdParams,
+  FindVoucherIdParams,
+} from '../../domain/common/findId-param.dto';
+import { EmployeeWithPaginationResponse } from '../../domain/employee/employee-response.dto';
+import { EmployeeProductResponse } from '../../domain/employee/employee-product-response.dto';
 
 @Controller('v1/vouchers')
 @ApiTags('Voucher')
@@ -50,7 +57,6 @@ export class VoucherController {
   constructor(
     private vcrService: VoucherService,
     private printService: PrintService,
-    private prodService: ProductService,
   ) {}
 
   @Get('')
@@ -63,12 +69,33 @@ export class VoucherController {
     return await this.vcrService.list(query);
   }
 
-  @Get('products')
-  @ApiOperation({ summary: 'List all Voucher Product' })
-  @ApiOkResponse({ type: ProductWithPaginationResponse })
-  @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async products() {
-    return await this.prodService.voucher();
+  // @Get('products')
+  // @ApiOperation({ summary: 'List all Voucher Product' })
+  // @ApiOkResponse({ type: ProductWithPaginationResponse })
+  // @ApiBadRequestResponse({ description: 'Bad Request' })
+  // public async products() {
+  //   return await this.prodService.voucher();
+  // }
+
+  @Get('/employees')
+  @ApiOperation({ summary: 'Get Employee' })
+  @ApiOkResponse({
+    status: HttpStatus.OK,
+    type: EmployeeWithPaginationResponse,
+  })
+  public async getEmployee(
+    @Query() query?: QueryVoucherEmployeeDTO,
+  ): Promise<EmployeeWithPaginationResponse> {
+    return await this.vcrService.getEmployee(query);
+  }
+
+  @Get('/employees/:id')
+  @ApiOperation({ summary: 'Get Product By Employee ID' })
+  @ApiOkResponse({ status: HttpStatus.OK, type: EmployeeProductResponse })
+  public async getProductByEmployeeId(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    return await this.vcrService.getProductByEmployeeId(id);
   }
 
   @Get('/:id')
@@ -118,7 +145,7 @@ export class VoucherController {
 
   @Put('/redeem')
   @ApiOperation({ summary: 'Batch Redeem Voucher' })
-  @ApiOkResponse({description: 'Successfully approve voucher'})
+  @ApiOkResponse({ description: 'Successfully approve voucher' })
   @ApiBadRequestResponse({ description: 'Failed to batch approve voucher' })
   @ApiHeader({ name: 'x-username', description: 'Custom User Request' })
   @ApiBody({ type: BatchPayloadVoucherDTO })
@@ -151,5 +178,4 @@ export class VoucherController {
   ) {
     return await this.vcrService.deleteAttachment(voucherId, attachmentId);
   }
-
 }

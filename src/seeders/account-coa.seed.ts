@@ -12,24 +12,30 @@ export const COA_ID_JASA = '429fcd37-cc5c-41ea-a5f0-26e4c00dc03a';
 export const COA_ID_SEWA_BANGUNAN = '785c3ed1-5a15-4c68-9fb0-f862594e3fa0';
 export const COA_ID_SEWA_ALAT = 'a1f71689-17a6-4505-b202-c4131b401243';
 export const COA_ID_BENSIN = '546ca89a-4f07-4821-8870-d276540187a8';
+export const COA_ID_UM_PERDIN = '03785a16-b0e9-4952-9667-9885ab24bba1';
+export const COA_ID_UM_REIMBURSEMENT = '8aa2325b-57f3-4626-b175-ae9e83729b79';
+export const COA_ID_TRANSIT = 'bc598bc8-aefd-44f1-92cf-2a3a0f1f2750';
+export const COA_ID_TRANSIT2 = '47d12fe1-fc6c-41e3-b380-c4a91e2629d1';
 
 const getAccounts = () => {
   let coas: AccountCoa[] = [];
 
   const coa = new AccountCoa();
-  coa.id = 'bc598bc8-aefd-44f1-92cf-2a3a0f1f2750';
+  coa.id = COA_ID_TRANSIT;
   coa.code = '500.10.11';
   coa.name = 'Cash Transit Coa';
+  coa.internalType = 'Liquidity';
   coas.push(coa);
 
   const coa1 = new AccountCoa();
-  coa1.id = 'e1bdd0d8-32f5-4d3e-99b5-c1a798b01766';
+  coa1.id = COA_ID_TRANSIT2;
   coa1.code = '500.10.18';
   coa1.name = 'Cash Transit Coa Pengganti';
+  coa1.internalType = 'Liquidity';
   coas.push(coa1);
 
   const coa2 = new AccountCoa();
-  coa2.id = '03785a16-b0e9-4952-9667-9885ab24bba1';
+  coa2.id = COA_ID_UM_PERDIN;
   coa2.code = '500.20.22';
   coa2.name = 'Down Payment Perdin Coa';
   coas.push(coa2);
@@ -41,7 +47,7 @@ const getAccounts = () => {
   coas.push(coa3);
 
   const coa4 = new AccountCoa();
-  coa4.id = '8aa2325b-57f3-4626-b175-ae9e83729b79';
+  coa4.id = COA_ID_UM_REIMBURSEMENT;
   coa4.code = '500.40.44';
   coa4.name = 'Down Payment Reimbursement Coa';
   coas.push(coa4);

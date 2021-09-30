@@ -9,6 +9,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -23,6 +24,7 @@ import { AccountPayment } from '../../../model/account-payment.entity';
 import { AuthService } from './auth.service';
 import {
   AccountPaymentPayMethod,
+  AccountPaymentState,
   AccountPaymentType,
   AccountStatementAmountPosition,
   AccountStatementSourceType,
@@ -99,10 +101,8 @@ export class LoanService {
   public async list(query?: QueryLoanDTO): Promise<LoanWithPaginationResponse> {
     const params = { ...query };
     const qb = new QueryBuilder(Loan, 'l', params);
-    const {
-      userBranchIds,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
+    const { userBranchIds, isSuperUser } =
+      await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['startDate__gte'] = 'l.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'l.transaction_date';
@@ -157,10 +157,8 @@ export class LoanService {
   }
 
   public async getById(id: string): Promise<LoanDetailResponse> {
-    const {
-      isSuperUser,
-      userBranchIds,
-    } = await AuthService.getUserBranchAndRole();
+    const { isSuperUser, userBranchIds } =
+      await AuthService.getUserBranchAndRole();
 
     const where = { id, isDeleted: false };
     if (!isSuperUser) {
@@ -358,11 +356,8 @@ export class LoanService {
   ): Promise<LoanDetailResponse> {
     try {
       const createPayment = await getManager().transaction(async (manager) => {
-        const {
-          user,
-          isSuperUser,
-          userBranchIds,
-        } = await AuthService.getUserBranchAndRole();
+        const { user, isSuperUser, userBranchIds } =
+          await AuthService.getUserBranchAndRole();
 
         const where = { id, isDeleted: false };
         if (!isSuperUser) {
@@ -403,21 +398,28 @@ export class LoanService {
         const existingPayments = loan.payments || [];
         loan.payments = existingPayments.concat([payment]);
         loan.paidAmount = loan?.payments
+          .filter((p) => p.state !== AccountPaymentState.REVERSED)
           .map((m) => Number(m.amount))
           .filter((i) => i)
           .reduce((a, b) => a + b, 0);
 
         const residualAmount = loan.residualAmount - payload.amount;
         if (residualAmount < 0) {
-          const residualPaymentAmount = -1 * residualAmount;
-          await this.createLoanFromOverPayment(
-            manager,
-            loan,
-            residualPaymentAmount,
+          // prevent amount to pay more than residualAmount
+          // base on discussion https://sicepat.atlassian.net/browse/NPC-883?focusedCommentId=18047
+          throw new UnprocessableEntityException(
+            `Maximum pembayaran untuk transaksi ini sebesar ${loan.residualAmount}`,
           );
 
-          loan.residualAmount = 0;
-          loan.state = LoanState.PAID;
+          // const residualPaymentAmount = -1 * residualAmount;
+          // await this.createLoanFromOverPayment(
+          //   manager,
+          //   loan,
+          //   residualPaymentAmount,
+          // );
+
+          // loan.residualAmount = 0;
+          // loan.state = LoanState.PAID;
         } else {
           loan.residualAmount = residualAmount;
           loan.state = residualAmount === 0 ? LoanState.PAID : LoanState.UNPAID;
@@ -479,6 +481,7 @@ export class LoanService {
     payment.transactionDate = new Date();
     payment.number = GenerateCode.payment(payment.transactionDate);
     payment.paymentMethod = payload.paymentMethod;
+    payment.state = AccountPaymentState.PAID;
     payment.createUserId = loan.updateUserId;
     payment.updateUserId = loan.updateUserId;
 
@@ -557,7 +560,7 @@ export class LoanService {
     const dpRepo = manager.getRepository(DownPayment);
     const dp = await dpRepo.findOne({
       where: { id: loan?.downPaymentId },
-      select: ['id', 'type', 'productId', 'product'],
+      select: ['id', 'type', 'productId', 'product', 'number'],
       relations: ['product'],
     });
 
@@ -571,6 +574,7 @@ export class LoanService {
     j.periodId = loan.periodId;
     j.number = GenerateCode.journal(payment.transactionDate);
     j.reference = payment.number;
+    j.downPaymentNumber = dp?.number;
     j.sourceType = JournalSourceType.PAYMENT;
     j.partnerName = loan?.employee?.name;
     j.partnerCode = loan?.employee?.nik;
