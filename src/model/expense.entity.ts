@@ -19,6 +19,7 @@ import { Period } from './period.entity';
 import { ExpensePaymentType, ExpenseState, ExpenseType } from './utils/enum';
 import { ColumnNumericTransformer } from './utils/transformer';
 import { Employee } from './employee.entity';
+import { Voucher } from './voucher.entity';
 
 @Entity('expense')
 export class Expense extends PtcBaseEntity {
@@ -45,6 +46,9 @@ export class Expense extends PtcBaseEntity {
 
   @Column({ type: 'uuid', name: 'down_payment_id', nullable: true })
   downPaymentId?: string;
+
+  @Column({ type: 'uuid', name: 'voucher_id', nullable: true })
+  voucherId?: string;
 
   @Column({ type: 'uuid', name: 'partner_id', nullable: true })
   partnerId?: string;
@@ -130,6 +134,10 @@ export class Expense extends PtcBaseEntity {
   @ManyToOne(() => DownPayment)
   @JoinColumn({ name: 'down_payment_id' })
   downPayment: DownPayment;
+
+  @ManyToOne(() => Voucher)
+  @JoinColumn({ name: 'voucher_id' })
+  voucher?: Voucher;
 
   @ManyToOne(() => Partner)
   @JoinColumn({ name: 'partner_id' })
