@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
 export class EmployeeDTO {
   @ApiProperty({
@@ -77,7 +83,6 @@ export class EmployeeDTO {
     example: true,
   })
   employeeStatus: boolean;
-
 }
 
 export class EmployeeProductDTO {
@@ -103,4 +108,10 @@ export class EmployeeProductDTO {
   @IsNotEmpty()
   allowanceAmount: number;
 
+  @ApiProperty({
+    description: 'Voucher Item ID',
+    example: 'b7726b7b-6882-42ea-b623-d8f8a347ba0b',
+  })
+  @IsUUID()
+  productId: string;
 }
