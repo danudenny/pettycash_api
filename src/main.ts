@@ -15,7 +15,7 @@ import { HttpStatus } from '@nestjs/common';
 const logger = new PinoLogger({});
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { logger: false });
+  const app = await NestFactory.create(AppModule, { logger: console });
   // nestjs-pino
   app.useLogger(app.get(Logger));
 
