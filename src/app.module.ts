@@ -49,7 +49,6 @@ import { UserBranchModule } from './app/modules/user-branch.module';
     LoggerModule.forRoot({
       pinoHttp: {
         level: LoaderEnv.envs.NODE_ENV !== 'production' ? 'debug' : 'error',
-        prettyPrint: LoaderEnv.envs.NODE_ENV !== 'production',
       },
     }),
     // TODO: add Health checks (Terminus)
