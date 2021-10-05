@@ -10,6 +10,7 @@ import { BranchCronService } from './app/queues/branch.cron.service';
 import { ContextService } from './common/services/context.service';
 import { Request, Response, NextFunction } from 'express';
 import { contextMiddleware } from './common/middleware/context.middleware';
+import { HttpStatus } from '@nestjs/common';
 
 const logger = new PinoLogger({});
 
@@ -24,7 +25,10 @@ async function bootstrap() {
   // app.use(urlencoded({ extended: true, limit: '10mb' }));
 
   if (LoaderEnv.envs.CORS) {
-    app.enableCors();
+    app.enableCors({
+      optionsSuccessStatus: HttpStatus.OK,
+      preflightContinue: true,
+    });
   }
   logger.info(`Enable Cors APP  :: ${LoaderEnv.envs.CORS}`);
 
