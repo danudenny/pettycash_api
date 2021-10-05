@@ -27,6 +27,7 @@ import {
   LoanSourceType,
   MASTER_ROLES,
   PeriodState,
+  VoucherState,
 } from '../../../model/utils/enum';
 import { Expense } from '../../../model/expense.entity';
 import { AuthService } from './auth.service';
@@ -46,6 +47,7 @@ import { AccountPayment } from '../../../model/account-payment.entity';
 import { Loan } from '../../../model/loan.entity';
 import { PinoLogger } from 'nestjs-pino';
 import { AccountStatementService } from './account-statement.service';
+import { Voucher } from '../../../model/voucher.entity';
 
 @Injectable()
 export class JournalService {
@@ -389,6 +391,14 @@ export class JournalService {
       await this.reverseDownPayment(manager, dp);
     }
 
+    // Reverse Voucher
+    if (expense?.voucherId) {
+      const vcr = await manager.findOne(Voucher, {
+        where: { id: expense?.voucherId },
+      });
+      await this.reverseVoucher(manager, vcr);
+    }
+
     return await this.reverseExpense(manager, expense);
   }
 
@@ -573,6 +583,18 @@ export class JournalService {
       where: { id },
     });
     return dp;
+  }
+
+  private async reverseVoucher(
+    manager: EntityManager,
+    voucher: Voucher,
+  ): Promise<Voucher> {
+    if (!voucher) return;
+
+    voucher.state = VoucherState.CANCELLED;
+    voucher.updateUser = await AuthService.getUser();
+
+    return await manager.save(voucher);
   }
 
   private async removeLoan(

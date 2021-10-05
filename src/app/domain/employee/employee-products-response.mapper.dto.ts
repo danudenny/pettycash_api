@@ -7,6 +7,7 @@ export class EmployeeProductsResponseMapper {
     it.id = dto.id;
     it.allowanceCode = dto.allowanceCode;
     it.allowanceAmount = dto.allowanceAmount;
+    it.productId = dto.productId;
     return it;
   }
 
@@ -15,6 +16,7 @@ export class EmployeeProductsResponseMapper {
       id: ety.id,
       allowanceCode: ety.allowance_code,
       allowanceAmount: ety.allowance_amount,
+      productId: ety.productId,
     });
   }
 

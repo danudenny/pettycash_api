@@ -7,7 +7,7 @@ import {
   BaseEntity,
   UpdateDateColumn,
   ManyToOne,
-  JoinColumn
+  JoinColumn,
 } from 'typeorm';
 
 // NOTE: source data separately from db master data
@@ -17,13 +17,13 @@ export class EmployeeVoucherItem extends BaseEntity {
   id: string;
 
   @Column({
-    type: 'string',
+    type: 'uuid',
     name: 'employee_id',
   })
   employeeId: string;
 
   @Column({
-    type: 'bigint',
+    type: 'uuid',
     name: 'product_id',
   })
   productId: string;

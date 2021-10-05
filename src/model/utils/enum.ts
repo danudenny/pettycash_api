@@ -78,6 +78,7 @@ export enum PartnerType {
 export enum VoucherState {
   DRAFT = 'draft',
   APPROVED = 'approved',
+  CANCELLED = 'cancelled', // also for REVERSED
 }
 
 export enum VoucherPaymentType {

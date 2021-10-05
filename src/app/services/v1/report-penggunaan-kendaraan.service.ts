@@ -24,7 +24,6 @@ export class ReportPenggunaanKendaraanService {
           query.end_date != undefined ? query.end_date : ''
         }&branch_id=${query.branch_id != undefined ? query.branch_id : ''}`,
       );
-      console.log(query.page);
       const heading = [
         ['PT. SiCepat Express Indonesia'],
         ['Data Laporan Penggunaan Kendaraan'],
@@ -39,6 +38,8 @@ export class ReportPenggunaanKendaraanService {
           'CABANG',
           'PARTNER',
           'KETERANGAN',
+          'ASAL',
+          'TUJUAN',
           'KM PENGISIAN SEBELUMNYA',
           'KM PENGISIAN',
           'BANYAK PENGISIAN',
@@ -57,6 +58,8 @@ export class ReportPenggunaanKendaraanService {
           cabang: emp.cabang,
           partner: emp.partner,
           description: emp.description,
+          asal: emp.asal,
+          tujuan: emp.tujuan,
           kilometerStart: emp.kilometerStart,
           kilometerEnd: emp.kilometerEnd,
           numberOfLiter: emp.numberOfLiter,
