@@ -60,7 +60,7 @@ export class AllocationBalanceService {
 
   private async getUser(includeBranch: boolean = false) {
     if (includeBranch) {
-      return await AuthService.getUser({ relations: ['branches'] });
+      return await AuthService.getUserBranches();
     } else {
       return await AuthService.getUser();
     }
@@ -284,7 +284,7 @@ export class AllocationBalanceService {
           throw new NotFoundException(`Alokasi ID ${id} tidak ditemukan!`);
         }
 
-        const user = await AuthService.getUser({ relations: ['role'] });
+        const user = await AuthService.getUserRole();
         const userRole = user?.role?.name;
 
         // TODO: Implement State Machine for approval flow?
@@ -376,7 +376,7 @@ export class AllocationBalanceService {
             );
           }
 
-          const user = await AuthService.getUser({ relations: ['role'] });
+          const user = await AuthService.getUserRole();
           const userRole = user?.role?.name as MASTER_ROLES;
 
           if (!userRole) {
@@ -441,7 +441,7 @@ export class AllocationBalanceService {
             );
           }
 
-          const user = await AuthService.getUser({ relations: ['role'] });
+          const user = await AuthService.getUserRole();
           const userRole = user?.role?.name as MASTER_ROLES;
 
           if (!userRole) {
@@ -508,7 +508,7 @@ export class AllocationBalanceService {
           throw new NotFoundException(`Cash Coa Cabang Tidak Ditemukan.`);
         }
 
-        const user = await AuthService.getUser({ relations: ['role'] });
+        const user = await AuthService.getUserRole();
         const userRole = user?.role?.name as MASTER_ROLES;
 
         // TODO: Implement State Machine for approval flow?
@@ -640,7 +640,7 @@ export class AllocationBalanceService {
       throw new BadRequestException(`Nominal tidak boleh kosong!`);
     }
 
-    const user = await AuthService.getUser({ relations: ['role'] });
+    const user = await AuthService.getUserRole();
     const userRole = user?.role?.name;
 
     if (userRole === MASTER_ROLES.ADMIN_BRANCH) {

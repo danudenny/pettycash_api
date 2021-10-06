@@ -311,7 +311,7 @@ export class AccountDailyClosingService {
   private async getAccountDailyClosingFromDTO(
     payload: CreateAccountDailyClosingDTO,
   ) {
-    const user = await AuthService.getUser({ relations: ['branches'] });
+    const user = await AuthService.getUserBranches();
     const branchId = user && user.branches && user.branches[0].id;
 
     const accountDailyClosing = new AccountDailyClosing();

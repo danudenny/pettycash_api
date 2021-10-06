@@ -36,7 +36,7 @@ export class PartnerService {
 
   private async getUser(includeBranch: boolean = false) {
     if (includeBranch) {
-      return await AuthService.getUser({ relations: ['branches'] });
+      return await AuthService.getUserBranches();
     } else {
       return await AuthService.getUser();
     }

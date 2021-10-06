@@ -17,7 +17,7 @@ export class BankBranchService {
   public async list(query: QueryBankBranchDTO): Promise<any> {
     const params = { ...query };
     const qb = new QueryBuilder(BankBranch, 'b', params);
-    const user = await AuthService.getUser({ relations: ['branches'] });
+    const user = await AuthService.getUserBranches();
     const userLegacyBranchIds = user?.branches?.map((v) => v.branchId);
 
     qb.fieldResolverMap['bankName__icontains'] = 'b.bank_name';

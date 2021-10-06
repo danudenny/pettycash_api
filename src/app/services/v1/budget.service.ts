@@ -31,7 +31,8 @@ export class BudgetService {
 
   private async getUser(includeBranch: boolean = false) {
     if (includeBranch) {
-      return await AuthService.getUser({ relations: ['branches', 'role'] });
+      const { user } = await AuthService.getUserBranchAndRole();
+      return user;
     } else {
       return await AuthService.getUser();
     }
@@ -66,7 +67,7 @@ export class BudgetService {
   public async list(query?: QueryBudgetDTO): Promise<BudgetWithPaginationResponse> {
     const params = { order: '-createdAt', limit: 10, ...query };
     const qb = new QueryBuilder(Budget, 'bgt', params);
-    const user = await AuthService.getUser({ relations: ['branches'] });
+    const user = await AuthService.getUserBranches();
     const userBranches = user?.branches?.map((v) => v.id);
 
     qb.fieldResolverMap['startDate__gte'] = 'bgt.startDate';
@@ -261,10 +262,10 @@ export class BudgetService {
     } else {
       const user = await this.getUser(true);
       const branchId = user && user.branches && user.branches[0].id;
-  
+
       const endDateData = await this.getBranch(branchId);
       const checkDate = new Date(data.startDate);
-  
+
       if (checkDate >= endDateData) {
         // Build BudgetItem
         const items: BudgetItem[] = [];
@@ -284,7 +285,7 @@ export class BudgetService {
         const date2 = new Date(data.endDate);
         const totalDays = this.getDifferenceInDays(date1, date2);
         const getMinimumAmount = Number(Math.ceil((totalAmountItem/totalDays)*2));
-  
+
         // Build Budget
         const budget = new Budget();
         budget.branchId = data.branchId;
@@ -303,7 +304,7 @@ export class BudgetService {
         budget.items = items;
         budget.createUser = user;
         budget.updateUser = user;
-  
+
         const result = await this.budgetRepo.save(budget);
         return new BudgetResponse(result);
       } else {
@@ -316,7 +317,7 @@ export class BudgetService {
     try{
       const updateBudget = await getManager().transaction(async (manager) => {
         const budgetExist = await manager.findOne(Budget, {
-          where: { id: id, isDeleted: false }
+          where: { id, isDeleted: false }
         });
 
         if (!budgetExist) {
@@ -327,9 +328,9 @@ export class BudgetService {
           } else {
             const user = await this.getUser(true);
             const branchId = user && user.branches && user.branches[0].id;
-      
+
             // Build BudgetItem
-            let items: BudgetItem[] = [];
+            const items: BudgetItem[] = [];
             const budgetItemExist = await manager.find(BudgetItem, {
               where: { budgetId: id, isDeleted: false }
             });
@@ -365,7 +366,7 @@ export class BudgetService {
             for (const y of budgetItemExistNew) {
               totalAmountItem = totalAmountItem + Number(y.amount);
             }
-    
+
             const date1 = new Date(data.startDate);
             const date2 = new Date(data.endDate);
             const totalDays = this.getDifferenceInDays(date1, date2);
@@ -383,7 +384,7 @@ export class BudgetService {
             budgetExist.state = BudgetState.DRAFT;
             budgetExist.createUser = user;
             budgetExist.updateUser = user;
-    
+
             const result = await this.budgetRepo.save(budgetExist);
             return new BudgetResponse(result as any);
           }
@@ -399,7 +400,7 @@ export class BudgetService {
     try{
       const updateBudget = await getManager().transaction(async (manager) => {
         const budgetExist = await manager.findOne(Budget, {
-          where: { id: id, isDeleted: false },
+          where: { id, isDeleted: false },
           relations: ['histories'],
         });
 
@@ -411,9 +412,9 @@ export class BudgetService {
           } else {
             const user = await this.getUser(true);
             const branchId = user && user.branches && user.branches[0].id;
-      
+
             // Build BudgetItem
-            let items: BudgetItem[] = [];
+            const items: BudgetItem[] = [];
             const budgetItemExist = await manager.find(BudgetItem, {
               where: { budgetId: id, isDeleted: false }
             });
@@ -449,7 +450,7 @@ export class BudgetService {
             for (const y of budgetItemExistNew) {
               totalAmountItem = totalAmountItem + Number(y.amount);
             }
-    
+
             const date1 = new Date(data.startDate);
             const date2 = new Date(data.endDate);
             const totalDays = this.getDifferenceInDays(date1, date2);
@@ -471,7 +472,7 @@ export class BudgetService {
             });
             budgetExist.createUser = user;
             budgetExist.updateUser = user;
-    
+
             const result = await this.budgetRepo.save(budgetExist);
             return new BudgetResponse(result as any);
           }
@@ -506,7 +507,7 @@ export class BudgetService {
     try {
       const approveBudget = await getManager().transaction(async (manager) => {
         const budgetExists = await manager.findOne(Budget, {
-          where: { id: id, isDeleted: false },
+          where: { id, isDeleted: false },
           relations: ['histories'],
         });
 
@@ -514,7 +515,7 @@ export class BudgetService {
           throw new NotFoundException(`Budget ID ${id} not found!`);
         }
 
-        const user = await AuthService.getUser({ relations: ['role'] });
+        const user = await AuthService.getUserRole();
         const userRole = user?.role?.name;
 
         if (userRole === MASTER_ROLES.SS_HO) {
@@ -523,7 +524,7 @@ export class BudgetService {
               `Budget ${budgetExists.number} already approved!`,
             );
           }
-      
+
           const state = BudgetState.CONFIRMED_BY_SS;
           const endDate = budgetExists.endDate;
 
@@ -541,7 +542,7 @@ export class BudgetService {
               `Budget ${budgetExists.number} already approved!`,
             );
           }
-      
+
           if (budgetExists.state === BudgetState.DRAFT || budgetExists.state === BudgetState.REJECTED) {
             throw new BadRequestException(
               `Budget ${budgetExists.number} need confirmed by SS first!`,
@@ -573,7 +574,7 @@ export class BudgetService {
     try {
       const rejectBudget = await getManager().transaction(async (manager) => {
         const budgetExist = await manager.findOne(Budget, {
-          where: { id: id, isDeleted: false },
+          where: { id, isDeleted: false },
           relations: ['histories'],
         });
 
@@ -585,7 +586,7 @@ export class BudgetService {
           throw new UnprocessableEntityException(`Budget already rejected!`);
         }
 
-        const user = await AuthService.getUser({ relations: ['role'] });
+        const user = await AuthService.getUserRole();
         const userRole = user?.role?.name as MASTER_ROLES;
 
         if (!userRole) {
@@ -619,21 +620,21 @@ export class BudgetService {
     try {
       const cancelBudget = await getManager().transaction(async (manager) => {
         const budgetExist = await manager.findOne(Budget, {
-          where: { id: id, isDeleted: false },
+          where: { id, isDeleted: false },
           relations: ['histories'],
         });
 
         if (!budgetExist) {
           throw new NotFoundException(`Budget Request ID ${id} not found!`);
         }
-    
+
         if (budgetExist.state === BudgetState.CANCELED) {
           throw new BadRequestException(
             `Budget ${budgetExist.number} already canceled!`,
           );
         }
 
-        const user = await AuthService.getUser({ relations: ['role'] });
+        const user = await AuthService.getUserRole();
         const userRole = user?.role?.name as MASTER_ROLES;
 
         if (!userRole) {
