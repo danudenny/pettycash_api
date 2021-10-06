@@ -102,6 +102,12 @@ export class EmployeeProductDTO {
   allowanceCode: string;
 
   @ApiProperty({
+    description: 'Product Name',
+    example: 'Uang Bensin',
+  })
+  productName: string;
+
+  @ApiProperty({
     description: 'Allowance Amount',
     example: '20000',
   })

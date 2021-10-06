@@ -50,7 +50,10 @@ export class AuthService {
     try {
       // Find User from Cache or Database.
       user = await User.findOne({
-        cache: LoaderEnv.envs.AUTH_CACHE_DURATION_IN_MINUTES * 60000,
+        cache: {
+          id: `users_${username}`,
+          milliseconds: LoaderEnv.envs.AUTH_CACHE_DURATION_IN_MINUTES * 60000,
+        },
         ...options,
         where: { username, isDeleted: false },
       });
@@ -61,7 +64,8 @@ export class AuthService {
         user = await this.getUser({ ...options, cache: false }, retry);
         // If user found. clear all cache.
         if (user) {
-          await getConnection().queryResultCache?.clear();
+          const cacheKey = `users_${username}`;
+          await getConnection().queryResultCache?.remove([cacheKey]);
         }
 
         if (strict && !user) {
@@ -94,6 +98,7 @@ export class AuthService {
    *   }>}
    * @memberof AuthService
    */
+  // TODO: need refactoring
   public static async getUserBranchAndRole(
     options?: FindOneOptions<User>,
   ): Promise<{
@@ -141,9 +146,12 @@ export class AuthService {
    * Clear cache for User.
    *
    * @static
+   * @param {string} username
+   * @returns {Promise<void>}
    * @memberof AuthService
    */
-  public static async clearCache(): Promise<void> {
-    await getConnection().queryResultCache?.clear();
+  public static async clearCache(username: string): Promise<void> {
+    const cacheKey = `users_${username}`;
+    await getConnection().queryResultCache?.remove([cacheKey]);
   }
 }
