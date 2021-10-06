@@ -132,14 +132,8 @@ export class VoucherService {
       where: {
         employeeId: id,
       },
+      relations: ['product'],
     });
-
-    if (!getProduct) {
-      throw new HttpException(
-        'Employee tidak mempunyai Voucher Item',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
 
     return new EmployeeProductResponse(getProduct);
   }
@@ -155,10 +149,8 @@ export class VoucherService {
       ...query,
     };
     const qb = new QueryBuilder(Voucher, 'vcr', params);
-    const {
-      userBranchIds,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
+    const { userBranchIds, isSuperUser } =
+      await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['number__icontains'] = 'vcr.number';
     qb.fieldResolverMap['startDate__gte'] = 'vcr.transactionDate';
@@ -200,10 +192,8 @@ export class VoucherService {
   }
 
   public async getById(id: string): Promise<VoucherDetailResponse> {
-    const {
-      userBranchIds,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
+    const { userBranchIds, isSuperUser } =
+      await AuthService.getUserBranchAndRole();
     const where = { id, isDeleted: false };
     if (!isSuperUser) {
       Object.assign(where, { branchId: In(userBranchIds) });
@@ -363,11 +353,12 @@ export class VoucherService {
           }
 
           const existingAttachments = voucher.attachments;
-          const newAttachments: Attachment[] = await VoucherService.uploadAndRetrieveFiles(
-            voucherId,
-            manager,
-            files,
-          );
+          const newAttachments: Attachment[] =
+            await VoucherService.uploadAndRetrieveFiles(
+              voucherId,
+              manager,
+              files,
+            );
 
           voucher.attachments = [].concat(existingAttachments, newAttachments);
           voucher.updateUser = await AuthService.getUser();
