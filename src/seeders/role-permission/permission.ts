@@ -11,7 +11,12 @@ import RoleTax from './role-tax';
  * which is not used on other role
  * except for `superuser`.
  */
-const OtherPermission = ['setting.global:update'];
+const OtherPermission = [
+  'setting.global:update',
+  'setting.cashflow.type:read',
+  'setting.cashflow.type:create',
+  'setting.cashflow.type:update',
+];
 
 /**
  * Insert all Role Permissions here except for role `RoleSuperuser`.

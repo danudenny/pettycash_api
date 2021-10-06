@@ -1,11 +1,18 @@
-import { Entity, Column, JoinColumn, ManyToOne, Index, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  JoinColumn,
+  ManyToOne,
+  Index,
+  OneToMany,
+} from 'typeorm';
 import { BankBranch } from './bank-branch.entity';
 import { PtcBaseEntity } from './base.entity';
 import { Branch } from './branch.entity';
 import { User } from './user.entity';
 import { CashBalanceAllocationState } from './utils/enum';
-import { AccountStatementHistory } from './account-statement-history.entity';
 import { CashflowType } from './cashflow-type.entity';
+import { CashBalanceAllocationHistory } from './cash.balance.allocation-history.entity';
 
 @Entity('cash_balance_allocation')
 export class CashBalanceAllocation extends PtcBaseEntity {
@@ -52,7 +59,7 @@ export class CashBalanceAllocation extends PtcBaseEntity {
   @Column({
     type: 'boolean',
     default: false,
-    name: 'is_paid'
+    name: 'is_paid',
   })
   isPaid: boolean;
 
@@ -76,6 +83,6 @@ export class CashBalanceAllocation extends PtcBaseEntity {
   @JoinColumn({ name: 'received_user_id', referencedColumnName: 'id' })
   receivedUser: User;
 
-  @OneToMany(() => AccountStatementHistory, (e) => e.cashBalance)
-  allocationHistory: AccountStatementHistory[];
+  @OneToMany(() => CashBalanceAllocationHistory, (e) => e.cashBalance)
+  allocationHistory: CashBalanceAllocationHistory[];
 }

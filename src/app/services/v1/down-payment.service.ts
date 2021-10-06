@@ -4,6 +4,7 @@ import {
   getManager,
   EntityManager,
   createQueryBuilder,
+  In,
 } from 'typeorm';
 import {
   BadRequestException,
@@ -11,6 +12,7 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 /** interfaces */
@@ -22,6 +24,7 @@ import {
   AccountStatementAmountPosition,
   AccountStatementSourceType,
   AccountStatementType,
+  BalanceType,
   DownPaymentState,
   DownPaymentType,
   JournalSourceType,
@@ -51,6 +54,8 @@ import { Loan } from '../../../model/loan.entity';
 import { Product } from '../../../model/product.entity';
 import { BranchService } from '../master/v1/branch.service';
 import { AccountStatementService } from './account-statement.service';
+import { UpdateDownPaymentDTO } from '../../domain/down-payment/down-payment-update.dto';
+import { BalanceService } from './balance.service';
 
 @Injectable()
 export class DownPaymentService {
@@ -121,6 +126,9 @@ export class DownPaymentService {
         ['prd.name', 'productName'],
         ['lo.id', 'loanId'],
         ['lo."number"', 'loanNumber'],
+        ['lo.type', 'loanType'],
+        ['lo.paid_amount', 'loanPaidAmount'],
+        ['lo.residual_amount', 'loanResidualAmount'],
         ['lo.state', 'loanState'],
       );
       qb.leftJoin((e) => e.branch, 'brc');
@@ -190,6 +198,15 @@ export class DownPaymentService {
 
         const user = await AuthService.getUser({ relations: ['branches'] });
         const branchId = user?.branches[0]?.id;
+        const pType = (payload.paymentType as unknown) as BalanceType;
+
+        // Check if can do transaction or not based on balance and transaction amount
+        await BalanceService.canDoTransaction({
+          branchId,
+          amount: payload.amount,
+          type: pType,
+        });
+
         const productRepo = manager.getRepository(Product);
         const product = await productRepo.findOne({
           where: { id: payload?.productId, isDeleted: false },
@@ -238,6 +255,62 @@ export class DownPaymentService {
     }
   }
 
+  public async updateDownPayment(
+    id: string,
+    payload?: UpdateDownPaymentDTO,
+  ): Promise<void> {
+    try {
+      await getManager().transaction(async (manager) => {
+        const {
+          userBranchIds,
+          isSuperUser,
+          user,
+        } = await AuthService.getUserBranchAndRole();
+
+        const where = { id, isDeleted: false };
+        if (!isSuperUser) {
+          Object.assign(where, { branchId: In(userBranchIds) });
+        }
+
+        const dpRepo = manager.getRepository(DownPayment);
+        const dp = await dpRepo.findOne({
+          where,
+          select: ['id', 'state', 'branchId', 'paymentType', 'amount'],
+        });
+
+        if (!dp) {
+          throw new NotFoundException(`DownPayment with ID ${id} not found!`);
+        }
+
+        if (dp.state !== DownPaymentState.DRAFT) {
+          throw new UnprocessableEntityException(
+            `Only Draft DownPayment can be updated!`,
+          );
+        }
+
+        const payment = payload?.paymentType || dp.paymentType;
+        const amount = payload?.amount || dp.amount;
+        const pType = (payment as unknown) as BalanceType;
+
+        // Check if can do transaction or not based on balance and transaction amount
+        await BalanceService.canDoTransaction({
+          branchId: dp.branchId,
+          amount,
+          type: pType,
+        });
+
+        const updateData = dpRepo.create(payload);
+        updateData.updateUserId = user?.id;
+        delete updateData.state;
+        delete updateData.branchId;
+
+        await dpRepo.update(id, updateData);
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
   public async approveDownPayment(
     downPaymentId: string,
     payload: ApproveDownPaymentDTO,
@@ -248,10 +321,23 @@ export class DownPaymentService {
           where: { id: downPaymentId, isDeleted: false },
           relations: ['branch', 'employee', 'department', 'histories'],
         });
-        if (!downPayment)
+
+        if (!downPayment) {
           throw new NotFoundException(
             `Down Payment ID ${downPaymentId} not found!`,
           );
+        }
+
+        const payment = payload?.paymentType || downPayment.paymentType;
+        const amount = payload?.amount || downPayment.amount;
+        const pType = (payment as unknown) as BalanceType;
+
+        // Check if can do transaction or not based on balance and transaction amount
+        await BalanceService.canDoTransaction({
+          branchId: downPayment.branchId,
+          amount,
+          type: pType,
+        });
 
         const user = await AuthService.getUser({ relations: ['role'] });
         const userRole = user?.role?.name;
@@ -272,17 +358,7 @@ export class DownPaymentService {
           );
         }
 
-        if (userRole === MASTER_ROLES.PIC_HO) {
-          if (currentState === DownPaymentState.APPROVED_BY_PIC_HO) {
-            throw new BadRequestException(
-              `Can't approve down payment with current state ${currentState}`,
-            );
-          }
-
-          state = DownPaymentState.APPROVED_BY_PIC_HO;
-          isCreateJurnal = true;
-          shouldCreateStatement = true;
-        } else if (
+        if (
           userRole === MASTER_ROLES.SS_HO ||
           userRole === MASTER_ROLES.SPV_HO
         ) {
@@ -298,10 +374,11 @@ export class DownPaymentService {
           shouldCreateLoan = TYPES_SHOULD_CREATE_LOAN.includes(downPaymentType);
         }
 
-        if (!state)
+        if (!state) {
           throw new BadRequestException(
             `Failed to approve down payment due unknown user role!`,
           );
+        }
 
         downPayment.state = state;
         downPayment.amount = payload?.amount || downPayment?.amount;

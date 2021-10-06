@@ -6,6 +6,7 @@ import {
   BaseEntity,
   ManyToOne,
   JoinColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { EmployeeRole } from './employee-role.entity';
 import { ColumnNumericTransformer } from './utils/transformer';
@@ -73,17 +74,38 @@ export class Employee extends BaseEntity {
   })
   dateOfResign: Date;
 
-  @ManyToOne(() => Branch)
+  @Column({
+    type: 'boolean',
+    nullable: true,
+    name: 'employee_status',
+  })
+  employeeStatus: boolean;
+
+  @ManyToOne(() => Branch, { createForeignKeyConstraints: false })
   @JoinColumn({
     name: 'branch_id',
     referencedColumnName: 'branchId',
   })
   branch: Branch;
 
-  @ManyToOne(() => EmployeeRole)
+  @ManyToOne(() => EmployeeRole, { createForeignKeyConstraints: false })
   @JoinColumn({
     name: 'employee_role_id',
     referencedColumnName: 'employeeRoleId',
   })
   employeeRole: EmployeeRole;
+
+  @Column({
+    type: 'boolean',
+    nullable: false,
+    default: () => 'false',
+    name: 'is_has_voucher',
+  })
+  isHasVoucher: boolean;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    name: 'updated_at',
+  })
+  updatedAt?: Date;
 }

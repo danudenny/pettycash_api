@@ -4,7 +4,6 @@ const RoleTax = [
 
   'menu.journal:read',
   'journal:read',
-  'journal:approve',
 
   'menu.setting:read',
   'setting.tax:read',

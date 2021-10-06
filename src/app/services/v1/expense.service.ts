@@ -18,13 +18,17 @@ import { ExpenseItemAttribute } from '../../../model/expense-item-attribute.enti
 import { ExpenseItem } from '../../../model/expense-item.entity';
 import { Expense } from '../../../model/expense.entity';
 import {
+  AccountPaymentState,
   AccountStatementAmountPosition,
+  AccountStatementSourceType,
   AccountStatementType,
   AccountTaxGroup,
   AccountTaxPartnerType,
+  BalanceType,
   DownPaymentState,
   DownPaymentType,
   ExpenseAssociationType,
+  ExpensePaymentType,
   ExpenseState,
   ExpenseType,
   JournalSourceType,
@@ -66,7 +70,6 @@ import { getPercentage } from '../../../shared/utils';
 import { RejectExpenseDTO } from '../../domain/expense/reject.dto';
 import { Period } from '../../../model/period.entity';
 import { ExpenseDetailResponse } from '../../domain/expense/response-detail.dto';
-import { GlobalSetting } from '../../../model/global-setting.entity';
 import { DownPayment } from '../../../model/down-payment.entity';
 import { Loan } from '../../../model/loan.entity';
 import { UpdateExpenseDTO } from '../../domain/expense/update.dto';
@@ -80,6 +83,8 @@ import { Vehicle } from '../../../model/vehicle.entity';
 import { VehicleTemp } from '../../../model/vehicle-temp.entity';
 import { AccountStatementService } from './account-statement.service';
 import { BranchService } from '../master/v1/branch.service';
+import { AwsS3Service } from '../../../common/services/aws-s3.service';
+import { BalanceService } from './balance.service';
 
 @Injectable()
 export class ExpenseService {
@@ -118,10 +123,8 @@ export class ExpenseService {
   ): Promise<ExpenseWithPaginationResponse> {
     const params = { order: '-updatedAt', limit: 10, ...query };
     const qb = new QueryBuilder(Expense, 'exp', params);
-    const {
-      userBranchIds,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
+    const { userBranchIds, isSuperUser } =
+      await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['startDate__gte'] = 'exp.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'exp.transaction_date';
@@ -166,10 +169,8 @@ export class ExpenseService {
   }
 
   public async getById(id: string): Promise<ExpenseDetailResponse> {
-    const {
-      userBranchIds,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
+    const { userBranchIds, isSuperUser } =
+      await AuthService.getUserBranchAndRole();
     const where = { id, isDeleted: false };
     if (!isSuperUser) {
       Object.assign(where, { branchId: In(userBranchIds) });
@@ -258,6 +259,14 @@ export class ExpenseService {
           items.push(item);
         }
 
+        const totalAmount = items
+          .map((m) => Number(m.amount))
+          .filter((i) => i)
+          .reduce((a, b) => a + b, 0);
+
+        // Check balance if Sufficient or not
+        await this.checkBalance(branchId, totalAmount, payload?.paymentType);
+
         // Build Expense
         const expense = new Expense();
         expense.branchId = branchId;
@@ -271,12 +280,7 @@ export class ExpenseService {
         expense.paymentType = payload.paymentType;
         expense.state = ExpenseState.DRAFT;
         expense.items = items;
-        expense.totalAmount =
-          items &&
-          items
-            .map((m) => Number(m.amount))
-            .filter((i) => i)
-            .reduce((a, b) => a + b, 0);
+        expense.totalAmount = totalAmount;
         expense.histories = await this.buildHistory(expense, {
           state: ExpenseState.DRAFT,
         });
@@ -332,11 +336,8 @@ export class ExpenseService {
           );
         }
 
-        const {
-          userBranchIds,
-          isSuperUser,
-          user,
-        } = await AuthService.getUserBranchAndRole();
+        const { userBranchIds, isSuperUser, user } =
+          await AuthService.getUserBranchAndRole();
 
         const where = { id, isDeleted: false };
         if (!isSuperUser) {
@@ -386,11 +387,12 @@ export class ExpenseService {
         }
 
         if (payload?.items) {
-          const updatedExpenseItems = await this.recreateAndRetrieveExpenseItems(
-            manager,
-            exp,
-            payload?.items,
-          );
+          const updatedExpenseItems =
+            await this.recreateAndRetrieveExpenseItems(
+              manager,
+              exp,
+              payload?.items,
+            );
 
           exp.totalAmount = updatedExpenseItems
             .map((m) => Number(m.amount))
@@ -407,6 +409,9 @@ export class ExpenseService {
             exp.differenceAmount = downPayment.amount - exp.totalAmount;
           }
         }
+
+        // Check balance if Sufficient or not
+        await this.checkBalance(exp.branchId, exp.totalAmount, exp.paymentType);
 
         // Update ExpenseItem tax if partner or employee changed and items not updated.
         if ((payload?.partnerId || payload?.employeeId) && !payload?.items) {
@@ -517,6 +522,13 @@ export class ExpenseService {
               .reduce((a, b) => a + b, 0);
           }
 
+          // Check balance if Sufficient or not
+          await this.checkBalance(
+            expense.branchId,
+            expense.totalAmount,
+            expense.paymentType,
+          );
+
           // Update or Insert Loan from Expense.
           await this.upsertLoanFromExpense(manager, expense);
 
@@ -526,6 +538,10 @@ export class ExpenseService {
           // (Re)Create Journal for SS/SPV HO
           await this.removeJournal(manager, expense);
           const journal = await this.buildJournal(manager, expenseId, userRole);
+          if (isSystemUser) {
+            journal.state = JournalState.POSTED;
+            journal.updateUser = user;
+          }
           await this.createJournal(manager, journal);
 
           // Update Vehicle Kilometer if any.
@@ -647,6 +663,9 @@ export class ExpenseService {
       ['att.filename', 'fileName'],
       ['att.file_mime', 'fileMime'],
       ['att.url', 'url'],
+      ['att.s3_acl', 'S3ACL'],
+      ['att."path"', 'S3Key'],
+      ['att.bucket_name', 'S3BucketName'],
       ['att.type_id', 'typeId'],
       ['typ.code', 'typeCode'],
       ['typ."name"', 'typeName'],
@@ -673,14 +692,31 @@ export class ExpenseService {
     );
     qb.qb.orderBy('att.updated_at', 'DESC');
 
-    // TODO: add caching.
+    const { CACHE_ATTACHMENT_DURATION_IN_MINUTES } = LoaderEnv.envs;
+    const cacheDuration = (CACHE_ATTACHMENT_DURATION_IN_MINUTES || 5) * 60; // in seconds
 
+    qb.qb.cache(`expense:${expenseId}:attachments`, 1000 * (cacheDuration - 5));
     const attachments = await qb.exec();
     if (!attachments) {
       throw new NotFoundException(`Attachments not found!`);
     }
 
-    return new ExpenseAttachmentResponse(attachments);
+    const signedAttachments = [];
+    for (const att of attachments) {
+      if (att.S3ACL === 'private') {
+        att.url = await AwsS3Service.getSignedUrl(
+          att.S3BucketName,
+          att.S3Key,
+          cacheDuration,
+        );
+      }
+      delete att.S3ACL;
+      delete att.S3Key;
+      delete att.S3BucketName;
+      signedAttachments.push(att);
+    }
+
+    return new ExpenseAttachmentResponse(signedAttachments);
   }
 
   /**
@@ -739,33 +775,34 @@ export class ExpenseService {
             };
 
             const expensePath = `expense/${expenseId}`;
-            const attachments = await AttachmentService.uploadFilesWithCustomName(
-              files,
-              (file) => {
-                let attachmentName: string;
-                if (attType?.name) {
-                  const attTypeName = parseAttTypeName(attType?.name);
-                  const ext = getExt(file);
-                  attachmentName = `${attTypeName}.${ext}`;
-                } else {
-                  attachmentName = `${file.originalname}`;
-                }
-                return attachmentName;
-              },
-              (file) => {
-                const rid = uuid().split('-')[0];
-                if (attType?.name) {
-                  const attTypeName = parseAttTypeName(attType?.name);
-                  const ext = getExt(file);
-                  pathId = `${expensePath}_${rid}_${attTypeName}.${ext}`;
-                } else {
-                  pathId = `${expensePath}_${rid}_${file.originalname}`;
-                }
-                return pathId;
-              },
-              attachmentTypeId,
-              manager,
-            );
+            const attachments =
+              await AttachmentService.uploadFilesWithCustomName(
+                files,
+                (file) => {
+                  let attachmentName: string;
+                  if (attType?.name) {
+                    const attTypeName = parseAttTypeName(attType?.name);
+                    const ext = getExt(file);
+                    attachmentName = `${attTypeName}.${ext}`;
+                  } else {
+                    attachmentName = `${file.originalname}`;
+                  }
+                  return attachmentName;
+                },
+                (file) => {
+                  const rid = uuid().split('-')[0];
+                  if (attType?.name) {
+                    const attTypeName = parseAttTypeName(attType?.name);
+                    const ext = getExt(file);
+                    pathId = `${expensePath}_${rid}_${attTypeName}.${ext}`;
+                  } else {
+                    pathId = `${expensePath}_${rid}_${file.originalname}`;
+                  }
+                  return pathId;
+                },
+                attachmentTypeId,
+                manager,
+              );
             newAttachments = attachments;
           }
 
@@ -780,12 +817,15 @@ export class ExpenseService {
             { id: expenseId },
             { updateUser: await this.getUser(), updatedAt: new Date() },
           );
+          await manager.connection?.queryResultCache?.remove([
+            `expense:${expenseId}:attachments`,
+          ]);
           return newAttachments;
         },
       );
 
       return new ExpenseAttachmentResponse(
-        (createAttachment as unknown) as ExpenseAttachmentDTO[],
+        createAttachment as unknown as ExpenseAttachmentDTO[],
       );
     } catch (error) {
       throw new BadRequestException(error.message);
@@ -827,6 +867,9 @@ export class ExpenseService {
     if (!updateAttachment) {
       throw new BadRequestException('Failed to update attachment!');
     }
+    await getManager().connection?.queryResultCache?.remove([
+      `expense:${expenseId}:attachments`,
+    ]);
   }
 
   public async deleteAttachment(
@@ -851,6 +894,9 @@ export class ExpenseService {
     if (!deleteAttachment) {
       throw new BadRequestException('Failed to delete attachment!');
     }
+    await getManager().connection?.queryResultCache?.remove([
+      `expense:${expenseId}:attachments`,
+    ]);
   }
 
   private async getTax(
@@ -896,7 +942,7 @@ export class ExpenseService {
 
     const productHasTax = product?.isHasTax;
     const productTaxType = product?.taxType;
-    const taxPartnerType = (partnerType as any) as AccountTaxPartnerType;
+    const taxPartnerType = partnerType as any as AccountTaxPartnerType;
 
     if (productHasTax) {
       const taxWhere: FindConditions<AccountTax> = {
@@ -947,9 +993,10 @@ export class ExpenseService {
     return val2;
   }
 
-  private getAssociationTypeAndId(
-    expense: Expense,
-  ): { associationType: ExpenseAssociationType; associationId: string } {
+  private getAssociationTypeAndId(expense: Expense): {
+    associationType: ExpenseAssociationType;
+    associationId: string;
+  } {
     const type = expense?.partnerId
       ? ExpenseAssociationType.PARTNER
       : ExpenseAssociationType.EMPLOYEE;
@@ -988,9 +1035,8 @@ export class ExpenseService {
     expense: Expense,
     items: UpdateExpenseItemDTO[],
   ): Promise<ExpenseItem[]> {
-    const { associationType, associationId } = this.getAssociationTypeAndId(
-      expense,
-    );
+    const { associationType, associationId } =
+      this.getAssociationTypeAndId(expense);
     const uitems: ExpenseItem[] = [];
     for (const v of items) {
       const item = new ExpenseItem();
@@ -1152,6 +1198,7 @@ export class ExpenseService {
     j.periodId = expense.periodId;
     j.number = GenerateCode.journal(expense.transactionDate);
     j.reference = expense.number;
+    j.downPaymentNumber = expense?.downPayment?.number;
     j.sourceType = JournalSourceType.EXPENSE;
     j.partnerName = expense?.partner?.name ?? expense?.employee?.name;
     j.partnerCode = expense?.partner?.code ?? expense?.employee?.nik;
@@ -1230,7 +1277,12 @@ export class ExpenseService {
     if (expense?.downPayment) {
       const downPayment = expense?.downPayment;
       const downPaymentType = downPayment?.type;
-      const setting = await getManager().getRepository(GlobalSetting).findOne();
+      const dpProduct = await getManager()
+        .getRepository(Product)
+        .findOne({
+          where: { id: downPayment?.productId },
+          select: ['id', 'coaId'],
+        });
 
       if (downPaymentType === DownPaymentType.PERDIN) {
         const dpJournalItem = new JournalItem();
@@ -1244,7 +1296,7 @@ export class ExpenseService {
         dpJournalItem.partnerName = partnerName;
         dpJournalItem.partnerCode = partnerCode;
         dpJournalItem.credit = downPayment?.amount;
-        dpJournalItem.coaId = setting?.downPaymentPerdinCoaId;
+        dpJournalItem.coaId = dpProduct?.coaId;
         items.push(dpJournalItem);
       }
     }
@@ -1270,9 +1322,8 @@ export class ExpenseService {
 
       // Add JournalItem for Tax
       if (v?.tax > 0) {
-        const { associationType, associationId } = this.getAssociationTypeAndId(
-          expense,
-        );
+        const { associationType, associationId } =
+          this.getAssociationTypeAndId(expense);
         const taxedAmount = this.calculateTax(i.credit, v.tax);
         const tax = await this.getTax(
           v.productId,
@@ -1336,7 +1387,6 @@ export class ExpenseService {
         dpJournalItem.partnerCode = partnerCode;
         dpJournalItem.coaId = expense?.branch?.cashCoaId;
         dpJournalItem.debit = downPayment?.amount;
-        dpJournalItem.coaId = expense?.branch?.cashCoaId;
         items.push(dpJournalItem);
       }
     }
@@ -1363,9 +1413,8 @@ export class ExpenseService {
 
       // Add JournalItem for Tax
       if (v?.tax > 0) {
-        const { associationType, associationId } = this.getAssociationTypeAndId(
-          expense,
-        );
+        const { associationType, associationId } =
+          this.getAssociationTypeAndId(expense);
         const taxedAmount = this.calculateTax(i.debit, v.tax);
         const tax = await this.getTax(
           v.productId,
@@ -1494,12 +1543,7 @@ export class ExpenseService {
       }
     }
 
-    if (
-      ![
-        DownPaymentState.APPROVED_BY_PIC_HO,
-        DownPaymentState.APPROVED_BY_SS_SPV,
-      ].includes(downPayment.state)
-    ) {
+    if (![DownPaymentState.APPROVED_BY_SS_SPV].includes(downPayment.state)) {
       throw new BadRequestException(`Down Payment not approved!`);
     }
 
@@ -1626,7 +1670,13 @@ export class ExpenseService {
     loan.createUserId = expense.createUserId;
     loan.updateUserId = expense.updateUserId;
 
-    return await manager.save(loan);
+    const newLoan = await manager.save(loan);
+
+    // Update DownPayment to add link to this newLoan
+    downPayment.loanId = newLoan?.id;
+    await manager.save(downPayment);
+
+    return newLoan;
   }
 
   /**
@@ -1649,7 +1699,10 @@ export class ExpenseService {
     // If minus mean Piutang/Receivable otherwise Hutang/Payable.
     // Piutang = Hutang perusahaan terhadap karyawan
     // Hutang = Hutang karyawan terhadap perusahaan
-    const isLoanHasPayments = loan?.payments?.length > 0;
+    const activePayments = loan?.payments?.filter(
+      (p) => p.state !== AccountPaymentState.REVERSED,
+    );
+    const isLoanHasPayments = activePayments?.length > 0;
     const currentDifferenceAmount = expense?.differenceAmount;
     const differenceAmount = downPayment.amount - expense.totalAmount;
     const loanAmount = loan?.amount;
@@ -1715,7 +1768,10 @@ export class ExpenseService {
     const loan = await this.retrieveLoanForExpense(manager, data);
     if (!loan) return;
 
-    if (loan?.payments?.length > 0) {
+    const activePayments = loan.payments?.filter(
+      (p) => p.state !== AccountPaymentState.REVERSED,
+    );
+    if (activePayments?.length > 0) {
       throw new UnprocessableEntityException(
         `Loan has payments, can't remove it!`,
       );
@@ -1741,6 +1797,7 @@ export class ExpenseService {
     await AccountStatementService.deleteAndUpdateBalance(
       {
         where: {
+          sourceType: AccountStatementSourceType.EXPENSE,
           reference: expense?.number,
           branchId: expense?.branchId,
           isDeleted: false,
@@ -1769,10 +1826,11 @@ export class ExpenseService {
     stmt.branchId = expense.branchId;
     stmt.createUser = expense.updateUser;
     stmt.updateUser = expense.updateUser;
+    stmt.sourceType = AccountStatementSourceType.EXPENSE;
     stmt.reference = expense.number;
     stmt.amount = expense.totalAmount;
     stmt.transactionDate = expense.transactionDate;
-    stmt.type = (expense.paymentType as unknown) as AccountStatementType;
+    stmt.type = expense.paymentType as unknown as AccountStatementType;
     stmt.amountPosition = AccountStatementAmountPosition.DEBIT;
     return stmt;
   }
@@ -1863,5 +1921,24 @@ export class ExpenseService {
     vTemp.vehicleNumber = vehicle?.vehicleNumber;
     vTemp.vehicleKilometer = kmEnd;
     return await manager.save(vTemp);
+  }
+
+  private async checkBalance(
+    branchId: string,
+    amount: number,
+    paymentType: ExpensePaymentType,
+  ): Promise<void> {
+    const isBalanceSufficient = await BalanceService.isSufficient({
+      branchId,
+      amount,
+      type: paymentType as unknown as BalanceType,
+    });
+
+    if (!isBalanceSufficient) {
+      const ttype =
+        paymentType === ExpensePaymentType.BANK ? 'Bank' : 'Uang Fisik';
+      const errMsg = `Jumlah tidak boleh lebih dari pada Saldo ${ttype} Sistem`;
+      throw new UnprocessableEntityException(errMsg);
+    }
   }
 }

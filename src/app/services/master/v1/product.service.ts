@@ -5,7 +5,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getManager } from 'typeorm';
+import { Repository, getManager, Raw } from 'typeorm';
 import { Product } from '../../../../model/product.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { QueryProductDTO } from '../../../domain/product/product.payload.dto';
@@ -18,8 +18,6 @@ import UpdateProductDTO from '../../../domain/product/update-product.dto';
 import { PG_UNIQUE_CONSTRAINT_VIOLATION } from '../../../../shared/errors';
 import { GenerateCode } from '../../../../common/services/generate-code.service';
 import { AuthService } from '../../v1/auth.service';
-import { ExpenseItem } from '../../../../model/expense-item.entity';
-import { DownPayment } from '../../../../model/down-payment.entity';
 
 @Injectable()
 export class ProductService {
@@ -72,14 +70,17 @@ export class ProductService {
   }
 
   public async create(data: CreateProductDTO): Promise<ProductResponse> {
-    const prodDto = await this.productRepo.create(data);
+    const prodDto = this.productRepo.create(data);
     const prodExist = await this.productRepo.findOne({
-      name: prodDto.name,
-      isDeleted: false,
+      where: {
+        name: Raw((alias) => `${alias} ILIKE '${prodDto.name?.trim()}'`),
+        isDeleted: false,
+      },
     });
     prodDto.createUserId = await ProductService.getUserId();
     prodDto.updateUserId = await ProductService.getUserId();
     prodDto.code = GenerateCode.product();
+    prodDto.name = prodDto.name?.trim();
 
     if (!prodDto.name) {
       throw new BadRequestException(`Nama produk tidak boleh kosong!`);
@@ -109,6 +110,18 @@ export class ProductService {
     });
     if (!product) {
       throw new NotFoundException(`Produk ID ${id} not found!`);
+    }
+
+    let { name: productName } = data;
+    productName = productName?.trim();
+    if (productName) {
+      const existProduct = await getManager().query(
+        `SELECT id FROM product WHERE id != $1 AND is_deleted IS FALSE AND "name" ILIKE $2`,
+        [id, productName],
+      );
+      if (existProduct?.length > 0) {
+        throw new BadRequestException(`Nama produk sudah terdaftar!`);
+      }
     }
 
     const allowedFieldToUpdate = ['name'];
@@ -176,11 +189,9 @@ export class ProductService {
     return new ProductResponse();
   }
 
-  public async voucher(): Promise<ProductWithPaginationResponse> {
-    const params = { order: '^code', limit: 10 };
-    const qb = new QueryBuilder(Product, 'prod', params);
+  public async voucher(): Promise<ProductResponse> {
+    const qb = new QueryBuilder(Product, 'prod');
 
-    qb.applyFilterPagination();
     qb.selectRaw(
       ['prod.id', 'id'],
       ['prod.code', 'code'],
@@ -206,9 +217,8 @@ export class ProductService {
       (e) => e.isDeleted,
       (v) => v.isFalse(),
     );
-    qb.qb.cache('pettycash:voucher:products', 1000 * 60 * 60);
 
     const products = await qb.exec();
-    return new ProductWithPaginationResponse(products, params);
+    return new ProductResponse(products);
   }
 }

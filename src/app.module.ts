@@ -37,6 +37,8 @@ import { OtherModule } from './app/modules/other.module';
 import { AttachmentTypeModule } from './app/modules/attachment-type.module';
 import { CashflowTypeModule } from './app/modules/cashflow-type.module';
 import { ReportParkingJournalModule } from './app/modules/report-parking-journal.module';
+import { ReportPenggunaanKendaraanModule } from './app/modules/report-penggunaan-kendaraan.module';
+import { UserBranchModule } from './app/modules/user-branch.module';
 
 @Module({
   imports: [
@@ -44,7 +46,11 @@ import { ReportParkingJournalModule } from './app/modules/report-parking-journal
     LoaderEnv,
     TypeOrmModule.forRoot(LoaderEnv.getTypeOrmConfig()),
     // TODO: add pinoHttp requestIdGenerator
-    LoggerModule.forRoot(),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: LoaderEnv.envs.NODE_ENV !== 'production' ? 'debug' : 'error',
+      },
+    }),
     // TODO: add Health checks (Terminus)
     BranchModule,
     BankBranchModule,
@@ -81,6 +87,8 @@ import { ReportParkingJournalModule } from './app/modules/report-parking-journal
     ReportParkingJournalModule,
     CashflowTypeModule,
     OtherModule,
+    ReportPenggunaanKendaraanModule,
+    UserBranchModule,
   ],
   controllers: [],
   providers: [],

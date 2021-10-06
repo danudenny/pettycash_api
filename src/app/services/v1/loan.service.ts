@@ -9,6 +9,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
@@ -23,6 +24,7 @@ import { AccountPayment } from '../../../model/account-payment.entity';
 import { AuthService } from './auth.service';
 import {
   AccountPaymentPayMethod,
+  AccountPaymentState,
   AccountPaymentType,
   AccountStatementAmountPosition,
   AccountStatementSourceType,
@@ -47,6 +49,8 @@ import { Period } from '../../../model/period.entity';
 import { JournalItem } from '../../../model/journal-item.entity';
 import { DownPayment } from '../../../model/down-payment.entity';
 import { AccountStatementService } from './account-statement.service';
+import { LoaderEnv } from '../../../config/loader';
+import { AwsS3Service } from '../../../common/services/aws-s3.service';
 
 @Injectable()
 export class LoanService {
@@ -97,10 +101,8 @@ export class LoanService {
   public async list(query?: QueryLoanDTO): Promise<LoanWithPaginationResponse> {
     const params = { ...query };
     const qb = new QueryBuilder(Loan, 'l', params);
-    const {
-      userBranchIds,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
+    const { userBranchIds, isSuperUser } =
+      await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['startDate__gte'] = 'l.transaction_date';
     qb.fieldResolverMap['endDate__lte'] = 'l.transaction_date';
@@ -155,10 +157,8 @@ export class LoanService {
   }
 
   public async getById(id: string): Promise<LoanDetailResponse> {
-    const {
-      isSuperUser,
-      userBranchIds,
-    } = await AuthService.getUserBranchAndRole();
+    const { isSuperUser, userBranchIds } =
+      await AuthService.getUserBranchAndRole();
 
     const where = { id, isDeleted: false };
     if (!isSuperUser) {
@@ -193,6 +193,9 @@ export class LoanService {
       ['att.filename', 'fileName'],
       ['att.file_mime', 'fileMime'],
       ['att.url', 'url'],
+      ['att.s3_acl', 'S3ACL'],
+      ['att."path"', 'S3Key'],
+      ['att.bucket_name', 'S3BucketName'],
     );
     qb.innerJoin(
       (e) => e.attachments,
@@ -212,12 +215,31 @@ export class LoanService {
       (v) => v.equals(loanId),
     );
 
+    const { CACHE_ATTACHMENT_DURATION_IN_MINUTES } = LoaderEnv.envs;
+    const cacheDuration = (CACHE_ATTACHMENT_DURATION_IN_MINUTES || 5) * 60; // in seconds
+
+    qb.qb.cache(`loan:${loanId}:attachments`, 1000 * (cacheDuration - 5));
     const attachments = await qb.exec();
     if (!attachments) {
       throw new NotFoundException(`Attachments not found!`);
     }
 
-    return new LoanAttachmentResponse(attachments);
+    const signedAttachments = [];
+    for (const att of attachments) {
+      if (att.S3ACL === 'private') {
+        att.url = await AwsS3Service.getSignedUrl(
+          att.S3BucketName,
+          att.S3Key,
+          cacheDuration,
+        );
+      }
+      delete att.S3ACL;
+      delete att.S3Key;
+      delete att.S3BucketName;
+      signedAttachments.push(att);
+    }
+
+    return new LoanAttachmentResponse(signedAttachments);
   }
 
   /**
@@ -267,6 +289,10 @@ export class LoanService {
           loan.updateUser = await AuthService.getUser();
 
           await manager.save(loan);
+          await manager.connection?.queryResultCache?.remove([
+            `loan:${loanId}:attachments`,
+          ]);
+
           return newAttachments;
         },
       );
@@ -310,6 +336,10 @@ export class LoanService {
     if (!deleteAttachment) {
       throw new BadRequestException('Failed to delete attachment!');
     }
+
+    await getManager().connection?.queryResultCache?.remove([
+      `loan:${loanId}:attachments`,
+    ]);
   }
 
   /**
@@ -326,11 +356,8 @@ export class LoanService {
   ): Promise<LoanDetailResponse> {
     try {
       const createPayment = await getManager().transaction(async (manager) => {
-        const {
-          user,
-          isSuperUser,
-          userBranchIds,
-        } = await AuthService.getUserBranchAndRole();
+        const { user, isSuperUser, userBranchIds } =
+          await AuthService.getUserBranchAndRole();
 
         const where = { id, isDeleted: false };
         if (!isSuperUser) {
@@ -371,21 +398,28 @@ export class LoanService {
         const existingPayments = loan.payments || [];
         loan.payments = existingPayments.concat([payment]);
         loan.paidAmount = loan?.payments
+          .filter((p) => p.state !== AccountPaymentState.REVERSED)
           .map((m) => Number(m.amount))
           .filter((i) => i)
           .reduce((a, b) => a + b, 0);
 
         const residualAmount = loan.residualAmount - payload.amount;
         if (residualAmount < 0) {
-          const residualPaymentAmount = -1 * residualAmount;
-          await this.createLoanFromOverPayment(
-            manager,
-            loan,
-            residualPaymentAmount,
+          // prevent amount to pay more than residualAmount
+          // base on discussion https://sicepat.atlassian.net/browse/NPC-883?focusedCommentId=18047
+          throw new UnprocessableEntityException(
+            `Maximum pembayaran untuk transaksi ini sebesar ${loan.residualAmount}`,
           );
 
-          loan.residualAmount = 0;
-          loan.state = LoanState.PAID;
+          // const residualPaymentAmount = -1 * residualAmount;
+          // await this.createLoanFromOverPayment(
+          //   manager,
+          //   loan,
+          //   residualPaymentAmount,
+          // );
+
+          // loan.residualAmount = 0;
+          // loan.state = LoanState.PAID;
         } else {
           loan.residualAmount = residualAmount;
           loan.state = residualAmount === 0 ? LoanState.PAID : LoanState.UNPAID;
@@ -447,6 +481,7 @@ export class LoanService {
     payment.transactionDate = new Date();
     payment.number = GenerateCode.payment(payment.transactionDate);
     payment.paymentMethod = payload.paymentMethod;
+    payment.state = AccountPaymentState.PAID;
     payment.createUserId = loan.updateUserId;
     payment.updateUserId = loan.updateUserId;
 
@@ -525,7 +560,7 @@ export class LoanService {
     const dpRepo = manager.getRepository(DownPayment);
     const dp = await dpRepo.findOne({
       where: { id: loan?.downPaymentId },
-      select: ['id', 'type', 'productId', 'product'],
+      select: ['id', 'type', 'productId', 'product', 'number'],
       relations: ['product'],
     });
 
@@ -539,6 +574,7 @@ export class LoanService {
     j.periodId = loan.periodId;
     j.number = GenerateCode.journal(payment.transactionDate);
     j.reference = payment.number;
+    j.downPaymentNumber = dp?.number;
     j.sourceType = JournalSourceType.PAYMENT;
     j.partnerName = loan?.employee?.name;
     j.partnerCode = loan?.employee?.nik;
@@ -694,13 +730,13 @@ export class LoanService {
         if (isReimbursement) {
           coaId = coaCash;
         } else if (isPerdin) {
-          coaId = coaCash;
+          // coaId = coaCash;
         }
       }
 
       if (isReceivable) {
         if (isPerdin) {
-          coaId = coaProduct;
+          // coaId = coaProduct;
         } else if (isReimbursement) {
           coaId = coaProduct;
         }
@@ -712,13 +748,13 @@ export class LoanService {
         if (isReimbursement) {
           coaId = coaProduct;
         } else if (isPerdin) {
-          coaId = coaProduct;
+          // coaId = coaProduct;
         }
       }
 
       if (isReceivable) {
         if (isPerdin) {
-          coaId = coaCash;
+          // coaId = coaCash;
         } else if (isReimbursement) {
           coaId = coaCash;
         }
@@ -747,13 +783,13 @@ export class LoanService {
     const isReceivable = loan?.type === LoanType.RECEIVABLE;
 
     if (isPayable) {
-      if (isPerdin || isReimbursement) {
+      if (isReimbursement) {
         canCreate = true;
       }
     }
 
     if (isReceivable) {
-      if (isPerdin || isReimbursement) {
+      if (isReimbursement) {
         canCreate = true;
       }
     }

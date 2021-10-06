@@ -5,6 +5,8 @@ import {
   COA_ID_JASA,
   COA_ID_SEWA_ALAT,
   COA_ID_SEWA_BANGUNAN,
+  COA_ID_UM_PERDIN,
+  COA_ID_UM_REIMBURSEMENT,
 } from './account-coa.seed';
 
 const getProducts = () => {
@@ -55,6 +57,24 @@ const getProducts = () => {
   p5.type = ProductType.EXPENSE;
   p5.coaId = COA_ID_BENSIN;
   products.push(p5);
+
+  const p6 = new Product();
+  p6.name = 'Uang Muka Perdin';
+  p6.code = 'PRD_UM_001';
+  p6.isHasTax = false;
+  p6.isHasKm = true;
+  p6.type = ProductType.DOWN_PAYMENT;
+  p6.coaId = COA_ID_UM_PERDIN;
+  products.push(p6);
+
+  const p7 = new Product();
+  p7.name = 'Uang Muka Reimbursement';
+  p7.code = 'PRD_UM_002';
+  p7.isHasTax = false;
+  p7.isHasKm = false;
+  p7.type = ProductType.DOWN_PAYMENT;
+  p7.coaId = COA_ID_UM_REIMBURSEMENT;
+  products.push(p7);
 
   products = products.map((product) => {
     const temp = Object.assign({}, product);

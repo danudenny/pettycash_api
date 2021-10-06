@@ -16,6 +16,7 @@ import { MASTER_ROLES } from '../../../model/utils/enum';
 import { UpdateUserRoleDTO } from '../../domain/user-role/update-user-role.dto';
 import { UserRoleDetailResponse } from '../../domain/user-role/response-detail.dto';
 import { AuthService } from './auth.service';
+import { PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class UserRoleService {
@@ -24,6 +25,7 @@ export class UserRoleService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(Role)
     private readonly roleRepo: Repository<Role>,
+    private readonly logger: PinoLogger,
   ) {}
 
   async list(query: QueryUserRoleDTO): Promise<UserRoleWithPaginationResponse> {
@@ -147,9 +149,13 @@ export class UserRoleService {
     user.roleId = roleId;
     user.branches = assignedBranches;
 
-    const updatedUser = await user.save();
-    await AuthService.clearCache();
-    return updatedUser;
+    try {
+      const updatedUser = await user.save();
+      await AuthService.clearCache();
+      return updatedUser;
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   public async create(payload: CreateUserRoleDTO): Promise<any> {

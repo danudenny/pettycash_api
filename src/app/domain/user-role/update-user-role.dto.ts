@@ -11,7 +11,7 @@ export class UpdateUserRoleDTO {
 
   @ApiProperty({
     description: 'Branch to attach',
-    examples: [
+    example: [
       '142648ab-9624-4a7a-a4b4-2f1c51e648d7',
       'eaaf465b-65bc-4784-909e-8d0180c6eb4c',
     ],

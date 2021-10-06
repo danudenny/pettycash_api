@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsUUID } from 'class-validator';
 import { JournalState } from '../../../model/utils/enum';
 import { BasePayload } from '../common/base-payload.dto';
 
@@ -14,6 +15,14 @@ export class QueryJournalDTO extends BasePayload {
     example: '2021-12-31',
   })
   endDate__lte: Date;
+
+  @ApiPropertyOptional({
+    description: 'Branch ID',
+    example: 'eaaf465b-65bc-4784-909e-8d0180c6eb4c',
+  })
+  @IsUUID()
+  @IsOptional()
+  branchId: string;
 
   @ApiPropertyOptional({
     description: 'Journal State',

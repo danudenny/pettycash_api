@@ -1,4 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn, BaseEntity } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  BaseEntity,
+  UpdateDateColumn,
+} from 'typeorm';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 // NOTE: source data separately from db master data
@@ -36,26 +42,22 @@ export class EmployeeRole extends BaseEntity {
   @Column('character varying', {
     name: 'employee_level',
     length: 50,
+    nullable: true,
   })
-  employeeLevel: string;
+  employeeLevel?: string;
 
   @Column('character varying', {
     name: 'employee_position',
     length: 50,
+    nullable: true,
   })
-  employeePosition: string;
+  employeePosition?: string;
 
   @Column('text', {
     name: 'description',
+    nullable: true,
   })
-  description: string;
-
-  @Column('boolean', {
-    nullable: false,
-    default: () => 'false',
-    name: 'is_has_voucher',
-  })
-  isHasVoucher: boolean;
+  description?: string;
 
   @Column('boolean', {
     nullable: false,
@@ -63,4 +65,10 @@ export class EmployeeRole extends BaseEntity {
     name: 'is_deleted',
   })
   isDeleted: boolean;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    name: 'updated_at',
+  })
+  updatedAt?: Date;
 }

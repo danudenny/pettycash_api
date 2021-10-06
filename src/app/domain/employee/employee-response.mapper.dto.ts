@@ -14,6 +14,7 @@ export class EmployeeResponseMapper {
     it.branchName = dto.branchName;
     it.dateOfEntry = dto.dateOfEntry;
     it.dateOfResign = dto.dateOfResign;
+    it.employeeStatus = dto.employeeStatus;
     return it;
   }
 
@@ -27,7 +28,8 @@ export class EmployeeResponseMapper {
       branchId: ety.branchId,
       branchName: ety.branch && ety.branch.branchName,
       dateOfEntry: ety.dateOfEntry,
-      dateOfResign: ety.dateOfResign
+      dateOfResign: ety.dateOfResign,
+      employeeStatus: ety.employeeStatus,
     });
   }
 

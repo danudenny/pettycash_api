@@ -13,4 +13,10 @@ export class QueryAccountDailyClosingDTO extends BasePayload {
     example: '2021-12-31',
   })
   endDate__lte: Date;
+
+  @ApiPropertyOptional({
+    description: 'Account Daily Closing Branch ID',
+    example: '142648ab-9624-4a7a-a4b4-2f1c51e648d7',
+  })
+  branchId: string;
 }

@@ -10,11 +10,12 @@ import { BranchCronService } from './app/queues/branch.cron.service';
 import { ContextService } from './common/services/context.service';
 import { Request, Response, NextFunction } from 'express';
 import { contextMiddleware } from './common/middleware/context.middleware';
+import { HttpStatus } from '@nestjs/common';
 
 const logger = new PinoLogger({});
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { logger: false });
+  const app = await NestFactory.create(AppModule, { logger: console });
   // nestjs-pino
   app.useLogger(app.get(Logger));
 
@@ -22,7 +23,15 @@ async function bootstrap() {
   // https://github.com/expressjs/body-parser/blob/0632e2f378d53579b6b2e4402258f4406e62ac6f/lib/types/json.js#L53-L55
   // app.use(json({ limit: '10mb' }));
   // app.use(urlencoded({ extended: true, limit: '10mb' }));
-  app.enableCors();
+
+  if (LoaderEnv.envs.CORS) {
+    app.enableCors({
+      optionsSuccessStatus: HttpStatus.OK,
+      preflightContinue: true,
+    });
+  }
+  logger.info(`Enable Cors APP  :: ${LoaderEnv.envs.CORS}`);
+
   app.useGlobalPipes(new ValidationPipe());
 
   // RequestContext

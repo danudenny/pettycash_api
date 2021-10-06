@@ -1,5 +1,5 @@
-import { BasePayload } from '../common/base-payload.dto';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { BasePayload } from '../common/base-payload.dto';
 
 export class QueryEmployeeDTO extends BasePayload {
   @ApiPropertyOptional({
@@ -15,14 +15,22 @@ export class QueryEmployeeDTO extends BasePayload {
   name__icontains: string;
 
   @ApiPropertyOptional({
-    description: 'Employee ID Card Number',
+    description: 'Employee Status',
+    example: true,
+  })
+  employeeStatus: boolean;
+}
+
+export class QueryVoucherEmployeeDTO extends BasePayload {
+  @ApiPropertyOptional({
+    description: 'Employee NIK',
     example: '20090134',
   })
-  idCardNumber__icontains: string;
+  nik__icontains: string;
 
   @ApiPropertyOptional({
-    description: 'Employee Branch',
-    example: 1,
+    description: 'Employee Name',
+    example: 'Denny Danuwijaya',
   })
-  branchId: Number;
+  name__icontains: string;
 }

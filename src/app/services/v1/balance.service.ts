@@ -654,4 +654,83 @@ export class BalanceService {
 
     return await balanceRepo.save(balance);
   }
+
+  /**
+   * Helper to check if balance is sufficient or not
+   *
+   * @static
+   * @param {{
+   *     branchId: string;
+   *     amount: number;
+   *     type: BalanceType;
+   *   }} data
+   * @return {*}  {Promise<boolean>}
+   * @memberof BalanceService
+   */
+  public static async isSufficient(data: {
+    branchId: string;
+    amount: number;
+    type: BalanceType;
+  }): Promise<boolean> {
+    const { branchId, amount, type } = data;
+    const balanceRepo = getManager().getRepository(Balance);
+    const balance = await balanceRepo.findOne({ where: { branchId } });
+
+    if (!balance) return false;
+
+    switch (type) {
+      case BalanceType.BANK:
+        return amount <= balance.bankAmount;
+      case BalanceType.CASH:
+        return amount <= balance.cashAmount;
+      case BalanceType.BON:
+        return amount <= balance.bonAmount;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Check if can Do Transaction or not based on available Balance
+   *
+   * throw error if balance is not sufficient
+   *
+   * @static
+   * @param {{
+   *     branchId: string;
+   *     amount: number;
+   *     type: BalanceType;
+   *   }} data
+   * @return {*}  {Promise<void>}
+   * @memberof BalanceService
+   */
+  public static async canDoTransaction(data: {
+    branchId: string;
+    amount: number;
+    type: BalanceType;
+  }): Promise<void> {
+    const { branchId, amount, type } = data;
+    const isSufficient = await this.isSufficient({ branchId, amount, type });
+    if (!isSufficient) {
+      let ttype: string;
+
+      switch (type) {
+        case BalanceType.BANK:
+          ttype = 'Bank';
+          break;
+        case BalanceType.CASH:
+          ttype = 'Uang Fisik';
+          break;
+        case BalanceType.BON:
+          ttype = 'Bon';
+          break;
+        default:
+          ttype = undefined;
+          break;
+      }
+
+      const errMsg = `Jumlah tidak boleh lebih dari pada Saldo ${ttype} Sistem`;
+      throw new UnprocessableEntityException(errMsg);
+    }
+  }
 }

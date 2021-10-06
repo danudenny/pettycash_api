@@ -21,6 +21,7 @@ export class AttachmentService {
     fileMime: string,
     pathId?: string,
     bucketName?: string,
+    acl?: 'private' | 'public-read',
     typeId?: any,
     tx?: EntityManager,
   ) {
@@ -34,6 +35,7 @@ export class AttachmentService {
       fileMime,
       pathId,
       bucketName,
+      acl,
     );
 
     const url = `https://${bucketName}.s3.amazonaws.com/${uploadResponse.awsKey}`;
@@ -47,10 +49,11 @@ export class AttachmentService {
       fileMime,
       fileProvider: FILE_PROVIDER.AWS_S3,
       path: uploadResponse.awsKey,
+      s3acl: uploadResponse.acl,
       name: attachmentName,
       fileName: fileOriginalName,
       url,
-      typeId: typeId,
+      typeId,
       createUserId: userId,
       updateUserId: userId,
     });
@@ -139,6 +142,7 @@ export class AttachmentService {
             file.mimetype,
             pathId,
             null,
+            'private',
             typeId,
             txManager,
           );
@@ -185,6 +189,7 @@ export class AttachmentService {
           file.mimetype,
           pathId,
           null,
+          'private',
           typeId,
           txManager,
         );
