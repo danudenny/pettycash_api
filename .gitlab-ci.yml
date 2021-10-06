@@ -5,17 +5,27 @@ include:
     file: /apps/gcr-push.yml
 
 stages:
-  - push
+  - build-push
 
-push-gcr-stag:
-  stage: push
+build-push:
+  image: google/cloud-sdk:alpine
+  stage: build-push
   extends:
-    - .gcr-push
+    - .gitlab-ssh-keys-alpine
+  services:
+    - docker:18.09.7-dind
   variables:
-    ENV_BUILD: staging
-    DOCKER_TAG: $CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID
-    DOCKERFILE_PATH: Dockerfile
-    APP_NAME: $CI_PROJECT_NAME
-    APP_PATH: '.'
+    DOCKER_IMAGE_GCR: $GCR_STORAGE_HOST/$GCR_STORAGE_PROJECT/$ENV_BUILD/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID
+    DOCKER_IMAGE_GITLAB: $CI_REGISTRY_IMAGE/$ENV_BUILD:latest
+  script:
+    - echo ${CI_JOB_TOKEN} | docker login -u gitlab-ci-token $CI_REGISTRY --password-stdin
+    - echo ${GCR_STORAGE_KEY} | base64 -d  > ${HOME}/gcloud-service-key.json
+    - gcloud --quiet --no-user-output-enabled auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+    - gcloud --quiet --no-user-output-enabled config set project ${GCR_STORAGE_PROJECT}
+    - gcloud --quiet --no-user-output-enabled auth configure-docker
+    - export SSH_KEY_DOCKER=$(echo "${SSH_KEY_GITLAB}" | base64 -d)
+    - docker build --target production -t ${DOCKER_IMAGE_GCR} -t ${DOCKER_IMAGE_GITLAB} .
+    - docker push ${DOCKER_IMAGE_GCR}
+    - docker push ${DOCKER_IMAGE_GITLAB}
   only:
     - staging
