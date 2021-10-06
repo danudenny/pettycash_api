@@ -218,7 +218,7 @@ export class JournalService {
   ): Promise<Journal> {
     try {
       const reverseJournal = await getManager().transaction(async (manager) => {
-        const user = await AuthService.getUser({ relations: ['role'] });
+        const user = await AuthService.getUserRole();
 
         await this.checkPermissionReversal(user);
 
@@ -682,7 +682,7 @@ export class JournalService {
   private async postJournal(
     ids: string[],
   ): Promise<{ success: object[]; fail: object[] }> {
-    const user = await AuthService.getUser({ relations: ['role'] });
+    const user = await AuthService.getUserRole();
     const userRole = user?.role?.name as MASTER_ROLES;
     const NOT_ALLOWED_STATE = [JournalState.POSTED];
 

@@ -1,6 +1,6 @@
 import { AttachmentTypeDTO, CreateAttachmentTypeDTO, QueryAttachmentTypeDTO } from './../../domain/attachment-type/att-type.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { AttachmentType } from '../../../model/attachment-type.entity';
 import { Repository } from 'typeorm';
 import { AttachmentTypeResponse } from '../../domain/attachment-type/att-type.response';
@@ -19,8 +19,7 @@ export class AttachmentTypeService {
     const user = await AuthService.getUser();
     return user.id;
   }
-  
-  async get(query?: QueryAttachmentTypeDTO): Promise<any> {
+ async get(query?: QueryAttachmentTypeDTO): Promise<any> {
     const params = { ...query };
     const qb = new QueryBuilder(AttachmentType, 'att', params);
 

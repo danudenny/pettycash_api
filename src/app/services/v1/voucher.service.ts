@@ -58,7 +58,7 @@ export class VoucherService {
 
   private async getUser(includeBranch: boolean = false) {
     if (includeBranch) {
-      return await AuthService.getUser({ relations: ['branches'] });
+      return await AuthService.getUserBranches();
     } else {
       return await AuthService.getUser();
     }
@@ -476,7 +476,7 @@ export class VoucherService {
   }
 
   public async redeem(data: BatchPayloadVoucherDTO): Promise<any> {
-    const user = await AuthService.getUser({ relations: ['role'] });
+    const user = await AuthService.getUserRole();
 
     const voucherToUpdateIds: string[] = [];
     const vouchers = await this.voucherRepo.find({
@@ -557,8 +557,8 @@ export class VoucherService {
     const webHookResult = webhookResp[0];
     console.log(webhookResp);
 
-    let ids = [];
-    let statuses = [];
+    const ids = [];
+    const statuses = [];
     webHookResult.forEach((element) => {
       ids.push(element.voucher_id);
       statuses.push(element.status);
@@ -570,7 +570,7 @@ export class VoucherService {
       },
     });
 
-    let numbersVcr = [];
+    const numbersVcr = [];
 
     if (getVoucherNumber.length == 0) {
       numbersVcr.push({
