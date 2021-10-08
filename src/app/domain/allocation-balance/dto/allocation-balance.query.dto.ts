@@ -1,7 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsUUID } from 'class-validator';
 import { CashBalanceAllocationState } from '../../../../model/utils/enum';
-import { Transform } from 'class-transformer';
 import { BasePayload } from '../../common/base-payload.dto';
 
 export class AllocationBalanceQueryDTO extends BasePayload {
