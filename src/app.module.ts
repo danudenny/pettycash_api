@@ -46,7 +46,11 @@ import { UserBranchModule } from './app/modules/user-branch.module';
     LoaderEnv,
     TypeOrmModule.forRoot(LoaderEnv.getTypeOrmConfig()),
     // TODO: add pinoHttp requestIdGenerator
-    LoggerModule.forRoot(),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: LoaderEnv.envs.NODE_ENV !== 'production' ? 'debug' : 'error',
+      },
+    }),
     // TODO: add Health checks (Terminus)
     BranchModule,
     BankBranchModule,

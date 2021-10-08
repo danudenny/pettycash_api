@@ -5,8 +5,7 @@ RUN yarn install
 RUN yarn run build
 
 FROM node:12.16-alpine AS production
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
+ENV NODE_ENV=production
 WORKDIR /pettyCash
 COPY . .
 RUN yarn install --prod

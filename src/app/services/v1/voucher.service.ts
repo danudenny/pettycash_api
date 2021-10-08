@@ -58,7 +58,7 @@ export class VoucherService {
 
   private async getUser(includeBranch: boolean = false) {
     if (includeBranch) {
-      return await AuthService.getUser({ relations: ['branches'] });
+      return await AuthService.getUserBranches();
     } else {
       return await AuthService.getUser();
     }
@@ -132,14 +132,8 @@ export class VoucherService {
       where: {
         employeeId: id,
       },
+      relations: ['product'],
     });
-
-    if (!getProduct) {
-      throw new HttpException(
-        'Employee tidak mempunyai Voucher Item',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
 
     return new EmployeeProductResponse(getProduct);
   }
@@ -155,10 +149,8 @@ export class VoucherService {
       ...query,
     };
     const qb = new QueryBuilder(Voucher, 'vcr', params);
-    const {
-      userBranchIds,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
+    const { userBranchIds, isSuperUser } =
+      await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['number__icontains'] = 'vcr.number';
     qb.fieldResolverMap['startDate__gte'] = 'vcr.transactionDate';
@@ -200,10 +192,8 @@ export class VoucherService {
   }
 
   public async getById(id: string): Promise<VoucherDetailResponse> {
-    const {
-      userBranchIds,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
+    const { userBranchIds, isSuperUser } =
+      await AuthService.getUserBranchAndRole();
     const where = { id, isDeleted: false };
     if (!isSuperUser) {
       Object.assign(where, { branchId: In(userBranchIds) });
@@ -363,11 +353,12 @@ export class VoucherService {
           }
 
           const existingAttachments = voucher.attachments;
-          const newAttachments: Attachment[] = await VoucherService.uploadAndRetrieveFiles(
-            voucherId,
-            manager,
-            files,
-          );
+          const newAttachments: Attachment[] =
+            await VoucherService.uploadAndRetrieveFiles(
+              voucherId,
+              manager,
+              files,
+            );
 
           voucher.attachments = [].concat(existingAttachments, newAttachments);
           voucher.updateUser = await AuthService.getUser();
@@ -485,7 +476,7 @@ export class VoucherService {
   }
 
   public async redeem(data: BatchPayloadVoucherDTO): Promise<any> {
-    const user = await AuthService.getUser({ relations: ['role'] });
+    const user = await AuthService.getUserRole();
 
     const voucherToUpdateIds: string[] = [];
     const vouchers = await this.voucherRepo.find({
@@ -566,8 +557,8 @@ export class VoucherService {
     const webHookResult = webhookResp[0];
     console.log(webhookResp);
 
-    let ids = [];
-    let statuses = [];
+    const ids = [];
+    const statuses = [];
     webHookResult.forEach((element) => {
       ids.push(element.voucher_id);
       statuses.push(element.status);
@@ -579,7 +570,7 @@ export class VoucherService {
       },
     });
 
-    let numbersVcr = [];
+    const numbersVcr = [];
 
     if (getVoucherNumber.length == 0) {
       numbersVcr.push({

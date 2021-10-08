@@ -6,6 +6,7 @@ export class EmployeeProductsResponseMapper {
     const it = new EmployeeProductDTO();
     it.id = dto.id;
     it.allowanceCode = dto.allowanceCode;
+    it.productName = dto.productName;
     it.allowanceAmount = dto.allowanceAmount;
     it.productId = dto.productId;
     return it;
@@ -15,6 +16,7 @@ export class EmployeeProductsResponseMapper {
     return this.toDTO({
       id: ety.id,
       allowanceCode: ety.allowance_code,
+      productName: ety.product && ety.product.name,
       allowanceAmount: ety.allowance_amount,
       productId: ety.productId,
     });
