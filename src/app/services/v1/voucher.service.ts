@@ -502,8 +502,6 @@ export class VoucherService {
       return id;
     });
 
-    const dataJson = JSON.stringify(data);
-
     const options = {
       headers: VoucherService.headerWebhook,
     };
@@ -511,7 +509,7 @@ export class VoucherService {
     const webhookResp = [];
     try {
       await axios
-        .post(LoaderEnv.envs.VOUCHER_HELPER_URL, dataJson, options)
+        .post(LoaderEnv.envs.VOUCHER_HELPER_URL, JSON.stringify(data), options)
         .then((result) => {
           webhookResp.push(result.data);
           const resp = [];

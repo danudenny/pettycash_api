@@ -5,7 +5,7 @@ import {
   EntityManager,
   getManager,
   Repository,
-  createQueryBuilder
+  createQueryBuilder,
 } from 'typeorm';
 import { AllocationBalanceWithPaginationResponse } from '../../domain/allocation-balance/response/response.dto';
 import { AllocationBalanceQueryDTO } from '../../domain/allocation-balance/dto/allocation-balance.query.dto';
@@ -130,10 +130,8 @@ export class AllocationBalanceService {
   ): Promise<AllocationBalanceWithPaginationResponse> {
     const params = { order: '^createdAt', limit: 10, ...query };
     const qb = new QueryBuilder(CashBalanceAllocation, 'cba', params);
-    const {
-      userBranchIds,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
+    const { userBranchIds, isSuperUser } =
+      await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['receivedDate'] = 'cba.received_date';
     qb.fieldResolverMap['branchId'] = 'cba.branchId';
@@ -147,12 +145,15 @@ export class AllocationBalanceService {
       ['br.branch_name', 'branchName'],
       ['cba.number', 'number'],
       ['cba.amount', 'amount'],
-      ['us.first_name || \' \' || us.last_name', 'picName'],
+      ["us.first_name || '' || COALESCE(' ' || us.last_name, '')", 'picName'],
       ['us.username', 'nik'],
       ['cba.state', 'state'],
       ['cba.received_date', 'receivedDate'],
       ['cba.is_paid', 'isPaid'],
-      ['ru.first_name || \' \' || ru.last_name', 'receivedUserName'],
+      [
+        "ru.first_name || ' ' || COALESCE(' ' || ru.last_name, '')",
+        'receivedUserName',
+      ],
     );
     qb.leftJoin((e) => e.branch, 'br');
     qb.leftJoin((e) => e.responsibleUser, 'us');
@@ -168,6 +169,8 @@ export class AllocationBalanceService {
         (v) => v.in(userBranchIds),
       );
     }
+
+    console.log(qb.getSql());
 
     const allocationBalance = await qb.exec();
 
@@ -271,9 +274,7 @@ export class AllocationBalanceService {
     }
   }
 
-  public async approve(
-    id: string
-  ): Promise<any> {
+  public async approve(id: string): Promise<any> {
     const approveAllocation = await getManager().transaction(
       async (manager) => {
         const allocation = await manager.findOne(CashBalanceAllocation, {
@@ -737,13 +738,13 @@ export class AllocationBalanceService {
     });
 
     const checkCoa = await createQueryBuilder('account_coa', 'coa')
-        .select('coa.id')
-        .where(`coa.id = '${alokasi?.branch?.cashCoaId}'`)
-        .andWhere('coa.isDeleted = false')
-        .andWhere('coa.isActive = true')
-        .getOne();
+      .select('coa.id')
+      .where(`coa.id = '${alokasi?.branch?.cashCoaId}'`)
+      .andWhere('coa.isDeleted = false')
+      .andWhere('coa.isActive = true')
+      .getOne();
 
-    if(checkCoa == null) {
+    if (checkCoa == null) {
       throw new HttpException(
         'Akun Coa Tidak Ditemukan',
         HttpStatus.BAD_REQUEST,
