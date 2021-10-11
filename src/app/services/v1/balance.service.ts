@@ -57,8 +57,10 @@ export class BalanceService {
   private async getBalances(query?: QueryBalanceDTO): Promise<any> {
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(Branch, 'b', params);
-    const { userBranchIds, isSuperUser } =
-      await AuthService.getUserBranchAndRole();
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['branchId'] = 'b.id';
 
@@ -178,8 +180,10 @@ export class BalanceService {
    * @memberof BalanceService
    */
   private async getBalanceWithoutBudget(query?: QueryBalanceDTO): Promise<any> {
-    const { userBranchIds, isSuperUser } =
-      await AuthService.getUserBranchAndRole();
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     const params = { limit: 10, ...query };
     const qb = new QueryBuilder(Branch, 'b', params);
@@ -212,8 +216,11 @@ export class BalanceService {
     query?: QuerySummaryBalanceDTO,
   ): Promise<any> {
     const qb = new QueryBuilder(Branch, 'b', {});
-    const { userBranchIds, userRoleName, isSuperUser } =
-      await AuthService.getUserBranchAndRole();
+    const {
+      userBranchIds,
+      userRoleName,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     if (!userBranchIds?.length) {
       throw new UnprocessableEntityException(
@@ -384,8 +391,10 @@ export class BalanceService {
     query?: QuerySummaryBalanceDTO,
   ): Promise<any> {
     const qb = new QueryBuilder(Branch, 'b', {});
-    const { userBranchIds, isSuperUser } =
-      await AuthService.getUserBranchAndRole();
+    const {
+      userBranchIds,
+      isSuperUser,
+    } = await AuthService.getUserBranchAndRole();
 
     if (!userBranchIds?.length) {
       throw new UnprocessableEntityException(
@@ -534,10 +543,7 @@ export class BalanceService {
     }
 
     const balanceRepo = manager.getRepository(Balance);
-    const balance = await balanceRepo.findOne({
-      where: { branchId },
-      lock: { mode: 'pessimistic_write' },
-    });
+    const balance = await balanceRepo.findOne({ where: { branchId } });
 
     if (!balance) {
       balance.branchId = branchId;
@@ -587,10 +593,7 @@ export class BalanceService {
     const { type, amount, branchId, manager: mngr } = data;
     const manager = mngr ? mngr : getManager();
     const balanceRepo = manager.getRepository(Balance);
-    let balance = await balanceRepo.findOne({
-      where: { branchId },
-      lock: { mode: 'pessimistic_write' },
-    });
+    let balance = await balanceRepo.findOne({ where: { branchId } });
 
     if (!balance) {
       balance = new Balance();
@@ -627,10 +630,7 @@ export class BalanceService {
     const { type, amount, branchId, manager: mngr } = data;
     const manager = mngr ? mngr : getManager();
     const balanceRepo = manager.getRepository(Balance);
-    let balance = await balanceRepo.findOne({
-      where: { branchId },
-      lock: { mode: 'pessimistic_write' },
-    });
+    let balance = await balanceRepo.findOne({ where: { branchId } });
 
     if (!balance) {
       balance = new Balance();
@@ -674,10 +674,7 @@ export class BalanceService {
   }): Promise<boolean> {
     const { branchId, amount, type } = data;
     const balanceRepo = getManager().getRepository(Balance);
-    const balance = await balanceRepo.findOne({
-      where: { branchId },
-      lock: { mode: 'pessimistic_write' },
-    });
+    const balance = await balanceRepo.findOne({ where: { branchId } });
 
     if (!balance) return false;
 
