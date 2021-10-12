@@ -74,7 +74,7 @@ export class ReportPenggunaanKendaraanService {
       utils.sheet_add_json(ws, dtSheet, { origin: 4, skipHeader: true });
       utils.book_append_sheet(wb, ws, 'Laporan Penggunaan Kendaraan');
 
-      let buff = write(wb, { type: 'buffer' });
+      const buff = write(wb, { type: 'buffer' });
 
       const fileName = `laporan-penggunaan-kendaraan-${new Date()}.xlsx`;
 
