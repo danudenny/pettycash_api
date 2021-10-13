@@ -1,28 +1,12 @@
-import { EmployeeVoucherItem } from './../../../model/employee-voucer-item.entity';
-import { Employee } from './../../../model/employee.entity';
-import { VoucherResponse } from './../../domain/voucher/response/voucher.response.dto';
-import {
-  BatchPayloadVoucherDTO,
-  VoucherCreateDTO,
-} from './../../domain/voucher/dto/voucher-create.dto';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { EmployeeVoucherItem } from '../../../model/employee-voucer-item.entity';
+import { Employee } from '../../../model/employee.entity';
+import { VoucherResponse, VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
+import { BatchPayloadVoucherDTO, VoucherCreateDTO } from '../../domain/voucher/dto/voucher-create.dto';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  In,
-  Repository,
-  getManager,
-  EntityManager,
-  createQueryBuilder,
-} from 'typeorm';
+import { createQueryBuilder, EntityManager, getManager, In, Repository } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Voucher } from '../../../model/voucher.entity';
-import { VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
 import { QueryVoucherDTO } from '../../domain/voucher/voucher-query.payload';
 import { VoucherDetailResponse } from '../../domain/voucher/response/voucher-detail.response.dto';
 import { VoucherItem } from '../../../model/voucher-item.entity';
@@ -49,19 +33,7 @@ export class VoucherService {
     private readonly voucherRepo: Repository<Voucher>,
     @InjectRepository(Attachment)
     private readonly attachmentRepo: Repository<Attachment>,
-  ) {}
-
-  private static async getUserId() {
-    const user = await AuthService.getUser();
-    return user.id;
-  }
-
-  private async getUser(includeBranch: boolean = false) {
-    if (includeBranch) {
-      return await AuthService.getUserBranches();
-    } else {
-      return await AuthService.getUser();
-    }
+  ) {
   }
 
   private static get headerWebhook() {
@@ -69,6 +41,11 @@ export class VoucherService {
       'API-Key': LoaderEnv.envs.VOUCHER_HELPER_KEY,
       'Content-Type': 'application/json',
     };
+  }
+
+  private static async getUserId() {
+    const user = await AuthService.getUser();
+    return user.id;
   }
 
   private static async uploadAndRetrieveFiles(
@@ -85,9 +62,7 @@ export class VoucherService {
         files,
         (file) => {
           const rid = randomStringGenerator().split('-')[0];
-          const pathId = `${voucherPath}_${rid}_${file.originalname}`;
-
-          return pathId;
+          return `${voucherPath}_${rid}_${file.originalname}`;
         },
         attachmentType,
         manager,
@@ -252,7 +227,7 @@ export class VoucherService {
           items.push(item);
         }
 
-        const user = await this.getUser(true);
+        const user = await VoucherService.getUser(true);
         const branchId = user && user.branches && user.branches[0].id;
         const employeeId: string = payload.employeeId;
         const brcCoaExist = await createQueryBuilder('employee', 'emp')
@@ -304,9 +279,7 @@ export class VoucherService {
         voucher.createUserId = await VoucherService.getUserId();
         voucher.updateUserId = await VoucherService.getUserId();
 
-        const result = await manager.save(voucher);
-
-        return result;
+        return await manager.save(voucher);
       });
 
       const data = JSON.stringify({
@@ -324,8 +297,8 @@ export class VoucherService {
         if (checkId) {
           await this.voucherRepo.delete({ id: createVoucher.id });
         }
-        throw new HttpException(
-          'Gagal Menyambungkan ke Webhook',
+        return new HttpException(
+          error.message,
           HttpStatus.GATEWAY_TIMEOUT,
         );
       }
@@ -508,52 +481,42 @@ export class VoucherService {
 
     const webhookResp = [];
     try {
-      await axios
-        .post(LoaderEnv.envs.VOUCHER_HELPER_URL, JSON.stringify(data), options)
-        .then((result) => {
-          webhookResp.push(result.data);
-          const resp = [];
-          webhookResp[0].forEach(async (res) => {
-            resp.push(res);
-            if (
-              res['status'] != 'SUCCESS' ||
-              res['status'] != 'APPROVING_EXPENSE_FAILED' ||
-              res['status'] != 'GENERATE_JOURNAL_FAILED'
-            ) {
-              await this.voucherRepo.update(
-                { id: res['voucher_id'] },
-                { paymentType: paymentTypeFromQuery[0] },
-              );
-            }
-            if (res['status'] == 'GENERATE_JOURNAL_FAILED') {
-              await this.voucherRepo.update(
-                { id: res['voucher_id'] },
-                { paymentType: data.payment_type },
-              );
-            }
-            if (res['status'] == 'APPROVING_EXPENSE_FAILED') {
-              await this.voucherRepo.update(
-                { id: res['voucher_id'] },
-                { paymentType: data.payment_type },
-              );
-            }
-            if (res['status'] == 'SUCCESS') {
-              await this.voucherRepo.update(
-                { id: res['voucher_id'] },
-                { paymentType: data.payment_type },
-              );
-            }
-          });
-        });
+      const response = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, JSON.stringify(data), options);
+      if (response) {
+        webhookResp.push(response.data);
+        const resp = [];
+        for (const res of webhookResp[0]) {
+          resp.push(res);
+          if (
+            res['status'] == 'VOUCHER_NOT_FOUND' ||
+            res['status'] == 'BALANCE_NOT_ENOUGH'
+          ) {
+            await this.voucherRepo.update(
+              { id: res['voucher_id'] },
+              { paymentType: paymentTypeFromQuery[0] },
+            );
+          }
+          if (
+            res['status'] == 'GENERATE_JOURNAL_FAILED' ||
+            res['status'] == 'EXPENSE_ALREADY_CREATE' ||
+            res['status'] == 'SUCCESS'
+          ) {
+            await this.voucherRepo.update(
+              { id: res['voucher_id'] },
+              { paymentType: data.payment_type },
+            );
+          }
+        }
+      }
     } catch (error) {
       console.log('error: ' + error);
       await this.voucherRepo.update(
         { id: In(successIds) },
         { paymentType: paymentTypeFromQuery[0] },
       );
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
     }
     const webHookResult = webhookResp[0];
-    console.log(webhookResp);
 
     const ids = [];
     const statuses = [];
@@ -590,5 +553,13 @@ export class VoucherService {
     }
 
     return numbersVcr;
+  }
+
+  private static async getUser(includeBranch: boolean = false) {
+    if (includeBranch) {
+      return await AuthService.getUserBranches();
+    } else {
+      return await AuthService.getUser();
+    }
   }
 }
