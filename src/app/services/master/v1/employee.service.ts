@@ -57,6 +57,8 @@ export class EmployeeService {
 
       qb.fieldResolverMap['nik__icontains'] = 'emp.nik';
       qb.fieldResolverMap['name__icontains'] = 'emp.name';
+      qb.fieldResolverMap['branchId'] = 'emp.branch_id';
+      qb.fieldResolverMap['positionName__icontains'] = 'emp_role.employee_role_name';
       qb.fieldResolverMap['employeeStatus'] = 'emp.employee_status';
 
       qb.applyFilterQueries();
@@ -66,11 +68,11 @@ export class EmployeeService {
         ['emp.nik', 'nik'],
         ['emp.name', 'name'],
         ['emp.employee_role_id', 'positionId'],
-        ['emp_role.employee_role_name', 'positionName'],
+        ['COALESCE(\' \' || emp_role.employee_role_name, \'-\')', 'positionName'],
         ['emp.branch_id', 'branchId'],
         ['brc.branch_name', 'branchName'],
         ['emp.date_of_entry', 'dateOfEntry'],
-        ['emp.date_of_resign', 'dateOfResign'],
+        ['COALESCE(\' \' || emp.date_of_resign, \'-\')', 'dateOfResign'],
         ['emp.is_deleted', 'isDeleted'],
       );
       qb.leftJoin((e) => e.employeeRole, 'emp_role');
