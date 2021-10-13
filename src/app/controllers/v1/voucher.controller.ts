@@ -1,5 +1,5 @@
-import { QueryVoucherEmployeeDTO } from './../../domain/employee/employee.payload.dto';
-import { VoucherResponse } from './../../domain/voucher/response/voucher.response.dto';
+import { QueryVoucherEmployeeDTO } from '../../domain/employee/employee.payload.dto';
+import { VoucherResponse } from '../../domain/voucher/response/voucher.response.dto';
 import {
   Body,
   Controller,
@@ -39,7 +39,6 @@ import {
   BatchPayloadVoucherDTO,
   VoucherCreateDTO,
 } from '../../domain/voucher/dto/voucher-create.dto';
-import { ProductService } from '../../services/master/v1/product.service';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { VoucherAttachmentResponse } from '../../domain/voucher/response/voucer-attachment.response.dto';
 import { CreateVoucherAttachmentDTO } from '../../domain/voucher/dto/create-attachment.dto';
@@ -68,14 +67,6 @@ export class VoucherController {
   ): Promise<VoucherWithPaginationResponse> {
     return await this.vcrService.list(query);
   }
-
-  // @Get('products')
-  // @ApiOperation({ summary: 'List all Voucher Product' })
-  // @ApiOkResponse({ type: ProductWithPaginationResponse })
-  // @ApiBadRequestResponse({ description: 'Bad Request' })
-  // public async products() {
-  //   return await this.prodService.voucher();
-  // }
 
   @Get('/employees')
   @ApiOperation({ summary: 'Get Employee' })
