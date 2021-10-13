@@ -72,6 +72,14 @@ export class VoucherService {
     return newAttachments;
   }
 
+  private static async getUser(includeBranch: boolean = false) {
+    if (includeBranch) {
+      return await AuthService.getUserBranches();
+    } else {
+      return await AuthService.getUser();
+    }
+  }
+
   public async getEmployee(
     query?: QueryVoucherEmployeeDTO,
   ): Promise<EmployeeWithPaginationResponse> {
@@ -514,7 +522,7 @@ export class VoucherService {
         { id: In(successIds) },
         { paymentType: paymentTypeFromQuery[0] },
       );
-      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR)
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
     const webHookResult = webhookResp[0];
 
@@ -553,13 +561,5 @@ export class VoucherService {
     }
 
     return numbersVcr;
-  }
-
-  private static async getUser(includeBranch: boolean = false) {
-    if (includeBranch) {
-      return await AuthService.getUserBranches();
-    } else {
-      return await AuthService.getUser();
-    }
   }
 }

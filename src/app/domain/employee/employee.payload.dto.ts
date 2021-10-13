@@ -15,6 +15,18 @@ export class QueryEmployeeDTO extends BasePayload {
   name__icontains: string;
 
   @ApiPropertyOptional({
+    description: 'Branch ID',
+    example: 964,
+  })
+  branchId: number;
+
+  @ApiPropertyOptional({
+    description: 'Employee Role',
+    example: 'Sigesit',
+  })
+  positionName__icontains: string;
+
+  @ApiPropertyOptional({
     description: 'Employee Status',
     example: true,
   })
