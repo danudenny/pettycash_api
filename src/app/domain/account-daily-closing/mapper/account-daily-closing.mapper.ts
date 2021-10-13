@@ -6,7 +6,7 @@ import { AccountDailyClosingDTO } from '../dto/account-daily-closing.dto';
 
 export class AccountDailyClosingMapper {
   public static fromArrayDTO(dto: Partial<AccountDailyClosingDTO[]>) {
-    const it = dto.map((accountDailyClosingDTO) => {
+    return dto.map((accountDailyClosingDTO) => {
       const item = new AccountDailyClosingDTO();
       item.id = accountDailyClosingDTO.id;
       item.branchName = accountDailyClosingDTO.branchName
@@ -15,7 +15,7 @@ export class AccountDailyClosingMapper {
       item.responsibleUserFirstName =
         accountDailyClosingDTO.responsibleUserFirstName;
       item.responsibleUserLastName =
-        accountDailyClosingDTO.responsibleUserLastName;
+        accountDailyClosingDTO.responsibleUserLastName || '';
       item.closingDate = accountDailyClosingDTO.closingDate;
       item.openingBankAmount = +accountDailyClosingDTO.openingBankAmount;
       item.closingBankAmount = +accountDailyClosingDTO.closingBankAmount;
@@ -43,8 +43,6 @@ export class AccountDailyClosingMapper {
         item.closingBankAmount + item.closingCashAmount + item.closingBonAmount;
       return item;
     });
-
-    return it;
   }
 
   public static fromEntity(entity: Partial<AccountDailyClosing>) {
@@ -73,7 +71,7 @@ export class AccountDailyClosingMapper {
   }
 
   private static toAccountCashboxItemsDTO(entities: AccountCashboxItem[]) {
-    const items = entities.map((entity) => {
+    return entities.map((entity) => {
       const item = new AccountCashboxItemsDTO();
       item.id = entity.id;
       item.pieces = entity.pieces;
@@ -82,7 +80,5 @@ export class AccountDailyClosingMapper {
 
       return item;
     });
-
-    return items;
   }
 }
