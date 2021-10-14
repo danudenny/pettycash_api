@@ -57,7 +57,7 @@ export class ExpenseDetailResponseMapper {
       const h = new ExpenseHistoryDTO();
       h.id = v.id;
       h.userId = v.createUserId;
-      h.userFullName = `${v.createUser?.firstName} ${v.createUser?.lastName}`;
+      h.userFullName = `${v.createUser?.firstName} ${v.createUser?.lastName || ''}`;
       h.userRole = v?.createUser?.role?.name as MASTER_ROLES;
       // Based on discussion, Use Expense Branch.
       h.branchName = branch && branch.branchName;
