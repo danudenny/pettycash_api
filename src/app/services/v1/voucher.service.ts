@@ -302,10 +302,10 @@ export class VoucherService {
       };
 
       try {
-        const create = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
-        logger.info(create);
         logger.info(data);
         logger.info(options);
+        const create = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
+        logger.info(create);
       } catch (error) {
         const checkId = await this.voucherRepo.findByIds([createVoucher.id]);
         if (checkId) {
@@ -346,6 +346,8 @@ export class VoucherService {
               manager,
               files,
             );
+
+          logger.info(newAttachments)
 
           voucher.attachments = [].concat(existingAttachments, newAttachments);
           voucher.updateUser = await AuthService.getUser();
@@ -495,10 +497,10 @@ export class VoucherService {
 
     const webhookResp = [];
     try {
-      const response = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, JSON.stringify(data), options);
-      logger.info(response);
       logger.info(data);
       logger.info(options);
+      const response = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, JSON.stringify(data), options);
+      logger.info(response);
       if (response) {
         webhookResp.push(response.data);
         const resp = [];
