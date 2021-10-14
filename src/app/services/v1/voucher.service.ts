@@ -25,6 +25,9 @@ import { AwsS3Service } from '../../../common/services/aws-s3.service';
 import { QueryVoucherEmployeeDTO } from '../../domain/employee/employee.payload.dto';
 import { EmployeeWithPaginationResponse } from '../../domain/employee/employee-response.dto';
 import { EmployeeProductResponse } from '../../domain/employee/employee-product-response.dto';
+import { PinoLogger } from 'nestjs-pino';
+
+const logger = new PinoLogger({});
 
 @Injectable()
 export class VoucherService {
@@ -299,7 +302,10 @@ export class VoucherService {
       };
 
       try {
-        await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
+        const create = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
+        logger.info(create);
+        logger.info(data);
+        logger.info(options);
       } catch (error) {
         const checkId = await this.voucherRepo.findByIds([createVoucher.id]);
         if (checkId) {
@@ -490,6 +496,9 @@ export class VoucherService {
     const webhookResp = [];
     try {
       const response = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, JSON.stringify(data), options);
+      logger.info(response);
+      logger.info(data);
+      logger.info(options);
       if (response) {
         webhookResp.push(response.data);
         const resp = [];
