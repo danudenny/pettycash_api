@@ -55,7 +55,7 @@ export class AccountDailyClosingMapper {
     item.responsibleUserFirstName =
       entity.createUser && entity.createUser.firstName;
     item.responsibleUserLastName =
-      entity.createUser && entity.createUser.lastName;
+      entity.createUser && entity.createUser.lastName || '';
     item.openingBankAmount = entity.openingBankAmount;
     item.closingBankAmount = entity.closingBankAmount;
     item.openingCashAmount = entity.openingCashAmount;
