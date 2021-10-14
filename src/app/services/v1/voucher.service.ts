@@ -302,10 +302,11 @@ export class VoucherService {
       };
 
       try {
-        logger.info(data);
-        logger.info(options);
-        const create = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
-        logger.info(create);
+        console.log(data);
+        console.log(options);
+        // const create = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
+        const create = await axios.post('https://api.s.sicepat.io/v1/pettycash/webhook/pettycash/redeem-voucher', data, options);
+        console.log(create);
       } catch (error) {
         const checkId = await this.voucherRepo.findByIds([createVoucher.id]);
         if (checkId) {
@@ -497,10 +498,10 @@ export class VoucherService {
 
     const webhookResp = [];
     try {
-      logger.info(data);
-      logger.info(options);
-      const response = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, JSON.stringify(data), options);
-      logger.info(response);
+      console.log(data);
+      console.log(options);
+      const response = await axios.post('https://api.s.sicepat.io/v1/pettycash/webhook/pettycash/redeem-voucher', JSON.stringify(data), options);
+      console.log(response);
       if (response) {
         webhookResp.push(response.data);
         const resp = [];
