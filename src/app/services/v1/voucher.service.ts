@@ -1,9 +1,6 @@
 import { EmployeeVoucherItem } from '../../../model/employee-voucer-item.entity';
 import { Employee } from '../../../model/employee.entity';
-import {
-  VoucherResponse,
-  VoucherWithPaginationResponse,
-} from '../../domain/voucher/response/voucher.response.dto';
+import { VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
 import {
   BatchPayloadVoucherDTO,
   VoucherCreateDTO,
@@ -330,7 +327,7 @@ export class VoucherService {
         if (checkId) {
           await this.voucherRepo.delete({ id: createVoucher.id });
         }
-        return new HttpException(error.message, HttpStatus.GATEWAY_TIMEOUT);
+        throw error.message;
       }
     } catch (err) {
       throw err;
@@ -349,7 +346,7 @@ export class VoucherService {
             relations: ['attachments'],
           });
 
-          if (!voucher) {
+          if (!voucher || voucherId == undefined) {
             throw new NotFoundException(`Voucher ID:  ${voucherId} not found!`);
           }
 
@@ -379,7 +376,7 @@ export class VoucherService {
         createAttachment as VoucherAttachmentDTO[],
       );
     } catch (error) {
-      throw new BadRequestException(error);
+      throw error;
     }
   }
 
