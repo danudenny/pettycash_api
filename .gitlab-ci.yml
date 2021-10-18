@@ -26,7 +26,7 @@ build-push:
     DOCKER_USER: gitlab-ci-token
     DOCKER_PASS: $CI_JOB_TOKEN
   script:
-    - echo ${CI_JOB_TOKEN} | docker login -u gitlab-ci-token $CI_REGISTRY --password-stdin
+    - echo ${CI_JOB_TOKEN} | docker login -u gitlab-ci-token ${CI_REGISTRY} --password-stdin
     - echo ${GCR_STORAGE_KEY} | base64 -d  > ${HOME}/gcloud-service-key.json
     - gcloud --quiet --no-user-output-enabled auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
     - gcloud --quiet --no-user-output-enabled config set project ${GCR_STORAGE_PROJECT}
