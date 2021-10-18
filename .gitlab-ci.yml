@@ -7,37 +7,20 @@ build-push:
   stage: build-push
   services:
     - docker:18.09.7-dind
-  before_script:
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - apk add --no-cache openssh git
-    - ssh-keyscan gitlab.sicepat.tech > ~/.ssh/known_hosts
-    - echo "${SSH_KEY_GITLAB}" | base64 -d > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - git config --global user.email "gitlab.bot@sicepat.tech"
-    - git config --global user.name "Gitlab Bot"
-    - git config --global url."git@gitlab.sicepat.tech:".insteadOf "https://gitlab.sicepat.tech/"
   variables:
     ENV_BUILD: staging
     DOCKER_IMAGE_GCR: $GCR_STORAGE_HOST/$GCR_STORAGE_PROJECT/$ENV_BUILD/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID
-    DOCKER_IMAGE_GITLAB: $CI_REGISTRY_IMAGE/$ENV_BUILD:latest
-    DOCKER_TAG: $DOCKER_IMAGE_GITLAB
-    DOCKER_HOST: $CI_REGISTRY
-    DOCKER_USER: gitlab-ci-token
-    DOCKER_PASS: $CI_JOB_TOKEN
   script:
-    - docker login gitlab.sicepat.tech:5050 -u gitlab-ci-token -p ${CI_JOB_TOKEN}
     - echo ${GCR_STORAGE_KEY} | base64 -d  > ${HOME}/gcloud-service-key.json
     - gcloud --quiet --no-user-output-enabled auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
     - gcloud --quiet --no-user-output-enabled config set project ${GCR_STORAGE_PROJECT}
     - gcloud --quiet --no-user-output-enabled auth configure-docker
     - docker build -t ${DOCKER_IMAGE_GCR} -t ${DOCKER_IMAGE_GITLAB} .
     - docker push ${DOCKER_IMAGE_GCR}
-    - docker push ${DOCKER_IMAGE_GITLAB}
   only:
     - sandbox
 
-deploy-old-staging:
+build-push-old-staging:
   image: docker:latest
   stage: deploy
   needs:
@@ -45,13 +28,8 @@ deploy-old-staging:
   services:
     - docker:dind
   environment: old-staging
-  variables:
-    ENV_BUILD: staging
-    DOCKER_TAG: $CI_REGISTRY_IMAGE/$ENV_BUILD:latest
-    DOCKER_HOST: $CI_REGISTRY
-    DOCKER_USER: gitlab-ci-token
-    DOCKER_PASS: $CI_JOB_TOKEN
   script:
+    - make build-and-push
     - make deploy
   only:
     - sandbox

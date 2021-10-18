@@ -3,12 +3,12 @@ name = petty-cash-api
 network = sicepatnet
 
 envFile = $(ENV_FILE)
-servicePort = $(SERVICE_PORT)
+servicePort = $(APP_SERVICE_PORT)
 
-dockerHost = $(DOCKER_HOST)
-dockerUser = $(DOCKER_USER)
-dockerPass = $(DOCKER_PASS)
-dockerTag = $(DOCKER_TAG)
+dockerHost = $(APP_DOCKER_HOST)
+dockerUser = $(APP_DOCKER_USER)
+dockerPass = $(APP_DOCKER_PASS)
+dockerTag = $(APP_DOCKER_TAG)
 
 # Pipeline Recipe
 build-docker:
