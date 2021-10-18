@@ -31,7 +31,7 @@ deploy-old-staging:
   image: docker:latest
   stage: deploy
   needs:
-    - build-push-old-staging
+    - build-push
   services:
     - docker:dind
   environment: old-staging
