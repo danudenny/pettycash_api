@@ -1,7 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Employee } from '../../../../model/employee.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
-import { QueryEmployeeDTO } from '../../../domain/employee/employee.payload.dto';
+import {
+  QueryEmployeeDTO,
+  QueryEmployeeRoleDTO,
+} from '../../../domain/employee/employee.payload.dto';
 import {
   EmployeeRoleWithPaginationResponse,
   EmployeeWithPaginationResponse,
@@ -132,10 +135,13 @@ export class EmployeeService {
   }
 
   public async employeeRole(
-    query?: BasePayload,
+    query?: QueryEmployeeRoleDTO,
   ): Promise<EmployeeRoleWithPaginationResponse> {
     const params = { order: '^employee_role_name', limit: 10, ...query };
     const qb = new QueryBuilder(EmployeeRole, 'emp_role', params);
+
+    qb.fieldResolverMap['id'] = 'emp_role.id';
+    qb.fieldResolverMap['name__icontains'] = 'emp_role.employee_role_name';
 
     qb.applyFilterPagination();
     qb.selectRaw(

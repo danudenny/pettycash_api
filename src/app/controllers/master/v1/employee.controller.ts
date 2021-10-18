@@ -17,7 +17,10 @@ import {
   EmployeeRoleWithPaginationResponse,
   EmployeeWithPaginationResponse,
 } from '../../../domain/employee/employee-response.dto';
-import { QueryEmployeeDTO } from '../../../domain/employee/employee.payload.dto';
+import {
+  QueryEmployeeDTO,
+  QueryEmployeeRoleDTO,
+} from '../../../domain/employee/employee.payload.dto';
 import { Response } from 'express';
 import { BasePayload } from '../../../domain/common/base-payload.dto';
 
@@ -38,7 +41,7 @@ export class EmployeeController {
   @ApiOperation({ summary: 'List all Roles' })
   @ApiOkResponse({ type: EmployeeRoleWithPaginationResponse })
   @ApiBadRequestResponse({ description: 'Bad Request' })
-  public async listRole(@Query() query?: BasePayload) {
+  public async listRole(@Query() query?: QueryEmployeeRoleDTO) {
     return await this.empService.employeeRole(query);
   }
 

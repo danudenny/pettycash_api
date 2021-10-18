@@ -59,4 +59,10 @@ export class QueryEmployeeRoleDTO extends BasePayload {
     example: 'e4a9d888-7c05-42b4-a596-dcd0d7a0f2d8',
   })
   id: string;
+
+  @ApiPropertyOptional({
+    description: 'Employee Role Name',
+    example: 'Sigesit',
+  })
+  name__icontains: string;
 }
