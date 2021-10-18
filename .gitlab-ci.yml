@@ -7,6 +7,16 @@ build-push:
   stage: build-push
   services:
     - docker:18.09.7-dind
+  before_script:
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - apk add --no-cache openssh git
+    - ssh-keyscan gitlab.sicepat.tech > ~/.ssh/known_hosts
+    - echo "${SSH_KEY_GITLAB}" | base64 -d > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - git config --global user.email "gitlab.bot@sicepat.tech"
+    - git config --global user.name "Gitlab Bot"
+    - git config --global url."git@gitlab.sicepat.tech:".insteadOf "https://gitlab.sicepat.tech/"
   variables:
     ENV_BUILD: staging
     DOCKER_IMAGE_GCR: $GCR_STORAGE_HOST/$GCR_STORAGE_PROJECT/$ENV_BUILD/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID
