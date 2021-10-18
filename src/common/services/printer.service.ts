@@ -4,9 +4,9 @@ import axios from 'axios';
 import { LoaderEnv } from '../../config/loader';
 
 const url = LoaderEnv.envs.PRINTER_HELPER_URL;
+console.log(`this is url jsreport: ${url}`);
 
 export class PrinterService {
-
   public static async responseForRawCommands({
     res,
     rawCommands,
@@ -32,6 +32,7 @@ export class PrinterService {
           printerName,
         };
         const checkTmsPrinter = await axios.post(url, payload, options);
+        console.log(`this is printer service: ${checkTmsPrinter}`);
 
         // NOTE: check status tmsPrinter
         // post to printer endpoint
