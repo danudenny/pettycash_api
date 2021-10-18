@@ -50,6 +50,7 @@ push-gitlab:
     - build
   services:
     - docker:18.09.7-dind
+  environment: old-staging
   variables:
     ENV_BUILD: staging
     DOCKER_TAG: $CI_REGISTRY_IMAGE/$ENV_BUILD:latest
@@ -65,11 +66,12 @@ push-gitlab:
 
 deploy-old-staging:
   image: docker:latest
-  stage: push
+  stage: deploy
   needs:
-    - build
+    - push-gitlab
   services:
     - docker:dind
+  environment: old-staging
   variables:
     ENV_BUILD: staging
     DOCKER_TAG: $CI_REGISTRY_IMAGE/$ENV_BUILD:latest
