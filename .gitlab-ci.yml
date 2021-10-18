@@ -17,7 +17,7 @@ build-push:
     - docker build -t ${DOCKER_IMAGE_GCR} .
     - docker push ${DOCKER_IMAGE_GCR}
   only:
-    - sandbox
+    - staging
 
 build-push-old-staging:
   image: docker:latest
@@ -29,6 +29,6 @@ build-push-old-staging:
     - make build-and-push
     - make deploy
   only:
-    - sandbox
+    - staging
   tags:
     - old-staging
