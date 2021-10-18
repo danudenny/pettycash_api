@@ -1,10 +1,28 @@
 import { EmployeeVoucherItem } from '../../../model/employee-voucer-item.entity';
 import { Employee } from '../../../model/employee.entity';
-import { VoucherResponse, VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
-import { BatchPayloadVoucherDTO, VoucherCreateDTO } from '../../domain/voucher/dto/voucher-create.dto';
-import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  VoucherResponse,
+  VoucherWithPaginationResponse,
+} from '../../domain/voucher/response/voucher.response.dto';
+import {
+  BatchPayloadVoucherDTO,
+  VoucherCreateDTO,
+} from '../../domain/voucher/dto/voucher-create.dto';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { createQueryBuilder, EntityManager, getManager, In, Repository } from 'typeorm';
+import {
+  createQueryBuilder,
+  EntityManager,
+  getManager,
+  In,
+  Repository,
+} from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Voucher } from '../../../model/voucher.entity';
 import { QueryVoucherDTO } from '../../domain/voucher/voucher-query.payload';
@@ -36,8 +54,7 @@ export class VoucherService {
     private readonly voucherRepo: Repository<Voucher>,
     @InjectRepository(Attachment)
     private readonly attachmentRepo: Repository<Attachment>,
-  ) {
-  }
+  ) {}
 
   private static get headerWebhook() {
     return {
@@ -302,23 +319,19 @@ export class VoucherService {
       };
 
       try {
-        console.log(data);
-        console.log(options);
         // const create = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
-        const create = await axios.post('https://api.s.sicepat.io/v1/pettycash/webhook/pettycash/redeem-voucher', data, options);
-        console.log(create);
+        return await axios.post(
+          'https://api.s.sicepat.io/v1/pettycash/webhook/pettycash/redeem-voucher',
+          data,
+          options,
+        );
       } catch (error) {
         const checkId = await this.voucherRepo.findByIds([createVoucher.id]);
         if (checkId) {
           await this.voucherRepo.delete({ id: createVoucher.id });
         }
-        return new HttpException(
-          error.message,
-          HttpStatus.GATEWAY_TIMEOUT,
-        );
+        return new HttpException(error.message, HttpStatus.GATEWAY_TIMEOUT);
       }
-
-      return new VoucherResponse(createVoucher);
     } catch (err) {
       throw err;
     }
@@ -348,7 +361,7 @@ export class VoucherService {
               files,
             );
 
-          logger.info(newAttachments)
+          logger.info(newAttachments);
 
           voucher.attachments = [].concat(existingAttachments, newAttachments);
           voucher.updateUser = await AuthService.getUser();
@@ -498,10 +511,11 @@ export class VoucherService {
 
     const webhookResp = [];
     try {
-      console.log(data);
-      console.log(options);
-      const response = await axios.post('https://api.s.sicepat.io/v1/pettycash/webhook/pettycash/redeem-voucher', JSON.stringify(data), options);
-      console.log(response);
+      const response = await axios.post(
+        'https://api.s.sicepat.io/v1/pettycash/webhook/pettycash/redeem-voucher',
+        JSON.stringify(data),
+        options,
+      );
       if (response) {
         webhookResp.push(response.data);
         const resp = [];
