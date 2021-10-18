@@ -318,7 +318,7 @@ export class VoucherService {
       try {
         // const create = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
         return await axios.post(
-          'https://api.s.sicepat.io/v1/pettycash/webhook/pettycash/redeem-voucher',
+          'https://www.pettycash-gefyra.backoffice/webhook/pettycash/redeem-voucher',
           data,
           options,
         );
@@ -509,7 +509,7 @@ export class VoucherService {
     const webhookResp = [];
     try {
       const response = await axios.post(
-        'https://api.s.sicepat.io/v1/pettycash/webhook/pettycash/redeem-voucher',
+        'https://www.pettycash-gefyra.backoffice/webhook/pettycash/redeem-voucher',
         JSON.stringify(data),
         options,
       );
