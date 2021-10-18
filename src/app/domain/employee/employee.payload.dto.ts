@@ -27,6 +27,12 @@ export class QueryEmployeeDTO extends BasePayload {
   positionName__icontains: string;
 
   @ApiPropertyOptional({
+    description: 'Employee Role ID',
+    example: 'e4a9d888-7c05-42b4-a596-dcd0d7a0f2d8',
+  })
+  positionNameId: string;
+
+  @ApiPropertyOptional({
     description: 'Employee Status',
     example: true,
   })
@@ -45,4 +51,12 @@ export class QueryVoucherEmployeeDTO extends BasePayload {
     example: 'Denny Danuwijaya',
   })
   name__icontains: string;
+}
+
+export class QueryEmployeeRoleDTO extends BasePayload {
+  @ApiPropertyOptional({
+    description: 'Employee Role ID',
+    example: 'e4a9d888-7c05-42b4-a596-dcd0d7a0f2d8',
+  })
+  id: string;
 }
