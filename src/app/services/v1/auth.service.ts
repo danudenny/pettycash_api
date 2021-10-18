@@ -145,7 +145,7 @@ export class AuthService {
     }
 
     const user = await this.userRepo.findOne({
-      where: { username },
+      where: { username, isDeleted: false },
       relations: ['role', 'role.permissions'],
     });
 
