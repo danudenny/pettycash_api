@@ -33,7 +33,7 @@ run-docker:
 	--network $(network) \
 	--name $(name) \
 	--env-file $(envFile) \
-	$(dockerTag):latest
+	$(dockerTag)
 
 deploy: login-docker pull-docker run-docker
 
