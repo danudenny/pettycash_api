@@ -36,6 +36,7 @@ export class LoaderEnv {
   public static envs = envs;
 
   public static isProduction() {
+    console.dir(envs, { colors: true, depth: null });
     return envs.NODE_ENV === 'production';
   }
 
