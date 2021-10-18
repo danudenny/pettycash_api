@@ -509,7 +509,7 @@ export class VoucherService {
     const webhookResp = [];
     try {
       const response = await axios.post(
-        'https://www.pettycash-gefyra.backoffice/webhook/pettycash/redeem-voucher',
+        'https://pettycash-gefyra.backoffice/webhook/pettycash/redeem-voucher',
         JSON.stringify(data),
         options,
       );
