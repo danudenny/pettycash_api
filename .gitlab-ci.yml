@@ -1,64 +1,27 @@
 stages:
-  - build
-  - push
+  - build-push
   - deploy
 
-build:
+build-push:
   image: google/cloud-sdk:alpine
-  stage: build
+  stage: build-push
   services:
     - docker:18.09.7-dind
   variables:
     ENV_BUILD: staging
     DOCKER_IMAGE_GCR: $GCR_STORAGE_HOST/$GCR_STORAGE_PROJECT/$ENV_BUILD/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID
     DOCKER_IMAGE_GITLAB: $CI_REGISTRY_IMAGE/$ENV_BUILD:latest
-  script:
-    - docker build --target production -t ${DOCKER_IMAGE_GCR} -t ${DOCKER_IMAGE_GITLAB} .
-    - docker save ${DOCKER_IMAGE_GCR} -o gcr_image.tar
-    - docker save ${DOCKER_IMAGE_GITLAB} -o gitlab_image.tar
-  artifacts:
-    paths:
-      - gcr_image.tar
-      - gitlab_image.tar
-  only:
-    - sandbox
-
-push-gcr:
-  image: google/cloud-sdk:alpine
-  stage: push
-  needs:
-    - build
-  services:
-    - docker:18.09.7-dind
-  variables:
-    ENV_BUILD: staging
-    DOCKER_IMAGE_GCR: $GCR_STORAGE_HOST/$GCR_STORAGE_PROJECT/$ENV_BUILD/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID
-  script:
-    - echo ${GCR_STORAGE_KEY} | base64 -d  > ${HOME}/gcloud-service-key.json
-    - gcloud --quiet --no-user-output-enabled auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
-    - gcloud --quiet --no-user-output-enabled config set project ${GCR_STORAGE_PROJECT}
-    - gcloud --quiet --no-user-output-enabled auth configure-docker
-    - docker load -i gcr_image.tar
-    - docker push ${DOCKER_IMAGE_GCR}
-  dependencies:
-    - build
-
-push-gitlab:
-  image: google/cloud-sdk:alpine
-  stage: push
-  needs:
-    - build
-  services:
-    - docker:18.09.7-dind
-  environment: old-staging
-  variables:
-    ENV_BUILD: staging
-    DOCKER_TAG: $CI_REGISTRY_IMAGE/$ENV_BUILD:latest
+    DOCKER_TAG: $DOCKER_IMAGE_GITLAB
     DOCKER_HOST: $CI_REGISTRY
     DOCKER_USER: gitlab-ci-token
     DOCKER_PASS: $CI_JOB_TOKEN
   script:
-    - docker load -i gitlab_image.tar
+    - docker build --target production -t ${DOCKER_IMAGE_GCR} -t ${DOCKER_IMAGE_GITLAB} .
+    - echo ${GCR_STORAGE_KEY} | base64 -d  > ${HOME}/gcloud-service-key.json
+    - gcloud --quiet --no-user-output-enabled auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+    - gcloud --quiet --no-user-output-enabled config set project ${GCR_STORAGE_PROJECT}
+    - gcloud --quiet --no-user-output-enabled auth configure-docker
+    - docker push ${DOCKER_IMAGE_GCR}
     - make push-docker
     - make clean-docker
   only:
@@ -68,7 +31,7 @@ deploy-old-staging:
   image: docker:latest
   stage: deploy
   needs:
-    - push-gitlab
+    - build-push
   services:
     - docker:dind
   environment: old-staging
