@@ -16,7 +16,7 @@ build-docker:
 
 push-docker:
 	@docker login $(dockerHost) -u $(dockerUser) -p $(dockerPass)
-	docker push -a $(dockerTag)
+	docker push $(dockerTag)
 
 build-and-push: build-docker push-docker
 
@@ -24,7 +24,7 @@ login-docker:
 	@docker login $(dockerHost) -u $(dockerUser) -p $(dockerPass)
 
 pull-docker:
-	docker pull $(dockerTag):latest
+	docker pull $(dockerTag)
 
 run-docker:
 	- docker stop $(name)
