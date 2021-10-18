@@ -2,16 +2,6 @@ stages:
   - build-push
 
 build-push:
-  before_script:
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - apk add --no-cache openssh git
-    - ssh-keyscan gitlab.sicepat.tech > ~/.ssh/known_hosts
-    - echo "${SSH_KEY_GITLAB}" | base64 -d > ~/.ssh/id_rsa
-    - chmod 600 ~/.ssh/id_rsa
-    - git config --global user.email "gitlab.bot@sicepat.tech"
-    - git config --global user.name "Gitlab Bot"
-    - git config --global url."git@gitlab.sicepat.tech:".insteadOf "https://gitlab.sicepat.tech/"
   image: google/cloud-sdk:alpine
   stage: build-push
   services:
@@ -24,22 +14,21 @@ build-push:
     - gcloud --quiet --no-user-output-enabled auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
     - gcloud --quiet --no-user-output-enabled config set project ${GCR_STORAGE_PROJECT}
     - gcloud --quiet --no-user-output-enabled auth configure-docker
-    - docker build --target production -t ${DOCKER_IMAGE_GCR} .
+    - docker build -t ${DOCKER_IMAGE_GCR} .
     - docker push ${DOCKER_IMAGE_GCR}
   only:
-    - staging
+    - sandbox
 
 build-push-old-staging:
   image: docker:latest
   stage: build-push
   services:
     - docker:dind
-  variables:
-    URL_PIPELINE: $CI_PIPELINE_URL
+  environment: old-staging
   script:
     - make build-and-push
     - make deploy
   only:
-    - old-staging
+    - sandbox
   tags:
     - old-staging
