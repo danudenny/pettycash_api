@@ -18,10 +18,7 @@ push-docker:
 	@docker login $(dockerHost) -u $(dockerUser) -p $(dockerPass)
 	docker push -a $(dockerTag)
 
-clean-docker:
-	docker rmi $(dockerTag)
-
-build-push: build-docker push-docker clean-docker
+build-and-push: build-docker push-docker
 
 login-docker:
 	@docker login $(dockerHost) -u $(dockerUser) -p $(dockerPass)
