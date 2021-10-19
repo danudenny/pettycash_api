@@ -323,13 +323,16 @@ export class VoucherService {
           options,
         );
       } catch (error) {
+        console.log(error);
         const checkId = await this.voucherRepo.findByIds([createVoucher.id]);
+        console.log(checkId);
         if (checkId) {
           await this.voucherRepo.delete({ id: createVoucher.id });
         }
-        throw error.message;
+        throw error;
       }
     } catch (err) {
+      console.log(err);
       throw err;
     }
   }
@@ -509,7 +512,7 @@ export class VoucherService {
     const webhookResp = [];
     try {
       const response = await axios.post(
-        'https://www.pettycash-gefyra.backoffice/webhook/pettycash/redeem-voucher',
+        LoaderEnv.envs.VOUCHER_HELPER_URL,
         JSON.stringify(data),
         options,
       );
