@@ -323,13 +323,16 @@ export class VoucherService {
           options,
         );
       } catch (error) {
+        console.log(error);
         const checkId = await this.voucherRepo.findByIds([createVoucher.id]);
+        console.log(checkId);
         if (checkId) {
           await this.voucherRepo.delete({ id: createVoucher.id });
         }
-        throw error.message;
+        throw error;
       }
     } catch (err) {
+      console.log(err);
       throw err;
     }
   }
