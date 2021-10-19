@@ -33,7 +33,7 @@ export class AccountStatementService {
   public async create(payload: CreateAccountStatementDTO): Promise<any> {
     const { amount, type, transactionDate, description } = payload;
     const reference = GenerateCode.accountStatement(transactionDate);
-    const user = await AuthService.getUser({ relations: ['branches'] });
+    const user = await AuthService.getUserBranches();
     const userBranch = user?.branches[0];
     const branchBalance = await this.balanceRepo.findOne({
       branchId: userBranch.id

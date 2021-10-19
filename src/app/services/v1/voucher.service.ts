@@ -1,28 +1,27 @@
-import { EmployeeVoucherItem } from './../../../model/employee-voucer-item.entity';
-import { Employee } from './../../../model/employee.entity';
-import { VoucherResponse } from './../../domain/voucher/response/voucher.response.dto';
+import { EmployeeVoucherItem } from '../../../model/employee-voucer-item.entity';
+import { Employee } from '../../../model/employee.entity';
+import { VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
 import {
   BatchPayloadVoucherDTO,
   VoucherCreateDTO,
-} from './../../domain/voucher/dto/voucher-create.dto';
+} from '../../domain/voucher/dto/voucher-create.dto';
 import {
   BadRequestException,
-  Injectable,
-  NotFoundException,
   HttpException,
   HttpStatus,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  createQueryBuilder,
+  EntityManager,
+  getManager,
   In,
   Repository,
-  getManager,
-  EntityManager,
-  createQueryBuilder,
 } from 'typeorm';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
 import { Voucher } from '../../../model/voucher.entity';
-import { VoucherWithPaginationResponse } from '../../domain/voucher/response/voucher.response.dto';
 import { QueryVoucherDTO } from '../../domain/voucher/voucher-query.payload';
 import { VoucherDetailResponse } from '../../domain/voucher/response/voucher-detail.response.dto';
 import { VoucherItem } from '../../../model/voucher-item.entity';
@@ -41,6 +40,9 @@ import { AwsS3Service } from '../../../common/services/aws-s3.service';
 import { QueryVoucherEmployeeDTO } from '../../domain/employee/employee.payload.dto';
 import { EmployeeWithPaginationResponse } from '../../domain/employee/employee-response.dto';
 import { EmployeeProductResponse } from '../../domain/employee/employee-product-response.dto';
+import { PinoLogger } from 'nestjs-pino';
+
+const logger = new PinoLogger({});
 
 @Injectable()
 export class VoucherService {
@@ -51,24 +53,16 @@ export class VoucherService {
     private readonly attachmentRepo: Repository<Attachment>,
   ) {}
 
-  private static async getUserId() {
-    const user = await AuthService.getUser();
-    return user.id;
-  }
-
-  private async getUser(includeBranch: boolean = false) {
-    if (includeBranch) {
-      return await AuthService.getUser({ relations: ['branches'] });
-    } else {
-      return await AuthService.getUser();
-    }
-  }
-
   private static get headerWebhook() {
     return {
       'API-Key': LoaderEnv.envs.VOUCHER_HELPER_KEY,
       'Content-Type': 'application/json',
     };
+  }
+
+  private static async getUserId() {
+    const user = await AuthService.getUser();
+    return user.id;
   }
 
   private static async uploadAndRetrieveFiles(
@@ -85,9 +79,7 @@ export class VoucherService {
         files,
         (file) => {
           const rid = randomStringGenerator().split('-')[0];
-          const pathId = `${voucherPath}_${rid}_${file.originalname}`;
-
-          return pathId;
+          return `${voucherPath}_${rid}_${file.originalname}`;
         },
         attachmentType,
         manager,
@@ -95,6 +87,14 @@ export class VoucherService {
     }
 
     return newAttachments;
+  }
+
+  private static async getUser(includeBranch: boolean = false) {
+    if (includeBranch) {
+      return await AuthService.getUserBranches();
+    } else {
+      return await AuthService.getUser();
+    }
   }
 
   public async getEmployee(
@@ -132,14 +132,8 @@ export class VoucherService {
       where: {
         employeeId: id,
       },
+      relations: ['product'],
     });
-
-    if (!getProduct) {
-      throw new HttpException(
-        'Employee tidak mempunyai Voucher Item',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
 
     return new EmployeeProductResponse(getProduct);
   }
@@ -155,10 +149,8 @@ export class VoucherService {
       ...query,
     };
     const qb = new QueryBuilder(Voucher, 'vcr', params);
-    const {
-      userBranchIds,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
+    const { userBranchIds, isSuperUser } =
+      await AuthService.getUserBranchAndRole();
 
     qb.fieldResolverMap['number__icontains'] = 'vcr.number';
     qb.fieldResolverMap['startDate__gte'] = 'vcr.transactionDate';
@@ -200,10 +192,8 @@ export class VoucherService {
   }
 
   public async getById(id: string): Promise<VoucherDetailResponse> {
-    const {
-      userBranchIds,
-      isSuperUser,
-    } = await AuthService.getUserBranchAndRole();
+    const { userBranchIds, isSuperUser } =
+      await AuthService.getUserBranchAndRole();
     const where = { id, isDeleted: false };
     if (!isSuperUser) {
       Object.assign(where, { branchId: In(userBranchIds) });
@@ -262,7 +252,7 @@ export class VoucherService {
           items.push(item);
         }
 
-        const user = await this.getUser(true);
+        const user = await VoucherService.getUser(true);
         const branchId = user && user.branches && user.branches[0].id;
         const employeeId: string = payload.employeeId;
         const brcCoaExist = await createQueryBuilder('employee', 'emp')
@@ -314,9 +304,7 @@ export class VoucherService {
         voucher.createUserId = await VoucherService.getUserId();
         voucher.updateUserId = await VoucherService.getUserId();
 
-        const result = await manager.save(voucher);
-
-        return result;
+        return await manager.save(voucher);
       });
 
       const data = JSON.stringify({
@@ -328,19 +316,19 @@ export class VoucherService {
       };
 
       try {
-        await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
+        // const create = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
+        return await axios.post(
+          'https://www.pettycash-gefyra.backoffice/webhook/pettycash/redeem-voucher',
+          data,
+          options,
+        );
       } catch (error) {
         const checkId = await this.voucherRepo.findByIds([createVoucher.id]);
         if (checkId) {
           await this.voucherRepo.delete({ id: createVoucher.id });
         }
-        throw new HttpException(
-          'Gagal Menyambungkan ke Webhook',
-          HttpStatus.GATEWAY_TIMEOUT,
-        );
+        throw error.message;
       }
-
-      return new VoucherResponse(createVoucher);
     } catch (err) {
       throw err;
     }
@@ -358,16 +346,19 @@ export class VoucherService {
             relations: ['attachments'],
           });
 
-          if (!voucher) {
+          if (!voucher || voucherId == undefined) {
             throw new NotFoundException(`Voucher ID:  ${voucherId} not found!`);
           }
 
           const existingAttachments = voucher.attachments;
-          const newAttachments: Attachment[] = await VoucherService.uploadAndRetrieveFiles(
-            voucherId,
-            manager,
-            files,
-          );
+          const newAttachments: Attachment[] =
+            await VoucherService.uploadAndRetrieveFiles(
+              voucherId,
+              manager,
+              files,
+            );
+
+          logger.info(newAttachments);
 
           voucher.attachments = [].concat(existingAttachments, newAttachments);
           voucher.updateUser = await AuthService.getUser();
@@ -385,7 +376,7 @@ export class VoucherService {
         createAttachment as VoucherAttachmentDTO[],
       );
     } catch (error) {
-      throw new BadRequestException(error);
+      throw error;
     }
   }
 
@@ -485,7 +476,7 @@ export class VoucherService {
   }
 
   public async redeem(data: BatchPayloadVoucherDTO): Promise<any> {
-    const user = await AuthService.getUser({ relations: ['role'] });
+    const user = await AuthService.getUserRole();
 
     const voucherToUpdateIds: string[] = [];
     const vouchers = await this.voucherRepo.find({
@@ -511,63 +502,55 @@ export class VoucherService {
       return id;
     });
 
-    const dataJson = JSON.stringify(data);
-
     const options = {
       headers: VoucherService.headerWebhook,
     };
 
     const webhookResp = [];
     try {
-      await axios
-        .post(LoaderEnv.envs.VOUCHER_HELPER_URL, dataJson, options)
-        .then((result) => {
-          webhookResp.push(result.data);
-          const resp = [];
-          webhookResp[0].forEach(async (res) => {
-            resp.push(res);
-            if (
-              res['status'] != 'SUCCESS' ||
-              res['status'] != 'APPROVING_EXPENSE_FAILED' ||
-              res['status'] != 'GENERATE_JOURNAL_FAILED'
-            ) {
-              await this.voucherRepo.update(
-                { id: res['voucher_id'] },
-                { paymentType: paymentTypeFromQuery[0] },
-              );
-            }
-            if (res['status'] == 'GENERATE_JOURNAL_FAILED') {
-              await this.voucherRepo.update(
-                { id: res['voucher_id'] },
-                { paymentType: data.payment_type },
-              );
-            }
-            if (res['status'] == 'APPROVING_EXPENSE_FAILED') {
-              await this.voucherRepo.update(
-                { id: res['voucher_id'] },
-                { paymentType: data.payment_type },
-              );
-            }
-            if (res['status'] == 'SUCCESS') {
-              await this.voucherRepo.update(
-                { id: res['voucher_id'] },
-                { paymentType: data.payment_type },
-              );
-            }
-          });
-        });
+      const response = await axios.post(
+        'https://www.pettycash-gefyra.backoffice/webhook/pettycash/redeem-voucher',
+        JSON.stringify(data),
+        options,
+      );
+      if (response) {
+        webhookResp.push(response.data);
+        const resp = [];
+        for (const res of webhookResp[0]) {
+          resp.push(res);
+          if (
+            res['status'] == 'VOUCHER_NOT_FOUND' ||
+            res['status'] == 'BALANCE_NOT_ENOUGH'
+          ) {
+            await this.voucherRepo.update(
+              { id: res['voucher_id'] },
+              { paymentType: paymentTypeFromQuery[0] },
+            );
+          }
+          if (
+            res['status'] == 'GENERATE_JOURNAL_FAILED' ||
+            res['status'] == 'EXPENSE_ALREADY_CREATE' ||
+            res['status'] == 'SUCCESS'
+          ) {
+            await this.voucherRepo.update(
+              { id: res['voucher_id'] },
+              { paymentType: data.payment_type },
+            );
+          }
+        }
+      }
     } catch (error) {
       console.log('error: ' + error);
       await this.voucherRepo.update(
         { id: In(successIds) },
         { paymentType: paymentTypeFromQuery[0] },
       );
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
     const webHookResult = webhookResp[0];
-    console.log(webhookResp);
 
-    let ids = [];
-    let statuses = [];
+    const ids = [];
+    const statuses = [];
     webHookResult.forEach((element) => {
       ids.push(element.voucher_id);
       statuses.push(element.status);
@@ -579,7 +562,7 @@ export class VoucherService {
       },
     });
 
-    let numbersVcr = [];
+    const numbersVcr = [];
 
     if (getVoucherNumber.length == 0) {
       numbersVcr.push({

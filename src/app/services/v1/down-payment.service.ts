@@ -68,7 +68,8 @@ export class DownPaymentService {
 
   private async getUser(includeBranch: boolean = false) {
     if (includeBranch) {
-      return await AuthService.getUser({ relations: ['branches'] });
+      const { user } = await AuthService.getUserBranchAndRole();
+      return user;
     } else {
       return await AuthService.getUser();
     }
@@ -196,7 +197,7 @@ export class DownPaymentService {
           payload.number = GenerateCode.downPayment();
         }
 
-        const user = await AuthService.getUser({ relations: ['branches'] });
+        const user = await AuthService.getUserBranches();
         const branchId = user?.branches[0]?.id;
         const pType = (payload.paymentType as unknown) as BalanceType;
 
@@ -339,7 +340,7 @@ export class DownPaymentService {
           type: pType,
         });
 
-        const user = await AuthService.getUser({ relations: ['role'] });
+        const user = await AuthService.getUserRole();
         const userRole = user?.role?.name;
         const downPaymentType = downPayment?.type;
         const { REIMBURSEMENT } = DownPaymentType;
@@ -433,7 +434,7 @@ export class DownPaymentService {
           throw new BadRequestException(`Down payment already rejected!`);
         }
 
-        const user = await AuthService.getUser({ relations: ['role'] });
+        const user = await AuthService.getUserRole();
         const userRole = user?.role?.name as MASTER_ROLES;
 
         if (

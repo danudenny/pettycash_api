@@ -70,8 +70,6 @@ export class UserService {
         );
       }
 
-      console.log(lastName);
-
       if (lastName) {
         qb.orWhere(
           (e) => e.lastName,

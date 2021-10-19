@@ -10,29 +10,6 @@ export class AllocationDetailResponseMapper {
     return dto;
   }
 
-  private static toCashBalanceAllocationHistoryDTO(
-    data: CashBalanceAllocationHistory[],
-    branch: Branch,
-  ): AlocationBalanceHistoryDTO[] {
-    const histories = data.map((v) => {
-      const h = new AlocationBalanceHistoryDTO();
-      h.id = v.id;
-      h.userId = v.createUserId;
-      h.userFullName = `${v.createUser?.firstName} ${v.createUser?.lastName}`;
-      h.userRole =
-        v.createUser &&
-        v.createUser.role &&
-        (v.createUser.role.name as MASTER_ROLES);
-      // Based on discussion, Use Expense Branch.
-      h.branchName = branch && branch.branchName;
-      h.state = v.state;
-      h.rejectedNote = v.rejectedNote;
-      h.createdAt = v.createdAt;
-      return h;
-    });
-    return histories;
-  }
-
   public static fromOneEntity(ety: Partial<CashBalanceAllocation>) {
     return this.toDTO({
       id: ety.id,
@@ -44,10 +21,10 @@ export class AllocationDetailResponseMapper {
       transferDate: ety.transferDate,
       state: ety.state,
       responsibleUserId: ety.responsibleUserId,
-      picName: ety.responsibleUser && `${ety.responsibleUser?.firstName} ${ety.responsibleUser?.lastName}`,
+      picName: ety.responsibleUser && `${ety.responsibleUser?.firstName} ${ety?.responsibleUser?.lastName || ''}`,
       nik: ety.responsibleUser.username,
       receivedUserId: ety.receivedUserId,
-      receivedUserName: ety.receivedUser && `${ety.receivedUser?.firstName} ${ety.receivedUser?.lastName}`,
+      receivedUserName: ety.receivedUser && `${ety.receivedUser?.firstName} ${ety.receivedUser?.lastName || ''}`,
       cashflowTypeId: ety.cashflowType && ety.cashflowType.id,
       cashflowTypeName: ety.cashflowType && ety.cashflowType.name,
       description: ety.description,
@@ -60,7 +37,29 @@ export class AllocationDetailResponseMapper {
     });
   }
 
-    public static fromEntity(entities: Partial<CashBalanceAllocation>): AllocationBalanceDetailDTO {
+  public static fromEntity(entities: Partial<CashBalanceAllocation>): AllocationBalanceDetailDTO {
     return this.fromOneEntity(entities);
+  }
+
+  private static toCashBalanceAllocationHistoryDTO(
+    data: CashBalanceAllocationHistory[],
+    branch: Branch,
+  ): AlocationBalanceHistoryDTO[] {
+    return data.map((v) => {
+      const h = new AlocationBalanceHistoryDTO();
+      h.id = v.id;
+      h.userId = v.createUserId;
+      h.userFullName = `${v.createUser?.firstName} ${v.createUser?.lastName || ''}`;
+      h.userRole =
+        v.createUser &&
+        v.createUser.role &&
+        (v.createUser.role.name as MASTER_ROLES);
+      // Based on discussion, Use Expense Branch.
+      h.branchName = branch && branch.branchName;
+      h.state = v.state;
+      h.rejectedNote = v.rejectedNote;
+      h.createdAt = v.createdAt;
+      return h;
+    });
   }
 }

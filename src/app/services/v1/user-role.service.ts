@@ -151,7 +151,7 @@ export class UserRoleService {
 
     try {
       const updatedUser = await user.save();
-      await AuthService.clearCache();
+      await AuthService.clearCache(user.username);
       return updatedUser;
     } catch (error) {
       this.logger.error(error);

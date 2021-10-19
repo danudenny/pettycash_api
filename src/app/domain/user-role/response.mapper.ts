@@ -33,7 +33,7 @@ export class UserRoleResponseMapper {
     it.id = dto.id;
     it.nik = dto.username;
     it.username = dto.username;
-    it.fullName = `${dto.firstName} ${dto.lastName}`;
+    it.fullName = `${dto.firstName} ${dto.lastName || ''}`;
     it.roleId = dto.roleId;
     it.roleName = dto.role && dto.role.name;
     it.branches =

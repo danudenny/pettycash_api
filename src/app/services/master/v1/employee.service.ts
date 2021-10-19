@@ -1,15 +1,21 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Employee } from '../../../../model/employee.entity';
 import { QueryBuilder } from 'typeorm-query-builder-wrapper';
-import { QueryEmployeeDTO } from '../../../domain/employee/employee.payload.dto';
-import { EmployeeWithPaginationResponse } from '../../../domain/employee/employee-response.dto';
+import {
+  QueryEmployeeDTO,
+  QueryEmployeeRoleDTO,
+} from '../../../domain/employee/employee.payload.dto';
+import {
+  EmployeeRoleWithPaginationResponse,
+  EmployeeWithPaginationResponse,
+} from '../../../domain/employee/employee-response.dto';
 import * as XLSX from 'xlsx';
 import { Response } from 'express';
+import { EmployeeRole } from '../../../../model/employee-role.entity';
+import { BasePayload } from '../../../domain/common/base-payload.dto';
 
 @Injectable()
 export class EmployeeService {
-  constructor() {}
-
   public async list(
     query?: QueryEmployeeDTO,
   ): Promise<EmployeeWithPaginationResponse> {
@@ -18,6 +24,10 @@ export class EmployeeService {
 
     qb.fieldResolverMap['nik__icontains'] = 'emp.nik';
     qb.fieldResolverMap['name__icontains'] = 'emp.name';
+    qb.fieldResolverMap['branchId'] = 'emp.branch_id';
+    qb.fieldResolverMap['positionName__icontains'] =
+      'emp_role.employee_role_name';
+    qb.fieldResolverMap['positionNameId'] = 'emp_role.id';
     qb.fieldResolverMap['employeeStatus'] = 'emp.employee_status';
 
     qb.applyFilterPagination();
@@ -27,11 +37,11 @@ export class EmployeeService {
       ['emp.nik', 'nik'],
       ['emp.name', 'name'],
       ['emp.employee_role_id', 'positionId'],
-      ['emp_role.employee_role_name', 'positionName'],
+      ["COALESCE(' ' || emp_role.employee_role_name, '-')", 'positionName'],
       ['emp.branch_id', 'branchId'],
       ['brc.branch_name', 'branchName'],
       ['emp.date_of_entry', 'dateOfEntry'],
-      ['emp.date_of_resign', 'dateOfResign'],
+      ["COALESCE(' ' || emp.date_of_resign, '-')", 'dateOfResign'],
       ['emp.is_deleted', 'isDeleted'],
     );
     qb.leftJoin((e) => e.employeeRole, 'emp_role');
@@ -53,6 +63,10 @@ export class EmployeeService {
 
       qb.fieldResolverMap['nik__icontains'] = 'emp.nik';
       qb.fieldResolverMap['name__icontains'] = 'emp.name';
+      qb.fieldResolverMap['branchId'] = 'emp.branch_id';
+      qb.fieldResolverMap['positionNameId'] = 'emp_role.id';
+      qb.fieldResolverMap['positionName__icontains'] =
+        'emp_role.employee_role_name';
       qb.fieldResolverMap['employeeStatus'] = 'emp.employee_status';
 
       qb.applyFilterQueries();
@@ -62,11 +76,11 @@ export class EmployeeService {
         ['emp.nik', 'nik'],
         ['emp.name', 'name'],
         ['emp.employee_role_id', 'positionId'],
-        ['emp_role.employee_role_name', 'positionName'],
+        ["COALESCE(' ' || emp_role.employee_role_name, '-')", 'positionName'],
         ['emp.branch_id', 'branchId'],
         ['brc.branch_name', 'branchName'],
         ['emp.date_of_entry', 'dateOfEntry'],
-        ['emp.date_of_resign', 'dateOfResign'],
+        ["COALESCE(' ' || emp.date_of_resign, '-')", 'dateOfResign'],
         ['emp.is_deleted', 'isDeleted'],
       );
       qb.leftJoin((e) => e.employeeRole, 'emp_role');
@@ -118,5 +132,32 @@ export class EmployeeService {
     } catch (err) {
       throw new HttpException(err, HttpStatus.BAD_REQUEST);
     }
+  }
+
+  public async employeeRole(
+    query?: QueryEmployeeRoleDTO,
+  ): Promise<EmployeeRoleWithPaginationResponse> {
+    const params = { order: '^employee_role_name', limit: 10, ...query };
+    const qb = new QueryBuilder(EmployeeRole, 'emp_role', params);
+
+    qb.fieldResolverMap['id'] = 'emp_role.id';
+    qb.fieldResolverMap['name__icontains'] = 'emp_role.employee_role_name';
+
+    qb.applyFilterPagination();
+    qb.selectRaw(
+      ['emp_role.id', 'id'],
+      ['emp_role.employee_role_id', 'employeeRoleId'],
+      ['emp_role.employee_role_code', 'employeeRoleCode'],
+      ['emp_role.employee_role_name', 'employeeRoleName'],
+      ['emp_role.employee_level', 'employeeLevel'],
+      ['emp_role.employee_position', 'employeePosition'],
+    );
+    qb.andWhere(
+      (e) => e.isDeleted,
+      (v) => v.isFalse(),
+    );
+
+    const emp_role = await qb.exec();
+    return new EmployeeRoleWithPaginationResponse(emp_role, params);
   }
 }

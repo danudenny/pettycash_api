@@ -21,7 +21,7 @@ export class ShowDownPaymentResponseMapper {
       h.id = v.id;
       h.userId = v.createUserId;
       h.state = v.state;
-      h.userFullName = `${v.createUser?.firstName} ${v.createUser?.lastName}`;
+      h.userFullName = `${v.createUser?.firstName} ${v.createUser?.lastName || ''}`;
       h.userRole =
         v.createUser &&
         v.createUser.role &&

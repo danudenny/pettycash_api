@@ -1,32 +1,82 @@
-include:
-  - project: platform/gitlab-ci
-    file: /apps/gitlab-ssh-keys.yml
-  - project: platform/gitlab-ci
-    file: /apps/gcr-push.yml
+image: docker:latest
+
+services:
+  - docker:dind
 
 stages:
-  - build-push
+  - build
+  - deploy
+  - checking
+  # - trigger-test
+  - notify-success
+  - notify-failure
 
-build-push:
-  image: google/cloud-sdk:alpine
-  stage: build-push
-  extends:
-    - .gitlab-ssh-keys-alpine
-  services:
-    - docker:18.09.7-dind
-  variables:
-    ENV_BUILD: staging
-    DOCKER_IMAGE_GCR: $GCR_STORAGE_HOST/$GCR_STORAGE_PROJECT/$ENV_BUILD/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME:$CI_COMMIT_SHORT_SHA-$CI_PIPELINE_ID
-    DOCKER_IMAGE_GITLAB: $CI_REGISTRY_IMAGE/$ENV_BUILD:latest
+variables:
+  URL_PIPELINE: $CI_PIPELINE_URL
+
+build:
+  stage: build
+  environment: staging
+  before_script:
+    - sudo apt install curl
   script:
-    - echo ${CI_JOB_TOKEN} | docker login -u gitlab-ci-token $CI_REGISTRY --password-stdin
-    - echo ${GCR_STORAGE_KEY} | base64 -d  > ${HOME}/gcloud-service-key.json
-    - gcloud --quiet --no-user-output-enabled auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
-    - gcloud --quiet --no-user-output-enabled config set project ${GCR_STORAGE_PROJECT}
-    - gcloud --quiet --no-user-output-enabled auth configure-docker
-    - export SSH_KEY_DOCKER=$(echo "${SSH_KEY_GITLAB}" | base64 -d)
-    - docker build --target production -t ${DOCKER_IMAGE_GCR} -t ${DOCKER_IMAGE_GITLAB} .
-    - docker push ${DOCKER_IMAGE_GCR}
-    - docker push ${DOCKER_IMAGE_GITLAB}
+    - make slack-notify-start
+    - make build-and-push
   only:
-    - staging
+    - develop
+
+deploy:
+  stage: deploy
+  needs:
+    - job: build
+  environment: staging
+  script:
+    - make deploy
+  only:
+    - develop
+
+checking:
+  stage: checking
+  needs:
+    - job: deploy
+  environment: staging
+  script:
+    - make health-check
+  only:
+    - develop
+
+# trigger-test:
+#   stage: trigger-test
+#   needs:
+#     - job: checking
+#   environment: staging
+#   before_script:
+#     - sudo apt install curl
+#   script:
+#     - 'curl -X PUT -H "Authorization: Basic ${KATALON_AUTH}" -H "Content-Type: application/json" https://testops.katalon.io/api/v1/run-configurations/33296/execute'
+#     - make slack-notify-finish
+#   only:
+#     - develop
+
+notify-success:
+  stage: notify-success
+  needs:
+    - job: checking
+  environment: staging
+  before_script:
+    - sudo apt install curl
+  script:
+    - make slack-notify-finish
+  only:
+    - develop
+
+notify-failure:
+  stage: notify-failure
+  environment: staging
+  before_script:
+    - sudo apt install curl
+  script:
+    - make slack-notify-failed
+  only:
+    - develop
+  when: on_failure

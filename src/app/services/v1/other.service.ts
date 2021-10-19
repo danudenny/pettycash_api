@@ -19,13 +19,14 @@ export class OtherService {
    * @return {*}  {Promise<void>}
    * @memberof OtherService
    */
+  // TODO: change this
   async clearCache(): Promise<void> {
-    const { isSuperUser } = await AuthService.getUserBranchAndRole();
-    if (!isSuperUser) {
-      throw new NotAcceptableException(
-        `You're not allowed to perform this action!`,
-      );
-    }
-    await getConnection().queryResultCache?.clear();
+    // const { isSuperUser } = await AuthService.getUserBranchAndRole();
+    // if (!isSuperUser) {
+    throw new NotAcceptableException(
+      `You're not allowed to perform this action!`,
+    );
+    // }
+    // await getConnection().queryResultCache?.clear();
   }
 }

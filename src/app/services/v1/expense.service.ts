@@ -105,7 +105,7 @@ export class ExpenseService {
 
   private async getUser(includeBranch: boolean = false) {
     if (includeBranch) {
-      return await AuthService.getUser({ relations: ['branches'] });
+      return await AuthService.getUserBranches();
     } else {
       return await AuthService.getUser();
     }
@@ -483,7 +483,7 @@ export class ExpenseService {
           );
         }
 
-        const user = await AuthService.getUser({ relations: ['role'] });
+        const user = await AuthService.getUserRole();
         const userRole = user?.role?.name as MASTER_ROLES;
         expense.updateUser = user;
 
@@ -596,7 +596,7 @@ export class ExpenseService {
           throw new UnprocessableEntityException(`Expense already rejected!`);
         }
 
-        const user = await AuthService.getUser({ relations: ['role'] });
+        const user = await AuthService.getUserRole();
         const userRole = user?.role?.name as MASTER_ROLES;
 
         if (!userRole) {

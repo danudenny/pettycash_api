@@ -7,7 +7,7 @@ export class UserResponseMapper {
     it.nik = dto.username;
     it.username = dto.username;
     it.firstName = dto.firstName;
-    it.lastName = dto.lastName;
+    it.lastName = dto.lastName || '';
     return it;
   }
 
