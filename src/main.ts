@@ -25,10 +25,7 @@ async function bootstrap() {
   // app.use(urlencoded({ extended: true, limit: '10mb' }));
 
   if (LoaderEnv.envs.CORS) {
-    app.enableCors({
-      optionsSuccessStatus: HttpStatus.OK,
-      preflightContinue: true,
-    });
+    app.enableCors();
   }
   logger.info(`Enable Cors APP  :: ${LoaderEnv.envs.CORS}`);
 
