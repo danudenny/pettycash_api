@@ -316,9 +316,8 @@ export class VoucherService {
       };
 
       try {
-        // const create = await axios.post(LoaderEnv.envs.VOUCHER_HELPER_URL, data, options);
         return await axios.post(
-          'https://www.pettycash-gefyra.backoffice/webhook/pettycash/redeem-voucher',
+          LoaderEnv.envs.VOUCHER_HELPER_URL,
           data,
           options,
         );
