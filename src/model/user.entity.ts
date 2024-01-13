@@ -1,4 +1,15 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  ManyToOne,
+  ManyToMany,
+  JoinColumn,
+  JoinTable,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Branch } from './branch.entity';
+import { Role } from './role.entity';
 
 // NOTE: source data from db master data
 @Entity('users')
@@ -38,14 +49,6 @@ export class User extends BaseEntity {
     name: 'username',
   })
   username: string;
-
-  @Column('character varying', {
-    nullable: false,
-    length: 500,
-    name: 'password',
-    select: false,
-  })
-  password: string;
 
   @Column('integer', {
     nullable: true,
@@ -117,16 +120,30 @@ export class User extends BaseEntity {
   })
   otpReset: string | null;
 
-  // relation model
+  @Column({
+    type: 'uuid',
+    nullable: true,
+    name: 'role_id',
+  })
+  roleId?: string;
 
-  // additional method
-  validatePassword(passwordToValidate: string) {
-    const crypto = require('crypto');
-    const hashPass = crypto
-      .createHash('md5')
-      .update(passwordToValidate)
-      .digest('hex');
-    // compare md5 hash password
-    return hashPass === this.password;
-  }
+  // relation model
+  @ManyToOne(() => Role)
+  @JoinColumn({ referencedColumnName: 'id' })
+  role: Role;
+
+  @ManyToMany(() => Branch)
+  @JoinTable({
+    name: 'user_branch',
+    joinColumn: {
+      name: 'user_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'branch_id',
+      referencedColumnName: 'id',
+    },
+  })
+  branches: Branch[];
+
 }

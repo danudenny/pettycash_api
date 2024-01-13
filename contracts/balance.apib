@@ -1,0 +1,101 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Balance
+
+# Group Balance
+
+## List Balance [GET /v1/balances?balanceDate__lte,branchId,state]
+
+API to get all balance branches (saldo cabang).
+
++ Parameters
+    + balanceDate__lte: `2021-01-01` (date, optional) - Balance Date to filter.
+    + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string, optional) - Branch to filter.
+    + state (enum[string], optional) - Balance Status to minimum amount.
+        + lessThan
+        + equal
+        + moreThan
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": [
+                {
+                    "branchId": "eaaf465b-65bc-4784-909e-8d0180c6eb4c",
+                    "branchName": "Tangerang Pinang",
+                    "currentAmount": 2000000,
+                    "minimumAmount": 2300000,
+                    "budgetAmount": 8000000,
+                    "differenceAmount": 300000,
+                    "state": "lessThan"
+                },
+                {
+                    "branchId": "eaaf465b-65bc-4784-909e-8d0180c6eb4c",
+                    "branchName": "Tangerang Pinang",
+                    "currentAmount": 2000000,
+                    "minimumAmount": 2300000,
+                    "budgetAmount": 8000000,
+                    "differenceAmount": 300000,
+                    "state": "equal"
+                }
+            ],
+            "meta": {
+                "page": 2,
+                "prevPage": 1,
+                "nextPage": null,
+                "perPage": 10,
+            }
+        }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "message": "Internal Server Error"
+            }
+
+## Summary Balance [GET /v1/balances/summary?noCache]
+
+API to get summary balance branches (saldo cabang).
+
++ Parameters
+    + noCache: false (boolean) - Force to not use cache.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "data": {
+                    "branchId": "eaaf465b-65bc-4784-909e-8d0180c6eb4c",
+                    "branchName": "Tangerang Pinang",
+                    "bankAmount": 2000000,
+                    "cashAmount": 2000000,
+                    "totalAmount": 2000000,
+                    "minimumAmount": 2300000,
+                    "retreiveAt": "2021-04-07T10:25:19.917Z",
+                    "deviationAmount": 1000
+                }
+        }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "message": "Internal Server Error"
+            }

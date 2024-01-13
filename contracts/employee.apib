@@ -1,0 +1,66 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Employee
+
+# Group Employee
+
+## List Employee [GET /v1/employees{?name__contains,nik__contains}]
+
+Untuk mendapatkan daftar employee sicepat.
+
++ Parameters
+    + name__contains: `Nui Employee` (string, optional) - NIK to Search (Using LIKE sql).
+    + nik__contains: `19000280` (string, optional) - NIK to Search (Using LIKE sql).
+ 
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "data": [
+                    {
+                        "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "nik": "19000280",
+                        "name": "Denny Danuwijaya",
+                        "npwpNumber": "1232.1231.999-12.11",
+                        "idCardNumber": "20090134",
+                        "positionId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "positionName": "Admin Branch",
+                        "branchId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "branchName": "Kebon Jeruk"
+                    },
+                    {
+                        "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "nik": "19000780",
+                        "name": "Edi Santoso",
+                        "npwpNumber": "1232.1231.999-12.11",
+                        "idCardNumber": "20090139",
+                        "positionId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "positionName": "Staff",
+                        "branchId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "branchName": "Kebon Jeruk"
+                    }
+                ],
+                "meta": {
+                    "page": 1,
+                    "prevPage": 1,
+                    "nextPage": null,
+                    "perPage": 10,
+                },
+                "status": "success",
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }

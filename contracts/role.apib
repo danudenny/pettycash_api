@@ -1,0 +1,46 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Role
+
+# Group Role
+
+## List Role [GET /v1/roles?{name__contains}]
+
+Get list all Role.
+
++ Parameters
+    + name__contains (string, optional) - Role Name to Search (Using LIKE sql).
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": [
+                {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "name": "accounting"
+                },
+                {
+                    "id": "382a615c-7e93-4e64-8bc5-01f731d35559",
+                    "name": "admin_branch"
+                },
+            ],
+            "status": "success"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+

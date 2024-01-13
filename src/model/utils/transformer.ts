@@ -19,7 +19,7 @@ export class ColumnNumericTransformer implements ValueTransformer {
     if (!isNullOrUndefined(data)) {
       return data;
     }
-    return null;
+    return 0;
   }
 
   from(data?: string | null): number | null {

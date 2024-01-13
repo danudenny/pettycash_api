@@ -1,0 +1,71 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API OPA Role Permission
+
+# Group OPA Role Permission
+
+## List Role [GET /v1/opa/role-permissions]
+
+Get list all Role Permission for OPA (Open Policy Agent).
+
++ Request (application/json)
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "sicepat": {
+                    "permissions": {
+                    "superuser": [
+                        "permission:all"
+                    ],
+                    "accounting": [
+                        "period:read",
+                        "period:create",
+                        "period:close",
+                        "budget:read",
+                        "budget.budget:read",
+                        "budget.budget:create"
+                    ],
+                    "pic_ho": [
+                        "period:read",
+                        "budget:read",
+                        "budget.budget:create"
+                    ],
+                    "ss_ho": [
+                        "period:read",
+                        "budget:read",
+                        "budget.budget:create"
+                    ],
+                    "spv_ho": [
+                        "period:read",
+                        "budget:read",
+                        "budget.budget:create"
+                    ],
+                    "admin": [
+                        "period:read",
+                        "budget:read"
+                    ],
+                    "ops": [
+                        "period:read",
+                        "budget:read"
+                    ],
+                    "tax": [
+                        "period:read",
+                        "budget:read"
+                    ]
+                    }
+                }
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+

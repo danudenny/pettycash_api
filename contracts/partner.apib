@@ -1,0 +1,266 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Partner
+
+# Group Partner
+
+## List Partner [GET /v1/partners{?name__contains,code__contains,state,type,order}]
+
+Get list all Partner.
+
++ Parameters
+    + name__contains: `Sicepat` (string, optional) - Partner Name to Search (Using LIKE).
+    + code__contains: `QT354` (string, optional) - Partner Code to Search (Using LIKE).
+    + state: `approved` (string, optional) - Partner Status `draft` `approved` `rejected` to filter.
+    + type: `company` (string, optional) - Partner Type `personal` `company` to filter.
+    + order: `^createdAt` (string, optional) - Sorting by field, use prefix `^` for ASC, `-` for DESC.
+        + Default: `-createdAt`
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": [
+                {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "code": "QWT551",
+                    "name": "HR Sicepat",
+                    "address": "Jl. Medan Merdeka 1, Jakarta Pusat, Indonesia",
+                    "type": "company",
+                    "npwpNumber": "1232.1231.999-12.11",
+                    "idCardNumber": null,
+                    "state": "draft",
+                    "createdAt": "2021-01-29T09:00:29.803Z"
+                },
+                {
+                    "id": "382a615c-7e93-4e64-8bc5-01f731d35559",
+                    "code": "OPK151",
+                    "name": "Antony",
+                    "address": "Jl. Taman Anggrek No. 12, Jakarta Pusat, Indonesia",
+                    "type": "personal",
+                    "npwpNumber": "1232.1231.999-12.11",
+                    "idCardNumber": "332211440920001",
+                    "state": "approved",
+                    "createdAt": "2021-01-29T09:00:29.803Z"
+                },
+            ],
+            "meta": {
+                "page": 2,
+                "prevPage": 1,
+                "nextPage": null,
+                "perPage": 10,
+            },
+            "status": "success"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+## Create Partner [POST /v1/partners]
+
+Create Partner
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + code: `QT3001` (string, optional) - Partner code.
+        + name: `Sicepat.com` (string) - Partner name.
+        + type: `company` (string) - Partner Type `personal` or `company`.
+        + npwpNumber: `1232.1231.999-12.11` (string, optional) - Partner NPWP.
+        + idCardNumber: `332211440920001` (string, optional) - Partner ID Card Number (KTP).
+        + address: `Jl. dipatiukur no.8, bandung, jawa barat, indonesia` (string) - Partner Address.
+
++ Response 201 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "PARTNER_CREATE_FAILED",
+                "message": "failed to create partner",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Update Partner [PUT /v1/partners/{id}]
+
+Update Partner
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Partner ID to Update.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + name: `Sicepat.com` (string) - Partner name.
+        + type: `company` (string) - Partner Type `personal` or `company`.
+        + npwpNumber: `1232.1231.999-12.11` (string, optional) - Partner NPWP.
+        + idCardNumber: `332211440920001` (string, optional) - Partner ID Card Number (KTP).
+        + address: `Jl. dipatiukur no.8, bandung, jawa barat, indonesia` (string) - Partner Address.
+
++ Response 200 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "PARTNER_UPDATE_FAILED",
+                "message": "failed to update partner",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+## Delete Partner [DELETE /v1/partners/{id}]
+
+Update Partner
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Partner ID to Delete.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 204 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "PARTNER_DELETE_FAILED",
+                "message": "failed to delete partner",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+## Approve Partner [PUT /v1/partners/{id}/approve]
+
+Untuk Approve Partner yang dibuat.
+
++ Parameters
+    + id (UUID) - ID of a Partner
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "data": {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "code": "QWT551",
+                    "name": "HR Sicepat",
+                    "address": "Jl. Medan Merdeka 1, Jakarta Pusat, Indonesia",
+                    "type": "company",
+                    "npwpNumber": "1232.1231.999-12.11",
+                    "idCardNumber": null,
+                    "state": "approved",
+                    "createdAt": "2021-01-29T09:00:29.803Z"
+                }
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "statusCode": 400,
+                "error": "Bad Request",
+                "message": "Partner Status has to be Approved"
+            }
+
+## Reject Partner [POST /v1/partners/{id}/reject]
+
+Untuk Reject Partner yang dibuat.
+
++ Parameters
+    + id (UUID) - ID of a Partner
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "status": "success",
+                "data": {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "code": "QWT551",
+                    "name": "HR Sicepat",
+                    "address": "Jl. Medan Merdeka 1, Jakarta Pusat, Indonesia",
+                    "type": "company",
+                    "npwpNumber": "1232.1231.999-12.11",
+                    "idCardNumber": null,
+                    "state": "rejected",
+                    "createdAt": "2021-01-29T09:00:29.803Z"
+                }
+            }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "statusCode": 400,
+                "error": "Bad Request",
+                "message": "Partner Status has to be Rejected"
+            }

@@ -1,0 +1,89 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Setting
+
+# Group Setting
+
+## Get Setting [GET /v1/settings]
+
+Get Global Setting
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": {
+                "voucherPartnerId": "6e608895-0048-436d-8550-6f68fadceea6",
+                "voucherPartnerName": "HR Sicepat",
+                "deviationAmount": 1000,
+                "cashTransitCoaId": "a94f51cd-806b-40d2-a8d4-4cbd9df99de0",
+                "cashTransitCoaCode": "112.005.234",
+                "downPaymentPerdinCoaId": "56734749-8a7a-49cf-beda-156e296cdc53",
+                "downPaymentPerdinCoaCode": "113.005.678",
+                "downPaymentReimbursementCoaId": "56734749-8a7a-49cf-beda-156e296cdc53",
+                "downPaymentReimbursementCoaCode": "115.002.234",
+            },
+            "status": "success"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "1000",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Update Setting [PUT /v1/settings]
+
+Update Global Setting.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+    
+    + Attributes (object)
+        + voucherPartnerId: `3e7436b1-adeb-4a85-8676-2968e0cec78c` (string) - Voucher Partner ID.
+        + deviationAmount: 1000 (number) - Deviation Amount.
+        + cashTransitCoaId: `3e7436b1-adeb-4a85-8676-2968e0cec78c` (string) - Cash Transit CoA ID.
+        + downPaymentPerdinCoaId: `3e7436b1-adeb-4a85-8676-2968e0cec78c` (string) - Down Payment Perdin CoA ID.
+        + downPaymentReimbursementCoaId: `3e7436b1-adeb-4a85-8676-2968e0cec78c` (string) - Down Payment Reimbursement CoA ID.
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "status": "success",
+            "message": "Setting successfully updated."
+        }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "SETTING_UPDATE_FAILED",
+                "message": "failed to update settings",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+

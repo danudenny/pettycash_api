@@ -1,0 +1,228 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Journal
+
+# Group Journal 
+
+## List Journal [GET /v1/journals{?startDate__gte,endDate__lte,state,partner__icontains,number__icontains,reference__icontains,order}]
+
+Get list all Journal.
+
++ Parameters
+    + startDate__gte: `2021-01-01` (date, optional) - Start Date to filter.
+    + endDate__lte: `2021-12-31` (date, optional) - End Date to filter.
+    + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string, optional) - Branch to filter.
+    + state: `draft` (enum[string], optional) - Journal Status.
+        + draft
+        + approved_by_ss_ho
+        + approved_by_spv_ho
+        + approved_by_tax
+        + posted 
+    + partner__icontains: `HR Sicepat` (string, optional) - Partner Name to Search.
+    + number__icontains: `JRNL20200201AAA123` (string, optional) - Journal Number to Search.
+    + reference__icontains: `Sicepat` (string, optional) - Journal Reference to Search.
+    + order: `^transactionDate` (string, optional) - Sorting by field, use prefix `^` for ASC, `-` for DESC.
+        + Default: `-transactionDate`
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+        {
+          "data": [
+                    {
+                        "branchId": "090a0e27-9c32-43e2-b78a-b8d39dce771b",
+                        "branchName": "Jakpus Tanah Abang",
+                        "coaCode": "111.001.0010",
+                        "coaId": "36d2b72d-b1bb-4eed-8763-cd3378143353",
+                        "coaName": "Kas Kantor Pusat",
+                        "credit": 0,
+                        "debit": 5000,
+                        "description": null,
+                        "downPaymentNumber": null,
+                        "isLedger": false,
+                        "itemId": "e104fd82-4299-4320-ba73-bf4180a46840",
+                        "journalId": "a8735560-3448-4f5c-a637-49c8eb1c047b",
+                        "number": "JRNL/2021/09/JTVR8254",
+                        "partnerCode": "202011844",
+                        "partnerName": "Eryn Utami",
+                        "periodMonth": 9,
+                        "periodYear": 2021,
+                        "reference": "PAY202109XKU297",
+                        "reverseJournalId": "007b2cae-fc1a-4385-a7be-768e6e607265",
+                        "state": "draft",
+                        "syncFailReason": null,
+                        "transactionDate": "2021-09-19T17:00:00.000Z"
+                    },
+                    {
+                        "branchId": "090a0e27-9c32-43e2-b78a-b8d39dce771b",
+                        "branchName": "Jakpus Tanah Abang",
+                        "coaCode": "500.40.48",
+                        "coaId": "3ab76b02-0489-4f65-981a-5ac91ad2b03b",
+                        "coaName": "Down Payment Reimbursement Coa Pengganti",
+                        "credit": 5000,
+                        "debit": 0,
+                        "description": null,
+                        "downPaymentNumber": null,
+                        "isLedger": true,
+                        "itemId": "f820f15e-b7e9-4848-8ade-f315edd072d2",
+                        "journalId": "a8735560-3448-4f5c-a637-49c8eb1c047b",
+                        "number": "JRNL/2021/09/JTVR8254",
+                        "partnerCode": "202011844",
+                        "partnerName": "Eryn Utami",
+                        "periodMonth": 9,
+                        "periodYear": 2021,
+                        "reference": "PAY202109XKU297",
+                        "reverseJournalId": "007b2cae-fc1a-4385-a7be-768e6e607265",
+                        "state": "draft",
+                        "syncFailReason": null,
+                        "transactionDate": "2021-09-19T17:00:00.000Z"
+                    }
+          ],
+          "meta": {
+            "page": 2,
+            "prevPage": 1,
+            "nextPage": null,
+            "perPage": 10
+          },
+          "status": "success"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Batch Post Journal [PUT /v1/journals/batch-post]
+
+Post Journal in Batch
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + datas: (array)
+            + item:
+                + id: `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string, required) - Journal ID to post
+
++ Response 200 (application/json)
+    + Body
+
+        {
+          "status": "success",
+          "data": {
+            "success": [
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              },
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              }
+            ],
+            "fail": [
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              },
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              },
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              }
+            ]
+          }
+        }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "JOURNAL_BATCH_POST_FAILED",
+                "message": "failed to batch post journal",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+## Batch Reverse Journal [PUT /v1/journals/batch-reverse]
+
+Reverse Journal in Batch
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + datas: (array)
+            + item:
+                + id: `3aa3eac8-a62f-44c3-b53c-31372492f9a0` (string, required) - Journal ID to reverse
+
++ Response 200 (application/json)
+    + Body
+
+        {
+          "status": "success",
+          "data": {
+            "success": [
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              },
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              }
+            ],
+            "fail": [
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              },
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              },
+              {
+                "id": "ee4517a2-2a91-4c35-a446-18257261dfd6"
+              }
+            ]
+          }
+        }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "JOURNAL_BATCH_REVERSE_FAILED",
+                "message": "failed to batch reverse journal",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }

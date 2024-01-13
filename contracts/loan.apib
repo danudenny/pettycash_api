@@ -1,0 +1,375 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Loan
+
+# Group Loan
+
+## List Loan [GET /v1/loans{?startDate__gte,endDate__lte,number__icontains,sourceDocument__icontains,branchId,employeeId,state,type,order}]
+
+Get list all loan.
+
++ Parameters
+    + startDate__gte: `2021-01-01` (date) - Start Date to filter.
+    + endDate__lte: `2021-12-31` (date) - End Date to filter.
+    + number__icontains: `REL-2020/01/AAB112` (string) - Number to search.
+    + sourceDocument__icontains: `REL-2020/01/AAB112` (string) - Source Document to search.
+    + branchId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string) - Branch to filter.
+    + employeeId: `eaaf465b-65bc-4784-909e-8d0180c6eb4c` (string) - Employee to filter.
+    + state: `unpaid` (enum[string], optional) - Loan Status.
+        + paid
+        + unpaid
+    + type: `expense` (enum[string]) - Loan Type.
+        + payable
+        + receivable
+    + order: `^createdAt` (string, optional) - Sorting by field, use prefix `^` for ASC, `-` for DESC.
+        + Default: `-createdAt`
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": [
+                {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "transactionDate": "2021-01-27",
+                    "periodMonth": 1,
+                    "periodYear": 2021,
+                    "branchName": "Kebon Jeruk",
+                    "branchCode": "1008991",
+                    "number": "LOAN202003111AAA",
+                    "sourceDocument": "REL-2020/01/AAB112",
+                    "downPaymentId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "employeeName": "Arianty Silvia",
+                    "employeeNik": "2020081991",
+                    "type": "payable",
+                    "state": "unpaid",
+                    "amount": 50000,
+                    "residualAmount": 50000,
+                    "paidAmount": 0
+                },
+                {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "transactionDate": "2021-01-27",
+                    "periodMonth": 1,
+                    "periodYear": 2021,
+                    "branchName": "Kebon Jeruk",
+                    "branchCode": "1008991",
+                    "number": "LOAN202003111AAA",
+                    "sourceDocument": "REL-2020/01/AAB112",
+                    "downPaymentId": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "employeeName": "Arianty Silvia",
+                    "employeeNik": "2020081991",
+                    "type": "receivable",
+                    "state": "paid",
+                    "amount": 50000,
+                    "residualAmount": 0,
+                    "paidAmount": 50000
+                }
+            ],
+            "meta": {
+                "page": 2,
+                "prevPage": 1,
+                "nextPage": null,
+                "perPage": 10,
+            },
+            "status": "success"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Get Loan [GET /v1/loans/{id}]
+
+Get Loan detail.
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Loan ID to Retrieve.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": {
+                "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                "employeeName": "Arianty Silvia",
+                "employeeNik": "2020081991",
+                "sourceDocument": "REL-2020/01/AAB112",
+                "downPaymentType": "reimbursement_ho",
+                "amount": 50000,
+                "residualAmount": 0,
+                "state": "paid",
+                "payments": [
+                  {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "transactionDate": "2021-01-27",
+                    "amount": 20000,
+                    "type": "partially",
+                    "paymentMethod": "bank",
+                    "receiverName": "Arianty Silvia",
+                    "receiverNik": "2020081991"
+                  },
+                  {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "transactionDate": "2021-01-27",
+                    "amount": 30000,
+                    "type": "paid",
+                    "paymentMethod": "cash",
+                    "receiverName": "Arianty Silvia",
+                    "receiverNik": "2020081991"
+                  }
+                ]
+            },
+            "status": "success"
+        }
+
++ Response 404 (application/json)
+    + Body
+
+          {
+              "status": "fail",
+              "code": "LOAN_NOT_FOUND",
+              "message": "Loan with {id} not found",
+              "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+          }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Create/Add Payment [POST /v1/loans/{id}/payments]
+
+Create/Add Payment to Loan 
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Loan ID.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + paymentMethod: `bank` (enum[string]) - Payment Method.
+            + cash
+            + bank
+        + amount: 50000 (number) - Amount to Pay.
+
++ Response 200 (application/json)
+    + Body
+
+        {
+            "data": {
+                "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                "employeeName": "Arianty Silvia",
+                "employeeNik": "2020081991",
+                "sourceDocument": "REL-2020/01/AAB112",
+                "amount": 50000,
+                "residualAmount": 0,
+                "state": "paid",
+                "payments": [
+                  {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "transactionDate": "2021-01-27",
+                    "amount": 20000,
+                    "type": "partially",
+                    "paymentMethod": "bank"
+                  },
+                  {
+                    "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+                    "transactionDate": "2021-01-27",
+                    "amount": 30000,
+                    "type": "paid",
+                    "paymentMethod": "cash"
+                  }
+                ]
+            },
+            "status": "success"
+        }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "LOAN_ADD_PAYMENT_FAILED",
+                "message": "failed to add payment",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## List Attachments [GET /v1/loans/{id}/attachments]
+
+Get Loan Attachments.
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Loan ID to Retrieve.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+
+        {
+          "data": [
+            {
+              "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+              "name": "imagename.jpg",
+              "fileName": "imagename.jpg",
+              "fileMime": "image/jpeg",
+              "url": "https://sicepatresi.s3.amazonaws.com/0009775/000977539725.jpg"
+            },
+            {
+              "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+              "name": "imagename2.png",
+              "fileName": "imagename2.png",
+              "fileMime": "image/png",
+              "url": "https://sicepatresi.s3.amazonaws.com/0009775/000977539725.png"
+            }
+          ],
+          "status": "success"
+        }
+
++ Response 404 (application/json)
+    + Body
+
+          {
+              "status": "fail",
+              "code": "LOAN_NOT_FOUND",
+              "message": "loan {id} not found",
+              "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+          }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "code": "GENERAL_ERROR",
+            "message": "Internal Server Error",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
+
+## Create Attachment [POST /v1/loans/{id}/attachments]
+
+Create Attachment
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Loan ID.
+
++ Request (multipart/form-data)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
+    + Attributes (object)
+        + file: (string) - File to upload (file data).
+
++ Response 201 (application/json)
+    + Body
+        {
+          "data": {
+            "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+            "name": "imagename.jpg",
+            "fileName": "imagename.jpg",
+            "fileMime": "image/jpeg",
+            "url": "https://sicepatresi.s3.amazonaws.com/0009775/000977539725.jpg"
+          },
+          "status": "success"
+        }
+        
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "LOAN_ATTACHMENT_CREATE_FAILED",
+                "message": "failed to create loan attachment",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
+
+## Delete Attachment [DELETE /v1/loans/{id}/attachments/{attachmentId}]
+
+Delete Attachment by ID
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Loan ID.
+    + attachmentId: `d97a5ba7-60c0-4326-85fe-76452e3b416c` (string) - Attachment ID to Delete.
+
++ Request (application/json)
+    + Header
+
+            Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 204 (application/json)
+    + Body
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "LOAN_ATTACHMENT_DELETE_FAILED",
+                "message": "failed to delete loan attachment",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+            {
+                "status": "error",
+                "code": "GENERAL_ERROR",
+                "message": "Internal Server Error",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }

@@ -1,5 +1,5 @@
 import * as dotEnvExtended from 'dotenv-extended';
-import * as dotEnvParseVariables from 'dotenv-parse-variables';
+import { default as dotEnvParseVariables } from 'dotenv-parse-variables';
 import * as path from 'path';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
@@ -36,6 +36,7 @@ export class LoaderEnv {
   public static envs = envs;
 
   public static isProduction() {
+    console.dir(envs, { colors: true, depth: null });
     return envs.NODE_ENV === 'production';
   }
 
@@ -83,7 +84,7 @@ export class LoaderEnv {
         if (!Array.isArray(dbSlaves)) {
           dbSlaves = [dbSlaves];
         }
-        slaves = dbSlaves.map(c => ({ url: c, ssl }));
+        slaves = dbSlaves.map((c) => ({ url: c, ssl }));
       }
 
       config = Object.assign(

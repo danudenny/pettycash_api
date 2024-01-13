@@ -1,0 +1,318 @@
+FORMAT: 1A
+HOST: http://pettycash.api.url
+
+# API Down Payment
+
+# Group Down Payment
+
+## List Down Payment [GET /v1/down-payments{?startDate__gte,endDate__lte,branchId,departmentId,state,type,paymentType,destinationPlace,number__icontains}]
+
+API to get all down payments
+
++ Parameters
+    + startDate__gte: `2021-01-29T09:00:29.803Z`    (date) - Start Date to filter.
+    + endDate__lte: `2021-01-29T09:00:29.803Z`  (date) - Start Date to filter.
+    + branchId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb`  (string) - Branch to filter.
+    + departmentId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb`  (string, optional) - Department to filter.
+    + productId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb`  (string, optional) - Product ID (Jenis Biaya) to filter.
+    + state: `draft` (enum[string], optional) - Status to filter
+        + draft
+        + approved_by_pic_ho 
+        + approved_by_ss_spv_ho
+        + rejected
+    + type: `reimbursement` (enum[string], optional) - Type down payment to filter.
+        + reimbursement
+        + perdin
+    + paymentType: `cash` (enum'[string], optional) - Type payment to filter.
+        + cash
+        + bank
+    + destinationPlace: `jakarta`  (string, optional) - Destination to filter.
+    + number__icontains: `UM001`   (string, optional) - Number down payment to search.
+
++ Request (application/json)
+    + Header
+         Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+        {
+            "status": "success",
+            "data": [
+                {
+                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "type": "reimbursement",
+                    "number": "UM001",
+                    "amount": 200000.00,
+                    "paymentType": "cash",
+                    "branchId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "branchName": "Kebon Jeruk",
+                    "departmentId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "departmentName": "IT",
+                    "employeeId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "employeeName": "Jeny",
+                    "employeeNik": "998366263636277627",
+                    "periodId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "periodName": "01-2010",
+                    "productId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "productName": "Reimbursement HO",
+                    "destinationPlace": "Jakarta",
+                    "description": "isi description",
+                    "state": "draft",
+                    "isRealized": false,
+                    "transactionDate": "2021-01-29T09:00:29.803Z",
+                    "loanId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "loanNumber": "LOAN202107ATY876",
+                    "loanType": "payable",
+                    "loanPaidAmount": 0,
+                    "loanResidualAmount": 10000,
+                    "loanState": "paid"
+                },
+                {
+                    "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "type": "reimbursement",
+                    "number": "UM002",
+                    "amount": 200000.00,
+                    "paymentType": "cash",
+                    "branchId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "branchName": "Kebon Jeruk",
+                    "departmentId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "departmentName": "IT",
+                    "employeeId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "employeeName": "DUDU",
+                    "employeeNik": "998366263636277627",
+                    "periodId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "periodName": "01-2010",
+                    "productId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "productName": "Perdin",
+                    "destinationPlace": "Jakarta",
+                    "description": "isi description",
+                    "state": "draft",
+                    "isRealized": false,
+                    "transactionDate": "2021-01-29T09:00:29.803Z",
+                    "loanId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                    "loanNumber": "LOAN202107ATY870",
+                    "loanType": "payable",
+                    "loanPaidAmount": 0,
+                    "loanResidualAmount": 10000,
+                    "loanState": "unpaid"
+                }
+            ],
+            "meta": {
+                "page": 1,
+                "prevPage": null,
+                "nextPage": null,
+                "perPage": 10
+            }
+        }
+        
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "Internal Server Error"
+        }
+
+## Detail Down Payment [GET /v1/down-payments/:id]
+API to get detail down payment
+
++ Parameters
+    + id: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - Down payment ID to retrieve.
+
++ Request (application/json)
+    + Header
+        Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+
++ Response 200 (application/json)
+    + Body
+        {
+            "status": "success",
+            "data":{
+                "id": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                "type": "reimbursement",
+                "number": "UM001",
+                "amount": 200000,
+                "paymentType": "cash",
+                "branchId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                "branchName": "Kebon Jeruk",
+                "departmentId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                "departmentName": "IT",
+                "employeeId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                "employeeName": "Jeny",
+                "employeeNik": "998366263636277627",
+                "periodId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                "periodName": "01-2010",
+                "productId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                "productName": "Perdin",
+                "destinationPlace": "Jakarta",
+                "description": "isi description",
+                "state": "draft",
+                "isRealized": false,
+                "transactionDate": "2021-01-29T09:00:29.803Z",
+                "loanId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                "loanNumber": "LOAN202107ATY870",
+                "loanType": "payable",
+                "loanPaidAmount": 0,
+                "loanResidualAmount": 10000,
+                "loanState": "unpaid",
+                "histories": [
+                    {
+                        "id": "2a683159-6a53-4a24-833b-3e0375ff68ed",
+                        "downPaymentId": "d2613fdc-8b7c-486e-90e6-aba5d4a819cb",
+                        "userId": "6e381b42-23c9-4388-ba0a-bb0272d33099",
+                        "userFullName": "Jenny",
+                        "userRole": "admin",
+                        "state": "draft",
+                        "rejectedNote": null,
+                        "createdAt": "2021-03-02T04:48:56.736Z"
+                    }
+                ]
+            }
+        }
+
++ Response 404 (application/json)
+    + Body
+        {
+            "status": "fail",
+            "code": "DOWN_PAYMENT_NOT_FOUND",
+            "message": "failed to close period due any open journal transaction",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "Internal Server Error"
+        }
+
+## Create Down Payment [POST /v1/down-payments]
+
+API to create down payment
+
++ Request (application/json)
+    + Header
+        Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+    + Attributes (object)
+        + transactionDate: `2021-01-29T09:00:29.803Z` (string) - Transaction date.
+        + departmentId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - Department.
+        + employeeId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - Employee.
+        + periodId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - Period.
+        + productId: `d2613fdc-8b7c-486e-90e6-aba5d4a819cb` (string) - Product.
+        + destinationPlace: `Jakarta` (string) - Destination.
+        + amount: `20000` (number) - amount down payment.
+        + paymentType: `cash` (string) - Type payment down payment.
+            + cash
+            + bank
+        + description: `entry description` (string) - Description.
+
++ Response 201 (application/json)
+    + Body
+        {
+            "data": {
+                "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+            },
+            "status": "success"
+        }
+
++ Response 400 (application/json)
+    + Body
+
+            {
+                "status": "fail",
+                "code": "EXPENSE_CREATE_FAILED",
+                "message": "failed to create expense",
+                "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+            }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "Internal Server Error"
+        }
+
+## Approve Down Payment [PATCH /v1/down-payments/:id/approve]
+
+API to approve down payment
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Down Payment ID.
+
++ Request (application/json)
+    + Header
+        + Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+        + x-username: approved_by_pic_ho
+    + Attributes (object)
+        + amount: `20000` (number) - amount down payment.
+        + paymentType: `cash` (string) - Type payment down payment.
+            + cash
+            + bank
+
++ Response 200 (application/json)
+    + Body
+        {
+            "data": {
+                "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+            },
+            "status": "success"
+        }
+
++ Response 404 (application/json)
+    + Body
+        {
+            "status": "fail",
+            "code": "EXPENSE_NOT_FOUND",
+            "message": "expense {id} not found",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "Internal Server Error"
+        }
+
+## Rejected Down Payment [PATCH /v1/down-payments/:id/reject]
+
+API to reject down payment
+
++ Parameters
+    + id: `5343f4f4-36a3-47cc-afe2-01b37a2063bf` (string) - Down Payment ID.
+
++ Request (application/json)
+    + Header
+        + Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2FwaV9pZCI6MywiZXhwIjoxNTUwMDg4NTE0fQ.Jnp0NMZ05zlXs4mKNdbt7cJ4Xwf8mTZrU-PS_eQY-vQ
+    + Attributes (object)
+        + rejectedNote: `isi description` (string) - Description reject down payment.
+
++ Response 200 (application/json)
+    + Body
+        {
+            "data": {
+                "id": "d659d65c-fcf3-45c8-956e-5baf9dee2522",
+            },
+            "status": "success"
+        }
+
++ Response 404 (application/json)
+    + Body
+        {
+            "status": "fail",
+            "code": "EXPENSE_NOT_FOUND",
+            "message": "expense {id} not found",
+            "traceId": "5343f4f4-36a3-47cc-afe2-01b37a2063bf"
+        }
+
++ Response 500 (application/json)
+    + Body
+
+        {
+            "status": "error",
+            "message": "Internal Server Error"
+        }
+

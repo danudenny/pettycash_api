@@ -1,30 +1,13 @@
-# stage development
-FROM node:12.16-alpine As development
-
-WORKDIR /usr/src/app
-
-COPY package*.json ./
-
-RUN npm install
-
+FROM node:12.16-alpine AS development
+WORKDIR /pettyCash
 COPY . .
+RUN yarn install
+RUN yarn run build
 
-RUN npm run build
-
-# stage production
-FROM node:12.16-alpine as production
-
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
-
-WORKDIR /usr/src/app
-
-COPY package*.json ./
-
-RUN npm install --only=production
-
+FROM node:12.16-alpine AS production
+ENV NODE_ENV=production
+WORKDIR /pettyCash
 COPY . .
-
-COPY --from=development /usr/src/app/dist ./dist
-
-CMD ["node", "dist/main"]
+RUN yarn install --prod
+COPY --from=development /pettyCash/dist ./dist
+CMD [ "node", "/pettyCash/dist/main.js" ]

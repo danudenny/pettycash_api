@@ -1,4 +1,13 @@
-import { Column, Entity, PrimaryGeneratedColumn, BaseEntity } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  BaseEntity,
+  ManyToOne,
+  JoinColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { AccountCoa } from './account-coa.entity';
 import { ColumnNumericTransformer } from './utils/transformer';
 
 // NOTE: source data from db master data
@@ -20,6 +29,12 @@ export class Branch extends BaseEntity {
     name: 'branch_type_id',
   })
   branchTypeId: number | null;
+
+  @Column('bigint', {
+    nullable: true,
+    name: 'representative_id',
+  })
+  representativeId: number | null;
 
   @Column('character varying', {
     nullable: false,
@@ -47,6 +62,13 @@ export class Branch extends BaseEntity {
   })
   phone1: string | null;
 
+  @Column({
+    type: 'uuid',
+    name: 'cash_coa_id',
+    nullable: true,
+  })
+  cashCoaId?: string;
+
   @Column('boolean', {
     name: 'is_active',
     nullable: false,
@@ -60,4 +82,21 @@ export class Branch extends BaseEntity {
     name: 'is_deleted',
   })
   isDeleted: boolean;
+
+  @Column('boolean', {
+    nullable: true,
+    default: () => 'false',
+    name: 'is_head_office',
+  })
+  isHeadOffice: boolean;
+
+  @ManyToOne(() => AccountCoa, { cascade: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'cash_coa_id', referencedColumnName: 'id' })
+  cashCoa?: AccountCoa;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    name: 'updated_at',
+  })
+  updatedAt?: Date;
 }
